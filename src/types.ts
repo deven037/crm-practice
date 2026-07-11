@@ -23,6 +23,20 @@ export interface Lead {
   source: string;
   ownerId: string;
   value: number;
+  productId?: string | null;
+  createdAt: string;
+}
+
+export const PRODUCT_CATEGORIES = ['Subscription', 'Service', 'Add-on', 'License', 'Training'];
+
+export interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  category: string;
+  price: number;
+  description: string;
+  active: boolean;
   createdAt: string;
 }
 

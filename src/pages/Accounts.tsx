@@ -31,13 +31,17 @@ export function Accounts() {
     <div data-testid="accounts-page">
       <div className="page-header">
         <h1>Accounts</h1>
+        <div className="page-actions">
+          <button className="btn btn-primary" onClick={() => navigate('/accounts/new')}>
+            + New Account
+          </button>
+        </div>
       </div>
       <div className="toolbar">
         <input
           type="search"
           className="input search-input"
           placeholder="Search accounts…"
-          data-testid="accounts-search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

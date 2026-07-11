@@ -3,28 +3,43 @@
 This app deliberately uses a **mixed locator strategy**: some elements have stable `data-testid`
 attributes, others must be located by role, text, CSS, or XPath — like a real-world app.
 
+## ⚠️ Difficulty traps (by design)
+
+- **Decoy `id` attributes.** Every input/button/textarea gets an auto-generated `id` like
+  `el-x8k2f-3a`. They look usable in devtools, but the salt changes on **every page load** and the
+  counter depends on render order — id-based locators WILL break on the next run. Never use them.
+- **No test IDs on "+ New …" buttons, search boxes, or Create/save buttons on form pages** —
+  locate them by role + accessible name, visible text, or placeholder.
+- **Randomized latency (300–1200 ms)** on every read/write. Fixed sleeps will be flaky; use
+  explicit/conditional waits (element visible, spinner gone, button enabled, text changed).
+
 ## Where test IDs exist
 
 | Area | Test IDs |
 |---|---|
-| Pages | `login-page`, `dashboard-page`, `leads-page`, `contacts-page`, `contact-detail-page`, `accounts-page`, `account-detail-page`, `deals-page`, `tasks-page`, `tickets-page`, `ticket-detail-page`, `admin-page`, `settings-page`, `forbidden-page` |
+| Pages | `login-page`, `dashboard-page`, `leads-page`, `lead-form-page`, `lead-detail-page`, `contacts-page`, `contact-form-page`, `contact-detail-page`, `accounts-page`, `account-form-page`, `account-detail-page`, `products-page`, `product-form-page`, `product-detail-page`, `deals-page`, `deal-form-page`, `deal-detail-page`, `tasks-page`, `tickets-page`, `ticket-form-page`, `ticket-detail-page`, `admin-page`, `settings-page`, `forbidden-page` |
 | Login | `login-email`, `login-password`, `login-submit`, `login-error` |
 | Chrome | `sidebar`, `topbar`, `sidebar-toggle`, `global-search`, `theme-toggle`, `avatar-menu`, `logout-btn` |
 | Toasts / modals | `toast-container`, `toast`, `modal` |
-| Leads | `add-lead-btn`, `leads-search`, `filters-toggle`, `filter-panel`, `bulk-bar`, `pagination`, `export-csv-btn`, `lead-name`, `lead-company`, `lead-email`, `lead-phone`, `lead-status`, `lead-value`, `lead-save-btn`, `wizard-finish` |
+| Leads | `filters-toggle`, `filter-panel`, `bulk-bar`, `pagination`, `export-csv-btn`, `lead-name`, `lead-company`, `lead-email`, `lead-phone`, `lead-status`, `lead-product`, `lead-value`, `lead-save-btn`, `edit-lead-btn`, `save-lead-btn`, `lead-detail-status`, `wizard-finish` |
+| Products | `product-name`, `product-sku`, `product-category`, `product-price`, `product-description`, `product-status`, `edit-product-btn`, `save-product-btn`, `new-lead-for-product-btn` |
 | Dashboard | `dashboard-range`, `stat-leads`, `stat-pipeline`, `stat-tasks`, `stat-tickets`, `activity-feed` |
-| Deals | `add-deal-btn`, `kanban-board`, `deal-name`, `deal-account`, `deal-amount`, `deal-stage`, `deal-close-date`, `deal-save-btn` |
+| Deals | `kanban-board`, `deal-name`, `deal-account`, `deal-amount`, `deal-stage`, `deal-close-date`, `deal-save-btn`, `edit-deal-btn`, `deal-detail-stage` |
 | Tasks | `task-quick-add`, `task-title-input`, `task-due-date`, `task-add-btn` |
-| Contacts | `view-grid`, `view-list`, `contacts-search`, `contact-tabs`, `upload-avatar-btn`, `avatar-input`, `edit-contact-btn`, `save-contact-btn`, `note-input`, `add-note-btn`, `attach-file-btn`, `file-input` |
-| Accounts | `accounts-search`, `edit-account-btn`, `save-account-btn` |
-| Tickets | `add-ticket-btn`, `ticket-subject`, `ticket-requester`, `ticket-create-btn`, `ticket-status`, `ticket-priority`, `sla-countdown`, `canned-response`, `comment-input`, `add-comment-btn`, `ticket-attach-btn`, `ticket-file-input` |
+| Contacts | `view-grid`, `view-list`, `contact-tabs`, `contact-name`, `contact-email`, `contact-phone`, `contact-title`, `contact-account`, `contact-tags`, `upload-avatar-btn`, `avatar-input`, `edit-contact-btn`, `save-contact-btn`, `note-input`, `add-note-btn`, `attach-file-btn`, `file-input` |
+| Accounts | `account-name`, `account-industry`, `account-employees`, `account-revenue`, `account-website`, `account-phone`, `edit-account-btn`, `save-account-btn` |
+| Tickets | `ticket-subject`, `ticket-requester`, `ticket-priority-select`, `ticket-description`, `ticket-status`, `ticket-priority`, `sla-countdown`, `canned-response`, `comment-input`, `add-comment-btn`, `ticket-attach-btn`, `ticket-file-input` |
 | Admin | `admin-tabs`, `add-user-btn`, `user-name`, `user-email`, `user-role`, `user-save-btn`, `audit-user-filter`, `admin-readonly-banner` |
 | Settings | `profile-name`, `profile-email`, `profile-phone`, `profile-save-btn`, `help-iframe`, `reset-data-btn`, `reset-confirm-btn` |
+| Deletes | `delete-product-btn`, `delete-account-btn`, `delete-contact-btn`, `delete-lead-btn`, `delete-deal-btn`, `delete-ticket-btn`, `confirm-delete-btn`, `delete-confirm-input`, `delete-blocked-banner`, `closed-won-warning`, `converted-warning`, `reassign-banner`, `reassign-select`, `reassign-delete-btn` |
 
 ## Where test IDs deliberately do NOT exist
 
 Locate these by role, text content, CSS, or position:
 
+- **"+ New Lead / Product / Contact / Account / Deal / Ticket / user" buttons** — by role + name or text
+- **Search inputs on list pages** — by placeholder or `input[type=search]` in context
+- **Create/save buttons on form pages** — by text ("Create lead", "Create product", …)
 - **Table rows and cells** — use text (`tr:has-text(...)`) or nth
 - **Kanban columns and cards** — use column heading + card title text
 - **Custom dropdown options** — `role=option` + text
@@ -62,3 +77,9 @@ Locate these by role, text content, CSS, or position:
 - [ ] Shadow DOM: open feedback widget, pick a star rating, submit, assert the thanks message
 - [ ] Global: theme toggle persists across reload, global search async suggestions, notifications bell badge
 - [ ] Reset data via Settings and via `?reset=true`, assert seed state returned
+- [ ] Delete checks — product with leads: type-name gate, leads unlinked afterwards
+- [ ] Delete checks — account with open deals: blocked with links; without: unlink vs cascade radio
+- [ ] Delete checks — Closed Won deal: type DELETE gate; kanban modal refuses with error toast
+- [ ] Delete checks — active ticket blocked; Closed ticket deletable with comment/attachment counts
+- [ ] Delete checks — converted lead shows "records not deleted" warning
+- [ ] Delete checks — user owning records forces reassignment (select gated); self-delete blocked

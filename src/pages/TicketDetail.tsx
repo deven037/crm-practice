@@ -1,7 +1,8 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { getById, newId, upsert } from '../data/store';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { getById, logAudit, newId, removeMany, upsert } from '../data/store';
 import { Ticket, TicketPriority, TicketStatus, TICKET_PRIORITIES, TICKET_TRANSITIONS } from '../types';
+import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
@@ -47,7 +48,9 @@ export function TicketDetail() {
   const [notFound, setNotFound] = useState(false);
   const [comment, setComment] = useState('');
   const [editingComment, setEditingComment] = useState<{ id: string; text: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
@@ -126,10 +129,63 @@ export function TicketDetail() {
 
       <div className="page-header">
         <h1>{ticket.subject}</h1>
-        <span className={`pill ticket-${ticket.status.replace(' ', '-').toLowerCase()}`} data-testid="ticket-status">
-          {ticket.status}
-        </span>
+        <div className="page-actions">
+          <span className={`pill ticket-${ticket.status.replace(' ', '-').toLowerCase()}`} data-testid="ticket-status">
+            {ticket.status}
+          </span>
+          <button className="btn btn-danger" data-testid="delete-ticket-btn" onClick={() => setDeleting(true)}>
+            🗑 Delete
+          </button>
+        </div>
       </div>
+
+      {deleting && ticket.status !== 'Closed' && (
+        <Modal
+          title="Cannot delete ticket"
+          onClose={() => setDeleting(false)}
+          footer={
+            <button className="btn" onClick={() => setDeleting(false)}>
+              Close
+            </button>
+          }
+        >
+          <div className="banner banner-error" role="alert" data-testid="delete-blocked-banner">
+            Only <strong>Closed</strong> tickets can be deleted. This ticket is currently{' '}
+            <strong>{ticket.status}</strong> — move it through the workflow to Closed first.
+          </div>
+        </Modal>
+      )}
+
+      {deleting && ticket.status === 'Closed' && (
+        <Modal
+          title={`Delete ticket — ${ticket.subject}`}
+          onClose={() => setDeleting(false)}
+          footer={
+            <>
+              <button className="btn" onClick={() => setDeleting(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn btn-danger"
+                data-testid="confirm-delete-btn"
+                onClick={async () => {
+                  await removeMany('tickets', [ticket.id]);
+                  logAudit(user?.name ?? 'Unknown', 'ticket.delete', `Deleted ticket "${ticket.subject}"`);
+                  toast.push('success', `Ticket "${ticket.subject}" deleted.`);
+                  navigate('/tickets');
+                }}
+              >
+                Delete ticket
+              </button>
+            </>
+          }
+        >
+          <p>
+            Delete “{ticket.subject}”? Its <strong>{ticket.comments.length} comment(s)</strong> and{' '}
+            <strong>{ticket.attachments.length} attachment(s)</strong> will be deleted with it.
+          </p>
+        </Modal>
+      )}
 
       <div className="card">
         <div className="ticket-meta">

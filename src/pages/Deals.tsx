@@ -1,5 +1,6 @@
 import { DragEvent, useEffect, useState } from 'react';
-import { getAll, newId, upsert, removeMany, logAudit } from '../data/store';
+import { useNavigate } from 'react-router-dom';
+import { getAll, upsert, removeMany, logAudit } from '../data/store';
 import { Account, Deal, DealStage, DEAL_STAGES, User } from '../types';
 import { Modal } from '../components/Modal';
 import { SearchableSelect, Select } from '../components/Select';
@@ -9,21 +10,10 @@ import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { formatCurrency, formatDate } from '../utils';
 
-const EMPTY_DEAL = (): Deal => ({
-  id: newId('deal'),
-  name: '',
-  accountId: null,
-  amount: 0,
-  stage: 'Qualification',
-  closeDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-  probability: 50,
-  ownerId: 'user-2',
-  createdAt: new Date().toISOString(),
-});
-
 export function Deals() {
   const toast = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -66,6 +56,10 @@ export function Deals() {
   };
 
   const deleteDeal = async (deal: Deal) => {
+    if (deal.stage === 'Closed Won') {
+      toast.push('error', 'Closed Won deals can only be deleted from their detail page.');
+      return;
+    }
     if (!window.confirm(`Delete deal "${deal.name}"?`)) return;
     await removeMany('deals', [deal.id]);
     toast.push('success', `Deal "${deal.name}" deleted.`);
@@ -78,7 +72,7 @@ export function Deals() {
       <div className="page-header">
         <h1>Deals</h1>
         <div className="page-actions">
-          <button className="btn btn-primary" data-testid="add-deal-btn" onClick={() => setEditing(EMPTY_DEAL())}>
+          <button className="btn btn-primary" onClick={() => navigate('/deals/new')}>
             + New Deal
           </button>
         </div>

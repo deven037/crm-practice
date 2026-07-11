@@ -1,6 +1,8 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { getAllSync, getById, newId, upsert } from '../data/store';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { getAllSync, getById, logAudit, newId, removeMany, upsert } from '../data/store';
+import { Modal } from '../components/Modal';
+import { useAuth } from '../auth/AuthContext';
 import { Account, Contact } from '../types';
 import { Tabs } from '../components/Tabs';
 import { MultiSelect } from '../components/Select';
@@ -22,8 +24,11 @@ export function ContactDetail() {
   const [draft, setDraft] = useState<Contact | null>(null);
   const [editing, setEditing] = useState(false);
   const [noteText, setNoteText] = useState('');
+  const [deleting, setDeleting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     (async () => {
@@ -100,7 +105,43 @@ export function ContactDetail() {
             {contact.title || 'No title'} {accountName ? `· ${accountName}` : ''}
           </p>
         </div>
+        <div className="page-actions" style={{ marginLeft: 'auto' }}>
+          <button className="btn btn-danger" data-testid="delete-contact-btn" onClick={() => setDeleting(true)}>
+            🗑 Delete
+          </button>
+        </div>
       </div>
+
+      {deleting && (
+        <Modal
+          title={`Delete contact — ${contact.name}`}
+          onClose={() => setDeleting(false)}
+          footer={
+            <>
+              <button className="btn" onClick={() => setDeleting(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn btn-danger"
+                data-testid="confirm-delete-btn"
+                onClick={async () => {
+                  await removeMany('contacts', [contact.id]);
+                  logAudit(user?.name ?? 'Unknown', 'contact.delete', `Deleted contact ${contact.name}`);
+                  toast.push('success', `Contact "${contact.name}" deleted.`);
+                  navigate('/contacts');
+                }}
+              >
+                Delete contact
+              </button>
+            </>
+          }
+        >
+          <p>
+            Delete “{contact.name}”? Their <strong>{contact.notes.length} note(s)</strong> and{' '}
+            <strong>{contact.files.length} file(s)</strong> will be deleted with them. This cannot be undone.
+          </p>
+        </Modal>
+      )}
 
       <Tabs
         testId="contact-tabs"

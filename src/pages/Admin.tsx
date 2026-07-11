@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getAll, logAudit, newId, removeMany, upsert } from '../data/store';
-import { AuditEntry, Role, User } from '../types';
+import { getAll, getAllSync, logAudit, newId, removeMany, saveAll, upsert } from '../data/store';
+import { Account, AuditEntry, Deal, Lead, Role, User } from '../types';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
 import { Tabs } from '../components/Tabs';
@@ -25,6 +25,8 @@ export function Admin() {
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [auditUserFilter, setAuditUserFilter] = useState('');
   const [editing, setEditing] = useState<User | null>(null);
+  const [reassigning, setReassigning] = useState<{ target: User; leads: number; accounts: number; deals: number } | null>(null);
+  const [reassignTo, setReassignTo] = useState('');
 
   const load = async () => {
     const [u, a] = await Promise.all([getAll<User>('users'), getAll<AuditEntry>('audit')]);
@@ -50,10 +52,35 @@ export function Admin() {
       toast.push('error', 'You cannot delete your own account.');
       return;
     }
+    // Referential check: a user who owns records must hand them over first.
+    const ownedLeads = getAllSync<Lead>('leads').filter((l) => l.ownerId === target.id).length;
+    const ownedAccounts = getAllSync<Account>('accounts').filter((a) => a.ownerId === target.id).length;
+    const ownedDeals = getAllSync<Deal>('deals').filter((d) => d.ownerId === target.id).length;
+    if (ownedLeads + ownedAccounts + ownedDeals > 0) {
+      setReassignTo('');
+      setReassigning({ target, leads: ownedLeads, accounts: ownedAccounts, deals: ownedDeals });
+      return;
+    }
     if (!window.confirm(`Delete user "${target.name}"?`)) return;
     await removeMany('users', [target.id]);
     logAudit(user?.name ?? 'Unknown', 'user.delete', `Deleted user ${target.name}`);
     toast.push('success', `User "${target.name}" deleted.`);
+    load();
+  };
+
+  const reassignAndDelete = async () => {
+    if (!reassigning || !reassignTo) return;
+    const { target } = reassigning;
+    const remap = <T extends { ownerId: string }>(items: T[]) =>
+      items.map((item) => (item.ownerId === target.id ? { ...item, ownerId: reassignTo } : item));
+    await saveAll('leads', remap(getAllSync<Lead>('leads')));
+    await saveAll('accounts', remap(getAllSync<Account>('accounts')));
+    await saveAll('deals', remap(getAllSync<Deal>('deals')));
+    await removeMany('users', [target.id]);
+    const newOwner = users.find((u) => u.id === reassignTo)?.name ?? 'unknown';
+    logAudit(user?.name ?? 'Unknown', 'user.delete', `Deleted ${target.name}; records reassigned to ${newOwner}`);
+    toast.push('success', `User "${target.name}" deleted — records reassigned to ${newOwner}.`);
+    setReassigning(null);
     load();
   };
 
@@ -102,7 +129,6 @@ export function Admin() {
                   <div className="toolbar">
                     <button
                       className="btn btn-primary"
-                      data-testid="add-user-btn"
                       disabled={readOnly}
                       onClick={() =>
                         setEditing({ id: newId('user'), name: '', email: '', password: 'Pass@123', role: 'rep', active: true })
@@ -208,6 +234,46 @@ export function Admin() {
             },
           ]}
         />
+      )}
+
+      {reassigning && (
+        <Modal
+          title={`Delete user — ${reassigning.target.name}`}
+          onClose={() => setReassigning(null)}
+          footer={
+            <>
+              <button className="btn" onClick={() => setReassigning(null)}>
+                Cancel
+              </button>
+              <button
+                className="btn btn-danger"
+                data-testid="reassign-delete-btn"
+                disabled={!reassignTo}
+                onClick={reassignAndDelete}
+              >
+                Reassign & delete
+              </button>
+            </>
+          }
+        >
+          <div className="banner banner-info" data-testid="reassign-banner">
+            {reassigning.target.name} owns <strong>{reassigning.leads} lead(s)</strong>,{' '}
+            <strong>{reassigning.accounts} account(s)</strong> and <strong>{reassigning.deals} deal(s)</strong>. These
+            must be reassigned before the user can be deleted.
+          </div>
+          <div className="field">
+            <span className="field-label">Reassign all records to *</span>
+            <Select
+              value={reassignTo}
+              options={users
+                .filter((u) => u.id !== reassigning.target.id && u.active)
+                .map((u) => ({ value: u.id, label: u.name }))}
+              onChange={setReassignTo}
+              placeholder="Choose new owner…"
+              testId="reassign-select"
+            />
+          </div>
+        </Modal>
       )}
 
       {editing && (

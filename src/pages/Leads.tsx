@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getAll, getAllSync, newId, removeMany, saveAll, upsert, logAudit } from '../data/store';
-import { Account, Contact, Deal, DealStage, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, User } from '../types';
+import { Account, Contact, Deal, DealStage, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Product, User } from '../types';
 import { Modal } from '../components/Modal';
 import { MultiSelect, SearchableSelect, Select } from '../components/Select';
 import { ContextMenu } from '../components/ContextMenu';
@@ -17,19 +18,6 @@ const PAGE_SIZES = [
   { value: '25', label: '25 / page' },
   { value: '50', label: '50 / page' },
 ];
-
-const EMPTY_LEAD = (): Lead => ({
-  id: newId('lead'),
-  name: '',
-  company: '',
-  email: '',
-  phone: '',
-  status: 'New',
-  source: 'Web',
-  ownerId: 'user-2',
-  value: 0,
-  createdAt: new Date().toISOString(),
-});
 
 interface WizardState {
   lead: Lead;
@@ -49,6 +37,7 @@ interface WizardState {
 export function Leads() {
   const toast = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -278,7 +267,7 @@ export function Leads() {
           <button className="btn" onClick={exportCsv} data-testid="export-csv-btn">
             ⬇ Export CSV
           </button>
-          <button className="btn btn-primary" data-testid="add-lead-btn" onClick={() => setEditing(EMPTY_LEAD())}>
+          <button className="btn btn-primary" onClick={() => navigate('/leads/new')}>
             + New Lead
           </button>
         </div>
@@ -289,7 +278,6 @@ export function Leads() {
           type="search"
           className="input search-input"
           placeholder="Search name, company, email…"
-          data-testid="leads-search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -488,6 +476,7 @@ export function Leads() {
           y={menu.y}
           onClose={() => setMenu(null)}
           items={[
+            { label: '👁 View details', onClick: () => navigate(`/leads/${menu.lead.id}`) },
             { label: '✏️ Edit lead', onClick: () => setEditing(menu.lead) },
             { label: '🔄 Convert lead…', onClick: () => openWizard(menu.lead) },
             { label: '🗑 Delete lead', onClick: () => deleteOne(menu.lead), danger: true },
@@ -730,6 +719,15 @@ function LeadModal({
         <div className="field">
           <span className="field-label">Owner</span>
           <Select value={draft.ownerId} options={owners} onChange={(v) => setDraft({ ...draft, ownerId: v })} />
+        </div>
+        <div className="field">
+          <span className="field-label">Interested product</span>
+          <SearchableSelect
+            value={draft.productId ?? ''}
+            options={[{ value: '', label: 'No product' }, ...getAllSync<Product>('products').map((p) => ({ value: p.id, label: p.name }))]}
+            onChange={(v) => setDraft({ ...draft, productId: v || null })}
+            placeholder="Search products…"
+          />
         </div>
         <div className="field">
           <span className="field-label">Estimated value ($)</span>

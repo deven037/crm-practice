@@ -33,6 +33,9 @@ export function Contacts() {
       <div className="page-header">
         <h1>Contacts</h1>
         <div className="page-actions">
+          <button className="btn btn-primary" onClick={() => navigate('/contacts/new')}>
+            + New Contact
+          </button>
           <div className="view-toggle" role="group" aria-label="View mode">
             <button
               className={classNames('btn', view === 'grid' && 'btn-active')}
@@ -59,7 +62,6 @@ export function Contacts() {
           type="search"
           className="input search-input"
           placeholder="Search contacts…"
-          data-testid="contacts-search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

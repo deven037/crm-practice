@@ -8,6 +8,7 @@ import {
   Lead,
   LEAD_SOURCES,
   LEAD_STATUSES,
+  Product,
   TaskItem,
   Ticket,
   User,
@@ -78,7 +79,36 @@ function seedAccounts(): Account[] {
   }));
 }
 
-function seedLeads(): Lead[] {
+// [name, category, price]
+const PRODUCT_CATALOG: [string, string, number][] = [
+  ['CRM Starter Plan', 'Subscription', 4900],
+  ['CRM Professional Plan', 'Subscription', 14900],
+  ['CRM Enterprise Plan', 'Subscription', 49900],
+  ['Onboarding Package', 'Service', 25000],
+  ['Data Migration Service', 'Service', 40000],
+  ['Premium Support (Annual)', 'Service', 18000],
+  ['API Access Add-on', 'Add-on', 9900],
+  ['Analytics Module', 'Add-on', 19900],
+  ['Marketing Automation Add-on', 'Add-on', 29900],
+  ['Mobile App License', 'License', 7900],
+  ['Admin Training Workshop', 'Training', 12000],
+  ['Custom Integration Build', 'Service', 75000],
+];
+
+function seedProducts(): Product[] {
+  return PRODUCT_CATALOG.map(([name, category, price], i) => ({
+    id: `product-${i + 1}`,
+    name,
+    sku: `PRD-${String(i + 1).padStart(3, '0')}`,
+    category,
+    price,
+    description: `${name} — ${category.toLowerCase()} offering for CRM customers.`,
+    active: i % 7 !== 6, // a couple of inactive products for filtering practice
+    createdAt: daysAgo(between(5, 300)),
+  }));
+}
+
+function seedLeads(products: Product[]): Lead[] {
   const leads: Lead[] = [];
   for (let i = 0; i < 50; i++) {
     const name = fullName(i);
@@ -92,6 +122,7 @@ function seedLeads(): Lead[] {
       source: pick(LEAD_SOURCES),
       ownerId: pick(OWNER_IDS),
       value: between(5, 90) * 1000,
+      productId: rand() > 0.25 ? pick(products).id : null,
       createdAt: daysAgo(between(0, 120)),
     });
   }
@@ -219,10 +250,12 @@ function seedNotifications(): AppNotification[] {
 export function buildSeedData() {
   rand = mulberry32(42);
   const accounts = seedAccounts();
+  const products = seedProducts();
   return {
     users: SEED_USERS,
     accounts,
-    leads: seedLeads(),
+    products,
+    leads: seedLeads(products),
     contacts: seedContacts(accounts),
     deals: seedDeals(accounts),
     tasks: seedTasks(),

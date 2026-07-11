@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { getAllSync, getValue, setValue } from '../data/store';
-import { Account, AppNotification, Contact, Deal, Lead } from '../types';
+import { Account, AppNotification, Contact, Deal, Lead, Product } from '../types';
 import { initials, timeAgo } from '../utils';
 import './feedback-widget';
 
@@ -56,10 +56,14 @@ function GlobalSearch() {
           .filter((a) => a.name.toLowerCase().includes(q))
           .slice(0, 3)
           .map((a) => ({ type: 'Account', id: a.id, label: a.name, link: `/accounts/${a.id}` })),
+        ...getAllSync<Product>('products')
+          .filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
+          .slice(0, 3)
+          .map((p) => ({ type: 'Product', id: p.id, label: `${p.name} (${p.sku})`, link: `/products/${p.id}` })),
         ...getAllSync<Deal>('deals')
           .filter((d) => d.name.toLowerCase().includes(q))
           .slice(0, 3)
-          .map((d) => ({ type: 'Deal', id: d.id, label: d.name, link: '/deals' })),
+          .map((d) => ({ type: 'Deal', id: d.id, label: d.name, link: `/deals/${d.id}` })),
       ];
       setResults(found);
       setSearching(false);
@@ -193,6 +197,7 @@ const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: str
       { to: '/leads', label: 'Leads', icon: '🎯' },
       { to: '/contacts', label: 'Contacts', icon: '👤' },
       { to: '/accounts', label: 'Accounts', icon: '🏢' },
+      { to: '/products', label: 'Products', icon: '📦' },
       { to: '/deals', label: 'Deals', icon: '💰' },
     ],
   },

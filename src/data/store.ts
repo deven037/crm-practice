@@ -6,8 +6,9 @@ const PREFIX = 'crm.';
 /**
  * Simulated network latency so spinners/skeletons genuinely appear and
  * automated tests have to wait properly instead of relying on instant DOM.
+ * The wide 300–1200ms spread makes fixed sleeps unreliable by design.
  */
-export const delay = (min = 200, max = 800) =>
+export const delay = (min = 300, max = 1200) =>
   new Promise<void>((resolve) => setTimeout(resolve, min + Math.random() * (max - min)));
 
 function writeRaw(key: string, value: unknown) {
@@ -33,7 +34,14 @@ export function seedDatabase() {
 export function ensureSeeded() {
   if (localStorage.getItem(PREFIX + 'seeded') === null) {
     seedDatabase();
+    return;
   }
+  // Migration: collections added in later versions (e.g. products) get seeded
+  // into existing storage without touching the user's other data.
+  const data = buildSeedData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (localStorage.getItem(PREFIX + key) === null) writeRaw(key, value);
+  });
 }
 
 /** Wipe every crm.* key (including session) and reseed from scratch. */

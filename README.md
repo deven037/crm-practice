@@ -33,18 +33,25 @@ contacts, 20 accounts, 25 deals, 30 tasks, 15 tickets, 5 users).
 - **UI:** Settings → Danger zone → *Reset all data*
 - **URL:** open any page with `?reset=true` (e.g. `http://localhost:5173/?reset=true`) — ideal in a test setup hook
 
-All store operations pass through simulated latency (200–800 ms), so loading spinners and
-skeletons genuinely appear — your tests must wait properly.
+All store operations pass through simulated latency (300–1200 ms), so loading spinners and
+skeletons genuinely appear — your tests must wait properly. The app is tuned to **intermediate
+automation difficulty**: every input/button carries a decoy auto-generated `id` that changes on
+each page load (never use them), and common buttons/search boxes intentionally have no test IDs —
+see [LOCATORS.md](LOCATORS.md) for the traps and the recommended strategies.
 
 ## Modules
 
 Dashboard (charts, infinite scroll) · Leads (full-featured table, inline edit, context menu, bulk
-actions, CSV export, convert-lead wizard) · Contacts (grid/list, tabs, avatar upload, tags) ·
-Accounts (detail with nested accordions, new-tab links) · Deals (drag-and-drop kanban, custom date
-picker, searchable select, slider) · Tasks (drag reorder, native alert/confirm dialogs) · Tickets
-(status workflow, live SLA countdown, comments, attachments) · Admin (RBAC, user CRUD, toggle
-switches, audit log) · Settings (validation, iframe help center, reset) · plus toasts, global
-search, notifications, dark mode, a shadow-DOM feedback widget.
+actions, CSV export, convert-lead wizard, detail page) · Contacts (grid/list, tabs, avatar upload,
+tags) · Accounts (detail with nested accordions, new-tab links) · Products (catalog linked to
+leads — each product's detail page lists the leads generated for it) · Deals (drag-and-drop
+kanban, custom date picker, searchable select, slider, detail page) · Tasks (drag reorder, native
+alert/confirm dialogs) · Tickets (status workflow, live SLA countdown, comments, attachments) ·
+Admin (RBAC, user CRUD, toggle switches, audit log) · Settings (validation, iframe help center,
+reset) · plus toasts, global search, notifications, dark mode, a shadow-DOM feedback widget.
+
+Creating a record (lead, contact, account, product, deal, ticket) uses a dedicated form page and
+lands on the new record's **detail page** — not back on the listing — like a real CRM.
 
 See **[LOCATORS.md](LOCATORS.md)** for the locator strategy map and a practice checklist.
 
