@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAll, getAllSync, newId, removeMany, saveAll, upsert, logAudit } from '../data/store';
-import { Account, Contact, Deal, DealStage, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Product, User } from '../types';
+import { Account, Contact, Deal, DealStage, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, User } from '../types';
 import { Modal } from '../components/Modal';
 import { MultiSelect, SearchableSelect, Select } from '../components/Select';
 import { ContextMenu } from '../components/ContextMenu';
@@ -56,8 +56,6 @@ export function Leads() {
   const [selected, setSelected] = useState<string[]>([]);
 
   // interactions
-  const [editing, setEditing] = useState<Lead | null>(null);
-  const [inlineEdit, setInlineEdit] = useState<{ id: string; field: 'email' | 'phone'; value: string } | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; lead: Lead } | null>(null);
   const [wizard, setWizard] = useState<WizardState | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
@@ -129,14 +127,6 @@ export function Leads() {
     );
   };
 
-  const saveLead = async (lead: Lead) => {
-    await upsert('leads', lead);
-    logAudit(user?.name ?? 'Unknown', 'lead.save', `Saved lead ${lead.name}`);
-    setEditing(null);
-    toast.push('success', `Lead "${lead.name}" saved.`);
-    load();
-  };
-
   const bulkDelete = async () => {
     // Native confirm dialog — practices dialog handling.
     if (!window.confirm(`Delete ${selected.length} selected lead(s)? This cannot be undone.`)) return;
@@ -158,30 +148,12 @@ export function Leads() {
     load();
   };
 
-  const deleteOne = async (lead: Lead) => {
-    if (!window.confirm(`Delete lead "${lead.name}"?`)) return;
-    await removeMany('leads', [lead.id]);
-    toast.push('success', `Lead "${lead.name}" deleted.`);
-    load();
-  };
-
   const exportCsv = () => {
     downloadCsv('leads-export.csv', [
       ['Name', 'Company', 'Email', 'Phone', 'Status', 'Source', 'Owner', 'Value', 'Created'],
       ...filtered.map((l) => [l.name, l.company, l.email, l.phone, l.status, l.source, ownerName(l.ownerId), l.value, formatDate(l.createdAt)]),
     ]);
     toast.push('info', `Exported ${filtered.length} leads to CSV.`);
-  };
-
-  const commitInlineEdit = async () => {
-    if (!inlineEdit) return;
-    const lead = leads.find((l) => l.id === inlineEdit.id);
-    if (lead) {
-      await upsert('leads', { ...lead, [inlineEdit.field]: inlineEdit.value });
-      toast.push('success', 'Field updated.');
-      load();
-    }
-    setInlineEdit(null);
   };
 
   const openWizard = (lead: Lead) =>
@@ -383,13 +355,14 @@ export function Leads() {
                 {pageRows.map((lead) => (
                   <tr
                     key={lead.id}
-                    className={selected.includes(lead.id) ? 'row-selected' : ''}
+                    className={`row-clickable${selected.includes(lead.id) ? ' row-selected' : ''}`}
+                    onClick={() => navigate(`/leads/${lead.id}`)}
                     onContextMenu={(e) => {
                       e.preventDefault();
                       setMenu({ x: e.clientX, y: e.clientY, lead });
                     }}
                   >
-                    <td className="checkbox-cell">
+                    <td className="checkbox-cell" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         aria-label={`Select ${lead.name}`}
@@ -401,29 +374,8 @@ export function Leads() {
                     </td>
                     <td>{lead.name}</td>
                     <td>{lead.company}</td>
-                    {(['email', 'phone'] as const).map((field) => (
-                      <td
-                        key={field}
-                        title="Double-click to edit"
-                        onDoubleClick={() => setInlineEdit({ id: lead.id, field, value: lead[field] })}
-                      >
-                        {inlineEdit && inlineEdit.id === lead.id && inlineEdit.field === field ? (
-                          <input
-                            className="input inline-input"
-                            autoFocus
-                            value={inlineEdit.value}
-                            onChange={(e) => setInlineEdit({ ...inlineEdit, value: e.target.value })}
-                            onBlur={commitInlineEdit}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') commitInlineEdit();
-                              if (e.key === 'Escape') setInlineEdit(null);
-                            }}
-                          />
-                        ) : (
-                          lead[field]
-                        )}
-                      </td>
-                    ))}
+                    <td>{lead.email}</td>
+                    <td>{lead.phone}</td>
                     <td>
                       <span className={`pill status-${lead.status.toLowerCase()}`}>{lead.status}</span>
                     </td>
@@ -477,19 +429,8 @@ export function Leads() {
           onClose={() => setMenu(null)}
           items={[
             { label: '👁 View details', onClick: () => navigate(`/leads/${menu.lead.id}`) },
-            { label: '✏️ Edit lead', onClick: () => setEditing(menu.lead) },
             { label: '🔄 Convert lead…', onClick: () => openWizard(menu.lead) },
-            { label: '🗑 Delete lead', onClick: () => deleteOne(menu.lead), danger: true },
           ]}
-        />
-      )}
-
-      {editing && (
-        <LeadModal
-          lead={editing}
-          owners={ownerOptions}
-          onCancel={() => setEditing(null)}
-          onSave={saveLead}
         />
       )}
 
@@ -639,107 +580,5 @@ export function Leads() {
         </Modal>
       )}
     </div>
-  );
-}
-
-function LeadModal({
-  lead,
-  owners,
-  onCancel,
-  onSave,
-}: {
-  lead: Lead;
-  owners: { value: string; label: string }[];
-  onCancel: () => void;
-  onSave: (lead: Lead) => void;
-}) {
-  const [draft, setDraft] = useState<Lead>({ ...lead });
-  const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
-  const isNew = !getAllSync<Lead>('leads').some((l) => l.id === lead.id);
-
-  const submit = () => {
-    const errs: { name?: string; email?: string } = {};
-    if (!draft.name.trim()) errs.name = 'Name is required.';
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(draft.email.trim())) errs.email = 'Enter a valid email.';
-    setErrors(errs);
-    if (Object.keys(errs).length === 0) onSave(draft);
-  };
-
-  return (
-    <Modal
-      title={isNew ? 'New lead' : `Edit lead — ${lead.name}`}
-      onClose={onCancel}
-      footer={
-        <>
-          <button className="btn" onClick={onCancel}>
-            Cancel
-          </button>
-          <button className="btn btn-primary" data-testid="lead-save-btn" onClick={submit}>
-            Save lead
-          </button>
-        </>
-      }
-    >
-      <div className="form-grid">
-        <div className="field">
-          <span className="field-label">Full name *</span>
-          <input className="input" data-testid="lead-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-          {errors.name && <span className="field-error">{errors.name}</span>}
-        </div>
-        <div className="field">
-          <span className="field-label">Company</span>
-          <input className="input" data-testid="lead-company" value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} />
-        </div>
-        <div className="field">
-          <span className="field-label">Email *</span>
-          <input className="input" data-testid="lead-email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
-          {errors.email && <span className="field-error">{errors.email}</span>}
-        </div>
-        <div className="field">
-          <span className="field-label">Phone</span>
-          <input className="input" data-testid="lead-phone" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
-        </div>
-        <div className="field">
-          <span className="field-label">Status</span>
-          <Select
-            value={draft.status}
-            options={LEAD_STATUSES.map((s) => ({ value: s, label: s }))}
-            onChange={(v) => setDraft({ ...draft, status: v as LeadStatus })}
-            testId="lead-status"
-          />
-        </div>
-        <div className="field">
-          <span className="field-label">Source</span>
-          <Select
-            value={draft.source}
-            options={LEAD_SOURCES.map((s) => ({ value: s, label: s }))}
-            onChange={(v) => setDraft({ ...draft, source: v })}
-          />
-        </div>
-        <div className="field">
-          <span className="field-label">Owner</span>
-          <Select value={draft.ownerId} options={owners} onChange={(v) => setDraft({ ...draft, ownerId: v })} />
-        </div>
-        <div className="field">
-          <span className="field-label">Interested product</span>
-          <SearchableSelect
-            value={draft.productId ?? ''}
-            options={[{ value: '', label: 'No product' }, ...getAllSync<Product>('products').map((p) => ({ value: p.id, label: p.name }))]}
-            onChange={(v) => setDraft({ ...draft, productId: v || null })}
-            placeholder="Search products…"
-          />
-        </div>
-        <div className="field">
-          <span className="field-label">Estimated value ($)</span>
-          <input
-            className="input"
-            type="number"
-            data-testid="lead-value"
-            value={draft.value}
-            onChange={(e) => setDraft({ ...draft, value: Number(e.target.value) })}
-          />
-        </div>
-      </div>
-    </Modal>
   );
 }

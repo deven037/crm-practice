@@ -21,7 +21,7 @@ attributes, others must be located by role, text, CSS, or XPath — like a real-
 | Login | `login-email`, `login-password`, `login-submit`, `login-error` |
 | Chrome | `sidebar`, `topbar`, `sidebar-toggle`, `global-search`, `theme-toggle`, `avatar-menu`, `logout-btn` |
 | Toasts / modals | `toast-container`, `toast`, `modal` |
-| Leads | `filters-toggle`, `filter-panel`, `bulk-bar`, `pagination`, `export-csv-btn`, `lead-name`, `lead-company`, `lead-email`, `lead-phone`, `lead-status`, `lead-product`, `lead-value`, `lead-save-btn`, `edit-lead-btn`, `save-lead-btn`, `lead-detail-status`, `wizard-finish` |
+| Leads | `filters-toggle`, `filter-panel`, `bulk-bar`, `pagination`, `export-csv-btn`, `lead-name`, `lead-company`, `lead-email`, `lead-phone`, `lead-status`, `lead-product`, `lead-value`, `edit-lead-btn`, `save-lead-btn`, `lead-detail-status`, `delete-lead-btn`, `wizard-finish` |
 | Products | `product-name`, `product-sku`, `product-category`, `product-price`, `product-description`, `product-status`, `edit-product-btn`, `save-product-btn`, `new-lead-for-product-btn` |
 | Dashboard | `dashboard-range`, `stat-leads`, `stat-pipeline`, `stat-tasks`, `stat-tickets`, `activity-feed` |
 | Deals | `kanban-board`, `deal-name`, `deal-account`, `deal-amount`, `deal-stage`, `deal-close-date`, `deal-save-btn`, `edit-deal-btn`, `deal-detail-stage` |
@@ -60,7 +60,7 @@ Locate these by role, text content, CSS, or position:
 - [ ] Read-only check: log in as `rep@crm.com` → Admin visible but controls disabled
 - [ ] Leads: sort each column, debounced search, multi-select status filter, pagination + page size
 - [ ] Leads: select all on page, bulk delete (handle `window.confirm`), bulk assign owner
-- [ ] Leads: double-click email cell → inline edit → Enter to save, Escape to cancel
+- [ ] Leads: click a row → detail page opens; edit and delete performed from there (checkbox clicks must NOT navigate)
 - [ ] Leads: right-click row → context menu → Convert lead → complete 3-step wizard
 - [ ] Leads: export CSV and verify the downloaded file
 - [ ] Dashboard: wait out skeleton loaders, assert stat tiles, change date range, infinite-scroll the activity feed
