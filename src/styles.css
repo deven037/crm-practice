@@ -547,6 +547,25 @@ code { background: var(--surface-2); border: 1px solid var(--border); border-rad
 .form-card { max-width: 680px; }
 .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 
+/* ---------- test cases ---------- */
+.testcase-list { display: flex; flex-direction: column; gap: 8px; }
+.testcase-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); }
+.testcase-head {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: none; border: none; padding: 12px 14px; cursor: pointer;
+  color: var(--text); font-size: 14px; text-align: left;
+}
+.testcase-card.open .accordion-chevron { transform: rotate(90deg); }
+.testcase-title { font-weight: 600; flex: 1; }
+.testcase-meta { font-size: 12px; white-space: nowrap; }
+.testcase-body { padding: 0 16px 14px 40px; }
+.testcase-steps { margin: 0 0 10px; padding-left: 18px; }
+.testcase-steps li { margin-bottom: 6px; }
+.testcase-alt {
+  margin: 0; padding: 8px 12px; border-left: 3px solid var(--accent);
+  background: var(--surface-2); border-radius: 6px; font-size: 13px;
+}
+
 /* ---------- misc ---------- */
 .help-iframe { width: 100%; height: 320px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
 .danger-zone { border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); }

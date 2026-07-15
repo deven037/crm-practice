@@ -212,6 +212,7 @@ const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: str
     label: 'System',
     items: [
       { to: '/admin', label: 'Admin', icon: '🛡️', adminOnly: true },
+      { to: '/testcases', label: 'Test Cases', icon: '🧪' },
       { to: '/settings', label: 'Settings', icon: '⚙️' },
     ],
   },

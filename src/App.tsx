@@ -27,6 +27,7 @@ import { TicketForm } from './pages/TicketForm';
 import { TicketDetail } from './pages/TicketDetail';
 import { Admin } from './pages/Admin';
 import { Settings } from './pages/Settings';
+import { TestCases } from './pages/TestCases';
 import { Forbidden } from './pages/Forbidden';
 
 /**
@@ -92,6 +93,7 @@ export function App() {
             <Route path="/tickets/:id" element={<Protected><TicketDetail /></Protected>} />
             <Route path="/admin" element={<Protected roles={['admin', 'rep']}><Admin /></Protected>} />
             <Route path="/settings" element={<Protected><Settings /></Protected>} />
+            <Route path="/testcases" element={<Protected><TestCases /></Protected>} />
             <Route path="/forbidden" element={<Protected><Forbidden /></Protected>} />
             <Route path="*" element={<Protected><Forbidden /></Protected>} />
           </Routes>
