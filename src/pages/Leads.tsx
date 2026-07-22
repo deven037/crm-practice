@@ -217,6 +217,7 @@ export function Leads() {
         closeDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         probability: 20,
         ownerId: wizard.lead.ownerId,
+        campaignId: wizard.lead.campaignId ?? null,
         createdAt: new Date().toISOString(),
       };
       await upsert('deals', deal);
@@ -359,6 +360,10 @@ export function Leads() {
                     onClick={() => navigate(`/leads/${lead.id}`)}
                     onContextMenu={(e) => {
                       e.preventDefault();
+                      // Without this, right-clicking a second row while the first row's
+                      // menu is open bubbles to ContextMenu's own document-level listener,
+                      // which closes the menu we just opened for this row.
+                      e.stopPropagation();
                       setMenu({ x: e.clientX, y: e.clientY, lead });
                     }}
                   >

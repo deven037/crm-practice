@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getAllSync, getById, logAudit, removeMany, upsert } from '../data/store';
-import { Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Product, User } from '../types';
+import { Campaign, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Product, User } from '../types';
 import { Modal } from '../components/Modal';
 import { SearchableSelect, Select } from '../components/Select';
+import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
@@ -39,8 +40,10 @@ export function LeadDetail() {
 
   const users = getAllSync<User>('users');
   const products = getAllSync<Product>('products');
+  const campaigns = getAllSync<Campaign>('campaigns');
   const ownerName = users.find((u) => u.id === lead.ownerId)?.name ?? '—';
   const product = products.find((p) => p.id === lead.productId);
+  const campaign = campaigns.find((c) => c.id === lead.campaignId);
 
   const save = async () => {
     if (!draft) return;
@@ -48,7 +51,13 @@ export function LeadDetail() {
       toast.push('error', 'Name and a valid email are required.');
       return;
     }
+    const cErrs = validateCustomFields('leads', 'detail', draft.customFields ?? {});
+    if (Object.keys(cErrs).length > 0) {
+      toast.push('error', Object.values(cErrs)[0]);
+      return;
+    }
     await upsert('leads', draft);
+    logAudit(user?.name ?? 'Unknown', 'lead.update', `Updated lead ${draft.name}`);
     setLead(draft);
     setEditing(false);
     toast.push('success', 'Lead updated.');
@@ -112,8 +121,11 @@ export function LeadDetail() {
             <dd>{formatCurrency(lead.value)}</dd>
             <dt>Interested product</dt>
             <dd>{product ? <Link to={`/products/${product.id}`}>{product.name}</Link> : '—'}</dd>
+            <dt>Campaign</dt>
+            <dd>{campaign ? <Link to={`/campaigns/${campaign.id}`}>{campaign.name}</Link> : '—'}</dd>
             <dt>Created</dt>
             <dd>{formatDate(lead.createdAt)}</dd>
+            <CustomFieldsSection module="leads" target="detail" mode="view" values={lead.customFields ?? {}} />
           </dl>
         ) : (
           draft && (
@@ -160,6 +172,15 @@ export function LeadDetail() {
                 />
               </div>
               <div className="field">
+                <span className="field-label">Campaign</span>
+                <SearchableSelect
+                  value={draft.campaignId ?? ''}
+                  options={[{ value: '', label: 'No campaign' }, ...campaigns.map((c) => ({ value: c.id, label: c.name }))]}
+                  onChange={(v) => setDraft({ ...draft, campaignId: v || null })}
+                  placeholder="Search campaigns…"
+                />
+              </div>
+              <div className="field">
                 <span className="field-label">Owner</span>
                 <Select
                   value={draft.ownerId}
@@ -176,6 +197,13 @@ export function LeadDetail() {
                   onChange={(e) => setDraft({ ...draft, value: Number(e.target.value) })}
                 />
               </div>
+              <CustomFieldsSection
+                module="leads"
+                target="detail"
+                mode="edit"
+                values={draft.customFields ?? {}}
+                onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+              />
             </div>
           )
         )}

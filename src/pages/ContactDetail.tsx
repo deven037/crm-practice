@@ -7,6 +7,7 @@ import { Account, Contact } from '../types';
 import { Tabs } from '../components/Tabs';
 import { MultiSelect } from '../components/Select';
 import { SearchableSelect } from '../components/Select';
+import { CustomFieldsSection } from '../components/CustomFieldsSection';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { formatDateTime, initials } from '../utils';
@@ -172,6 +173,7 @@ export function ContactDetail() {
                               </span>
                             ))}
                       </dd>
+                      <CustomFieldsSection module="contacts" target="detail" mode="view" values={contact.customFields ?? {}} />
                     </dl>
                     <button
                       className="btn"
@@ -217,6 +219,13 @@ export function ContactDetail() {
                           placeholder="Add tags…"
                         />
                       </div>
+                      <CustomFieldsSection
+                        module="contacts"
+                        target="detail"
+                        mode="edit"
+                        values={draft.customFields ?? {}}
+                        onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+                      />
                       <div className="field-span">
                         <button
                           className="btn btn-primary"

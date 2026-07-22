@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { getAllSync, getValue, setValue } from '../data/store';
-import { Account, AppNotification, Contact, Deal, Lead, Product } from '../types';
+import { Account, AppNotification, Campaign, Contact, Deal, Lead, Product, Quote } from '../types';
 import { initials, timeAgo } from '../utils';
 import './feedback-widget';
 
@@ -64,6 +64,20 @@ function GlobalSearch() {
           .filter((d) => d.name.toLowerCase().includes(q))
           .slice(0, 3)
           .map((d) => ({ type: 'Deal', id: d.id, label: d.name, link: `/deals/${d.id}` })),
+        ...getAllSync<Campaign>('campaigns')
+          .filter((c) => c.name.toLowerCase().includes(q) || c.channel.toLowerCase().includes(q))
+          .slice(0, 3)
+          .map((c) => ({ type: 'Campaign', id: c.id, label: c.name, link: `/campaigns/${c.id}` })),
+        ...getAllSync<Quote>('quotes')
+          .filter((qt) => {
+            const account = getAllSync<Account>('accounts').find((a) => a.id === qt.accountId);
+            return qt.quoteNumber.toLowerCase().includes(q) || (account?.name.toLowerCase().includes(q) ?? false);
+          })
+          .slice(0, 3)
+          .map((qt) => {
+            const account = getAllSync<Account>('accounts').find((a) => a.id === qt.accountId);
+            return { type: 'Quote', id: qt.id, label: `${qt.quoteNumber} — ${account?.name ?? '—'}`, link: `/quotes/${qt.id}` };
+          }),
       ];
       setResults(found);
       setSearching(false);
@@ -198,6 +212,8 @@ const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: str
       { to: '/contacts', label: 'Contacts', icon: '👤' },
       { to: '/accounts', label: 'Accounts', icon: '🏢' },
       { to: '/products', label: 'Products', icon: '📦' },
+      { to: '/campaigns', label: 'Campaigns', icon: '📣' },
+      { to: '/quotes', label: 'Quotes', icon: '🧾' },
       { to: '/deals', label: 'Deals', icon: '💰' },
     ],
   },

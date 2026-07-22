@@ -12,6 +12,19 @@ attributes, others must be located by role, text, CSS, or XPath — like a real-
   locate them by role + accessible name, visible text, or placeholder.
 - **Randomized latency (300–1200 ms)** on every read/write. Fixed sleeps will be flaky; use
   explicit/conditional waits (element visible, spinner gone, button enabled, text changed).
+- **Cascading/dependent select.** The Quote form's "Linked deal" dropdown is scoped to the
+  currently-selected Account and silently **resets** whenever the Account changes — pick a Deal,
+  then change the Account, and your Deal selection clears without warning. Always re-select the
+  deal after the account.
+- **Live client-computed totals.** Quote line-item subtotals/discounts/totals recompute on every
+  keystroke, client-side, rounded **per-line** to the nearest cent — assert against the documented
+  per-row formula (`quantity × unitPrice × (1 − discountPct/100)`, rounded to the cent), not a
+  naive full-precision sum of all rows.
+- **Admin-configurable forms.** Custom fields and their on-page layout are defined at runtime in
+  Admin → Object Configuration. A hardcoded assumption about a form/detail page's field set will
+  break the moment an admin adds, reorders, or hides a custom field — query the live layout/labels
+  rather than assuming them. Dropdown-type custom field **options** are admin-defined too, not a
+  fixed source-level enum.
 
 ## Where test IDs exist
 
@@ -31,13 +44,16 @@ attributes, others must be located by role, text, CSS, or XPath — like a real-
 | Tickets | `ticket-subject`, `ticket-requester`, `ticket-priority-select`, `ticket-description`, `ticket-status`, `ticket-priority`, `sla-countdown`, `canned-response`, `comment-input`, `add-comment-btn`, `ticket-attach-btn`, `ticket-file-input` |
 | Admin | `admin-tabs`, `add-user-btn`, `user-name`, `user-email`, `user-role`, `user-save-btn`, `audit-user-filter`, `admin-readonly-banner` |
 | Settings | `profile-name`, `profile-email`, `profile-phone`, `profile-save-btn`, `help-iframe`, `reset-data-btn`, `reset-confirm-btn` |
-| Deletes | `delete-product-btn`, `delete-account-btn`, `delete-contact-btn`, `delete-lead-btn`, `delete-deal-btn`, `delete-ticket-btn`, `confirm-delete-btn`, `delete-confirm-input`, `delete-blocked-banner`, `closed-won-warning`, `converted-warning`, `reassign-banner`, `reassign-select`, `reassign-delete-btn` |
+| Deletes | `delete-product-btn`, `delete-account-btn`, `delete-contact-btn`, `delete-lead-btn`, `delete-deal-btn`, `delete-ticket-btn`, `delete-campaign-btn`, `delete-quote-btn`, `confirm-delete-btn`, `delete-confirm-input`, `delete-blocked-banner`, `closed-won-warning`, `converted-warning`, `reassign-banner`, `reassign-select`, `reassign-delete-btn` |
+| Campaigns | `campaigns-page`, `campaign-form-page`, `campaign-detail-page`, `campaign-name`, `campaign-channel`, `campaign-budget`, `campaign-status`, `campaign-start-date`, `campaign-end-date`, `edit-campaign-btn`, `save-campaign-btn`, `campaign-roi`, `new-lead-for-campaign-btn` |
+| Quotes | `quotes-page`, `quote-form-page`, `quote-detail-page`, `quote-account`, `quote-deal`, `quote-number`, `quote-valid-until`, `quote-status`, `edit-quote-btn`, `save-quote-btn`, `add-line-item`, `remove-line-item`, `quote-total` |
+| Object Configuration | `object-config-tabs`, `object-config-{module}` (grid cards, e.g. `object-config-leads`), `object-config-page`, `object-config-readonly-banner`, `field-label`, `field-type`, `field-options`, `field-save-btn`, `confirm-delete-field-btn`, `layout-available`, `layout-included`, `save-layout-btn` |
 
 ## Where test IDs deliberately do NOT exist
 
 Locate these by role, text content, CSS, or position:
 
-- **"+ New Lead / Product / Contact / Account / Deal / Ticket / user" buttons** — by role + name or text
+- **"+ New Lead / Product / Contact / Account / Deal / Ticket / Campaign / Quote / user" buttons** — by role + name or text
 - **Search inputs on list pages** — by placeholder or `input[type=search]` in context
 - **Create/save buttons on form pages** — by text ("Create lead", "Create product", …)
 - **Table rows and cells** — use text (`tr:has-text(...)`) or nth
@@ -83,3 +99,12 @@ Locate these by role, text content, CSS, or position:
 - [ ] Delete checks — active ticket blocked; Closed ticket deletable with comment/attachment counts
 - [ ] Delete checks — converted lead shows "records not deleted" warning
 - [ ] Delete checks — user owning records forces reassignment (select gated); self-delete blocked
+- [ ] Campaigns: create with cross-field date validation (end after start), reverse-lookup of generated leads, ROI panel (Closed Won deals only), delete gate (unlinks leads + deals)
+- [ ] Campaigns → Leads → Deals: convert a campaign-tagged lead with "also create a deal", move it to Closed Won, verify the campaign's ROI panel updates
+- [ ] Quotes: cascading Account → Deal select (deal selection clears when the account changes)
+- [ ] Quotes: live line-item totals recompute per keystroke, rounded per line; add/remove rows
+- [ ] Quotes: status transitions match the workflow map; accepting a quote with a linked open deal auto-closes it as Won (distinct toast); accepting one with an already-closed deal leaves it untouched (different toast + inline note)
+- [ ] Quotes: delete a product referenced by a quote's line item — quote keeps showing it as "(deleted product)" with no crash
+- [ ] Object Configuration (Admin): create a custom field, drag it into the Form and Detail layouts, fill it in on a new record, confirm it round-trips on reload
+- [ ] Object Configuration: remove a field from a layout (data survives, hidden ≠ deleted) and re-add it; delete a field with existing data (type-to-confirm gate, data nulled everywhere)
+- [ ] Object Configuration: rep sees every module's config read-only; viewer has no `/admin/objects/*` access

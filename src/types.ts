@@ -4,6 +4,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   password: string;
   role: Role;
   active: boolean;
@@ -24,7 +25,9 @@ export interface Lead {
   ownerId: string;
   value: number;
   productId?: string | null;
+  campaignId?: string | null;
   createdAt: string;
+  customFields?: Record<string, string | number | boolean | null>;
 }
 
 export const PRODUCT_CATEGORIES = ['Subscription', 'Service', 'Add-on', 'License', 'Training'];
@@ -38,6 +41,7 @@ export interface Product {
   description: string;
   active: boolean;
   createdAt: string;
+  customFields?: Record<string, string | number | boolean | null>;
 }
 
 export interface ContactNote {
@@ -64,6 +68,7 @@ export interface Contact {
   notes: ContactNote[];
   files: FileRef[];
   createdAt: string;
+  customFields?: Record<string, string | number | boolean | null>;
 }
 
 export interface Account {
@@ -76,6 +81,7 @@ export interface Account {
   phone: string;
   ownerId: string;
   createdAt: string;
+  customFields?: Record<string, string | number | boolean | null>;
 }
 
 export type DealStage = 'Qualification' | 'Proposal' | 'Negotiation' | 'Closed Won' | 'Closed Lost';
@@ -90,7 +96,33 @@ export interface Deal {
   closeDate: string;
   probability: number;
   ownerId: string;
+  campaignId?: string | null;
   createdAt: string;
+  customFields?: Record<string, string | number | boolean | null>;
+}
+
+export type CampaignStatus = 'Planned' | 'Active' | 'Completed' | 'Cancelled';
+export const CAMPAIGN_STATUSES: CampaignStatus[] = ['Planned', 'Active', 'Completed', 'Cancelled'];
+export const CAMPAIGN_CHANNELS = [
+  'Email',
+  'Social Media',
+  'Webinar',
+  'Content Marketing',
+  'Paid Search',
+  'Trade Show',
+  'Partner Referral',
+];
+
+export interface Campaign {
+  id: string;
+  name: string;
+  channel: string;
+  budget: number;
+  startDate: string;
+  endDate: string;
+  status: CampaignStatus;
+  createdAt: string;
+  customFields?: Record<string, string | number | boolean | null>;
 }
 
 export type TaskPriority = 'Low' | 'Medium' | 'High';
@@ -135,6 +167,40 @@ export interface Ticket {
   createdAt: string;
   comments: TicketComment[];
   attachments: FileRef[];
+  customFields?: Record<string, string | number | boolean | null>;
+}
+
+export type QuoteStatus = 'Draft' | 'Sent' | 'Accepted' | 'Rejected' | 'Expired';
+export const QUOTE_STATUSES: QuoteStatus[] = ['Draft', 'Sent', 'Accepted', 'Rejected', 'Expired'];
+
+/** Allowed status transitions for the quote workflow. */
+export const QUOTE_TRANSITIONS: Record<QuoteStatus, QuoteStatus[]> = {
+  Draft: ['Sent'],
+  Sent: ['Accepted', 'Rejected', 'Expired'],
+  Rejected: ['Draft'],
+  Expired: ['Draft'],
+  Accepted: [],
+};
+
+export interface QuoteLineItem {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  discountPct: number;
+}
+
+export interface Quote {
+  id: string;
+  quoteNumber: string;
+  accountId: string;
+  dealId?: string | null;
+  lineItems: QuoteLineItem[];
+  status: QuoteStatus;
+  validUntil: string;
+  createdAt: string;
+  customFields?: Record<string, string | number | boolean | null>;
 }
 
 export interface Activity {
@@ -157,4 +223,40 @@ export interface AppNotification {
   text: string;
   read: boolean;
   when: string;
+}
+
+/** Modules that support admin-defined custom fields and designable layouts. */
+export const CUSTOM_FIELD_MODULES = [
+  'leads',
+  'contacts',
+  'accounts',
+  'deals',
+  'products',
+  'tickets',
+  'campaigns',
+  'quotes',
+] as const;
+export type CustomFieldModule = (typeof CUSTOM_FIELD_MODULES)[number];
+
+export type CustomFieldType = 'text' | 'number' | 'date' | 'dropdown' | 'checkbox';
+export const CUSTOM_FIELD_TYPES: CustomFieldType[] = ['text', 'number', 'date', 'dropdown', 'checkbox'];
+
+export interface CustomFieldDef {
+  id: string;
+  module: CustomFieldModule;
+  key: string;
+  label: string;
+  type: CustomFieldType;
+  options?: string[];
+  required: boolean;
+  createdAt: string;
+}
+
+export type LayoutTarget = 'form' | 'detail';
+
+export interface LayoutDef {
+  id: string;
+  module: CustomFieldModule;
+  target: LayoutTarget;
+  fieldIds: string[];
 }

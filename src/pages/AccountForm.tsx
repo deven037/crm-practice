@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getAllSync, newId, upsert, logAudit } from '../data/store';
 import { Account, User } from '../types';
 import { Select } from '../components/Select';
+import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 
@@ -26,6 +27,7 @@ export function AccountForm() {
     createdAt: new Date().toISOString(),
   });
   const [errors, setErrors] = useState<{ name?: string; website?: string }>({});
+  const [customErrors, setCustomErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
@@ -33,7 +35,9 @@ export function AccountForm() {
     if (!draft.name.trim()) errs.name = 'Account name is required.';
     if (draft.website && !/^https?:\/\/.+\..+/.test(draft.website.trim())) errs.website = 'Enter a valid URL (starting with http:// or https://).';
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    const cErrs = validateCustomFields('accounts', 'form', draft.customFields ?? {});
+    setCustomErrors(cErrs);
+    if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) return;
     setBusy(true);
     await upsert('accounts', draft);
     logAudit(user?.name ?? 'Unknown', 'account.create', `Created account ${draft.name}`);
@@ -109,7 +113,16 @@ export function AccountForm() {
               onChange={(v) => setDraft({ ...draft, ownerId: v })}
             />
           </div>
+          <CustomFieldsSection
+            module="accounts"
+            target="form"
+            mode="edit"
+            values={draft.customFields ?? {}}
+            onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+            errors={customErrors}
+          />
         </div>
+
         <div className="form-actions">
           <button className="btn" onClick={() => navigate('/accounts')}>
             Cancel

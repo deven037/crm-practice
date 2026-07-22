@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getAll, getAllSync, getById, logAudit, removeMany, saveAll, upsert } from '../data/store';
-import { Account, Contact, Deal } from '../types';
+import { Account, Contact, Deal, Quote } from '../types';
+import { computeQuoteTotals, QUOTE_STATUS_PILL } from '../components/QuoteLineItems';
 import { Accordion } from '../components/Accordion';
+import { CustomFieldsSection } from '../components/CustomFieldsSection';
 import { Modal } from '../components/Modal';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
@@ -16,6 +18,7 @@ export function AccountDetail() {
   const [notFound, setNotFound] = useState(false);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
+  const [quotes, setQuotes] = useState<Quote[]>([]);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Account | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -25,10 +28,11 @@ export function AccountDetail() {
 
   useEffect(() => {
     (async () => {
-      const [a, c, d] = await Promise.all([
+      const [a, c, d, q] = await Promise.all([
         getById<Account>('accounts', id ?? ''),
         getAll<Contact>('contacts'),
         getAll<Deal>('deals'),
+        getAll<Quote>('quotes'),
       ]);
       if (!a) {
         setNotFound(true);
@@ -37,6 +41,7 @@ export function AccountDetail() {
       setAccount(a);
       setContacts(c.filter((x) => x.accountId === a.id));
       setDeals(d.filter((x) => x.accountId === a.id));
+      setQuotes(q.filter((x) => x.accountId === a.id));
     })();
   }, [id]);
 
@@ -140,6 +145,7 @@ export function AccountDetail() {
                 '—'
               )}
             </dd>
+            <CustomFieldsSection module="accounts" target="detail" mode="view" values={account.customFields ?? {}} />
           </dl>
         ) : (
           draft && (
@@ -165,6 +171,13 @@ export function AccountDetail() {
                 <span className="field-label">Website</span>
                 <input className="input" value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
               </div>
+              <CustomFieldsSection
+                module="accounts"
+                target="detail"
+                mode="edit"
+                values={draft.customFields ?? {}}
+                onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+              />
             </div>
           )
         )}
@@ -186,6 +199,7 @@ export function AccountDetail() {
         {deals.length === 0 && <p className="muted">No deals for this account.</p>}
         {deals.map((deal) => (
           <Accordion key={deal.id} title={`${deal.name} — ${formatCurrency(deal.amount)}`}>
+            <Link to={`/deals/${deal.id}`}>View deal →</Link>
             <dl className="detail-list">
               <dt>Stage</dt>
               <dd>{deal.stage}</dd>
@@ -196,6 +210,21 @@ export function AccountDetail() {
             </dl>
           </Accordion>
         ))}
+      </Accordion>
+
+      <Accordion title="Quotes" badge={quotes.length}>
+        {quotes.length === 0 && <p className="muted">No quotes for this account.</p>}
+        <ul className="related-list">
+          {quotes.map((q) => (
+            <li key={q.id}>
+              <Link to={`/quotes/${q.id}`}>{q.quoteNumber}</Link>{' '}
+              <span className="muted">
+                — <span className={`pill ${QUOTE_STATUS_PILL[q.status]}`}>{q.status}</span> ·{' '}
+                {formatCurrency(computeQuoteTotals(q.lineItems).total)}
+              </span>
+            </li>
+          ))}
+        </ul>
       </Accordion>
 
       {deleting && openDeals.length > 0 && (

@@ -20,7 +20,7 @@ export function Settings() {
   const { user, refreshUser } = useAuth();
   const [name, setName] = useState(user?.name ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(user?.phone ?? '');
   const [errors, setErrors] = useState<{ name?: string; email?: string; phone?: string }>({});
   const [prefs, setPrefs] = useState<Prefs>(() => getValue('prefs', DEFAULT_PREFS));
   const [confirmReset, setConfirmReset] = useState(false);
@@ -36,7 +36,7 @@ export function Settings() {
       const users = getAllSync<User>('users');
       const idx = users.findIndex((u) => u.id === user.id);
       if (idx >= 0) {
-        users[idx] = { ...users[idx], name: name.trim(), email: email.trim() };
+        users[idx] = { ...users[idx], name: name.trim(), email: email.trim(), phone: phone.trim() };
         setValue('users', users);
         refreshUser();
       }

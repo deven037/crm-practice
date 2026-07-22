@@ -2,13 +2,21 @@ import {
   Account,
   Activity,
   AppNotification,
+  Campaign,
+  CampaignStatus,
+  CAMPAIGN_CHANNELS,
   Contact,
+  CustomFieldDef,
   Deal,
   DEAL_STAGES,
+  LayoutDef,
   Lead,
   LEAD_SOURCES,
   LEAD_STATUSES,
   Product,
+  Quote,
+  QuoteLineItem,
+  QUOTE_STATUSES,
   TaskItem,
   Ticket,
   User,
@@ -247,21 +255,186 @@ function seedNotifications(): AppNotification[] {
   ];
 }
 
+const CAMPAIGN_NAMES = [
+  'Spring Product Launch',
+  'LinkedIn Lead Gen Push',
+  'Webinar Series: CRM Best Practices',
+  'Partner Co-Marketing Q2',
+  'Retargeting Ad Blitz',
+  'Trade Show — SaaSCon',
+  'Content Hub Relaunch',
+  'Customer Referral Drive',
+];
+
+function seedCampaigns(): Campaign[] {
+  return CAMPAIGN_NAMES.map((name, i) => {
+    const startOffsetDays = between(30, 200);
+    const durationDays = between(14, 90);
+    const start = new Date(now() - startOffsetDays * DAY);
+    const end = new Date(start.getTime() + durationDays * DAY);
+    let status: CampaignStatus;
+    if (end.getTime() < now()) status = pick<CampaignStatus>(['Completed', 'Cancelled']);
+    else if (start.getTime() > now()) status = 'Planned';
+    else status = 'Active';
+    return {
+      id: `campaign-${i + 1}`,
+      name,
+      channel: pick(CAMPAIGN_CHANNELS),
+      budget: between(5, 50) * 1000,
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
+      status,
+      createdAt: daysAgo(startOffsetDays + between(0, 5)),
+    };
+  });
+}
+
+// Separate pass, run after seedLeads()/seedCampaigns() have both already consumed
+// their own rand() calls, so existing lead fields (e.g. productId) stay unchanged.
+function attachCampaignsToLeads(leads: Lead[], campaigns: Campaign[]): Lead[] {
+  return leads.map((l) => ({ ...l, campaignId: rand() > 0.4 ? pick(campaigns).id : null }));
+}
+
+function seedQuotes(accounts: Account[], deals: Deal[], products: Product[]): Quote[] {
+  const quotes: Quote[] = [];
+  for (let i = 0; i < 15; i++) {
+    const account = pick(accounts);
+    const accountDeals = deals.filter((d) => d.accountId === account.id);
+    const dealId = accountDeals.length > 0 && rand() > 0.35 ? pick(accountDeals).id : null;
+    const lineItemCount = between(1, 4);
+    const lineItems: QuoteLineItem[] = [];
+    for (let j = 0; j < lineItemCount; j++) {
+      const product = pick(products);
+      lineItems.push({
+        id: `qline-${i}-${j}`,
+        productId: product.id,
+        productName: product.name,
+        quantity: between(1, 5),
+        unitPrice: product.price,
+        discountPct: pick([0, 5, 10, 15, 20]),
+      });
+    }
+    quotes.push({
+      id: `quote-${i + 1}`,
+      quoteNumber: `Q-2026-${String(i + 1).padStart(4, '0')}`,
+      accountId: account.id,
+      dealId,
+      lineItems,
+      status: pick(QUOTE_STATUSES),
+      validUntil: daysFromNow(between(7, 60)),
+      createdAt: daysAgo(between(1, 120)),
+    });
+  }
+  return quotes;
+}
+
+// Ships with a small, concrete custom-field example (rather than a blank slate) so
+// there's something to find and interact with immediately in the Object Configuration
+// admin pages and on the Leads/Accounts form + detail pages.
+function seedCustomFieldDefs(): CustomFieldDef[] {
+  return [
+    {
+      id: 'cf-lead-referral',
+      module: 'leads',
+      key: 'referral_source',
+      label: 'Referral Source',
+      type: 'text',
+      required: false,
+      createdAt: daysAgo(60),
+    },
+    {
+      id: 'cf-lead-risk',
+      module: 'leads',
+      key: 'renewal_risk',
+      label: 'Renewal Risk',
+      type: 'dropdown',
+      options: ['Low', 'Medium', 'High'],
+      required: false,
+      createdAt: daysAgo(60),
+    },
+    {
+      id: 'cf-account-contract',
+      module: 'accounts',
+      key: 'contract_type',
+      label: 'Contract Type',
+      type: 'dropdown',
+      options: ['Annual', 'Monthly'],
+      required: false,
+      createdAt: daysAgo(60),
+    },
+  ];
+}
+
+function seedLayouts(): LayoutDef[] {
+  return [
+    { id: 'layout-leads-form', module: 'leads', target: 'form', fieldIds: ['cf-lead-referral', 'cf-lead-risk'] },
+    { id: 'layout-leads-detail', module: 'leads', target: 'detail', fieldIds: ['cf-lead-referral', 'cf-lead-risk'] },
+    { id: 'layout-accounts-form', module: 'accounts', target: 'form', fieldIds: ['cf-account-contract'] },
+    { id: 'layout-accounts-detail', module: 'accounts', target: 'detail', fieldIds: ['cf-account-contract'] },
+  ];
+}
+
+const REFERRAL_SOURCES_EXAMPLE = [
+  'Friend of customer',
+  'Conference badge scan',
+  'Partner intro',
+  'Cold LinkedIn outreach',
+  'Existing customer referral',
+];
+const RENEWAL_RISKS_EXAMPLE = ['Low', 'Medium', 'High'];
+const CONTRACT_TYPES_EXAMPLE = ['Annual', 'Monthly'];
+
+// Deterministic (index-based, no rand() draw) so it never perturbs the shared PRNG stream.
+function applyCustomFieldExamples(leads: Lead[], accounts: Account[]) {
+  for (let i = 0; i < 5 && i < leads.length; i++) {
+    leads[i].customFields = {
+      referral_source: REFERRAL_SOURCES_EXAMPLE[i % REFERRAL_SOURCES_EXAMPLE.length],
+      renewal_risk: RENEWAL_RISKS_EXAMPLE[i % RENEWAL_RISKS_EXAMPLE.length],
+    };
+  }
+  for (let i = 0; i < 5 && i < accounts.length; i++) {
+    accounts[i].customFields = {
+      contract_type: CONTRACT_TYPES_EXAMPLE[i % CONTRACT_TYPES_EXAMPLE.length],
+    };
+  }
+}
+
 export function buildSeedData() {
   rand = mulberry32(42);
   const accounts = seedAccounts();
   const products = seedProducts();
+  const leads = seedLeads(products);
+  const contacts = seedContacts(accounts);
+  const deals = seedDeals(accounts);
+  const tasks = seedTasks();
+  const tickets = seedTickets();
+  const activities = seedActivities();
+  const notifications = seedNotifications();
+
+  // Everything below is appended after every pre-existing rand()/pick()/between()
+  // consumption above, so pre-existing seed values stay byte-identical to before.
+  const campaigns = seedCampaigns();
+  const leadsWithCampaigns = attachCampaignsToLeads(leads, campaigns);
+  const quotes = seedQuotes(accounts, deals, products);
+  const customFieldDefs = seedCustomFieldDefs();
+  const layouts = seedLayouts();
+  applyCustomFieldExamples(leadsWithCampaigns, accounts);
+
   return {
     users: SEED_USERS,
     accounts,
     products,
-    leads: seedLeads(products),
-    contacts: seedContacts(accounts),
-    deals: seedDeals(accounts),
-    tasks: seedTasks(),
-    tickets: seedTickets(),
-    activities: seedActivities(),
-    notifications: seedNotifications(),
+    leads: leadsWithCampaigns,
+    contacts,
+    deals,
+    tasks,
+    tickets,
+    activities,
+    notifications,
+    campaigns,
+    quotes,
+    customFieldDefs,
+    layouts,
     audit: [
       { id: 'audit-1', user: 'Alex Admin', action: 'seed', detail: 'Database seeded with sample data', when: new Date().toISOString() },
     ],

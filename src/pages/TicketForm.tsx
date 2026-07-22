@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { newId, upsert, logAudit } from '../data/store';
 import { Ticket, TicketPriority, TICKET_PRIORITIES } from '../types';
 import { Select } from '../components/Select';
+import { CustomFieldsSection, CustomFieldValues, validateCustomFields } from '../components/CustomFieldsSection';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 
@@ -16,6 +17,8 @@ export function TicketForm() {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<TicketPriority>('Medium');
   const [errors, setErrors] = useState<{ subject?: string; requester?: string }>({});
+  const [customFields, setCustomFields] = useState<CustomFieldValues>({});
+  const [customErrors, setCustomErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
@@ -23,7 +26,9 @@ export function TicketForm() {
     if (!subject.trim()) errs.subject = 'Subject is required.';
     if (!requester.trim()) errs.requester = 'Requester is required.';
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    const cErrs = validateCustomFields('tickets', 'form', customFields);
+    setCustomErrors(cErrs);
+    if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) return;
 
     const ticket: Ticket = {
       id: newId('ticket'),
@@ -36,6 +41,7 @@ export function TicketForm() {
       createdAt: new Date().toISOString(),
       comments: [],
       attachments: [],
+      customFields,
     };
     setBusy(true);
     await upsert('tickets', ticket);
@@ -83,6 +89,16 @@ export function TicketForm() {
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
+
+        <CustomFieldsSection
+          module="tickets"
+          target="form"
+          mode="edit"
+          values={customFields}
+          onChange={(k, v) => setCustomFields({ ...customFields, [k]: v })}
+          errors={customErrors}
+        />
+
         <div className="form-actions">
           <button className="btn" onClick={() => navigate('/tickets')}>
             Cancel

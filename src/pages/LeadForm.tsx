@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getAllSync, newId, upsert, logAudit } from '../data/store';
-import { Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Product, User } from '../types';
+import { Campaign, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Product, User } from '../types';
 import { SearchableSelect, Select } from '../components/Select';
+import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 
@@ -14,6 +15,7 @@ export function LeadForm() {
 
   const users = getAllSync<User>('users');
   const products = getAllSync<Product>('products');
+  const campaigns = getAllSync<Campaign>('campaigns');
 
   const [draft, setDraft] = useState<Lead>({
     id: newId('lead'),
@@ -26,9 +28,11 @@ export function LeadForm() {
     ownerId: user?.id ?? 'user-2',
     value: 0,
     productId: params.get('productId'),
+    campaignId: params.get('campaignId'),
     createdAt: new Date().toISOString(),
   });
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+  const [customErrors, setCustomErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
@@ -36,7 +40,9 @@ export function LeadForm() {
     if (!draft.name.trim()) errs.name = 'Name is required.';
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(draft.email.trim())) errs.email = 'Enter a valid email.';
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    const cErrs = validateCustomFields('leads', 'form', draft.customFields ?? {});
+    setCustomErrors(cErrs);
+    if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) return;
     setBusy(true);
     await upsert('leads', draft);
     logAudit(user?.name ?? 'Unknown', 'lead.create', `Created lead ${draft.name}`);
@@ -101,6 +107,16 @@ export function LeadForm() {
             />
           </div>
           <div className="field">
+            <span className="field-label">Campaign</span>
+            <SearchableSelect
+              value={draft.campaignId ?? ''}
+              options={[{ value: '', label: 'No campaign' }, ...campaigns.map((c) => ({ value: c.id, label: c.name }))]}
+              onChange={(v) => setDraft({ ...draft, campaignId: v || null })}
+              placeholder="Search campaigns…"
+              testId="lead-campaign"
+            />
+          </div>
+          <div className="field">
             <span className="field-label">Owner</span>
             <Select
               value={draft.ownerId}
@@ -118,7 +134,16 @@ export function LeadForm() {
               onChange={(e) => setDraft({ ...draft, value: Number(e.target.value) })}
             />
           </div>
+          <CustomFieldsSection
+            module="leads"
+            target="form"
+            mode="edit"
+            values={draft.customFields ?? {}}
+            onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+            errors={customErrors}
+          />
         </div>
+
         <div className="form-actions">
           <button className="btn" onClick={() => navigate('/leads')}>
             Cancel

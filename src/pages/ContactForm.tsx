@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getAllSync, newId, upsert, logAudit } from '../data/store';
 import { Account, Contact } from '../types';
 import { MultiSelect, SearchableSelect } from '../components/Select';
+import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 
@@ -31,6 +32,7 @@ export function ContactForm() {
     createdAt: new Date().toISOString(),
   });
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+  const [customErrors, setCustomErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
@@ -38,7 +40,9 @@ export function ContactForm() {
     if (!draft.name.trim()) errs.name = 'Name is required.';
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(draft.email.trim())) errs.email = 'Enter a valid email.';
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    const cErrs = validateCustomFields('contacts', 'form', draft.customFields ?? {});
+    setCustomErrors(cErrs);
+    if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) return;
     setBusy(true);
     await upsert('contacts', draft);
     logAudit(user?.name ?? 'Unknown', 'contact.create', `Created contact ${draft.name}`);
@@ -95,7 +99,16 @@ export function ContactForm() {
               testId="contact-tags"
             />
           </div>
+          <CustomFieldsSection
+            module="contacts"
+            target="form"
+            mode="edit"
+            values={draft.customFields ?? {}}
+            onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+            errors={customErrors}
+          />
         </div>
+
         <div className="form-actions">
           <button className="btn" onClick={() => navigate('/contacts')}>
             Cancel

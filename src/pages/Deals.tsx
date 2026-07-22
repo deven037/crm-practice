@@ -8,7 +8,7 @@ import { DatePicker } from '../components/DatePicker';
 import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
-import { formatCurrency, formatDate } from '../utils';
+import { autoCloseDate, formatCurrency, formatDate } from '../utils';
 
 export function Deals() {
   const toast = useToast();
@@ -41,15 +41,17 @@ export function Deals() {
     const id = e.dataTransfer.getData('text/deal-id');
     const deal = deals.find((d) => d.id === id);
     if (!deal || deal.stage === stage) return;
+    const updated = autoCloseDate(deal.stage, { ...deal, stage });
     // Optimistic UI so the card moves instantly, then persist.
-    setDeals((prev) => prev.map((d) => (d.id === id ? { ...d, stage } : d)));
-    await upsert('deals', { ...deal, stage });
+    setDeals((prev) => prev.map((d) => (d.id === id ? updated : d)));
+    await upsert('deals', updated);
     logAudit(user?.name ?? 'Unknown', 'deal.stage', `Moved "${deal.name}" to ${stage}`);
     toast.push('success', `"${deal.name}" moved to ${stage}.`);
   };
 
   const saveDeal = async (deal: Deal) => {
-    await upsert('deals', deal);
+    const toSave = editing ? autoCloseDate(editing.stage, deal) : deal;
+    await upsert('deals', toSave);
     toast.push('success', `Deal "${deal.name}" saved.`);
     setEditing(null);
     load();

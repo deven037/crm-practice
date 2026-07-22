@@ -28,7 +28,8 @@ Forgot-password flow: the reset code is always `123456`.
 ## Resetting test data
 
 The seed data is **deterministic** — every reset produces identical records (~50 leads, 40
-contacts, 20 accounts, 25 deals, 30 tasks, 15 tickets, 5 users).
+contacts, 20 accounts, 12 products, 25 deals, 30 tasks, 15 tickets, 5 users, 8 campaigns, 15
+quotes).
 
 - **UI:** Settings → Danger zone → *Reset all data*
 - **URL:** open any page with `?reset=true` (e.g. `http://localhost:5173/?reset=true`) — ideal in a test setup hook
@@ -44,11 +45,15 @@ see [LOCATORS.md](LOCATORS.md) for the traps and the recommended strategies.
 Dashboard (charts, infinite scroll) · Leads (full-featured table, inline edit, context menu, bulk
 actions, CSV export, convert-lead wizard, detail page) · Contacts (grid/list, tabs, avatar upload,
 tags) · Accounts (detail with nested accordions, new-tab links) · Products (catalog linked to
-leads — each product's detail page lists the leads generated for it) · Deals (drag-and-drop
-kanban, custom date picker, searchable select, slider, detail page) · Tasks (drag reorder, native
-alert/confirm dialogs) · Tickets (status workflow, live SLA countdown, comments, attachments) ·
-Admin (RBAC, user CRUD, toggle switches, audit log) · Settings (validation, iframe help center,
-reset) · plus toasts, global search, notifications, dark mode, a shadow-DOM feedback widget.
+leads — each product's detail page lists the leads generated for it) · Campaigns (channel/budget/
+date tracking, ROI computed from linked Closed Won deals, reverse-lookup of generated leads) ·
+Quotes (line-item builder with live computed totals, cascading Account→Deal select, status
+workflow, accepting a quote can auto-close its linked deal) · Deals (drag-and-drop kanban, custom
+date picker, searchable select, slider, detail page) · Tasks (drag reorder, native alert/confirm
+dialogs) · Tickets (status workflow, live SLA countdown, comments, attachments) · Admin (RBAC, user
+CRUD, toggle switches, audit log, Object Configuration for per-module custom fields and drag-and-
+drop page layouts) · Settings (validation, iframe help center, reset) · plus toasts, global search,
+notifications, dark mode, a shadow-DOM feedback widget.
 
 Creating a record (lead, contact, account, product, deal, ticket) uses a dedicated form page and
 lands on the new record's **detail page** — not back on the listing — like a real CRM.

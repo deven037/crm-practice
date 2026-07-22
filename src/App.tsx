@@ -18,6 +18,12 @@ import { AccountDetail } from './pages/AccountDetail';
 import { Products } from './pages/Products';
 import { ProductForm } from './pages/ProductForm';
 import { ProductDetail } from './pages/ProductDetail';
+import { Campaigns } from './pages/Campaigns';
+import { CampaignForm } from './pages/CampaignForm';
+import { CampaignDetail } from './pages/CampaignDetail';
+import { Quotes } from './pages/Quotes';
+import { QuoteForm } from './pages/QuoteForm';
+import { QuoteDetail } from './pages/QuoteDetail';
 import { Deals } from './pages/Deals';
 import { DealForm } from './pages/DealForm';
 import { DealDetail } from './pages/DealDetail';
@@ -26,6 +32,7 @@ import { Tickets } from './pages/Tickets';
 import { TicketForm } from './pages/TicketForm';
 import { TicketDetail } from './pages/TicketDetail';
 import { Admin } from './pages/Admin';
+import { ObjectConfig } from './pages/ObjectConfig';
 import { Settings } from './pages/Settings';
 import { TestCases } from './pages/TestCases';
 import { Forbidden } from './pages/Forbidden';
@@ -84,6 +91,12 @@ export function App() {
             <Route path="/products" element={<Protected><Products /></Protected>} />
             <Route path="/products/new" element={<Protected><ProductForm /></Protected>} />
             <Route path="/products/:id" element={<Protected><ProductDetail /></Protected>} />
+            <Route path="/campaigns" element={<Protected><Campaigns /></Protected>} />
+            <Route path="/campaigns/new" element={<Protected><CampaignForm /></Protected>} />
+            <Route path="/campaigns/:id" element={<Protected><CampaignDetail /></Protected>} />
+            <Route path="/quotes" element={<Protected><Quotes /></Protected>} />
+            <Route path="/quotes/new" element={<Protected><QuoteForm /></Protected>} />
+            <Route path="/quotes/:id" element={<Protected><QuoteDetail /></Protected>} />
             <Route path="/deals" element={<Protected><Deals /></Protected>} />
             <Route path="/deals/new" element={<Protected><DealForm /></Protected>} />
             <Route path="/deals/:id" element={<Protected><DealDetail /></Protected>} />
@@ -92,6 +105,7 @@ export function App() {
             <Route path="/tickets/new" element={<Protected><TicketForm /></Protected>} />
             <Route path="/tickets/:id" element={<Protected><TicketDetail /></Protected>} />
             <Route path="/admin" element={<Protected roles={['admin', 'rep']}><Admin /></Protected>} />
+            <Route path="/admin/objects/:module" element={<Protected roles={['admin', 'rep']}><ObjectConfig /></Protected>} />
             <Route path="/settings" element={<Protected><Settings /></Protected>} />
             <Route path="/testcases" element={<Protected><TestCases /></Protected>} />
             <Route path="/forbidden" element={<Protected><Forbidden /></Protected>} />

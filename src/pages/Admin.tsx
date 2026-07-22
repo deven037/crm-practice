@@ -1,19 +1,37 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { getAll, getAllSync, logAudit, newId, removeMany, saveAll, upsert } from '../data/store';
-import { Account, AuditEntry, Deal, Lead, Role, User } from '../types';
+import { Account, AuditEntry, CustomFieldDef, CUSTOM_FIELD_MODULES, CustomFieldModule, Deal, Lead, Role, User } from '../types';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
 import { Tabs } from '../components/Tabs';
 import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
-import { formatDateTime } from '../utils';
+import { classNames, formatDateTime } from '../utils';
 
 const ROLES: { value: Role; label: string }[] = [
   { value: 'admin', label: 'Admin' },
   { value: 'rep', label: 'Sales Rep' },
   { value: 'viewer', label: 'Viewer' },
 ];
+
+const AUDIT_PAGE_SIZES = [
+  { value: '10', label: '10 / page' },
+  { value: '25', label: '25 / page' },
+  { value: '50', label: '50 / page' },
+];
+
+const OBJECT_MODULE_LABELS: Record<CustomFieldModule, { label: string; icon: string }> = {
+  leads: { label: 'Leads', icon: '🎯' },
+  contacts: { label: 'Contacts', icon: '👤' },
+  accounts: { label: 'Accounts', icon: '🏢' },
+  deals: { label: 'Deals', icon: '💰' },
+  products: { label: 'Products', icon: '📦' },
+  tickets: { label: 'Tickets', icon: '🎫' },
+  campaigns: { label: 'Campaigns', icon: '📣' },
+  quotes: { label: 'Quotes', icon: '🧾' },
+};
 
 export function Admin() {
   const toast = useToast();
@@ -24,6 +42,8 @@ export function Admin() {
   const [users, setUsers] = useState<User[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [auditUserFilter, setAuditUserFilter] = useState('');
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditPageSize, setAuditPageSize] = useState(10);
   const [editing, setEditing] = useState<User | null>(null);
   const [reassigning, setReassigning] = useState<{ target: User; leads: number; accounts: number; deals: number } | null>(null);
   const [reassignTo, setReassignTo] = useState('');
@@ -102,6 +122,10 @@ export function Admin() {
   );
 
   const auditUsers = useMemo(() => [...new Set(audit.map((a) => a.user))], [audit]);
+
+  const auditTotalPages = Math.max(1, Math.ceil(filteredAudit.length / auditPageSize));
+  const auditCurrentPage = Math.min(auditPage, auditTotalPages);
+  const auditPageRows = filteredAudit.slice((auditCurrentPage - 1) * auditPageSize, auditCurrentPage * auditPageSize);
 
   return (
     <div data-testid="admin-page">
@@ -194,7 +218,10 @@ export function Admin() {
                     <Select
                       value={auditUserFilter}
                       options={[{ value: '', label: 'All users' }, ...auditUsers.map((u) => ({ value: u, label: u }))]}
-                      onChange={setAuditUserFilter}
+                      onChange={(v) => {
+                        setAuditUserFilter(v);
+                        setAuditPage(1);
+                      }}
                       testId="audit-user-filter"
                     />
                   </div>
@@ -209,7 +236,7 @@ export function Admin() {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredAudit.slice(0, 50).map((entry) => (
+                        {auditPageRows.map((entry) => (
                           <tr key={entry.id}>
                             <td>{formatDateTime(entry.when)}</td>
                             <td>{entry.user}</td>
@@ -228,6 +255,76 @@ export function Admin() {
                         )}
                       </tbody>
                     </table>
+                  </div>
+
+                  {filteredAudit.length > 0 && (
+                    <div className="pagination" data-testid="audit-pagination">
+                      <span className="muted">
+                        {filteredAudit.length} entries · page {auditCurrentPage} of {auditTotalPages}
+                      </span>
+                      <div className="pagination-controls">
+                        <Select
+                          value={String(auditPageSize)}
+                          options={AUDIT_PAGE_SIZES}
+                          onChange={(v) => {
+                            setAuditPageSize(Number(v));
+                            setAuditPage(1);
+                          }}
+                        />
+                        <button
+                          className="btn"
+                          disabled={auditCurrentPage <= 1}
+                          onClick={() => setAuditPage((p) => p - 1)}
+                          aria-label="Previous page"
+                        >
+                          ‹ Prev
+                        </button>
+                        {Array.from({ length: auditTotalPages })
+                          .slice(0, 7)
+                          .map((_, i) => (
+                            <button
+                              key={i}
+                              className={classNames('btn btn-page', auditCurrentPage === i + 1 && 'btn-active')}
+                              onClick={() => setAuditPage(i + 1)}
+                            >
+                              {i + 1}
+                            </button>
+                          ))}
+                        <button
+                          className="btn"
+                          disabled={auditCurrentPage >= auditTotalPages}
+                          onClick={() => setAuditPage((p) => p + 1)}
+                          aria-label="Next page"
+                        >
+                          Next ›
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ),
+            },
+            {
+              id: 'objects',
+              label: 'Object Configuration',
+              content: (
+                <>
+                  <p className="muted">
+                    Define custom fields per module and design where they appear on each module's Form (New + Edit)
+                    and Detail pages.
+                  </p>
+                  <div className="object-config-grid">
+                    {CUSTOM_FIELD_MODULES.map((m) => {
+                      const count = getAllSync<CustomFieldDef>('customFieldDefs').filter((d) => d.module === m).length;
+                      const meta = OBJECT_MODULE_LABELS[m];
+                      return (
+                        <Link key={m} to={`/admin/objects/${m}`} className="object-config-card" data-testid={`object-config-${m}`}>
+                          <span className="object-config-icon">{meta.icon}</span>
+                          <span className="object-config-name">{meta.label}</span>
+                          <span className="muted">{count} custom field{count === 1 ? '' : 's'}</span>
+                        </Link>
+                      );
+                    })}
                   </div>
                 </>
               ),

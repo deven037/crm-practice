@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getAll, getAllSync, getById, logAudit, removeMany, saveAll, upsert } from '../data/store';
-import { Lead, Product, PRODUCT_CATEGORIES } from '../types';
+import { Lead, Product, PRODUCT_CATEGORIES, Quote } from '../types';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
+import { CustomFieldsSection } from '../components/CustomFieldsSection';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
@@ -16,6 +17,7 @@ export function ProductDetail() {
   const [product, setProduct] = useState<Product | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [affectedQuotes, setAffectedQuotes] = useState<Quote[]>([]);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -24,13 +26,18 @@ export function ProductDetail() {
 
   useEffect(() => {
     (async () => {
-      const [p, l] = await Promise.all([getById<Product>('products', id ?? ''), getAll<Lead>('leads')]);
+      const [p, l, q] = await Promise.all([
+        getById<Product>('products', id ?? ''),
+        getAll<Lead>('leads'),
+        getAll<Quote>('quotes'),
+      ]);
       if (!p) {
         setNotFound(true);
         return;
       }
       setProduct(p);
       setLeads(l.filter((lead) => lead.productId === p.id));
+      setAffectedQuotes(q.filter((quote) => quote.lineItems.some((li) => li.productId === p.id)));
     })();
   }, [id]);
 
@@ -63,11 +70,20 @@ export function ProductDetail() {
       );
       await saveAll('leads', allLeads);
     }
+    // Quotes are NOT mutated: each line item already snapshots productName/unitPrice,
+    // so QuoteLineItemsView falls back to "{productName} (deleted product)" once the
+    // product no longer resolves — no write needed to keep the quote's history readable.
     await removeMany('products', [product.id]);
-    logAudit(user?.name ?? 'Unknown', 'product.delete', `Deleted product ${product.name} (${leads.length} lead(s) unlinked)`);
+    logAudit(
+      user?.name ?? 'Unknown',
+      'product.delete',
+      `Deleted product ${product.name} (${leads.length} lead(s) unlinked, ${affectedQuotes.length} quote(s) reference it historically)`
+    );
     toast.push('success', `Product "${product.name}" deleted.${leads.length > 0 ? ` ${leads.length} lead(s) unlinked.` : ''}`);
     navigate('/products');
   };
+
+  const hasDependents = leads.length > 0 || affectedQuotes.length > 0;
 
   return (
     <div data-testid="product-detail-page">
@@ -132,6 +148,7 @@ export function ProductDetail() {
             <dd>{product.description || '—'}</dd>
             <dt>Created</dt>
             <dd>{formatDate(product.createdAt)}</dd>
+            <CustomFieldsSection module="products" target="detail" mode="view" values={product.customFields ?? {}} />
           </dl>
         ) : (
           draft && (
@@ -173,6 +190,13 @@ export function ProductDetail() {
                   onChange={(e) => setDraft({ ...draft, description: e.target.value })}
                 />
               </div>
+              <CustomFieldsSection
+                module="products"
+                target="detail"
+                mode="edit"
+                values={draft.customFields ?? {}}
+                onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+              />
             </div>
           )
         )}
@@ -217,7 +241,7 @@ export function ProductDetail() {
               <button
                 className="btn btn-danger"
                 data-testid="confirm-delete-btn"
-                disabled={leads.length > 0 && confirmName !== product.name}
+                disabled={hasDependents && confirmName !== product.name}
                 onClick={doDelete}
               >
                 Delete product
@@ -225,13 +249,23 @@ export function ProductDetail() {
             </>
           }
         >
-          {leads.length === 0 ? (
+          {!hasDependents ? (
             <p>Delete “{product.name}”? This cannot be undone.</p>
           ) : (
             <>
               <div className="banner banner-error" role="alert">
-                {leads.length} lead(s) reference this product. Deleting it will <strong>unlink</strong> the product from
-                those leads — the leads themselves are kept.
+                {leads.length > 0 && (
+                  <p>
+                    {leads.length} lead(s) reference this product. Deleting it will <strong>unlink</strong> the product
+                    from those leads — the leads themselves are kept.
+                  </p>
+                )}
+                {affectedQuotes.length > 0 && (
+                  <p>
+                    {affectedQuotes.length} quote(s) reference this product in a line item — those quotes will keep
+                    showing the product's name as a historical record, marked "(deleted product)".
+                  </p>
+                )}
               </div>
               <div className="field">
                 <span className="field-label">Type the product name to confirm</span>

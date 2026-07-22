@@ -86,7 +86,9 @@ export function DatePicker({ value, onChange, testId }: DatePickerProps) {
                   type="button"
                   className={`datepicker-day${isSelected ? ' selected' : ''}${isToday ? ' today' : ''}`}
                   onClick={() => {
-                    onChange(new Date(viewYear, viewMonth, day, 12).toISOString());
+                    // End-of-day (not noon) so a date picked as "today" never reads as
+                    // overdue later the same day (isOverdue is a strict < Date.now() check).
+                    onChange(new Date(viewYear, viewMonth, day, 23, 59, 59).toISOString());
                     setOpen(false);
                   }}
                 >

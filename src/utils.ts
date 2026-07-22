@@ -1,5 +1,35 @@
-export function formatCurrency(amount: number): string {
-  return '$' + amount.toLocaleString('en-US');
+import { Deal, DealStage } from './types';
+
+/**
+ * Stamps closeDate to now when a deal newly transitions into a closed stage
+ * (from a non-closed previous stage) — without this, the dashboard's won-revenue
+ * chart (which buckets by closeDate's month) never reflects a deal closed today,
+ * since new/open deals default to a closeDate weeks in the future.
+ */
+export function autoCloseDate(previousStage: DealStage, deal: Deal): Deal {
+  const wasClosed = previousStage.startsWith('Closed');
+  const isClosed = deal.stage.startsWith('Closed');
+  return !wasClosed && isClosed ? { ...deal, closeDate: new Date().toISOString() } : deal;
+}
+
+export function formatCurrency(amount: number, cents = false): string {
+  return (
+    '$' +
+    amount.toLocaleString('en-US', cents ? { minimumFractionDigits: 2, maximumFractionDigits: 2 } : undefined)
+  );
+}
+
+/** Rounds to the nearest cent — used to avoid compounding float error in quote line-item math. */
+export function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+export function slugify(label: string): string {
+  return label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
 }
 
 export function formatDate(iso: string | null | undefined): string {

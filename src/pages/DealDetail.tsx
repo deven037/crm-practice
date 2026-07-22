@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getAllSync, getById, logAudit, removeMany, upsert } from '../data/store';
-import { Account, Deal, DealStage, DEAL_STAGES, User } from '../types';
+import { Account, Deal, DealStage, DEAL_STAGES, Quote, User } from '../types';
 import { Modal } from '../components/Modal';
 import { SearchableSelect, Select } from '../components/Select';
 import { DatePicker } from '../components/DatePicker';
+import { CustomFieldsSection } from '../components/CustomFieldsSection';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
-import { formatCurrency, formatDate } from '../utils';
+import { autoCloseDate, formatCurrency, formatDate } from '../utils';
 
 export function DealDetail() {
   const { id } = useParams();
@@ -41,8 +42,10 @@ export function DealDetail() {
 
   const accounts = getAllSync<Account>('accounts');
   const users = getAllSync<User>('users');
+  const quotes = getAllSync<Quote>('quotes');
   const account = accounts.find((a) => a.id === deal.accountId);
   const ownerName = users.find((u) => u.id === deal.ownerId)?.name ?? '—';
+  const linkedQuote = quotes.find((q) => q.dealId === deal.id);
 
   const save = async () => {
     if (!draft) return;
@@ -50,8 +53,9 @@ export function DealDetail() {
       toast.push('error', 'Deal name is required.');
       return;
     }
-    await upsert('deals', draft);
-    setDeal(draft);
+    const toSave = autoCloseDate(deal.stage, draft);
+    await upsert('deals', toSave);
+    setDeal(toSave);
     setEditing(false);
     toast.push('success', 'Deal updated.');
   };
@@ -121,6 +125,9 @@ export function DealDetail() {
             <dd>{ownerName}</dd>
             <dt>Created</dt>
             <dd>{formatDate(deal.createdAt)}</dd>
+            <dt>Linked quote</dt>
+            <dd>{linkedQuote ? <Link to={`/quotes/${linkedQuote.id}`}>{linkedQuote.quoteNumber}</Link> : '—'}</dd>
+            <CustomFieldsSection module="deals" target="detail" mode="view" values={deal.customFields ?? {}} />
           </dl>
         ) : (
           draft && (
@@ -170,6 +177,13 @@ export function DealDetail() {
                   onChange={(e) => setDraft({ ...draft, probability: Number(e.target.value) })}
                 />
               </div>
+              <CustomFieldsSection
+                module="deals"
+                target="detail"
+                mode="edit"
+                values={draft.customFields ?? {}}
+                onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+              />
             </div>
           )
         )}

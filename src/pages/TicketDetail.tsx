@@ -4,6 +4,7 @@ import { getById, logAudit, newId, removeMany, upsert } from '../data/store';
 import { Ticket, TicketPriority, TicketStatus, TICKET_PRIORITIES, TICKET_TRANSITIONS } from '../types';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
+import { CustomFieldsSection } from '../components/CustomFieldsSection';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
@@ -47,6 +48,7 @@ export function TicketDetail() {
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [comment, setComment] = useState('');
+  const [cannedValue, setCannedValue] = useState('');
   const [editingComment, setEditingComment] = useState<{ id: string; text: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -75,7 +77,11 @@ export function TicketDetail() {
     if (message) toast.push('success', message);
   };
 
-  const transition = (status: TicketStatus) => persist({ ...ticket, status }, `Ticket moved to ${status}.`);
+  const transition = (status: TicketStatus) => {
+    const from = ticket.status;
+    persist({ ...ticket, status }, `Ticket moved to ${status}.`);
+    logAudit(user?.name ?? 'Unknown', 'ticket.status', `Ticket #${ticket.id} moved ${from} → ${status}`);
+  };
 
   const addComment = () => {
     if (!comment.trim()) return;
@@ -89,7 +95,9 @@ export function TicketDetail() {
       },
       'Comment added.'
     );
+    logAudit(user?.name ?? 'Unknown', 'ticket.comment', `Comment added to ticket #${ticket.id}`);
     setComment('');
+    setCannedValue('');
   };
 
   const saveEditedComment = () => {
@@ -196,7 +204,10 @@ export function TicketDetail() {
             <Select
               value={ticket.priority}
               options={TICKET_PRIORITIES.map((p) => ({ value: p, label: p }))}
-              onChange={(v) => persist({ ...ticket, priority: v as TicketPriority }, `Priority set to ${v}.`)}
+              onChange={(v) => {
+                persist({ ...ticket, priority: v as TicketPriority }, `Priority set to ${v}.`);
+                logAudit(user?.name ?? 'Unknown', 'ticket.priority', `Ticket #${ticket.id} priority set to ${v}`);
+              }}
               testId="ticket-priority"
             />
           </span>
@@ -212,6 +223,14 @@ export function TicketDetail() {
             </button>
           ))}
         </div>
+
+        <CustomFieldsSection
+          module="tickets"
+          target="detail"
+          mode="edit"
+          values={ticket.customFields ?? {}}
+          onChange={(k, v) => persist({ ...ticket, customFields: { ...ticket.customFields, [k]: v } })}
+        />
       </div>
 
       <div className="card">
@@ -271,7 +290,15 @@ export function TicketDetail() {
         </div>
 
         <div className="comment-composer">
-          <Select value="" options={CANNED_RESPONSES} onChange={(v) => v && setComment(v)} testId="canned-response" />
+          <Select
+            value={cannedValue}
+            options={CANNED_RESPONSES}
+            onChange={(v) => {
+              setCannedValue(v);
+              if (v) setComment(v);
+            }}
+            testId="canned-response"
+          />
           <textarea
             className="input"
             rows={3}

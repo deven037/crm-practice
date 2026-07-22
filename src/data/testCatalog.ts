@@ -13,7 +13,7 @@ export interface CatalogModule {
   cases: CatalogCase[];
 }
 
-export const CATALOG_INTRO = "Application at deterministic seed state (open with /?reset=true). Password for all users: Pass@123. Default login: admin@crm.com unless stated. Seed: 50 leads, 40 contacts, 20 accounts, 12 products, 25 deals, 30 tasks, 15 tickets, 5 users. All data operations have simulated latency (300–1200 ms) — wait for spinners/skeletons to resolve before asserting.";
+export const CATALOG_INTRO = "Application at deterministic seed state (open with /?reset=true). Password for all users: Pass@123. Default login: admin@crm.com unless stated. Seed: 50 leads, 40 contacts, 20 accounts, 12 products, 25 deals, 30 tasks, 15 tickets, 5 users, 8 campaigns, 15 quotes. All data operations have simulated latency (300–1200 ms) — wait for spinners/skeletons to resolve before asserting.";
 
 export const TEST_CATALOG: CatalogModule[] = [
   {
@@ -490,7 +490,7 @@ export const TEST_CATALOG: CatalogModule[] = [
           ],
           [
             "Repeat until the end",
-            "\"You’re all caught up 🎉\" shown at exactly 60 items"
+            "\"You're all caught up 🎉\" shown at exactly 60 items"
           ],
           [
             "Scroll up and back down",
@@ -574,8 +574,8 @@ export const TEST_CATALOG: CatalogModule[] = [
             "Still P (lost is excluded)"
           ],
           [
-            "Delete both test deals",
-            "Tile returns exactly to P"
+            "Delete the $10k Closed Lost deal from the board; then open the $40k Closed Won deal's detail page and delete it there via the typed DELETE confirmation (the board itself refuses to delete a Closed Won deal)",
+            "Both removed; tile returns exactly to P"
           ],
           [
             "Compare against the Deals board open-column totals",
@@ -2263,7 +2263,7 @@ export const TEST_CATALOG: CatalogModule[] = [
           ],
           [
             "Use the breadcrumb to return",
-            "List state preserved"
+            "List reloads fresh — the earlier search term is cleared (search state is not preserved across navigation on this or any list page in the app)"
           ],
           [
             "Search gibberish",
@@ -3006,6 +3006,885 @@ export const TEST_CATALOG: CatalogModule[] = [
           [
             "Reset data",
             "Sweep leaves no residue"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Campaigns",
+    "cases": [
+      {
+        "id": "TC-CMP-001",
+        "title": "List: create, search across name/channel/status, recency sort",
+        "tags": [
+          "Smoke",
+          "Sanity",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Open Campaigns on fresh seed",
+            "8 rows, newest-first by Created"
+          ],
+          [
+            "Click \"+ New Campaign\"; fill name, channel, budget; Create",
+            "\"Creating…\" busy state, then lands on the campaign DETAIL page"
+          ],
+          [
+            "Breadcrumb back to Campaigns",
+            "New campaign is row 1 — ordering is live"
+          ],
+          [
+            "Search the campaign's channel (e.g. \"Email\")",
+            "Only that channel's campaigns shown"
+          ],
+          [
+            "Clear; search a status word (e.g. \"Active\")",
+            "Only Active-status campaigns shown"
+          ],
+          [
+            "Search gibberish",
+            "\"No campaigns match\" empty state"
+          ],
+          [
+            "Clear",
+            "Full list returns"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CMP-002",
+        "title": "Form validation: required name, budget > 0, end date after start date",
+        "tags": [
+          "Sanity",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Click Create campaign with the form empty",
+            "Errors: name required; \"Enter a valid budget greater than 0.\""
+          ],
+          [
+            "Enter a name; budget \"abc\"",
+            "Budget error persists"
+          ],
+          [
+            "Budget \"0\"",
+            "Still rejected (must be > 0)"
+          ],
+          [
+            "Budget 25000; set End date BEFORE Start date",
+            "\"End date must be after start date.\"; no navigation"
+          ],
+          [
+            "Set End date after Start date; Create",
+            "Accepted; lands on detail"
+          ],
+          [
+            "Verify the detail",
+            "Budget formatted as $; start/end dates as entered"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CMP-003",
+        "title": "Detail edit-in-place: save/cancel parity",
+        "tags": [
+          "Sanity",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Open a campaign; click Edit",
+            "In-place form; Save/Cancel replace Edit/Delete"
+          ],
+          [
+            "Change channel, budget, status; Cancel",
+            "Original values restored"
+          ],
+          [
+            "Edit again; same changes; Save",
+            "Toast; read view updated"
+          ],
+          [
+            "Reload the detail URL",
+            "All changes persisted"
+          ],
+          [
+            "Admin → Audit log",
+            "No entry for this edit (in-place saves are not audited, matching Product/Deal/Account convention)"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CMP-004",
+        "title": "Feature: Leads generated reverse-lookup panel and prefill link",
+        "tags": [
+          "Feature",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Open a campaign with no leads",
+            "\"Leads generated (0)\" with empty-state text"
+          ],
+          [
+            "Click \"+ New lead for this campaign\"",
+            "Lead form at /leads/new?campaignId=…; Campaign field PRE-FILLED"
+          ],
+          [
+            "Create the lead",
+            "Lands on the lead detail; Campaign field shows a link back to the campaign"
+          ],
+          [
+            "Click the campaign link",
+            "Back on the campaign; panel now \"Leads generated (1)\""
+          ],
+          [
+            "Open the lead; change its Campaign to \"No campaign\" via edit; return to the campaign",
+            "Panel back to (0) — attribution is live"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CMP-005",
+        "title": "Feature: ROI panel computes only from Closed Won deals attributed to the campaign",
+        "tags": [
+          "Feature",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Create a campaign with a $10,000 budget",
+            "ROI panel shows \"Won revenue: $0\"; ROI \"0.0%\""
+          ],
+          [
+            "Create a lead tagged to this campaign; convert it with \"also create a deal\" ($5,000, Qualification)",
+            "Deal inherits the campaign's id (not shown in UI, verified via the campaign's Deals attributed panel)"
+          ],
+          [
+            "Return to the campaign",
+            "\"Deals attributed (1)\" panel shows the deal in Qualification; ROI still 0.0% (not yet Closed Won)"
+          ],
+          [
+            "Open the deal; move its stage to Closed Won",
+            "Deal closes with today's close date"
+          ],
+          [
+            "Return to the campaign",
+            "Won revenue = $5,000; ROI = 50.0%"
+          ],
+          [
+            "Create a second deal on the campaign directly in Closed Lost (not via conversion — skip if no direct path; otherwise verify it does NOT add to won revenue)",
+            "Won revenue and ROI unchanged by any non-Closed-Won deal"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CMP-006",
+        "title": "Delete gate: campaign with leads and/or deals requires typed confirmation and unlinks both",
+        "tags": [
+          "Smoke",
+          "Sanity",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Open a campaign with at least one lead and one attributed deal; click Delete",
+            "Red warning naming both counts; name input; Delete button DISABLED"
+          ],
+          [
+            "Type a wrong name",
+            "Still disabled"
+          ],
+          [
+            "Type the exact campaign name",
+            "Delete enables"
+          ],
+          [
+            "Confirm",
+            "Toast; navigated to /campaigns; campaign gone"
+          ],
+          [
+            "Open the affected lead and deal",
+            "Both survive; Campaign field/attribution shows \"—\" / absent"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CMP-007",
+        "title": "Delete gate: campaign with zero dependents deletes with a plain confirm",
+        "tags": [
+          "Sanity",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Create a throwaway campaign; open detail; Delete",
+            "Simple confirm modal — no type-to-confirm input"
+          ],
+          [
+            "Cancel, then Delete and confirm",
+            "Toast; back on the list; campaign gone"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CMP-008",
+        "title": "Feature: global search finds campaigns by name and channel",
+        "tags": [
+          "Feature",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Global search a seeded campaign's name fragment (2+ chars)",
+            "Result appears tagged \"Campaign\"; clicking navigates to its detail"
+          ],
+          [
+            "Search a channel word instead (e.g. \"Webinar\")",
+            "Matching campaigns appear in results too"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CMP-009",
+        "title": "Journey: Campaign → Lead → Convert → Deal → Closed Won → ROI reflects real revenue",
+        "tags": [
+          "E2E"
+        ],
+        "steps": [
+          [
+            "Create a campaign with a $20,000 budget",
+            "Detail landing; ROI 0%"
+          ],
+          [
+            "Create a lead via the form, tagged to this campaign",
+            "Lead detail shows the campaign link; campaign panel \"Leads generated (1)\""
+          ],
+          [
+            "Right-click the lead → Convert: existing account branch, \"also create a deal\" for $10,000",
+            "Lead → Converted; deal created in Qualification"
+          ],
+          [
+            "Verify the campaign's \"Deals attributed\" panel shows the new deal",
+            "Deal listed; ROI still 0% (open stage)"
+          ],
+          [
+            "Open the deal; drag/move it to Closed Won on the kanban",
+            "Stage Closed Won; close date stamped today"
+          ],
+          [
+            "Return to the campaign detail",
+            "Won revenue $10,000; ROI 50.0%"
+          ],
+          [
+            "Dashboard",
+            "Open pipeline and won-revenue chart both reconcile with this deal's new state"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CMP-010",
+        "title": "Journey: campaign teardown after a full lifecycle",
+        "tags": [
+          "E2E"
+        ],
+        "steps": [
+          [
+            "Reuse (or recreate) a campaign with one converted lead and one Closed Won deal attributed",
+            "Baseline established"
+          ],
+          [
+            "Open the campaign; Delete",
+            "Type-to-confirm gate (both a lead and a deal reference it)"
+          ],
+          [
+            "Type the exact name; confirm",
+            "Campaign removed; toast"
+          ],
+          [
+            "Open the lead and the deal",
+            "Both survive with the campaign reference cleared"
+          ],
+          [
+            "Admin → Audit log",
+            "campaign.create, lead.convert, deal.stage, campaign.delete all present in order"
+          ],
+          [
+            "Reset data",
+            "Environment clean — 8 seeded campaigns return"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Quotes",
+    "cases": [
+      {
+        "id": "TC-QT-001",
+        "title": "Create a quote: account required, auto-generated quote number, custom override",
+        "tags": [
+          "Smoke",
+          "Sanity",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Click \"+ New Quote\" with the form empty; add one line item; Create",
+            "Error: Account is required"
+          ],
+          [
+            "Pick an account; try Create with zero line items",
+            "Error: add at least one line item with a product and quantity > 0"
+          ],
+          [
+            "Add a line item (pick a product, quantity 1); leave Quote number blank; Create",
+            "Lands on the quote detail; quote number auto-generated in \"Q-2026-…\" style"
+          ],
+          [
+            "Create a second quote with a custom quote number typed in",
+            "Kept exactly as typed, not overwritten"
+          ],
+          [
+            "Verify both on the Quotes list",
+            "Quote numbers rendered in code style; searchable by quote number"
+          ]
+        ]
+      },
+      {
+        "id": "TC-QT-002",
+        "title": "Feature: cascading Account → Deal select — options scoped, selection resets on account change",
+        "tags": [
+          "Smoke",
+          "Sanity",
+          "Regression",
+          "Feature"
+        ],
+        "steps": [
+          [
+            "Open the New Quote form; pick an account that has open deals",
+            "Linked deal dropdown offers only THAT account's deals"
+          ],
+          [
+            "Pick one of its deals",
+            "Selection shown"
+          ],
+          [
+            "Now change the Account field to a different account",
+            "Linked deal selection silently CLEARS back to \"No deal (optional)\" — the previous deal was not carried over"
+          ],
+          [
+            "Open the Linked deal dropdown again",
+            "Options are now scoped to the NEW account's deals only"
+          ],
+          [
+            "Pick an account with zero deals",
+            "Linked deal shows an empty-state message (\"This account has no deals yet\") instead of an empty list"
+          ]
+        ]
+      },
+      {
+        "id": "TC-QT-003",
+        "title": "Feature: live line-item totals recompute on every keystroke, rounded per line to the cent",
+        "tags": [
+          "Feature",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Add a line item; pick a product",
+            "Unit price auto-fills from the product's current price; editable afterward"
+          ],
+          [
+            "Set quantity 3, discount 33%",
+            "Line total updates INSTANTLY (no debounce) to quantity × unitPrice × (1 − 0.33), rounded to the nearest cent"
+          ],
+          [
+            "Manually edit the unit price",
+            "Line total recomputes again from the edited price"
+          ],
+          [
+            "Add a second line item with different quantity/discount",
+            "Quote Total = sum of the two ALREADY-ROUNDED line totals, not a re-rounded raw sum"
+          ],
+          [
+            "Verify against hand calculation for a discount that produces a non-whole-cent intermediate (e.g. 33%)",
+            "Matches the documented per-line formula exactly"
+          ]
+        ]
+      },
+      {
+        "id": "TC-QT-004",
+        "title": "Feature: add/remove line item rows independently",
+        "tags": [
+          "Feature",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Add three line items with different products/quantities",
+            "Three independent rows; total sums all three"
+          ],
+          [
+            "Remove the middle row (×)",
+            "Only that row disappears; the other two rows' values are untouched; total recomputes"
+          ],
+          [
+            "Add a new row after removal",
+            "New blank row appended at the end, not inserted where the removed row was"
+          ]
+        ]
+      },
+      {
+        "id": "TC-QT-005",
+        "title": "Feature: status transitions follow the QUOTE_TRANSITIONS map exactly",
+        "tags": [
+          "Sanity",
+          "Regression",
+          "Feature"
+        ],
+        "steps": [
+          [
+            "Open a Draft quote",
+            "Only \"Sent\" offered under Move to:"
+          ],
+          [
+            "Move to Sent",
+            "Now \"Accepted\", \"Rejected\", \"Expired\" offered"
+          ],
+          [
+            "Move to Rejected",
+            "Only \"Draft\" offered (reopen)"
+          ],
+          [
+            "Move back to Draft, then Sent, then Expired",
+            "Expired also only offers \"Draft\" to reopen"
+          ],
+          [
+            "Move a Sent quote to Accepted",
+            "No further transition buttons shown — \"No further transitions (terminal status)\""
+          ]
+        ]
+      },
+      {
+        "id": "TC-QT-006",
+        "title": "Accepting a quote linked to an open deal auto-closes that deal as Won",
+        "tags": [
+          "Smoke",
+          "Sanity",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Create a quote for an account with an open (non-closed) deal; link that deal; add a line item; Create",
+            "Quote lands as Draft"
+          ],
+          [
+            "Move Draft → Sent → Accepted",
+            "Distinct success toast: \"Quote accepted. Deal '{name}' was automatically closed as Won.\""
+          ],
+          [
+            "Open the linked deal",
+            "Stage now Closed Won; close date stamped to today; \"Linked quote\" field shows this quote"
+          ],
+          [
+            "Admin → Audit log",
+            "quote.create, quote.accept entries present; quote.accept detail names the deal"
+          ]
+        ]
+      },
+      {
+        "id": "TC-QT-007",
+        "title": "Accepting a quote linked to an ALREADY-closed deal leaves the deal untouched",
+        "tags": [
+          "Sanity",
+          "Regression",
+          "Feature"
+        ],
+        "steps": [
+          [
+            "Create a quote linked to a deal that is already Closed Won or Closed Lost",
+            "Quote lands as Draft"
+          ],
+          [
+            "Move Draft → Sent → Accepted",
+            "Distinct, lower-key toast/info message: \"Quote accepted. Linked deal was already {stage} — no change made.\" (different from TC-QT-006's toast)"
+          ],
+          [
+            "Open the quote detail",
+            "An inline note near the Linked deal field: \"This quote's linked deal was already closed when accepted.\""
+          ],
+          [
+            "Open the deal",
+            "Stage and close date are UNCHANGED from before acceptance"
+          ]
+        ]
+      },
+      {
+        "id": "TC-QT-008",
+        "title": "Deleted-product line items render as a historical snapshot, without breaking the quote",
+        "tags": [
+          "Feature",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Note a seeded quote that references a specific product in a line item",
+            "Line item shows the product name as a link to its detail"
+          ],
+          [
+            "Delete that product (type-to-confirm gate, since it's referenced by leads/quotes)",
+            "Product removed; banner during delete also mentions N quote(s) reference it historically"
+          ],
+          [
+            "Reopen the quote",
+            "That line item still shows quantity/unit price/discount/line total exactly as before, with the product's name rendered as plain text \"{name} (deleted product)\" — no link, no crash"
+          ],
+          [
+            "Verify the quote's Total",
+            "Unchanged — the historical line total is unaffected by the product's deletion"
+          ]
+        ]
+      },
+      {
+        "id": "TC-QT-009",
+        "title": "Journey: Account → Deal → Quote → Accept → Deal auto-closed → Dashboard reflects it",
+        "tags": [
+          "E2E"
+        ],
+        "steps": [
+          [
+            "Create a new account; create an open deal on it ($60,000, Proposal)",
+            "Both created"
+          ],
+          [
+            "Create a quote for that account; cascading-select the new deal; add 2 line items",
+            "Total computed live"
+          ],
+          [
+            "Move the quote Draft → Sent → Accepted",
+            "Success toast naming the auto-closed deal"
+          ],
+          [
+            "Open the deal",
+            "Closed Won; close date today; linked quote shown"
+          ],
+          [
+            "Dashboard",
+            "\"Open pipeline\" excludes this deal; \"Won revenue\" chart's current month reflects its amount"
+          ],
+          [
+            "Account detail",
+            "\"Quotes\" accordion lists this quote with a working link; \"Related deals\" shows it Closed Won"
+          ]
+        ]
+      },
+      {
+        "id": "TC-QT-010",
+        "title": "Journey: quote lifecycle rejection and reopen never touches an unrelated deal",
+        "tags": [
+          "E2E"
+        ],
+        "steps": [
+          [
+            "Create a quote linked to an open deal",
+            "Draft"
+          ],
+          [
+            "Draft → Sent → Rejected",
+            "Ordinary toast; no logAudit entry for this transition (only quote.create/delete/accept are audited)"
+          ],
+          [
+            "Verify the linked deal",
+            "Untouched — still its original open stage"
+          ],
+          [
+            "Reopen: Rejected → Draft → Sent → Expired",
+            "Same non-accept transitions; deal still untouched throughout"
+          ],
+          [
+            "Delete the quote",
+            "Simple confirm (no dependents can point at a Quote); toast; back on /quotes"
+          ],
+          [
+            "Verify the deal one more time",
+            "Completely unaffected by the whole quote lifecycle"
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Custom Fields & Layouts",
+    "cases": [
+      {
+        "id": "TC-CFL-001",
+        "title": "Create a custom field and verify it renders on Form and Detail per the saved layout",
+        "tags": [
+          "Smoke",
+          "Sanity",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Admin → Object Configuration → open a module (e.g. Deals)",
+            "Custom Fields (0) and Layout tabs shown"
+          ],
+          [
+            "+ Add field: label \"Renewal Term\", type Number, not required; Save",
+            "Field appears in the Custom Fields table"
+          ],
+          [
+            "Layout tab → Form: drag \"Renewal Term\" from Available into Included; Save layout",
+            "Persisted"
+          ],
+          [
+            "Open that module's New record form",
+            "A \"Custom fields\" section appears with a Renewal Term number input"
+          ],
+          [
+            "Fill it in and create the record",
+            "Value saved"
+          ],
+          [
+            "Layout tab → Detail: drag the field into Included; Save layout",
+            "Persisted"
+          ],
+          [
+            "Open the new record's detail page",
+            "\"Custom fields\" card shows Renewal Term with the value entered"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CFL-002",
+        "title": "A required custom field blocks form submission until filled",
+        "tags": [
+          "Sanity",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Edit a custom field (or create a new one) and tick Required; Save",
+            "Field marked with * on forms"
+          ],
+          [
+            "Open that module's New record form; leave the field blank; submit",
+            "Field-level error \"{Label} is required.\"; no navigation"
+          ],
+          [
+            "Fill the field; submit",
+            "Succeeds"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CFL-003",
+        "title": "Feature: removing a field from the layout hides it but does not delete its data",
+        "tags": [
+          "Feature",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "With a field included in a module's Detail layout, set a value on an existing record",
+            "Value visible on the detail"
+          ],
+          [
+            "Layout tab: drag that field OUT of Included back to Available; Save layout",
+            "Field no longer renders anywhere on that surface"
+          ],
+          [
+            "Re-open the same record",
+            "\"Custom fields\" section is gone (or shrinks) — but the underlying value was never touched"
+          ],
+          [
+            "Drag the field back into Included; Save layout",
+            "Re-open the record: the ORIGINAL value reappears exactly as before — hidden ≠ deleted"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CFL-004",
+        "title": "Layout Designer: drag a field between Available and Included, and reorder within Included",
+        "tags": [
+          "Smoke",
+          "Sanity",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "A module with 2+ custom fields: open Layout, Form target",
+            "Both panes show current state"
+          ],
+          [
+            "Drag one field from Available into Included",
+            "Moves panes without a page reload"
+          ],
+          [
+            "Drag it back to Available",
+            "Returns; Included shrinks"
+          ],
+          [
+            "With 2 fields in Included, drag the second one above the first",
+            "Order visually updates"
+          ],
+          [
+            "Click Save layout; reload the page",
+            "The dragged order and inclusion persist exactly as last arranged"
+          ],
+          [
+            "Open the module's Form page",
+            "Custom fields render in the saved order"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CFL-005",
+        "title": "Delete gate: a field with existing data requires typed confirmation and nulls the data everywhere",
+        "tags": [
+          "Smoke",
+          "Sanity",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Set a custom field's value on 2+ records in a module",
+            "Values visible on those records"
+          ],
+          [
+            "Custom Fields tab → Delete that field",
+            "Warning: \"N record(s) have a value in this field. Deleting it will remove that data permanently.\"; Delete button DISABLED"
+          ],
+          [
+            "Type a wrong label",
+            "Still disabled"
+          ],
+          [
+            "Type the exact label",
+            "Delete enables"
+          ],
+          [
+            "Confirm",
+            "Field removed from the Custom Fields table"
+          ],
+          [
+            "Open the affected records",
+            "The field's data is gone (not just hidden); no leftover value if the field is ever recreated with the same label"
+          ],
+          [
+            "Check the Layout tab (both Form and Detail)",
+            "The deleted field no longer appears in either Included list"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CFL-006",
+        "title": "Delete gate: a field with zero recorded values deletes with a plain confirm",
+        "tags": [
+          "Sanity",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Create a brand-new custom field; do not set it on any record; Delete it",
+            "Simple confirm — no type-to-confirm input, since no record has a value"
+          ],
+          [
+            "Confirm",
+            "Field removed immediately"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CFL-007",
+        "title": "Feature: dropdown custom field options are admin-defined, not a fixed source-level list",
+        "tags": [
+          "Feature",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Create a Dropdown-type field with options \"Bronze\", \"Silver\", \"Gold\" (one per line)",
+            "Saved"
+          ],
+          [
+            "Open a record's form/detail",
+            "The dropdown offers exactly those three options — nowhere hardcoded in the app itself"
+          ],
+          [
+            "Edit the field definition to add a fourth option \"Platinum\"; Save",
+            "Existing records' values are untouched; the dropdown now offers all four options going forward"
+          ],
+          [
+            "A tester who hardcoded an assumed option list from an earlier session",
+            "Would now be wrong — options must be queried live, not assumed"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CFL-008",
+        "title": "RBAC: rep sees Object Configuration read-only; viewer has no access at all",
+        "tags": [
+          "Sanity",
+          "Regression"
+        ],
+        "steps": [
+          [
+            "Log in as rep@crm.com; open Admin → Object Configuration → any module",
+            "Read-only banner shown; + Add field, Edit, Delete, and Save layout controls all disabled; drag handles inert"
+          ],
+          [
+            "Log in as viewer@crm.com; try /admin/objects/leads directly via URL",
+            "403 Forbidden — same as the rest of /admin"
+          ],
+          [
+            "Log in as admin",
+            "Full CRUD and drag/save access restored"
+          ]
+        ]
+      },
+      {
+        "id": "TC-CFL-009",
+        "title": "Journey: admin defines a Lead custom field end-to-end and confirms it survives editing and reordering",
+        "tags": [
+          "E2E"
+        ],
+        "steps": [
+          [
+            "Admin → Object Configuration → Leads → + Add field: \"Preferred Contact Time\" (Dropdown: Morning/Afternoon/Evening), required",
+            "Field created"
+          ],
+          [
+            "Layout → Form: drag it into Included alongside the existing seeded fields; Save layout",
+            "Persisted"
+          ],
+          [
+            "Layout → Detail: same; Save layout",
+            "Persisted"
+          ],
+          [
+            "Create a new lead via the form; the required dropdown blocks submit until chosen; pick \"Evening\"; submit",
+            "Lands on the lead detail"
+          ],
+          [
+            "Verify the detail's Custom fields card",
+            "Shows \"Preferred Contact Time: Evening\" alongside the seeded Referral Source / Renewal Risk fields"
+          ],
+          [
+            "Edit the lead; change it to \"Morning\"; Save",
+            "Persisted on reload"
+          ],
+          [
+            "Back in Object Configuration, drag \"Preferred Contact Time\" to the TOP of the Detail layout; Save layout",
+            "Reorders"
+          ],
+          [
+            "Re-open the lead detail",
+            "\"Preferred Contact Time\" now renders first among the custom fields, still showing \"Morning\""
           ]
         ]
       }
@@ -3937,8 +4816,8 @@ export const TEST_CATALOG: CatalogModule[] = [
             "Merged list again"
           ],
           [
-            "Verify the cap",
-            "Log never exceeds 200 entries (oldest trimmed)"
+            "Generate 200+ audit-worthy actions, then page through the audit log using the Prev/Next pagination controls (page size selectable 10/25/50)",
+            "Total entries across all pages never exceeds 200; the oldest entries have been trimmed off the end"
           ]
         ]
       },

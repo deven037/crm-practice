@@ -4,6 +4,7 @@ import { getAllSync, newId, upsert, logAudit } from '../data/store';
 import { Account, Deal, DealStage, DEAL_STAGES, User } from '../types';
 import { SearchableSelect, Select } from '../components/Select';
 import { DatePicker } from '../components/DatePicker';
+import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 
@@ -28,6 +29,7 @@ export function DealForm() {
   });
   const [amountText, setAmountText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [customErrors, setCustomErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 
   const commitAmount = () => {
@@ -42,6 +44,9 @@ export function DealForm() {
       setError('Deal name is required.');
       return;
     }
+    const cErrs = validateCustomFields('deals', 'form', draft.customFields ?? {});
+    setCustomErrors(cErrs);
+    if (Object.keys(cErrs).length > 0) return;
     setBusy(true);
     await upsert('deals', draft);
     logAudit(user?.name ?? 'Unknown', 'deal.create', `Created deal ${draft.name}`);
@@ -118,7 +123,16 @@ export function DealForm() {
               onChange={(e) => setDraft({ ...draft, probability: Number(e.target.value) })}
             />
           </div>
+          <CustomFieldsSection
+            module="deals"
+            target="form"
+            mode="edit"
+            values={draft.customFields ?? {}}
+            onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+            errors={customErrors}
+          />
         </div>
+
         <div className="form-actions">
           <button className="btn" onClick={() => navigate('/deals')}>
             Cancel
