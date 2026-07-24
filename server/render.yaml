@@ -12,7 +12,7 @@ services:
       - key: JWT_EXPIRES_IN
         value: 12h
       - key: CORS_ORIGIN
-        value: https://<your-netlify-site>.netlify.app,http://localhost:5173
+        value: https://automation-crm.netlify.app,http://localhost:5173
       - key: LOGIN_RATE_LIMIT_MAX
         value: "8"
       - key: RESET_RATE_LIMIT_MAX
