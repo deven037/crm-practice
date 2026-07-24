@@ -13,7 +13,7 @@ export interface CatalogModule {
   cases: CatalogCase[];
 }
 
-export const CATALOG_INTRO = "Application at deterministic seed state (open with /?reset=true). Password for all users: Pass@123. Default login: admin@crm.com unless stated. Seed: 50 leads, 40 contacts, 20 accounts, 12 products, 25 deals, 30 tasks, 15 tickets, 5 users, 8 campaigns, 15 quotes. All data operations have simulated latency (300–1200 ms) — wait for spinners/skeletons to resolve before asserting.";
+export const CATALOG_INTRO = "Application at deterministic seed state (open with /?reset=true). Password for all users: Pass@123. Default login: admin@crm.com unless stated. Seed: 50 leads, 40 contacts, 20 accounts, 12 products, 25 deals, 30 tasks, 15 tickets, 5 users, 8 campaigns, 15 quotes. All data operations have simulated latency (300–1200 ms) — wait for spinners/skeletons to resolve before asserting. API cases (below) target the standalone server in server/ — base URL http://localhost:4000 in dev (or your deployed Render URL), every endpoint under /api, auth via `POST /api/auth/login` returning a Bearer token, interactive docs at /api/docs (Swagger UI) and /api/openapi.json, deterministic reset via `POST /api/reset` (no auth required, so it can be a test suite's first step).";
 
 export const TEST_CATALOG: CatalogModule[] = [
   {
@@ -5878,6 +5878,591 @@ export const TEST_CATALOG: CatalogModule[] = [
             "Verify via ?reset=true as the alternate path",
             "Same guarantee"
           ]
+        ]
+      }
+    ]
+  },
+  {
+    "name": "API — Authentication & Sessions",
+    "cases": [
+      {
+        "id": "TC-API-AUTH-001",
+        "title": "Login issues a bearer token; /auth/me resolves it back to the same user",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["POST /api/auth/login with admin@crm.com / Pass@123", "200; body has {token, user}; user has no password field"],
+          ["GET /api/auth/me with Authorization: Bearer <token>", "200; returns the same user (id, name, email, role)"],
+          ["GET /api/auth/me with no Authorization header", "401 { code: 'unauthorized' }"],
+          ["GET /api/auth/me with a garbage token string (not a valid JWT)", "401 — invalid token is treated the same as missing"]
+        ]
+      },
+      {
+        "id": "TC-API-AUTH-002",
+        "title": "Login negative matrix: wrong password, unknown email, deactivated account",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["POST /api/auth/login with admin@crm.com / WrongPass", "401 { code: 'invalid_credentials' }"],
+          ["POST /api/auth/login with ghost@crm.com / Pass@123", "401 with the SAME generic invalid_credentials code — no user-enumeration hint distinguishing unknown-email from wrong-password"],
+          ["POST /api/auth/login with priya@crm.com / Pass@123 (seeded inactive)", "403 { code: 'account_deactivated' }, not 401 — a distinct status from bad credentials"]
+        ]
+      },
+      {
+        "id": "TC-API-AUTH-003",
+        "title": "Login body validation",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["POST /api/auth/login with {} (empty body)", "422 validation_error; fieldErrors for both email and password"],
+          ["POST /api/auth/login with only email set", "422; fieldErrors.password present, fieldErrors.email absent"]
+        ]
+      },
+      {
+        "id": "TC-API-AUTH-004",
+        "title": "Login attempts are rate-limited per IP",
+        "tags": ["Sanity", "Regression"],
+        "steps": [
+          ["POST /api/auth/login with a wrong password 8 times in a row (default LOGIN_RATE_LIMIT_MAX), from the same client", "First 8 responses are 401 invalid_credentials"],
+          ["Send one more login attempt immediately after", "429 { code: 'rate_limited' }, even with the CORRECT password this time — the limiter blocks by request count, not by success/failure"],
+          ["Wait for the 15-minute window to elapse (or note it for a later run)", "Subsequent attempts succeed again once the window resets"]
+        ]
+      },
+      {
+        "id": "TC-API-AUTH-005",
+        "title": "Forgot-password: no user-enumeration hint, real password change verified by re-login",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["POST /api/auth/forgot-password with { email: 'rep@crm.com', newPassword: 'NewPass@456' } — no Authorization header sent", "200 { ok: true } — endpoint is intentionally unauthenticated"],
+          ["POST /api/auth/login with rep@crm.com / Pass@123 (the OLD password)", "401 — old password no longer works"],
+          ["POST /api/auth/login with rep@crm.com / NewPass@456", "200 — new password is live"],
+          ["POST /api/auth/forgot-password with a made-up email like nobody@crm.com", "Still 200 { ok: true } — identical response whether or not the email matched a real account"],
+          ["Cleanup: POST /api/reset", "rep@crm.com's password restored to the seed value Pass@123"]
+        ]
+      },
+      {
+        "id": "TC-API-AUTH-006",
+        "title": "Forgot-password validation",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["POST /api/auth/forgot-password with newPassword shorter than 8 characters", "422; fieldErrors.newPassword mentions the 8-character minimum"],
+          ["POST /api/auth/forgot-password with a malformed email string", "422; fieldErrors.email present"]
+        ]
+      },
+      {
+        "id": "TC-API-AUTH-007",
+        "title": "Journey: a locked-out rep self-serves a reset, then exercises a role boundary",
+        "tags": ["E2E"],
+        "steps": [
+          ["POST /api/auth/login as rep@crm.com with a wrong password twice", "Two 401s, no side effects"],
+          ["POST /api/auth/forgot-password to set a new password for rep@crm.com", "200 ok"],
+          ["POST /api/auth/login with the new password", "200; token issued"],
+          ["Using that token, GET /api/audit (admin/rep-only resource)", "200 — rep role is permitted to read the audit log"],
+          ["Using that token, POST /api/leads with a valid body", "201 — rep can create records"],
+          ["POST /api/reset", "Environment restored to the deterministic seed for the next run"]
+        ]
+      }
+    ]
+  },
+  {
+    "name": "API — Leads & Conversion",
+    "cases": [
+      {
+        "id": "TC-API-LEAD-001",
+        "title": "Create, fetch, and list envelope shape",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["POST /api/leads with { name, email, ownerId } only", "201; response has an auto-generated id, status defaults to 'New', source defaults to 'Web', value defaults to 0"],
+          ["GET /api/leads/:id with the returned id", "200; body matches exactly what POST returned"],
+          ["GET /api/leads?pageSize=10", "200; body shape is { data, page, pageSize, total, totalPages } — data.length ≤ 10, total reflects the full matching set regardless of page size"]
+        ]
+      },
+      {
+        "id": "TC-API-LEAD-002",
+        "title": "Pagination, sorting, and filtering on the list endpoint",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["GET /api/leads?page=1&pageSize=10 vs ?page=2&pageSize=10 (fresh seed, 50 leads)", "Two disjoint sets of 10; totalPages = 5"],
+          ["GET /api/leads?sort=-value", "data sorted by value descending — first row's value ≥ every other row's"],
+          ["GET /api/leads?sort=name", "data sorted alphabetically ascending by name"],
+          ["GET /api/leads?status=New&ownerId=user-1", "Every row in data satisfies BOTH filters (AND, not OR)"],
+          ["GET /api/leads?q=aurora (matches a seeded company name)", "Only leads whose name/company/email contains \"aurora\" (case-insensitive)"],
+          ["GET /api/leads?page=0", "400 — page must be a positive integer (or the API clamps to 1; verify which and assert consistently)"]
+        ]
+      },
+      {
+        "id": "TC-API-LEAD-003",
+        "title": "Create validation, and 404s on unknown ids",
+        "tags": ["Sanity", "Regression"],
+        "steps": [
+          ["POST /api/leads with {} (empty body)", "422; fieldErrors for name, email, and ownerId"],
+          ["POST /api/leads with an invalid email string", "422; fieldErrors.email"],
+          ["GET /api/leads/does-not-exist", "404 { code: 'not_found' }"],
+          ["PUT /api/leads/does-not-exist with a valid body", "404"],
+          ["DELETE /api/leads/does-not-exist", "404"]
+        ]
+      },
+      {
+        "id": "TC-API-LEAD-004",
+        "title": "Lead conversion: new-account branch, and re-convert is blocked",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["Create a lead, then POST /api/leads/:id/convert with { accountMode: 'new', accountName: 'API Test Co', contactName: 'API Contact', contactEmail: 'api@example.com', createDeal: true, dealAmount: 15000 }", "200; response has { lead, account, contact, deal }; lead.status is now 'Converted'; contact.tags includes 'imported'; deal.amount is 15000"],
+          ["GET /api/accounts/:id for the returned account.id", "200 — the account genuinely exists as its own resource, not just embedded in the response"],
+          ["POST /api/leads/:id/convert again on the same (now-Converted) lead", "409 { code: 'already_converted' }"]
+        ]
+      },
+      {
+        "id": "TC-API-LEAD-005",
+        "title": "Lead conversion: existing-account branch reuses the account, no duplicate created",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["Note an existing seeded account's id and its current contact count via GET /api/contacts?accountId=<id>", "Baseline recorded"],
+          ["Convert a different lead with { accountMode: 'existing', existingAccountId: '<that id>', contactName, contactEmail }", "200; response.account.id equals the account id you passed in — no new account row created"],
+          ["Re-run GET /api/contacts?accountId=<id>", "Count increased by exactly 1 — the new contact, linked to the existing account"]
+        ]
+      },
+      {
+        "id": "TC-API-LEAD-006",
+        "title": "Convert with createDeal carries the lead's campaignId onto the new deal",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["PUT a lead to set its campaignId to a real seeded campaign id", "200"],
+          ["Convert that lead with createDeal: true", "200; response.deal.campaignId equals the lead's campaignId"],
+          ["GET /api/campaigns/:id for that campaign and cross-check via GET /api/deals?campaignId=<id>", "The new deal appears in that filtered list"]
+        ]
+      },
+      {
+        "id": "TC-API-LEAD-007",
+        "title": "Journey: full lead lifecycle via API only, ending with an auto-closed deal",
+        "tags": ["E2E"],
+        "steps": [
+          ["POST /api/reset", "Deterministic baseline"],
+          ["POST /api/leads to create a lead", "201"],
+          ["GET /api/leads?q=<the lead's name>", "Found via search"],
+          ["POST /api/leads/:id/convert with accountMode existing (any seeded account) and createDeal: true, dealStage 'Qualification'", "200; deal created"],
+          ["PUT /api/deals/:id to change stage to 'Closed Won'", "200; response.closeDate is now within the last few seconds (auto-stamped), not the far-future date a normal open deal would have"],
+          ["DELETE /api/deals/:id without a confirm parameter", "409 confirmation_required — Closed Won deals need explicit confirmation"],
+          ["DELETE /api/deals/:id?confirm=DELETE", "204"],
+          ["POST /api/reset", "Environment clean for the next run"]
+        ]
+      }
+    ]
+  },
+  {
+    "name": "API — Deals, Quotes & Workflow Guards",
+    "cases": [
+      {
+        "id": "TC-API-DQ-001",
+        "title": "closeDate auto-stamps only on the FIRST transition into a closed stage",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["POST /api/deals with stage 'Qualification' (closeDate defaults ~30 days out)", "201"],
+          ["PUT the deal with stage 'Closed Won'", "200; closeDate is now ~now, not the original future date"],
+          ["Record that new closeDate, then PUT the SAME deal again with stage 'Closed Lost' (already closed → closed)", "200; closeDate is UNCHANGED from the previous step — the auto-stamp only fires on a non-closed → closed transition, not closed → closed"]
+        ]
+      },
+      {
+        "id": "TC-API-DQ-002",
+        "title": "Deleting a Closed Won deal requires explicit confirmation",
+        "tags": ["Sanity", "Regression"],
+        "steps": [
+          ["Create a deal and PUT its stage to 'Closed Won'", "200"],
+          ["DELETE /api/deals/:id (no confirm param)", "409 { code: 'confirmation_required' }; deal still exists (GET confirms)"],
+          ["DELETE /api/deals/:id?confirm=DELETE", "204; subsequent GET is 404"],
+          ["Create a second deal, leave it in 'Qualification', DELETE it directly with no confirm param", "204 — the confirmation gate only applies to Closed Won deals"]
+        ]
+      },
+      {
+        "id": "TC-API-DQ-003",
+        "title": "Quote status transitions are validated against the allowed-transition map",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["Create a quote (status defaults to 'Draft')", "201"],
+          ["POST /api/quotes/:id/transition { status: 'Accepted' } directly from Draft", "409 { code: 'illegal_transition' } — Draft can only go to Sent"],
+          ["POST /api/quotes/:id/transition { status: 'Sent' }", "200"],
+          ["POST .../transition { status: 'Accepted' }", "200 — Sent → Accepted is legal"],
+          ["POST .../transition { status: 'Sent' } again (Accepted is terminal)", "409 — no transitions are allowed out of Accepted"]
+        ]
+      },
+      {
+        "id": "TC-API-DQ-004",
+        "title": "Rejected/Expired quotes can be reopened to Draft",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["Create a quote, transition Draft → Sent → Rejected", "200 at each step"],
+          ["POST .../transition { status: 'Draft' }", "200 — Rejected → Draft is explicitly allowed (reopen)"],
+          ["Repeat the same reopen check via the Expired branch (Draft → Sent → Expired → Draft)", "Same result"]
+        ]
+      },
+      {
+        "id": "TC-API-DQ-005",
+        "title": "Accepting a quote linked to an OPEN deal auto-closes that deal as Won",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["Create an account, a deal on it in 'Qualification', and a quote with dealId pointing to that deal", "201 each"],
+          ["Transition the quote Draft → Sent → Accepted", "200; the Accepted response body's `deal` field is present and shows stage 'Closed Won' with closeDate ≈ now"],
+          ["GET /api/deals/:id independently", "Confirms the same — stage 'Closed Won', closeDate ≈ now — this happened as a SIDE EFFECT of accepting the quote, not a separate call"]
+        ]
+      },
+      {
+        "id": "TC-API-DQ-006",
+        "title": "Accepting a quote linked to an ALREADY-closed deal leaves the deal untouched",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["Create a deal, PUT its stage to 'Closed Lost'", "200"],
+          ["Create a quote with dealId pointing to that deal, transition Draft → Sent → Accepted", "200; the response's `deal` field is ABSENT (or undefined) — distinguishing this from the auto-close path in TC-API-DQ-005"],
+          ["GET /api/deals/:id", "stage is still 'Closed Lost' — accepting the quote did not touch it"]
+        ]
+      },
+      {
+        "id": "TC-API-DQ-007",
+        "title": "Quote creation validation and auto-numbering",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["POST /api/quotes with no accountId", "422; fieldErrors.accountId"],
+          ["POST /api/quotes with accountId set but lineItems: []", "422 — at least one line item is required"],
+          ["POST /api/quotes with quoteNumber left out entirely", "201; a quoteNumber is auto-generated (Q-<year>-<digits> pattern)"],
+          ["POST another quote with a custom quoteNumber string supplied", "201; the exact custom value is stored verbatim, not overwritten"]
+        ]
+      },
+      {
+        "id": "TC-API-DQ-008",
+        "title": "Journey: quote-driven deal closure, then a guarded deletion",
+        "tags": ["E2E"],
+        "steps": [
+          ["POST /api/reset", "Baseline"],
+          ["Create an account, an open deal on it, and a quote linked to the deal with two line items", "All 201"],
+          ["Transition the quote through Draft → Sent → Accepted", "200; linked deal auto-closes to Closed Won"],
+          ["DELETE the now-Closed-Won deal without confirm", "409"],
+          ["DELETE it again with ?confirm=DELETE", "204"],
+          ["DELETE the quote", "204 — quotes have no dependent-record gate, unlike deals"],
+          ["POST /api/reset", "Clean for the next run"]
+        ]
+      }
+    ]
+  },
+  {
+    "name": "API — Tickets Workflow",
+    "cases": [
+      {
+        "id": "TC-API-TIK-001",
+        "title": "Create defaults and required-field validation",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["POST /api/tickets with { subject, requester } only", "201; status defaults to 'Open', priority to 'Medium', slaDue is auto-set roughly 48 hours out, comments/attachments start empty"],
+          ["POST /api/tickets with {} (no subject/requester)", "422; fieldErrors for both"]
+        ]
+      },
+      {
+        "id": "TC-API-TIK-002",
+        "title": "Status transitions follow the ticket workflow map exactly",
+        "tags": ["Sanity", "Regression"],
+        "steps": [
+          ["Create a ticket (status Open), POST .../transition { status: 'Resolved' } directly", "409 illegal_transition — Open can only go to In Progress or Closed"],
+          ["POST .../transition { status: 'In Progress' }", "200"],
+          ["POST .../transition { status: 'Resolved' }", "200 — In Progress → Resolved is legal"],
+          ["POST .../transition { status: 'Closed' }", "200"],
+          ["POST .../transition { status: 'Open' }", "200 — Closed → Open (reopen) is the one legal move out of Closed"]
+        ]
+      },
+      {
+        "id": "TC-API-TIK-003",
+        "title": "Only Closed tickets can be deleted",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["Create a ticket, leave it Open, DELETE it", "409 { code: 'not_closed' }"],
+          ["Transition it to Closed, DELETE again", "204"]
+        ]
+      },
+      {
+        "id": "TC-API-TIK-004",
+        "title": "Dedicated priority and comment endpoints",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["POST /api/tickets/:id/priority { priority: 'Urgent' }", "200; GET the ticket afterward shows priority Urgent"],
+          ["POST /api/tickets/:id/comments { text: 'First note' }", "201; comment has an author matching the authenticated user, a generated id, and a createdAt"],
+          ["POST a second comment", "201; comments array now has both, in order — the first comment is not overwritten"]
+        ]
+      },
+      {
+        "id": "TC-API-TIK-005",
+        "title": "Journey: full ticket lifecycle via the dedicated endpoints",
+        "tags": ["E2E"],
+        "steps": [
+          ["Create a ticket", "201, status Open"],
+          ["Escalate priority to Urgent", "200"],
+          ["Add two comments", "Both persisted, in order"],
+          ["Transition Open → In Progress → Resolved → Closed", "Each 200, following the legal chain"],
+          ["DELETE the ticket", "204 — now permitted since it's Closed"]
+        ]
+      }
+    ]
+  },
+  {
+    "name": "API — Accounts, Products & Campaigns Delete-Gates",
+    "cases": [
+      {
+        "id": "TC-API-DEL-001",
+        "title": "Account delete defaults to unlink; ?cascade=true removes dependents instead",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["Create an account, a contact on it, and a deal on it", "201 each"],
+          ["DELETE /api/accounts/:id (no query param)", "204; GET the contact and the deal afterward — both still exist, but with accountId now null (unlink, the default)"],
+          ["Repeat with a fresh account+contact+deal, this time DELETE /api/accounts/:id?cascade=true", "204; GET the contact and the deal afterward — both now 404 (removed, not just unlinked)"]
+        ]
+      },
+      {
+        "id": "TC-API-DEL-002",
+        "title": "Product delete unlinks leads; Quotes keep their historical line-item snapshot",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["Create a product, then a lead with productId pointing to it", "201 each"],
+          ["Create a quote with a line item referencing that same product (productId + a snapshotted productName)", "201"],
+          ["DELETE /api/products/:id", "204"],
+          ["GET the lead", "productId is now null — the lead survives, unlinked"],
+          ["GET /api/products/:id", "404 — the product itself is gone"],
+          ["GET the quote", "200; its line item is untouched — productId still references the now-deleted id, productName still holds the original snapshot text, no error or data loss"]
+        ]
+      },
+      {
+        "id": "TC-API-DEL-003",
+        "title": "Campaign delete always unlinks both Leads and Deals (no cascade option)",
+        "tags": ["Sanity", "Regression"],
+        "steps": [
+          ["Create a campaign, a lead with that campaignId, and a deal with that campaignId", "201 each"],
+          ["DELETE /api/campaigns/:id", "204"],
+          ["GET the lead and the deal", "Both survive; campaignId is null on each — there is no ?cascade option for campaigns, unlink is the only behavior"]
+        ]
+      },
+      {
+        "id": "TC-API-DEL-004",
+        "title": "Campaign date validation: endDate must be after startDate",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["POST /api/campaigns with endDate equal to or before startDate", "422; fieldErrors.endDate mentions end date must be after start date"],
+          ["Fix endDate to be later than startDate, resubmit", "201"]
+        ]
+      },
+      {
+        "id": "TC-API-DEL-005",
+        "title": "Product price and campaign budget validation",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["POST /api/products with price: 0", "422 — price must be greater than 0"],
+          ["POST /api/products with price: -50", "422"],
+          ["POST /api/campaigns with budget: 0", "422 — same rule for campaign budget"]
+        ]
+      },
+      {
+        "id": "TC-API-DEL-006",
+        "title": "Journey: build a small web of records, then tear it down in dependency order",
+        "tags": ["E2E"],
+        "steps": [
+          ["POST /api/reset", "Baseline"],
+          ["Create Account A, Product P, Campaign C", "201 each"],
+          ["Create Lead L linked to both P (productId) and C (campaignId), plus a Deal D on Account A also linked to C", "201 each"],
+          ["DELETE Campaign C", "204; L.campaignId and D.campaignId both null afterward"],
+          ["DELETE Product P", "204; L.productId null afterward, still otherwise intact"],
+          ["DELETE Account A with ?cascade=true", "204; D is now removed entirely (it was a dependent deal)"],
+          ["GET L", "Still exists — leads are never cascade-deleted by any of these operations, only unlinked"],
+          ["POST /api/reset", "Clean for the next run"]
+        ]
+      }
+    ]
+  },
+  {
+    "name": "API — Users, RBAC & Rate Limits",
+    "cases": [
+      {
+        "id": "TC-API-RBAC-001",
+        "title": "Viewer role: read access everywhere, write access nowhere",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["Log in as viewer@crm.com", "200; token issued"],
+          ["GET /api/leads", "200 — read is allowed for every authenticated role"],
+          ["POST /api/leads with a valid body", "403 { code: 'forbidden' }"],
+          ["PUT /api/leads/:id (any existing lead) with a valid body", "403"],
+          ["DELETE /api/leads/:id", "403"],
+          ["GET /api/users", "403 — unlike most resources, even READING the user list is admin/rep-only"]
+        ]
+      },
+      {
+        "id": "TC-API-RBAC-002",
+        "title": "Self-service profile edit is allowed for any role; editing someone else requires admin/rep",
+        "tags": ["Sanity", "Regression"],
+        "steps": [
+          ["Log in as viewer@crm.com; PUT /api/users/:ownId with a new name/email/phone", "200 — editing your OWN record is always allowed, regardless of role"],
+          ["Still as viewer, PUT /api/users/:someoneElsesId", "403 — viewer cannot edit another user"],
+          ["Log in as admin; PUT /api/users/:viewerId", "200 — admin/rep can edit any user"]
+        ]
+      },
+      {
+        "id": "TC-API-RBAC-003",
+        "title": "Self-delete is always blocked, regardless of role",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["Log in as admin; DELETE /api/users/:adminsOwnId", "403 — 'You cannot delete your own account.', even for an admin"]
+        ]
+      },
+      {
+        "id": "TC-API-RBAC-004",
+        "title": "Deleting a user who owns records requires ?reassignTo=",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["Pick a seeded user who owns at least one lead/account/deal (e.g. one of the OWNER_IDS); DELETE /api/users/:id with no query param", "409 { code: 'has_owned_records', details: { leads, accounts, deals } } — counts match reality"],
+          ["Retry DELETE /api/users/:id?reassignTo=<anotherActiveUserId>", "204"],
+          ["GET the previously-owned leads/accounts/deals", "ownerId on each now equals the reassignTo id"]
+        ]
+      },
+      {
+        "id": "TC-API-RBAC-005",
+        "title": "Toggling active status affects subsequent login",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["As admin, POST /api/users/:samSalesId/toggle-active on an active user", "200; response.active is now false"],
+          ["POST /api/auth/login as that now-deactivated user", "403 account_deactivated"],
+          ["POST /api/users/:id/toggle-active again", "200; active back to true"],
+          ["Login again", "200 — succeeds once reactivated"]
+        ]
+      },
+      {
+        "id": "TC-API-RBAC-006",
+        "title": "Journey: admin lifecycle-manages a rep account end-to-end",
+        "tags": ["E2E"],
+        "steps": [
+          ["POST /api/reset", "Baseline"],
+          ["Admin creates a new user with role 'rep'", "201"],
+          ["New rep logs in, edits their own profile", "200 each"],
+          ["Admin deactivates the new rep", "200"],
+          ["Rep's next login attempt", "403 account_deactivated"],
+          ["Admin reassigns nothing (new user owns no records) and deletes the rep directly", "204 — no 409, since a brand-new user owns zero records"],
+          ["POST /api/reset", "Clean for the next run"]
+        ]
+      }
+    ]
+  },
+  {
+    "name": "API — Custom Fields & Layouts",
+    "cases": [
+      {
+        "id": "TC-API-CF-001",
+        "title": "Create a field: key auto-slugified, stays stable across later edits",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["POST /api/customFieldDefs { module: 'deals', label: 'Renewal Contact', type: 'text' }", "201; response.key is an auto-generated slug of the label (e.g. renewal_contact)"],
+          ["PUT the same field, changing only its label to 'Renewal POC'", "200; response.key is UNCHANGED from creation — only the label changed"]
+        ]
+      },
+      {
+        "id": "TC-API-CF-002",
+        "title": "Dropdown fields require at least one option",
+        "tags": ["Sanity", "Regression"],
+        "steps": [
+          ["POST /api/customFieldDefs { module: 'deals', label: 'Risk', type: 'dropdown' } with no options", "422; fieldErrors.options"],
+          ["Resubmit with options: ['Low', 'Medium', 'High']", "201"]
+        ]
+      },
+      {
+        "id": "TC-API-CF-003",
+        "title": "Deleting a field unlinks its value from every record AND strips it from every layout",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["Create a custom field on 'deals'; PUT a real deal setting customFields[<key>] to a value", "200"],
+          ["POST /api/layouts to include that field in the deals Form layout", "200/201"],
+          ["DELETE /api/customFieldDefs/:id", "204"],
+          ["GET the deal", "customFields no longer contains that key — the rest of its custom data (if any) is untouched"],
+          ["GET /api/layouts (deals, form target)", "fieldIds no longer includes the deleted field's id"]
+        ]
+      },
+      {
+        "id": "TC-API-CF-004",
+        "title": "Layout fieldIds are validated against the target module",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["Create a custom field on 'leads'; POST /api/layouts { module: 'accounts', target: 'form', fieldIds: [<that leads field's id>] }", "422 { code: 'invalid_field_ids' } — the field belongs to a different module"],
+          ["Retry with a field id that actually belongs to 'accounts'", "200/201"]
+        ]
+      },
+      {
+        "id": "TC-API-CF-005",
+        "title": "Saving a layout for the same (module, target) twice updates in place, no duplicates",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["GET /api/layouts and note the total count", "Baseline"],
+          ["POST /api/layouts for (module: 'products', target: 'detail') with one fieldIds set", "200/201"],
+          ["POST /api/layouts again for the SAME (module, target) with a different fieldIds set", "200 (not 201) — same layout record updated, not duplicated"],
+          ["GET /api/layouts count again", "Increased by at most 1 from the original baseline, not 2"]
+        ]
+      },
+      {
+        "id": "TC-API-CF-006",
+        "title": "Journey: define, use, and fully retire a custom field",
+        "tags": ["E2E"],
+        "steps": [
+          ["POST /api/reset", "Baseline"],
+          ["Create a dropdown field on 'accounts' with options", "201"],
+          ["Add it to both the accounts Form and Detail layouts", "200/201 each"],
+          ["PUT an account setting that field's value", "200"],
+          ["GET the account", "Value present under customFields"],
+          ["DELETE the field", "204"],
+          ["GET the account and both layouts again", "Value gone from the account; field id gone from both layouts — full cleanup, nothing dangling"],
+          ["POST /api/reset", "Clean for the next run"]
+        ]
+      }
+    ]
+  },
+  {
+    "name": "API — System: Bootstrap, Reset & Docs",
+    "cases": [
+      {
+        "id": "TC-API-SYS-001",
+        "title": "Health check is public; bootstrap requires auth and omits passwords",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["GET /api/health with no Authorization header", "200 { ok: true }"],
+          ["GET /api/bootstrap with no Authorization header", "401"],
+          ["GET /api/bootstrap with a valid token", "200; body has a key for every collection (users, leads, contacts, accounts, deals, products, tickets, campaigns, quotes, tasks, activities, notifications, customFieldDefs, layouts, audit)"],
+          ["Inspect bootstrap.users", "Every user object has no password field"]
+        ]
+      },
+      {
+        "id": "TC-API-SYS-002",
+        "title": "Reset is public, deterministic, and idempotent",
+        "tags": ["Smoke", "Sanity", "Regression"],
+        "steps": [
+          ["POST /api/reset with NO Authorization header at all", "200 { ok: true, seededAt } — confirms it's genuinely unauthenticated by design"],
+          ["GET /api/leads total (with any valid token)", "Exactly 50"],
+          ["Create 3 extra leads via POST", "Total becomes 53"],
+          ["POST /api/reset again", "200"],
+          ["GET /api/leads total", "Back to exactly 50 — the 3 extra leads are gone, not merged or duplicated"],
+          ["Repeat the whole create-3/reset cycle once more", "Identical result both times — reset is fully idempotent"]
+        ]
+      },
+      {
+        "id": "TC-API-SYS-003",
+        "title": "Reset requests are rate-limited",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["POST /api/reset rapidly, more times than RESET_RATE_LIMIT_MAX within one minute (default 10)", "The requests beyond the limit return 429 rate_limited instead of 200"]
+        ]
+      },
+      {
+        "id": "TC-API-SYS-004",
+        "title": "OpenAPI spec and Swagger UI are reachable and well-formed",
+        "tags": ["Feature", "Regression"],
+        "steps": [
+          ["GET /api/openapi.json", "200; valid JSON; info.title is 'Practice CRM API'; paths is a non-empty object covering every resource"],
+          ["GET /api/docs", "200; HTML response (Swagger UI page) — importable as-is into Postman via 'Import from link' against /api/openapi.json"]
+        ]
+      },
+      {
+        "id": "TC-API-SYS-005",
+        "title": "Journey: a standard API test-suite setup/teardown cycle",
+        "tags": ["E2E"],
+        "steps": [
+          ["POST /api/reset as the suite's first step (before any login)", "200"],
+          ["Log in, GET /api/bootstrap to warm up any local fixtures", "200"],
+          ["Run a handful of create/list/update/delete calls across two or three resources", "All succeed per their individual rules"],
+          ["POST /api/reset as the suite's teardown step", "200"],
+          ["GET /api/leads, /api/accounts, /api/products totals", "All back to the exact deterministic seed counts (50 / 20 / 12) — the environment is clean for whichever suite runs next"]
         ]
       }
     ]
