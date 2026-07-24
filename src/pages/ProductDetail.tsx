@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getAll, getAllSync, getById, logAudit, removeMany, saveAll, upsert } from '../data/store';
+import { getAll, getAllSync, getById, removeMany, saveAll, upsert } from '../data/store';
 import { Lead, Product, PRODUCT_CATEGORIES, Quote } from '../types';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
@@ -74,11 +74,6 @@ export function ProductDetail() {
     // so QuoteLineItemsView falls back to "{productName} (deleted product)" once the
     // product no longer resolves — no write needed to keep the quote's history readable.
     await removeMany('products', [product.id]);
-    logAudit(
-      user?.name ?? 'Unknown',
-      'product.delete',
-      `Deleted product ${product.name} (${leads.length} lead(s) unlinked, ${affectedQuotes.length} quote(s) reference it historically)`
-    );
     toast.push('success', `Product "${product.name}" deleted.${leads.length > 0 ? ` ${leads.length} lead(s) unlinked.` : ''}`);
     navigate('/products');
   };

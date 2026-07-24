@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getAllSync, newId, upsert, logAudit } from '../data/store';
+import { getAllSync, newId, upsert } from '../data/store';
 import { Account, Contact } from '../types';
 import { MultiSelect, SearchableSelect } from '../components/Select';
 import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
@@ -45,7 +45,6 @@ export function ContactForm() {
     if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) return;
     setBusy(true);
     await upsert('contacts', draft);
-    logAudit(user?.name ?? 'Unknown', 'contact.create', `Created contact ${draft.name}`);
     toast.push('success', `Contact "${draft.name}" created.`);
     navigate(`/contacts/${draft.id}`);
   };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { newId, upsert, logAudit } from '../data/store';
+import { newId, upsert } from '../data/store';
 import { Ticket, TicketPriority, TICKET_PRIORITIES } from '../types';
 import { Select } from '../components/Select';
 import { CustomFieldsSection, CustomFieldValues, validateCustomFields } from '../components/CustomFieldsSection';
@@ -45,7 +45,6 @@ export function TicketForm() {
     };
     setBusy(true);
     await upsert('tickets', ticket);
-    logAudit(user?.name ?? 'Unknown', 'ticket.create', `Created ticket "${ticket.subject}"`);
     toast.push('success', `Ticket "${ticket.subject}" created.`);
     navigate(`/tickets/${ticket.id}`);
   };

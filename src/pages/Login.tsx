@@ -2,10 +2,15 @@ import { FormEvent, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
-import { getAllSync, setValue, delay } from '../data/store';
-import { User } from '../types';
+import { apiFetch } from '../data/apiFetch';
 
 type Mode = 'login' | 'forgot-email' | 'forgot-code' | 'forgot-password';
+
+// Cosmetic pacing only, for the forgot-password flow's fake email/code steps (no
+// server round-trip backs those two — the real network call for the password
+// change itself already provides realistic latency).
+const delay = (min: number, max: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, min + Math.random() * (max - min)));
 
 export function Login() {
   const { login } = useAuth();
@@ -86,13 +91,10 @@ export function Login() {
       return;
     }
     setBusy(true);
-    await delay(300, 700);
-    const users = getAllSync<User>('users');
-    const idx = users.findIndex((u) => u.email.toLowerCase() === resetEmail.trim().toLowerCase());
-    if (idx >= 0) {
-      users[idx] = { ...users[idx], password: newPassword };
-      setValue('users', users);
-    }
+    await apiFetch('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email: resetEmail, newPassword }),
+    });
     setBusy(false);
     toast.push('success', 'Password updated. You can sign in now.');
     setMode('login');

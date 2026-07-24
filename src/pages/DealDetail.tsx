@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getAllSync, getById, logAudit, removeMany, upsert } from '../data/store';
+import { getAllSync, getById, removeMany, upsert } from '../data/store';
 import { Account, Deal, DealStage, DEAL_STAGES, Quote, User } from '../types';
 import { Modal } from '../components/Modal';
 import { SearchableSelect, Select } from '../components/Select';
@@ -204,7 +204,6 @@ export function DealDetail() {
                 disabled={deal.stage === 'Closed Won' && confirmText !== 'DELETE'}
                 onClick={async () => {
                   await removeMany('deals', [deal.id]);
-                  logAudit(user?.name ?? 'Unknown', 'deal.delete', `Deleted deal ${deal.name} (${deal.stage})`);
                   toast.push('success', `Deal "${deal.name}" deleted.`);
                   navigate('/deals');
                 }}

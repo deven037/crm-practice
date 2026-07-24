@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAll, getAllSync, newId, removeMany, saveAll, upsert, logAudit } from '../data/store';
+import { getAll, getAllSync, newId, removeMany, saveAll, upsert } from '../data/store';
 import { Account, Contact, Deal, DealStage, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, User } from '../types';
 import { Modal } from '../components/Modal';
 import { MultiSelect, SearchableSelect, Select } from '../components/Select';
@@ -131,7 +131,6 @@ export function Leads() {
     // Native confirm dialog — practices dialog handling.
     if (!window.confirm(`Delete ${selected.length} selected lead(s)? This cannot be undone.`)) return;
     await removeMany('leads', selected);
-    logAudit(user?.name ?? 'Unknown', 'lead.delete', `Deleted ${selected.length} leads`);
     toast.push('success', `${selected.length} lead(s) deleted.`);
     setSelected([]);
     load();
@@ -223,7 +222,6 @@ export function Leads() {
       await upsert('deals', deal);
     }
     await upsert('leads', { ...wizard.lead, status: 'Converted' as LeadStatus });
-    logAudit(user?.name ?? 'Unknown', 'lead.convert', `Converted lead ${wizard.lead.name}`);
     toast.push('success', `Lead "${wizard.lead.name}" converted successfully.`);
     setWizard(null);
     load();

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { getAllSync, newId, upsert, logAudit } from '../data/store';
+import { getAllSync, newId, upsert } from '../data/store';
 import { Campaign, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Product, User } from '../types';
 import { SearchableSelect, Select } from '../components/Select';
 import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
@@ -45,7 +45,6 @@ export function LeadForm() {
     if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) return;
     setBusy(true);
     await upsert('leads', draft);
-    logAudit(user?.name ?? 'Unknown', 'lead.create', `Created lead ${draft.name}`);
     toast.push('success', `Lead "${draft.name}" created.`);
     navigate(`/leads/${draft.id}`);
   };

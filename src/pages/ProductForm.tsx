@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { newId, upsert, logAudit } from '../data/store';
+import { newId, upsert } from '../data/store';
 import { Product, PRODUCT_CATEGORIES } from '../types';
 import { Select } from '../components/Select';
 import { CustomFieldsSection, CustomFieldValues, validateCustomFields } from '../components/CustomFieldsSection';
@@ -52,7 +52,6 @@ export function ProductForm() {
     };
     setBusy(true);
     await upsert('products', product);
-    logAudit(user?.name ?? 'Unknown', 'product.create', `Created product ${product.name}`);
     toast.push('success', `Product "${product.name}" created.`);
     navigate(`/products/${product.id}`);
   };

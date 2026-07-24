@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getAll, getAllSync, logAudit, newId, removeMany, saveAll, upsert } from '../data/store';
+import { getAll, getAllSync, newId, removeMany, saveAll, upsert } from '../data/store';
 import { Account, AuditEntry, CustomFieldDef, CUSTOM_FIELD_MODULES, CustomFieldModule, Deal, Lead, Role, User } from '../types';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
@@ -62,7 +62,6 @@ export function Admin() {
   const toggleActive = async (target: User) => {
     const next = { ...target, active: !target.active };
     await upsert('users', next);
-    logAudit(user?.name ?? 'Unknown', 'user.toggle', `${next.active ? 'Activated' : 'Deactivated'} ${target.name}`);
     toast.push('success', `${target.name} ${next.active ? 'activated' : 'deactivated'}.`);
     load();
   };
@@ -83,7 +82,6 @@ export function Admin() {
     }
     if (!window.confirm(`Delete user "${target.name}"?`)) return;
     await removeMany('users', [target.id]);
-    logAudit(user?.name ?? 'Unknown', 'user.delete', `Deleted user ${target.name}`);
     toast.push('success', `User "${target.name}" deleted.`);
     load();
   };
@@ -98,7 +96,6 @@ export function Admin() {
     await saveAll('deals', remap(getAllSync<Deal>('deals')));
     await removeMany('users', [target.id]);
     const newOwner = users.find((u) => u.id === reassignTo)?.name ?? 'unknown';
-    logAudit(user?.name ?? 'Unknown', 'user.delete', `Deleted ${target.name}; records reassigned to ${newOwner}`);
     toast.push('success', `User "${target.name}" deleted — records reassigned to ${newOwner}.`);
     setReassigning(null);
     load();
@@ -110,7 +107,6 @@ export function Admin() {
       return;
     }
     await upsert('users', target);
-    logAudit(user?.name ?? 'Unknown', 'user.save', `Saved user ${target.name}`);
     toast.push('success', `User "${target.name}" saved.`);
     setEditing(null);
     load();

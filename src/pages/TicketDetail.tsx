@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getById, logAudit, newId, removeMany, upsert } from '../data/store';
+import { getById, newId, removeMany, upsert } from '../data/store';
 import { Ticket, TicketPriority, TicketStatus, TICKET_PRIORITIES, TICKET_TRANSITIONS } from '../types';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
@@ -78,9 +78,7 @@ export function TicketDetail() {
   };
 
   const transition = (status: TicketStatus) => {
-    const from = ticket.status;
     persist({ ...ticket, status }, `Ticket moved to ${status}.`);
-    logAudit(user?.name ?? 'Unknown', 'ticket.status', `Ticket #${ticket.id} moved ${from} → ${status}`);
   };
 
   const addComment = () => {
@@ -95,7 +93,6 @@ export function TicketDetail() {
       },
       'Comment added.'
     );
-    logAudit(user?.name ?? 'Unknown', 'ticket.comment', `Comment added to ticket #${ticket.id}`);
     setComment('');
     setCannedValue('');
   };
@@ -178,7 +175,6 @@ export function TicketDetail() {
                 data-testid="confirm-delete-btn"
                 onClick={async () => {
                   await removeMany('tickets', [ticket.id]);
-                  logAudit(user?.name ?? 'Unknown', 'ticket.delete', `Deleted ticket "${ticket.subject}"`);
                   toast.push('success', `Ticket "${ticket.subject}" deleted.`);
                   navigate('/tickets');
                 }}
@@ -204,10 +200,7 @@ export function TicketDetail() {
             <Select
               value={ticket.priority}
               options={TICKET_PRIORITIES.map((p) => ({ value: p, label: p }))}
-              onChange={(v) => {
-                persist({ ...ticket, priority: v as TicketPriority }, `Priority set to ${v}.`);
-                logAudit(user?.name ?? 'Unknown', 'ticket.priority', `Ticket #${ticket.id} priority set to ${v}`);
-              }}
+              onChange={(v) => persist({ ...ticket, priority: v as TicketPriority }, `Priority set to ${v}.`)}
               testId="ticket-priority"
             />
           </span>

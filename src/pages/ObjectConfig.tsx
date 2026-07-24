@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getAllSync, logAudit, newId, saveAll, setValue } from '../data/store';
+import { getAllSync, newId, removeMany, upsert } from '../data/store';
 import {
   CustomFieldDef,
   CustomFieldModule,
@@ -15,7 +15,7 @@ import { Select } from '../components/Select';
 import { Tabs } from '../components/Tabs';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
-import { classNames, slugify } from '../utils';
+import { classNames } from '../utils';
 
 const MODULE_LABELS: Record<CustomFieldModule, string> = {
   leads: 'Leads',
@@ -77,66 +77,31 @@ export function ObjectConfig() {
     );
   }
 
-  const persistDefs = (next: CustomFieldDef[]) => {
-    const others = getAllSync<CustomFieldDef>('customFieldDefs').filter((d) => d.module !== mod);
-    setValue('customFieldDefs', [...others, ...next]);
-    setDefs(next);
-  };
-
-  const persistLayouts = (next: LayoutDef[]) => {
-    const others = getAllSync<LayoutDef>('layouts').filter((l) => l.module !== mod);
-    setValue('layouts', [...others, ...next]);
-    setLayouts(next);
-  };
-
   const dependentCount = (key: string) =>
     getAllSync<GenericRecord>(mod).filter((r) => r.customFields?.[key] !== undefined && r.customFields?.[key] !== null)
       .length;
 
-  const saveField = () => {
+  // Persistence + audit-on-mutation, unlinking dependent records, and stripping a
+  // deleted field out of every Layout are all handled server-side (see
+  // server/src/routes/customFieldDefs.ts) — this just calls the API and syncs local state.
+  const saveField = async () => {
     if (!editingField) return;
     if (!editingField.label.trim()) {
       toast.push('error', 'Label is required.');
       return;
     }
     const isNew = !defs.some((d) => d.id === editingField.id);
-    const field: CustomFieldDef = {
-      ...editingField,
-      label: editingField.label.trim(),
-      key: isNew ? slugify(editingField.label) : editingField.key,
-    };
-    const next = isNew ? [...defs, field] : defs.map((d) => (d.id === field.id ? field : d));
-    persistDefs(next);
-    logAudit(
-      user?.name ?? 'Unknown',
-      'customfield.create',
-      `${isNew ? 'Created' : 'Updated'} custom field "${field.label}" on ${MODULE_LABELS[mod]}`
-    );
-    toast.push('success', `Custom field "${field.label}" saved.`);
+    const saved = await upsert('customFieldDefs', { ...editingField, label: editingField.label.trim() });
+    setDefs(isNew ? [...defs, saved] : defs.map((d) => (d.id === saved.id ? saved : d)));
+    toast.push('success', `Custom field "${saved.label}" saved.`);
     setEditingField(null);
   };
 
-  const deleteField = () => {
+  const deleteField = async () => {
     if (!deletingField) return;
-    const count = dependentCount(deletingField.key);
-    if (count > 0) {
-      const records = getAllSync<GenericRecord>(mod).map((r) => {
-        if (r.customFields && deletingField.key in r.customFields) {
-          const rest = { ...r.customFields };
-          delete rest[deletingField.key];
-          return { ...r, customFields: rest };
-        }
-        return r;
-      });
-      saveAll(mod, records);
-    }
-    persistDefs(defs.filter((d) => d.id !== deletingField.id));
-    persistLayouts(layouts.map((l) => ({ ...l, fieldIds: l.fieldIds.filter((id) => id !== deletingField.id) })));
-    logAudit(
-      user?.name ?? 'Unknown',
-      'customfield.delete',
-      `Deleted custom field "${deletingField.label}" from ${MODULE_LABELS[mod]} (${count} record(s) had a value)`
-    );
+    await removeMany('customFieldDefs', [deletingField.id]);
+    setDefs(defs.filter((d) => d.id !== deletingField.id));
+    setLayouts(layouts.map((l) => ({ ...l, fieldIds: l.fieldIds.filter((id) => id !== deletingField.id) })));
     toast.push('success', `Custom field "${deletingField.label}" deleted.`);
     setDeletingField(null);
   };
@@ -144,13 +109,13 @@ export function ObjectConfig() {
   const includedFields = stagedIds.map((id) => defs.find((d) => d.id === id)).filter((d): d is CustomFieldDef => Boolean(d));
   const availableFields = defs.filter((d) => !stagedIds.includes(d.id));
 
-  const saveLayout = () => {
+  const saveLayout = async () => {
     const existing = layouts.find((l) => l.target === target);
-    const next: LayoutDef = existing
+    const draft: LayoutDef = existing
       ? { ...existing, fieldIds: stagedIds }
       : { id: newId('layout'), module: mod, target, fieldIds: stagedIds };
-    persistLayouts([...layouts.filter((l) => l.target !== target), next]);
-    logAudit(user?.name ?? 'Unknown', 'layout.save', `Layout saved for ${MODULE_LABELS[mod]} (${target === 'form' ? 'Form' : 'Detail'})`);
+    const saved = await upsert('layouts', draft);
+    setLayouts([...layouts.filter((l) => l.target !== target), saved]);
     toast.push('success', 'Layout saved.');
   };
 

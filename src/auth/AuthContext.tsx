@@ -1,54 +1,64 @@
-import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { User } from '../types';
-import { delay, getAllSync, logAudit } from '../data/store';
-
-const SESSION_KEY = 'crm.session';
+import { apiFetch, clearToken, getToken, setToken } from '../data/apiFetch';
+import { initStore } from '../data/store';
 
 interface AuthState {
-  user: User | null;
+  user: User | null | undefined; // undefined = still checking the stored session
   login: (email: string, password: string, remember: boolean) => Promise<string | null>;
   logout: () => void;
-  refreshUser: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState>({
-  user: null,
+  user: undefined,
   login: async () => 'Auth not ready',
   logout: () => {},
-  refreshUser: () => {},
+  refreshUser: async () => {},
 });
 
-function readSession(): User | null {
-  const id = localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY);
-  if (!id) return null;
-  return getAllSync<User>('users').find((u) => u.id === id) ?? null;
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => readSession());
+  const [user, setUser] = useState<User | null | undefined>(undefined);
+
+  const refreshUser = useCallback(async () => {
+    if (!getToken()) {
+      setUser(null);
+      return;
+    }
+    try {
+      const me = await apiFetch<User>('/auth/me');
+      // Warm the data cache only once a valid session is confirmed — /api/bootstrap
+      // requires auth, so this can't run before we know the stored token is good.
+      await initStore();
+      setUser(me);
+    } catch {
+      setUser(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
 
   const login = useCallback(async (email: string, password: string, remember: boolean) => {
-    await delay(400, 1000);
-    const found = getAllSync<User>('users').find(
-      (u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password
-    );
-    if (!found) return 'Invalid email or password.';
-    if (!found.active) return 'This account has been deactivated. Contact your administrator.';
-    const storage = remember ? localStorage : sessionStorage;
-    storage.setItem(SESSION_KEY, found.id);
-    logAudit(found.name, 'login', `${found.name} signed in`);
-    setUser(found);
-    return null;
+    try {
+      const { token, user: found } = await apiFetch<{ token: string; user: User }>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password, remember }),
+      });
+      setToken(token, remember);
+      await initStore();
+      setUser(found);
+      return null;
+    } catch (e) {
+      return (e as Error).message;
+    }
   }, []);
 
   const logout = useCallback(() => {
-    if (user) logAudit(user.name, 'logout', `${user.name} signed out`);
-    localStorage.removeItem(SESSION_KEY);
-    sessionStorage.removeItem(SESSION_KEY);
+    clearToken();
     setUser(null);
-  }, [user]);
-
-  const refreshUser = useCallback(() => setUser(readSession()), []);
+  }, []);
 
   return <AuthContext.Provider value={{ user, login, logout, refreshUser }}>{children}</AuthContext.Provider>;
 }

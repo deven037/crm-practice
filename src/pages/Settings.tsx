@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { getAllSync, getValue, resetData, setValue } from '../data/store';
-import { User } from '../types';
+import { getValue, setValue } from '../data/store';
+import { apiFetch, clearToken } from '../data/apiFetch';
 import { Modal } from '../components/Modal';
 import { Accordion } from '../components/Accordion';
 import { useToast } from '../components/Toast';
@@ -25,7 +25,7 @@ export function Settings() {
   const [prefs, setPrefs] = useState<Prefs>(() => getValue('prefs', DEFAULT_PREFS));
   const [confirmReset, setConfirmReset] = useState(false);
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     const errs: typeof errors = {};
     if (!name.trim()) errs.name = 'Name is required.';
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) errs.email = 'Enter a valid email address.';
@@ -33,13 +33,11 @@ export function Settings() {
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
     if (user) {
-      const users = getAllSync<User>('users');
-      const idx = users.findIndex((u) => u.id === user.id);
-      if (idx >= 0) {
-        users[idx] = { ...users[idx], name: name.trim(), email: email.trim(), phone: phone.trim() };
-        setValue('users', users);
-        refreshUser();
-      }
+      await apiFetch(`/users/${user.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), phone: phone.trim() }),
+      });
+      await refreshUser();
     }
     toast.push('success', 'Profile saved.');
   };
@@ -49,8 +47,9 @@ export function Settings() {
     setValue('prefs', next);
   };
 
-  const doReset = () => {
-    resetData();
+  const doReset = async () => {
+    await apiFetch('/reset', { method: 'POST' });
+    clearToken();
     toast.push('success', 'All data reset to seed state. Reloading…');
     setTimeout(() => {
       window.location.href = '/login';

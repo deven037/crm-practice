@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getAllSync, getById, logAudit, removeMany, upsert } from '../data/store';
+import { getAllSync, getById, removeMany, upsert } from '../data/store';
+import { apiFetch } from '../data/apiFetch';
 import { Account, Deal, Product, Quote, QuoteLineItem, QuoteStatus, QUOTE_TRANSITIONS } from '../types';
 import { SearchableSelect } from '../components/Select';
 import { DatePicker } from '../components/DatePicker';
@@ -10,7 +11,7 @@ import { Modal } from '../components/Modal';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
-import { autoCloseDate, formatDate } from '../utils';
+import { formatDate } from '../utils';
 
 export function QuoteDetail() {
   const { id } = useParams();
@@ -56,38 +57,34 @@ export function QuoteDetail() {
     toast.push('success', 'Quote updated.');
   };
 
+  // Transition legality (QUOTE_TRANSITIONS) and the accept-auto-closes-linked-deal side
+  // effect are enforced server-side (server/src/routes/quotes.ts) — this just calls it
+  // and syncs local state from the authoritative response.
   const transition = async (next: QuoteStatus) => {
-    let updatedQuote = quote;
+    const result = await apiFetch<{ quote: Quote; deal?: Deal }>(`/quotes/${quote.id}/transition`, {
+      method: 'POST',
+      body: JSON.stringify({ status: next }),
+    });
+    setQuote(result.quote);
+
     if (next === 'Accepted' && quote.dealId) {
-      const deal = deals.find((d) => d.id === quote.dealId);
-      if (deal && !deal.stage.startsWith('Closed')) {
-        const closedDeal = autoCloseDate(deal.stage, { ...deal, stage: 'Closed Won' });
-        await upsert('deals', closedDeal);
-        logAudit(user?.name ?? 'Unknown', 'quote.accept', `Accepted quote ${quote.quoteNumber} — deal "${deal.name}" auto-closed as Won`);
-        toast.push('success', `Quote accepted. Deal "${deal.name}" was automatically closed as Won.`);
+      await getById<Deal>('deals', quote.dealId); // refresh the cache so the linked-deal view reflects the new stage
+      if (result.deal) {
         setDealAlreadyClosedNote(false);
-      } else if (deal) {
-        logAudit(user?.name ?? 'Unknown', 'quote.accept', `Accepted quote ${quote.quoteNumber} (linked deal already ${deal.stage})`);
-        toast.push('info', `Quote accepted. Linked deal was already ${deal.stage} — no change made.`);
-        setDealAlreadyClosedNote(true);
+        toast.push('success', `Quote accepted. Deal "${result.deal.name}" was automatically closed as Won.`);
       } else {
-        logAudit(user?.name ?? 'Unknown', 'quote.accept', `Accepted quote ${quote.quoteNumber}`);
-        toast.push('success', `Quote "${quote.quoteNumber}" accepted.`);
+        setDealAlreadyClosedNote(true);
+        toast.push('info', 'Quote accepted. Linked deal was already closed — no change made.');
       }
     } else if (next === 'Accepted') {
-      logAudit(user?.name ?? 'Unknown', 'quote.accept', `Accepted quote ${quote.quoteNumber}`);
       toast.push('success', `Quote "${quote.quoteNumber}" accepted.`);
     } else {
       toast.push('success', `Quote moved to ${next}.`);
     }
-    updatedQuote = { ...quote, status: next };
-    await upsert('quotes', updatedQuote);
-    setQuote(updatedQuote);
   };
 
   const doDelete = async () => {
     await removeMany('quotes', [quote.id]);
-    logAudit(user?.name ?? 'Unknown', 'quote.delete', `Deleted quote ${quote.quoteNumber}`);
     toast.push('success', `Quote "${quote.quoteNumber}" deleted.`);
     navigate('/quotes');
   };

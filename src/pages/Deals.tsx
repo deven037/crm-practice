@@ -1,6 +1,6 @@
 import { DragEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAll, upsert, removeMany, logAudit } from '../data/store';
+import { getAll, upsert, removeMany } from '../data/store';
 import { Account, Deal, DealStage, DEAL_STAGES, User } from '../types';
 import { Modal } from '../components/Modal';
 import { SearchableSelect, Select } from '../components/Select';
@@ -45,7 +45,6 @@ export function Deals() {
     // Optimistic UI so the card moves instantly, then persist.
     setDeals((prev) => prev.map((d) => (d.id === id ? updated : d)));
     await upsert('deals', updated);
-    logAudit(user?.name ?? 'Unknown', 'deal.stage', `Moved "${deal.name}" to ${stage}`);
     toast.push('success', `"${deal.name}" moved to ${stage}.`);
   };
 

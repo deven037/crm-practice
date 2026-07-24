@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getAllSync, newId, upsert, logAudit } from '../data/store';
+import { getAllSync, newId, upsert } from '../data/store';
 import { Account, User } from '../types';
 import { Select } from '../components/Select';
 import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
@@ -40,7 +40,6 @@ export function AccountForm() {
     if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) return;
     setBusy(true);
     await upsert('accounts', draft);
-    logAudit(user?.name ?? 'Unknown', 'account.create', `Created account ${draft.name}`);
     toast.push('success', `Account "${draft.name}" created.`);
     navigate(`/accounts/${draft.id}`);
   };

@@ -1,0 +1,627 @@
+openapi: 3.0.3
+info:
+  title: Practice CRM API
+  version: 1.0.0
+  description: >
+    A real REST API for the Practice CRM training app, built for API-automation
+    practice (Postman, RestAssured, pytest, curl, etc.). Records created here
+    show up in the CRM UI on next navigation/reload of the relevant page — this
+    API is the CRM's single source of truth.
+
+
+    **Reset**: `POST /api/reset` restores the deterministic seed state at any
+    time (no auth required — see that endpoint's description). Seed login:
+    `admin@crm.com` / `Pass@123` (also `rep@crm.com`, `viewer@crm.com`,
+    `sam@crm.com`, `priya@crm.com` — all deactivated except `priya@crm.com`,
+    same password). **Passwords are stored in plaintext by design** — this is
+    a training tool with no real user data, and the seed credentials are
+    published intentionally for testers to use.
+
+
+    **Free-tier note**: this server may be deployed on a free host that sleeps
+    after inactivity; a cold start re-seeds automatically, so state resets
+    after idle periods. This is expected, not a bug.
+servers:
+  - url: /api
+security:
+  - bearerAuth: []
+tags:
+  - name: Auth
+  - name: Leads
+  - name: Contacts
+  - name: Accounts
+  - name: Deals
+  - name: Products
+  - name: Tickets
+  - name: Campaigns
+  - name: Quotes
+  - name: Users
+  - name: Tasks
+  - name: Activities
+  - name: Notifications
+  - name: CustomFieldDefs
+  - name: Layouts
+  - name: Audit
+  - name: System
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    pageSize:
+      name: pageSize
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+    sort:
+      name: sort
+      in: query
+      description: Field name to sort by; prefix with `-` for descending (e.g. `-createdAt`).
+      schema: { type: string }
+    q:
+      name: q
+      in: query
+      description: Free-text search across the resource's searchable fields.
+      schema: { type: string }
+  responses:
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ValidationError:
+      description: Request failed validation.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Authenticated, but not permitted to perform this action.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Missing, invalid, or expired token.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: Request conflicts with the resource's current state (illegal transition, confirmation required, etc.).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: {}
+    ListEnvelope:
+      type: object
+      properties:
+        data: { type: array, items: {} }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+        totalPages: { type: integer }
+
+paths:
+  /health:
+    get:
+      tags: [System]
+      security: []
+      summary: Liveness check.
+      responses:
+        '200': { description: OK }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Log in with email + password, receive a bearer token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+                remember: { type: boolean }
+      responses:
+        '200':
+          description: Success.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: Account deactivated. }
+        '429': { description: Too many attempts. }
+
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Reset a user's password by email (no auth — that's the point of this flow). No user-enumeration hint.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, newPassword]
+              properties:
+                email: { type: string }
+                newPassword: { type: string, minLength: 8 }
+      responses:
+        '200': { description: Always OK, regardless of whether the email matched an account. }
+        '422': { $ref: '#/components/responses/ValidationError' }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get the current authenticated user.
+      responses:
+        '200': { description: OK }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /bootstrap:
+    get:
+      tags: [System]
+      summary: One combined payload of every collection, used to pre-warm client caches.
+      responses:
+        '200': { description: OK }
+
+  /reset:
+    post:
+      tags: [System]
+      security: []
+      summary: Deterministically reseed the entire server (no auth required — see description).
+      description: >
+        Restores every collection to the same fixed, publicly-documented seed
+        state every time. No auth is required so a test suite can reset state
+        as its very first step, before it has a token. Rate-limited against
+        accidental spam only.
+      responses:
+        '200': { description: Reseeded. }
+        '429': { description: Too many reset requests. }
+
+  /leads:
+    get:
+      tags: [Leads]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/q'
+        - { name: status, in: query, schema: { type: string } }
+        - { name: source, in: query, schema: { type: string } }
+        - { name: ownerId, in: query, schema: { type: string } }
+        - { name: campaignId, in: query, schema: { type: string } }
+        - { name: productId, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content: { application/json: { schema: { $ref: '#/components/schemas/ListEnvelope' } } }
+    post:
+      tags: [Leads]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses:
+        '201': { description: Created }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /leads/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      tags: [Leads]
+      responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/NotFound' } }
+    put:
+      tags: [Leads]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses:
+        '200': { description: Updated }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    delete:
+      tags: [Leads]
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+  /leads/{id}/convert:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      tags: [Leads]
+      summary: Convert a lead into an Account + Contact (+ optional Deal); marks the lead Converted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accountMode, contactName, contactEmail]
+              properties:
+                accountMode: { type: string, enum: [new, existing] }
+                existingAccountId: { type: string }
+                accountName: { type: string }
+                contactName: { type: string }
+                contactEmail: { type: string }
+                contactPhone: { type: string }
+                createDeal: { type: boolean }
+                dealName: { type: string }
+                dealAmount: { type: number }
+                dealStage: { type: string }
+      responses:
+        '200': { description: Converted. }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: Lead already converted. }
+
+  /contacts:
+    get:
+      tags: [Contacts]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/q'
+        - { name: accountId, in: query, schema: { type: string } }
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Contacts]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '201': { description: Created }, '422': { $ref: '#/components/responses/ValidationError' } }
+  /contacts/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get: { tags: [Contacts], responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/NotFound' } } }
+    put:
+      tags: [Contacts]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Updated }, '404': { $ref: '#/components/responses/NotFound' } }
+    delete: { tags: [Contacts], responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } } }
+
+  /accounts:
+    get:
+      tags: [Accounts]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/q'
+        - { name: ownerId, in: query, schema: { type: string } }
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Accounts]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '201': { description: Created }, '422': { $ref: '#/components/responses/ValidationError' } }
+  /accounts/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get: { tags: [Accounts], responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/NotFound' } } }
+    put:
+      tags: [Accounts]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Updated }, '404': { $ref: '#/components/responses/NotFound' } }
+    delete:
+      tags: [Accounts]
+      summary: Delete an account. `?cascade=true` deletes dependent Contacts/Deals; default (false) unlinks them.
+      parameters: [{ name: cascade, in: query, schema: { type: boolean, default: false } }]
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  /deals:
+    get:
+      tags: [Deals]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/q'
+        - { name: stage, in: query, schema: { type: string } }
+        - { name: ownerId, in: query, schema: { type: string } }
+        - { name: accountId, in: query, schema: { type: string } }
+        - { name: campaignId, in: query, schema: { type: string } }
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Deals]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '201': { description: Created }, '422': { $ref: '#/components/responses/ValidationError' } }
+  /deals/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get: { tags: [Deals], responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/NotFound' } } }
+    put:
+      tags: [Deals]
+      summary: Full update. Stage transitions into Closed Won/Lost auto-stamp closeDate to now.
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Updated }, '404': { $ref: '#/components/responses/NotFound' } }
+    delete:
+      tags: [Deals]
+      summary: Delete a deal. Closed Won deals require `?confirm=DELETE`.
+      parameters: [{ name: confirm, in: query, schema: { type: string } }]
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /products:
+    get:
+      tags: [Products]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/q'
+        - { name: category, in: query, schema: { type: string } }
+        - { name: active, in: query, schema: { type: boolean } }
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Products]
+      summary: Create a product. Leave `sku` blank to auto-generate one.
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '201': { description: Created }, '422': { $ref: '#/components/responses/ValidationError' } }
+  /products/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get: { tags: [Products], responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/NotFound' } } }
+    put:
+      tags: [Products]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Updated }, '404': { $ref: '#/components/responses/NotFound' } }
+    delete:
+      tags: [Products]
+      summary: Delete a product. Unlinks referencing Leads; Quote line-item snapshots are left as historical records.
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  /tickets:
+    get:
+      tags: [Tickets]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/q'
+        - { name: status, in: query, schema: { type: string } }
+        - { name: priority, in: query, schema: { type: string } }
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Tickets]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '201': { description: Created }, '422': { $ref: '#/components/responses/ValidationError' } }
+  /tickets/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get: { tags: [Tickets], responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/NotFound' } } }
+    put:
+      tags: [Tickets]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Updated }, '404': { $ref: '#/components/responses/NotFound' } }
+    delete:
+      tags: [Tickets]
+      summary: Delete a ticket. Only Closed tickets may be deleted.
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { description: Ticket is not Closed. }
+  /tickets/{id}/transition:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      tags: [Tickets]
+      summary: Move a ticket's status, validated against the allowed transition map.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [status], properties: { status: { type: string } } }
+      responses:
+        '200': { description: Transitioned. }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /tickets/{id}/priority:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      tags: [Tickets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [priority], properties: { priority: { type: string } } }
+      responses: { '200': { description: Updated. } }
+  /tickets/{id}/comments:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      tags: [Tickets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [text], properties: { text: { type: string } } }
+      responses: { '201': { description: Comment added. } }
+
+  /campaigns:
+    get:
+      tags: [Campaigns]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/q'
+        - { name: status, in: query, schema: { type: string } }
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Campaigns]
+      summary: Create a campaign. `endDate` must be after `startDate`.
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '201': { description: Created }, '422': { $ref: '#/components/responses/ValidationError' } }
+  /campaigns/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get: { tags: [Campaigns], responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/NotFound' } } }
+    put:
+      tags: [Campaigns]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Updated }, '404': { $ref: '#/components/responses/NotFound' } }
+    delete:
+      tags: [Campaigns]
+      summary: Delete a campaign. Unlinks referencing Leads and Deals.
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  /quotes:
+    get:
+      tags: [Quotes]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/q'
+        - { name: status, in: query, schema: { type: string } }
+        - { name: accountId, in: query, schema: { type: string } }
+        - { name: dealId, in: query, schema: { type: string } }
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Quotes]
+      summary: Create a quote. Leave `quoteNumber` blank to auto-generate one.
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '201': { description: Created }, '422': { $ref: '#/components/responses/ValidationError' } }
+  /quotes/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get: { tags: [Quotes], responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/NotFound' } } }
+    put:
+      tags: [Quotes]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Updated }, '404': { $ref: '#/components/responses/NotFound' } }
+    delete: { tags: [Quotes], responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } } }
+  /quotes/{id}/transition:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      tags: [Quotes]
+      summary: >
+        Move a quote's status, validated against the allowed transition map.
+        Accepting a quote with a linked, non-closed deal auto-closes that
+        deal as Closed Won (closeDate stamped to now).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [status], properties: { status: { type: string } } }
+      responses:
+        '200': { description: Transitioned. }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /users:
+    get:
+      tags: [Users]
+      parameters: [{ $ref: '#/components/parameters/page' }, { $ref: '#/components/parameters/pageSize' }]
+      responses: { '200': { description: OK }, '403': { $ref: '#/components/responses/Forbidden' } }
+    post:
+      tags: [Users]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '201': { description: Created }, '422': { $ref: '#/components/responses/ValidationError' } }
+  /users/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get: { tags: [Users], responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/NotFound' } } }
+    put:
+      tags: [Users]
+      summary: Update a user. Any authenticated user may update their own record; only admin/rep may edit others or change role/active.
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Updated }, '403': { $ref: '#/components/responses/Forbidden' } }
+    delete:
+      tags: [Users]
+      summary: Delete a user. Self-delete is blocked. If the user owns records, requires `?reassignTo=<userId>`.
+      parameters: [{ name: reassignTo, in: query, schema: { type: string } }]
+      responses:
+        '204': { description: Deleted }
+        '403': { description: Cannot delete your own account. }
+        '409': { description: User owns records; reassign before deleting. }
+  /users/{id}/toggle-active:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post: { tags: [Users], responses: { '200': { description: Toggled. } } }
+
+  /tasks:
+    get:
+      tags: [Tasks]
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/pageSize'
+        - $ref: '#/components/parameters/sort'
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Tasks]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '201': { description: Created }, '422': { $ref: '#/components/responses/ValidationError' } }
+  /tasks/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get: { tags: [Tasks], responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/NotFound' } } }
+    put:
+      tags: [Tasks]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Updated }, '404': { $ref: '#/components/responses/NotFound' } }
+    delete: { tags: [Tasks], responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } } }
+
+  /activities:
+    get:
+      tags: [Activities]
+      summary: Read-only — activities are system-generated at seed time.
+      parameters: [{ $ref: '#/components/parameters/page' }, { $ref: '#/components/parameters/pageSize' }]
+      responses: { '200': { description: OK } }
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      parameters: [{ $ref: '#/components/parameters/page' }, { $ref: '#/components/parameters/pageSize' }]
+      responses: { '200': { description: OK } }
+  /notifications/{id}/read:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post: { tags: [Notifications], responses: { '200': { description: Marked read. } } }
+  /notifications/mark-all-read:
+    post: { tags: [Notifications], responses: { '200': { description: All marked read. } } }
+
+  /customFieldDefs:
+    get:
+      tags: [CustomFieldDefs]
+      parameters: [{ $ref: '#/components/parameters/page' }, { $ref: '#/components/parameters/pageSize' }]
+      responses: { '200': { description: OK } }
+    post:
+      tags: [CustomFieldDefs]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '201': { description: Created }, '422': { $ref: '#/components/responses/ValidationError' } }
+  /customFieldDefs/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get: { tags: [CustomFieldDefs], responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/NotFound' } } }
+    put:
+      tags: [CustomFieldDefs]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Updated }, '404': { $ref: '#/components/responses/NotFound' } }
+    delete:
+      tags: [CustomFieldDefs]
+      summary: Delete a field. Unlinks its value from every record of its module and strips it from any Layout.
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  /layouts:
+    get:
+      tags: [Layouts]
+      parameters: [{ $ref: '#/components/parameters/page' }, { $ref: '#/components/parameters/pageSize' }]
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Layouts]
+      summary: Upsert a layout by (module, target). `fieldIds` must belong to the given module.
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Updated (existing) }, '201': { description: Created }, '422': { $ref: '#/components/responses/ValidationError' } }
+  /layouts/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get: { tags: [Layouts], responses: { '200': { description: OK }, '404': { $ref: '#/components/responses/NotFound' } } }
+    put:
+      tags: [Layouts]
+      requestBody: { required: true, content: { application/json: { schema: { type: object } } } }
+      responses: { '200': { description: Updated }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  /audit:
+    get:
+      tags: [Audit]
+      summary: Read-only audit log.
+      parameters: [{ $ref: '#/components/parameters/page' }, { $ref: '#/components/parameters/pageSize' }]
+      responses: { '200': { description: OK }, '403': { $ref: '#/components/responses/Forbidden' } }

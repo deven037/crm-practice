@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getAllSync, getById, logAudit, removeMany, upsert } from '../data/store';
+import { getAllSync, getById, removeMany, upsert } from '../data/store';
 import { Campaign, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Product, User } from '../types';
 import { Modal } from '../components/Modal';
 import { SearchableSelect, Select } from '../components/Select';
@@ -57,7 +57,6 @@ export function LeadDetail() {
       return;
     }
     await upsert('leads', draft);
-    logAudit(user?.name ?? 'Unknown', 'lead.update', `Updated lead ${draft.name}`);
     setLead(draft);
     setEditing(false);
     toast.push('success', 'Lead updated.');
@@ -223,7 +222,6 @@ export function LeadDetail() {
                 data-testid="confirm-delete-btn"
                 onClick={async () => {
                   await removeMany('leads', [lead.id]);
-                  logAudit(user?.name ?? 'Unknown', 'lead.delete', `Deleted lead ${lead.name}`);
                   toast.push('success', `Lead "${lead.name}" deleted.`);
                   navigate('/leads');
                 }}

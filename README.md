@@ -1,14 +1,27 @@
 # Practice CRM
 
-A full-featured CRM web app built **specifically as a UI automation practice target** (Playwright,
-Selenium, Cypress…). Frontend-only — data lives in `localStorage`, no backend needed.
+A full-featured CRM web app built **specifically as a UI *and* API automation practice target**
+(Playwright, Selenium, Cypress, Postman, RestAssured, pytest…). The React frontend is backed by a
+real REST API (`server/`) — records created via the API show up in the UI, and vice versa.
 
 ## Quick start
 
+Run both the frontend and the API (two terminals):
+
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+npm run dev              # frontend — http://localhost:5173
 ```
+
+```bash
+cd server
+npm install
+npm run dev               # API — http://localhost:4000
+```
+
+`vite.config.ts` proxies `/api/*` to the API in dev, so no CORS setup is needed locally. See
+**[server/README.md](server/README.md)** for the API's endpoints, Swagger UI (`/api/docs`), auth,
+and deployment.
 
 Production build: `npm run build`, then `npm run preview`.
 
@@ -33,12 +46,27 @@ quotes).
 
 - **UI:** Settings → Danger zone → *Reset all data*
 - **URL:** open any page with `?reset=true` (e.g. `http://localhost:5173/?reset=true`) — ideal in a test setup hook
+- **API:** `POST /api/reset` — no auth required, so it can be the first step of an API test suite too
 
-All store operations pass through simulated latency (300–1200 ms), so loading spinners and
+All API calls pass through simulated latency (300–1200 ms server-side), so loading spinners and
 skeletons genuinely appear — your tests must wait properly. The app is tuned to **intermediate
 automation difficulty**: every input/button carries a decoy auto-generated `id` that changes on
 each page load (never use them), and common buttons/search boxes intentionally have no test IDs —
 see [LOCATORS.md](LOCATORS.md) for the traps and the recommended strategies.
+
+## API for automation practice
+
+`server/` is a standalone Node/Express REST API — the CRM's single source of truth. It covers all
+8 business modules (Leads, Contacts, Accounts, Deals, Products, Tickets, Campaigns, Quotes) plus
+Users/Auth, Tasks, Notifications, and the Custom Fields/Layouts config, with:
+
+- Bearer-token auth (`POST /api/auth/login`), role-based 403s, rate-limited login attempts
+- Pagination/filtering/sorting on every list endpoint, structured 400/422 validation errors
+- Business-rule-aware endpoints: lead conversion, quote/ticket status transitions (409 on illegal
+  moves), account cascade-vs-unlink delete, deal Closed-Won delete confirmation
+- An OpenAPI 3 spec + Swagger UI at `/api/docs` — importable straight into Postman/Insomnia
+
+See **[server/README.md](server/README.md)** for the full endpoint list and deployment notes.
 
 ## Modules
 

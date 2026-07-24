@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getAllSync, newId, upsert, logAudit } from '../data/store';
+import { getAllSync, newId, upsert } from '../data/store';
 import { Account, Deal, DealStage, DEAL_STAGES, User } from '../types';
 import { SearchableSelect, Select } from '../components/Select';
 import { DatePicker } from '../components/DatePicker';
@@ -49,7 +49,6 @@ export function DealForm() {
     if (Object.keys(cErrs).length > 0) return;
     setBusy(true);
     await upsert('deals', draft);
-    logAudit(user?.name ?? 'Unknown', 'deal.create', `Created deal ${draft.name}`);
     toast.push('success', `Deal "${draft.name}" created.`);
     navigate(`/deals/${draft.id}`);
   };

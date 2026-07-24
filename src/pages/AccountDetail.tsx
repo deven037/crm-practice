@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getAll, getAllSync, getById, logAudit, removeMany, saveAll, upsert } from '../data/store';
+import { getAll, getAllSync, getById, removeMany, saveAll, upsert } from '../data/store';
 import { Account, Contact, Deal, Quote } from '../types';
 import { computeQuoteTotals, QUOTE_STATUS_PILL } from '../components/QuoteLineItems';
 import { Accordion } from '../components/Accordion';
@@ -81,7 +81,6 @@ export function AccountDetail() {
       await saveAll('deals', allDeals);
     }
     await removeMany('accounts', [account.id]);
-    logAudit(user?.name ?? 'Unknown', 'account.delete', `Deleted account ${account.name} (${cascade})`);
     toast.push('success', `Account "${account.name}" deleted.`);
     navigate('/accounts');
   };

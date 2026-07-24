@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { newId, upsert, logAudit } from '../data/store';
+import { newId, upsert } from '../data/store';
 import { Campaign, CAMPAIGN_CHANNELS, CAMPAIGN_STATUSES } from '../types';
 import { Select } from '../components/Select';
 import { DatePicker } from '../components/DatePicker';
@@ -47,7 +47,6 @@ export function CampaignForm() {
     };
     setBusy(true);
     await upsert('campaigns', campaign);
-    logAudit(user?.name ?? 'Unknown', 'campaign.create', `Created campaign ${campaign.name}`);
     toast.push('success', `Campaign "${campaign.name}" created.`);
     navigate(`/campaigns/${campaign.id}`);
   };

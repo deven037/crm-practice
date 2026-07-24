@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getAllSync, getById, logAudit, newId, removeMany, upsert } from '../data/store';
+import { getAllSync, getById, newId, removeMany, upsert } from '../data/store';
 import { Modal } from '../components/Modal';
 import { useAuth } from '../auth/AuthContext';
 import { Account, Contact } from '../types';
@@ -127,7 +127,6 @@ export function ContactDetail() {
                 data-testid="confirm-delete-btn"
                 onClick={async () => {
                   await removeMany('contacts', [contact.id]);
-                  logAudit(user?.name ?? 'Unknown', 'contact.delete', `Deleted contact ${contact.name}`);
                   toast.push('success', `Contact "${contact.name}" deleted.`);
                   navigate('/contacts');
                 }}

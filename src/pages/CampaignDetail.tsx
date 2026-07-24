@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { getAll, getAllSync, getById, logAudit, removeMany, saveAll, upsert } from '../data/store';
+import { getAll, getAllSync, getById, removeMany, saveAll, upsert } from '../data/store';
 import { Campaign, CAMPAIGN_CHANNELS, CAMPAIGN_STATUSES, Deal, Lead } from '../types';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
@@ -87,11 +87,6 @@ export function CampaignDetail() {
       await saveAll('deals', allDeals);
     }
     await removeMany('campaigns', [campaign.id]);
-    logAudit(
-      user?.name ?? 'Unknown',
-      'campaign.delete',
-      `Deleted campaign ${campaign.name} (${leads.length} lead(s), ${deals.length} deal(s) unlinked)`
-    );
     toast.push('success', `Campaign "${campaign.name}" deleted.`);
     navigate('/campaigns');
   };

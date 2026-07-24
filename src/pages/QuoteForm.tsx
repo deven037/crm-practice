@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getAllSync, newId, upsert, logAudit } from '../data/store';
+import { getAllSync, newId, upsert } from '../data/store';
 import { Account, Deal, Product, Quote, QuoteLineItem } from '../types';
 import { SearchableSelect } from '../components/Select';
 import { DatePicker } from '../components/DatePicker';
@@ -63,7 +63,6 @@ export function QuoteForm() {
     setBusy(true);
     await upsert('quotes', quote);
     const accountName = accounts.find((a) => a.id === accountId)?.name ?? '—';
-    logAudit(user?.name ?? 'Unknown', 'quote.create', `Created quote ${quote.quoteNumber} for ${accountName}`);
     toast.push('success', `Quote "${quote.quoteNumber}" created.`);
     navigate(`/quotes/${quote.id}`);
   };
