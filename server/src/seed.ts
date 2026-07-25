@@ -414,7 +414,7 @@ export function buildSeedData() {
   applyCustomFieldExamples(leadsWithCampaigns, accounts);
 
   return {
-    users: SEED_USERS,
+    users: [...SEED_USERS], // copy — SEED_USERS is a shared module-level constant, never hand out the live reference
     accounts,
     products,
     leads: leadsWithCampaigns,

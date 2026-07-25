@@ -44,7 +44,11 @@ export class Collection<T extends { id: string }> {
   ) {}
 
   seed(items: T[]) {
-    this.items = items;
+    // Copy, don't alias — some seed sources (e.g. SEED_USERS in seed.ts) are shared
+    // module-level constants reused across every reset. Storing the same reference
+    // here would let create()'s in-place unshift() permanently mutate that constant,
+    // so every future "reset" would faithfully restore an already-polluted seed.
+    this.items = [...items];
   }
 
   all(): T[] {
