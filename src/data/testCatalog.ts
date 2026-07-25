@@ -5920,7 +5920,7 @@ export const TEST_CATALOG: CatalogModule[] = [
         "title": "Login attempts are rate-limited per IP",
         "tags": ["Sanity", "Regression"],
         "steps": [
-          ["POST /api/auth/login with a wrong password 8 times in a row (default LOGIN_RATE_LIMIT_MAX), from the same client", "First 8 responses are 401 invalid_credentials"],
+          ["POST /api/auth/login with a wrong password 50 times in a row (default LOGIN_RATE_LIMIT_MAX), from the same client", "First 50 responses are 401 invalid_credentials"],
           ["Send one more login attempt immediately after", "429 { code: 'rate_limited' }, even with the CORRECT password this time — the limiter blocks by request count, not by success/failure"],
           ["Wait for the 15-minute window to elapse (or note it for a later run)", "Subsequent attempts succeed again once the window resets"]
         ]

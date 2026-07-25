@@ -14,6 +14,6 @@ services:
       - key: CORS_ORIGIN
         value: https://automation-crm.netlify.app,http://localhost:5173
       - key: LOGIN_RATE_LIMIT_MAX
-        value: "8"
+        value: "50"
       - key: RESET_RATE_LIMIT_MAX
         value: "10"

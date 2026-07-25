@@ -6,7 +6,7 @@ export const env = {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean),
-  loginRateLimitMax: Number(process.env.LOGIN_RATE_LIMIT_MAX ?? 8),
+  loginRateLimitMax: Number(process.env.LOGIN_RATE_LIMIT_MAX ?? 50),
   resetRateLimitMax: Number(process.env.RESET_RATE_LIMIT_MAX ?? 10),
   disableLatency: process.env.DISABLE_LATENCY === 'true',
 };
