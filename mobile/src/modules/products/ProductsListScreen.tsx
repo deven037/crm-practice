@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ModulesStackParamList } from '../../navigation/types';
+import { ProductsStackParamList } from '../../navigation/types';
 import { useProducts } from '../../api/hooks/useProducts';
 import { Spinner } from '../../components/Spinner';
 import { formatCurrency, formatDate } from '../../utils';
 import { locatorProps, testIds } from '../../testIds';
 
-type Props = NativeStackScreenProps<ModulesStackParamList, 'productsList'>;
+type Props = NativeStackScreenProps<ProductsStackParamList, 'productsList'>;
 
 export function ProductsListScreen({ navigation }: Props) {
   const [query, setQuery] = useState('');
@@ -16,14 +16,6 @@ export function ProductsListScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container} {...locatorProps(testIds.page('products'))}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Products</Text>
-        {/* Deliberately no testID — locate by text, mirroring the web app's "+ New" convention */}
-        <Pressable style={styles.newBtn} onPress={() => navigation.navigate('productsForm', {})}>
-          <Text style={styles.newBtnText}>+ New Product</Text>
-        </Pressable>
-      </View>
-
       {/* Deliberately no testID — locate by placeholder text */}
       <TextInput
         style={styles.search}
@@ -67,12 +59,8 @@ export function ProductsListScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
-  title: { fontSize: 22, fontWeight: '700' },
-  newBtn: { backgroundColor: '#2563eb', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 14 },
-  newBtnText: { color: '#fff', fontWeight: '600' },
   search: {
-    marginHorizontal: 16,
+    margin: 16,
     marginBottom: 8,
     borderWidth: 1,
     borderColor: '#d1d5db',

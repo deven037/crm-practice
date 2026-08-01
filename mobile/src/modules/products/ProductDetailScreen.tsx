@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ModulesStackParamList } from '../../navigation/types';
+import { ProductsStackParamList } from '../../navigation/types';
 import { useDeleteProduct, useProduct, useProductDependents, useUpdateProduct } from '../../api/hooks/useProducts';
 import { SelectField } from '../../components/SelectField';
 import { Spinner } from '../../components/Spinner';
@@ -9,7 +9,7 @@ import { Product, PRODUCT_CATEGORIES } from '../../types';
 import { formatCurrency, formatDate } from '../../utils';
 import { locatorProps, testIds } from '../../testIds';
 
-type Props = NativeStackScreenProps<ModulesStackParamList, 'productsDetail'>;
+type Props = NativeStackScreenProps<ProductsStackParamList, 'productsDetail'>;
 
 export function ProductDetailScreen({ route, navigation }: Props) {
   const { id } = route.params;

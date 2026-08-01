@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ModulesStackParamList } from '../../navigation/types';
+import { ProductsStackParamList } from '../../navigation/types';
 import { useCreateProduct } from '../../api/hooks/useProducts';
 import { SelectField } from '../../components/SelectField';
 import { PRODUCT_CATEGORIES } from '../../types';
 import { locatorProps, testIds } from '../../testIds';
 
-type Props = NativeStackScreenProps<ModulesStackParamList, 'productsForm'>;
+type Props = NativeStackScreenProps<ProductsStackParamList, 'productsForm'>;
 
 export function ProductFormScreen({ navigation }: Props) {
   const createProduct = useCreateProduct();
