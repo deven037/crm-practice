@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "Practice CRM Mobile",
-    "slug": "practice-crm-mobile",
+    "slug": "crm",
+    "owner": "deven037",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -26,6 +27,11 @@
       "expo-secure-store",
       "expo-sharing",
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "5398d568-90a7-48fc-b99b-21783ff398f8"
+      }
+    }
   }
 }
