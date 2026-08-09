@@ -74,5 +74,4 @@ export type DrawerParamList = {
   Tasks: undefined;
   Admin: undefined;
   Settings: undefined;
-  TestCatalog: undefined;
 };

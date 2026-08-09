@@ -38,7 +38,6 @@ const NAV_GROUPS: {
     label: 'System',
     items: [
       { route: 'Admin', label: 'Admin', icon: '🛡️', adminOnly: true },
-      { route: 'TestCatalog', label: 'Test Cases', icon: '🧪' },
       { route: 'Settings', label: 'Settings', icon: '⚙️' },
     ],
   },

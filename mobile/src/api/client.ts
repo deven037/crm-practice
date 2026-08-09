@@ -10,6 +10,21 @@ export interface ListEnvelope<T> {
   totalPages: number;
 }
 
+/** Mirrors the server's { error: { code, message, details } } shape so callers that need
+ * structured info (e.g. the has_owned_records reassign flow) don't have to re-fetch it. */
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+  details?: unknown;
+
+  constructor(status: number, message: string, code?: string, details?: unknown) {
+    super(message);
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
 /**
  * Called on every 401. There's no `window.location` on native, so instead of an imperative
  * redirect, this just flips shared auth state to `null` — AuthContext/RootNavigator react to
@@ -40,7 +55,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body?.error?.message ?? `Request failed (${res.status})`);
+    throw new ApiError(res.status, body?.error?.message ?? `Request failed (${res.status})`, body?.error?.code, body?.error?.details);
   }
 
   if (res.status === 204) return undefined as T;

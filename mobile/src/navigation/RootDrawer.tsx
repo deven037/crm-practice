@@ -10,13 +10,11 @@ import { TicketsStack } from './stacks/TicketsStack';
 import { CampaignsStack } from './stacks/CampaignsStack';
 import { DealsStack } from './stacks/DealsStack';
 import { QuotesStack } from './stacks/QuotesStack';
-import { createPlaceholderStack } from './stacks/placeholderStackFactory';
+import { TasksStack } from './stacks/TasksStack';
+import { AdminStack } from './stacks/AdminStack';
+import { SettingsStack } from './stacks/SettingsStack';
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
-const TasksStack = createPlaceholderStack('Tasks');
-const AdminStack = createPlaceholderStack('Admin');
-const SettingsStack = createPlaceholderStack('Settings');
-const TestCatalogStack = createPlaceholderStack('Test Catalog');
 
 export function RootDrawer() {
   return (
@@ -35,7 +33,6 @@ export function RootDrawer() {
       <Drawer.Screen name="Tasks" component={TasksStack} />
       <Drawer.Screen name="TicketsStack" component={TicketsStack} />
       <Drawer.Screen name="Admin" component={AdminStack} />
-      <Drawer.Screen name="TestCatalog" component={TestCatalogStack} />
       <Drawer.Screen name="Settings" component={SettingsStack} />
     </Drawer.Navigator>
   );
