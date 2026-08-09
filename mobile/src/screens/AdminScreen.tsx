@@ -5,7 +5,6 @@ import { useCreateUser, useDeleteUser, useToggleUserActive, useUpdateUser, useUs
 import { useAudit } from '../api/hooks/useAudit';
 import { ApiError } from '../api/client';
 import { SelectField } from '../components/SelectField';
-import { HamburgerButton } from '../components/HamburgerButton';
 import { Spinner } from '../components/Spinner';
 import { Role, User } from '../types';
 import { formatDateTime } from '../utils';
@@ -80,12 +79,6 @@ export function AdminScreen() {
 
   return (
     <View style={styles.container} {...locatorProps(testIds.page('admin'))}>
-      <View style={styles.header}>
-        <HamburgerButton />
-        <Text style={styles.headerTitle}>Admin</Text>
-        <View style={{ width: 32 }} />
-      </View>
-
       {readOnly && (
         <View style={styles.readOnlyBanner} {...locatorProps(testIds.raw('admin-readonly-banner'))}>
           <Text style={styles.readOnlyText}>You have read-only access to this area. Contact an administrator to make changes.</Text>
@@ -260,8 +253,6 @@ export function AdminScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   flex: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, paddingBottom: 4 },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
   readOnlyBanner: { backgroundColor: '#e0f2fe', margin: 16, marginBottom: 0, borderRadius: 8, padding: 10 },
   readOnlyText: { color: '#075985', fontSize: 13 },
   tabRow: { flexDirection: 'row', gap: 8, padding: 16 },

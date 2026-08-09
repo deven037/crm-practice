@@ -5,7 +5,6 @@ import { useAuth } from '../auth/AuthContext';
 import { apiFetch } from '../api/client';
 import { clearToken } from '../auth/storage';
 import { getPrefs, setPrefs, Prefs } from '../utils/prefs';
-import { HamburgerButton } from '../components/HamburgerButton';
 import { locatorProps, testIds } from '../testIds';
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -60,12 +59,6 @@ export function SettingsScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} {...locatorProps(testIds.page('settings'))}>
-      <View style={styles.header}>
-        <HamburgerButton />
-        <Text style={styles.headerTitle}>Settings</Text>
-        <View style={{ width: 32 }} />
-      </View>
-
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Profile</Text>
         <Text style={styles.label}>Full name *</Text>
@@ -175,8 +168,6 @@ export function SettingsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { padding: 16 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
   card: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, padding: 16, gap: 4, marginBottom: 16 },
   dangerCard: { borderColor: '#fecaca' },
   cardTitle: { fontWeight: '700', fontSize: 15, marginBottom: 4 },

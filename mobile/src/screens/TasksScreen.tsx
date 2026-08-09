@@ -5,7 +5,6 @@ import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flat
 import { useCreateTask, useDeleteTask, useReorderTasks, useTasks, useUpdateTask } from '../api/hooks/useTasks';
 import { SelectField } from '../components/SelectField';
 import { DatePickerField } from '../components/DatePickerField';
-import { HamburgerButton } from '../components/HamburgerButton';
 import { Spinner } from '../components/Spinner';
 import { TaskItem, TaskPriority, TASK_PRIORITIES } from '../types';
 import { formatDate, isOverdue } from '../utils';
@@ -117,12 +116,6 @@ export function TasksScreen() {
 
   return (
     <View style={styles.container} {...locatorProps(testIds.page('tasks'))}>
-      <View style={styles.header}>
-        <HamburgerButton />
-        <Text style={styles.headerTitle}>Tasks</Text>
-        <View style={{ width: 32 }} />
-      </View>
-
       <View style={styles.quickAdd} {...locatorProps(testIds.raw('task-quick-add'))}>
         <TextInput
           style={styles.input}
@@ -167,8 +160,6 @@ export function TasksScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, paddingBottom: 4 },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
   quickAdd: { paddingHorizontal: 16, paddingTop: 8, gap: 8 },
   quickAddRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   input: { borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10 },
