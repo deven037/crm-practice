@@ -1,14 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Download, ListChecks, SlidersHorizontal, Table2 } from 'lucide-react';
 import { getAll, getAllSync, newId, removeMany, saveAll, upsert } from '../data/store';
 import { Account, Contact, Deal, DealStage, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, User } from '../types';
 import { Modal } from '../components/Modal';
 import { MultiSelect, SearchableSelect, Select } from '../components/Select';
 import { ContextMenu } from '../components/ContextMenu';
+import { LeadTriageMode } from '../components/LeadTriageMode';
+import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
+import { MassUpdateModal } from '../components/MassUpdateModal';
+import { ToolBoxPanel } from '../components/ToolBoxPanel';
 import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { classNames, downloadCsv, formatCurrency, formatDate } from '../utils';
+import { getStatusOptions } from '../utils/rules';
 
 type SortKey = 'name' | 'company' | 'status' | 'source' | 'value' | 'createdAt';
 type SortDir = 'asc' | 'desc';
@@ -41,6 +47,7 @@ export function Leads() {
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [mode, setMode] = useState<'table' | 'triage'>('table');
 
   // table state
   const [query, setQuery] = useState('');
@@ -60,6 +67,8 @@ export function Leads() {
   const [wizard, setWizard] = useState<WizardState | null>(null);
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignTo, setAssignTo] = useState('');
+  const [massUpdateOpen, setMassUpdateOpen] = useState(false);
+  const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -144,6 +153,21 @@ export function Leads() {
     setAssignOpen(false);
     setSelected([]);
     setAssignTo('');
+    load();
+  };
+
+  // Setup → Mass Update, reusing the existing per-item upsert in a loop (same pattern as bulkAssign).
+  const applyMassUpdate = async (fieldKey: string, value: string) => {
+    const next = leads.map((l) => (selected.includes(l.id) ? { ...l, [fieldKey]: fieldKey === 'value' ? Number(value) : value } : l));
+    await saveAll('leads', next);
+    toast.push('success', `${selected.length} lead(s) updated.`);
+    setSelected([]);
+    load();
+  };
+
+  const triageSetStatus = async (lead: Lead, status: LeadStatus) => {
+    await upsert('leads', { ...lead, status });
+    toast.push('success', `${lead.name} marked ${status}.`);
     load();
   };
 
@@ -236,14 +260,58 @@ export function Leads() {
         <h1>Leads</h1>
         <div className="page-actions">
           <button className="btn" onClick={exportCsv} data-testid="export-csv-btn">
-            ⬇ Export CSV
+            <Download size={14} /> Export CSV
           </button>
-          <button className="btn btn-primary" onClick={() => navigate('/leads/new')}>
+          <div className="view-toggle" role="group" aria-label="View mode">
+            <button
+              className={classNames('btn', mode === 'table' && 'btn-active')}
+              aria-label="Table view"
+              data-testid="view-table"
+              onClick={() => setMode('table')}
+            >
+              <Table2 size={14} /> Table
+            </button>
+            <button
+              className={classNames('btn', mode === 'triage' && 'btn-active')}
+              aria-label="Triage view"
+              data-testid="view-triage"
+              onClick={() => setMode('triage')}
+            >
+              <ListChecks size={14} /> Triage
+            </button>
+          </div>
+          <button className="btn btn-create" onClick={() => setLayoutPickerOpen(true)}>
             + New Lead
           </button>
         </div>
       </div>
 
+      <ToolBoxPanel
+        module="leads"
+        links={[
+          { label: 'Assignment Rules', to: '/setup/assignment-rules' },
+          { label: 'Dedupe Rule', to: '/setup/dedupe-rules' },
+          { label: 'Status Codes', to: '/setup/status-codes' },
+          { label: 'Import Data', to: '/setup/import' },
+          { label: 'Custom Fields', to: '/admin/objects/leads' },
+          { label: 'Customise Page Layout', to: '/setup/layouts/leads' },
+        ]}
+      />
+
+      {mode === 'triage' ? (
+        loading ? (
+          <SkeletonRows rows={4} />
+        ) : (
+          <LeadTriageMode
+            leads={filtered}
+            ownerName={ownerName}
+            onQualify={(lead) => triageSetStatus(lead, 'Qualified')}
+            onDisqualify={(lead) => triageSetStatus(lead, 'Unqualified')}
+            onExit={() => setMode('table')}
+          />
+        )
+      ) : (
+        <>
       <div className="toolbar">
         <input
           type="search"
@@ -257,13 +325,16 @@ export function Leads() {
           data-testid="filters-toggle"
           onClick={() => setShowFilters((s) => !s)}
         >
-          ⚙ Filters{(statusFilter.length > 0 || sourceFilter || ownerFilter) && ' •'}
+          <SlidersHorizontal size={14} /> Filters{(statusFilter.length > 0 || sourceFilter || ownerFilter) && ' •'}
         </button>
         {selected.length > 0 && (
           <div className="bulk-bar" data-testid="bulk-bar">
             <span>{selected.length} selected</span>
             <button className="btn" onClick={() => setAssignOpen(true)}>
               Assign owner
+            </button>
+            <button className="btn" data-testid="mass-update-btn" onClick={() => setMassUpdateOpen(true)}>
+              Mass update
             </button>
             <button className="btn btn-danger" onClick={bulkDelete}>
               Delete
@@ -424,6 +495,12 @@ export function Leads() {
           </div>
         </>
       )}
+        </>
+      )}
+
+      {layoutPickerOpen && (
+        <LayoutPickerPanel module="leads" basePath="/leads" onClose={() => setLayoutPickerOpen(false)} />
+      )}
 
       {menu && (
         <ContextMenu
@@ -431,8 +508,8 @@ export function Leads() {
           y={menu.y}
           onClose={() => setMenu(null)}
           items={[
-            { label: '👁 View details', onClick: () => navigate(`/leads/${menu.lead.id}`) },
-            { label: '🔄 Convert lead…', onClick: () => openWizard(menu.lead) },
+            { label: 'View details', onClick: () => navigate(`/leads/${menu.lead.id}`) },
+            { label: 'Convert lead…', onClick: () => openWizard(menu.lead) },
           ]}
         />
       )}
@@ -457,6 +534,19 @@ export function Leads() {
             <Select value={assignTo} options={ownerOptions} onChange={setAssignTo} placeholder="Choose owner…" />
           </div>
         </Modal>
+      )}
+
+      {massUpdateOpen && (
+        <MassUpdateModal
+          count={selected.length}
+          onClose={() => setMassUpdateOpen(false)}
+          fields={[
+            { key: 'status', label: 'Status', options: getStatusOptions('leads', 'status', LEAD_STATUSES).map((s) => ({ value: s, label: s })) },
+            { key: 'source', label: 'Source', options: LEAD_SOURCES.map((s) => ({ value: s, label: s })) },
+            { key: 'ownerId', label: 'Owner', options: ownerOptions },
+          ]}
+          onApply={applyMassUpdate}
+        />
       )}
 
       {wizard && (

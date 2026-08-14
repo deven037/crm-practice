@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useCallback, useContext, useRef, useState } from 'react';
+import { CheckCircle2, Info, XCircle } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -12,7 +13,7 @@ const ToastContext = createContext<{ push: (type: ToastType, message: string) =>
   push: () => {},
 });
 
-const ICONS: Record<ToastType, string> = { success: '✓', error: '✕', info: 'ℹ' };
+const ICONS: Record<ToastType, typeof CheckCircle2> = { success: CheckCircle2, error: XCircle, info: Info };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -30,7 +31,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div className="toast-container" data-testid="toast-container" aria-live="polite">
         {toasts.map((toast) => (
           <div key={toast.id} className={`toast toast-${toast.type}`} data-testid="toast" role="status">
-            <span className="toast-icon">{ICONS[toast.type]}</span>
+            <span className="toast-icon">{(() => { const Icon = ICONS[toast.type]; return <Icon size={16} />; })()}</span>
             <span className="toast-message">{toast.message}</span>
             <button
               className="toast-close"

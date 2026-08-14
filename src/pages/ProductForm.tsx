@@ -1,16 +1,29 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { newId, upsert } from '../data/store';
-import { Product, PRODUCT_CATEGORIES } from '../types';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { getAllSync, newId, upsert } from '../data/store';
+import { PageLayout, Product, PRODUCT_CATEGORIES } from '../types';
 import { Select } from '../components/Select';
 import { CustomFieldsSection, CustomFieldValues, validateCustomFields } from '../components/CustomFieldsSection';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
+import { getCustomFieldsAsModuleFields } from '../utils/moduleFields';
+import { classNames } from '../utils';
 
 export function ProductForm() {
   const navigate = useNavigate();
   const toast = useToast();
   const { user } = useAuth();
+  const [params] = useSearchParams();
+
+  const layouts = getAllSync<PageLayout>('pageLayouts').filter((l) => l.module === 'products');
+  const layout = layouts.find((l) => l.id === params.get('layout')) ?? layouts.find((l) => l.isDefault) ?? layouts[0];
+  const allLayoutKeys = new Set(layout?.tabs.flatMap((t) => t.fieldKeys) ?? []);
+  const [activeTabId, setActiveTabId] = useState(layout?.tabs[0]?.id ?? '');
+  const activeTab = layout?.tabs.find((t) => t.id === activeTabId) ?? layout?.tabs[0];
+  const isVisible = (key: string) => !layout || (activeTab?.fieldKeys.includes(key) ?? true);
+  const customFieldIds = new Set(getCustomFieldsAsModuleFields('products').map((f) => f.key));
+  const activeTabCustomIds = activeTab?.fieldKeys.filter((k) => customFieldIds.has(k)) ?? [];
+
   const [name, setName] = useState('');
   const [sku, setSku] = useState('');
   const [category, setCategory] = useState('Subscription');
@@ -25,8 +38,8 @@ export function ProductForm() {
   const submit = async () => {
     const errs: typeof errors = {};
     const price = Number(priceText.replace(/[^0-9.]/g, ''));
-    if (!name.trim()) errs.name = 'Product name is required.';
-    if (!priceText.trim() || !Number.isFinite(price) || price <= 0) errs.price = 'Enter a valid price greater than 0.';
+    if (allLayoutKeys.has('name') && !name.trim()) errs.name = 'Product name is required.';
+    if (allLayoutKeys.has('price') && (!priceText.trim() || !Number.isFinite(price) || price <= 0)) errs.price = 'Enter a valid price greater than 0.';
     setErrors(errs);
     const cErrs = validateCustomFields('products', 'form', customFields);
     setCustomErrors(cErrs);
@@ -64,61 +77,88 @@ export function ProductForm() {
       <div className="page-header">
         <h1>New product</h1>
       </div>
+      {layout && <p className="muted" style={{ marginTop: -8 }}>Layout: {layout.name}</p>}
 
       <div className="card form-card">
+        {layout && layout.tabs.length > 1 && (
+          <div className="chip-filters" data-testid="product-form-layout-tabs" style={{ marginBottom: 16 }}>
+            {layout.tabs.map((tab) => (
+              <span
+                key={tab.id}
+                className={classNames('chip-filter', tab.id === activeTabId && 'active')}
+                style={{ cursor: 'pointer' }}
+                onClick={() => setActiveTabId(tab.id)}
+              >
+                {tab.label}
+              </span>
+            ))}
+          </div>
+        )}
         <div className="form-grid">
-          <div className="field">
-            <span className="field-label">Product name *</span>
-            <input className="input" data-testid="product-name" value={name} onChange={(e) => setName(e.target.value)} />
-            {errors.name && <span className="field-error">{errors.name}</span>}
-          </div>
-          <div className="field">
-            <span className="field-label">SKU</span>
-            <input
-              className="input"
-              data-testid="product-sku"
-              placeholder="Auto-generated if left empty"
-              value={sku}
-              onChange={(e) => setSku(e.target.value)}
-            />
-          </div>
-          <div className="field">
-            <span className="field-label">Category</span>
-            <Select
-              value={category}
-              options={PRODUCT_CATEGORIES.map((c) => ({ value: c, label: c }))}
-              onChange={setCategory}
-              testId="product-category"
-            />
-          </div>
-          <div className="field">
-            <span className="field-label">Price ($) *</span>
-            <input
-              className="input"
-              data-testid="product-price"
-              placeholder="e.g. 14900"
-              value={priceText}
-              onChange={(e) => setPriceText(e.target.value)}
-            />
-            {errors.price && <span className="field-error">{errors.price}</span>}
-          </div>
-          <div className="field field-span">
-            <span className="field-label">Description</span>
-            <textarea
-              className="input"
-              rows={3}
-              data-testid="product-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-          <label className="switch-row field-span">
-            <label className="switch">
-              <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
-              <span className="switch-slider" />
+          {isVisible('name') && (
+            <div className="field">
+              <span className="field-label">Product name *</span>
+              <input className="input" data-testid="product-name" value={name} onChange={(e) => setName(e.target.value)} />
+              {errors.name && <span className="field-error">{errors.name}</span>}
+            </div>
+          )}
+          {isVisible('sku') && (
+            <div className="field">
+              <span className="field-label">SKU</span>
+              <input
+                className="input"
+                data-testid="product-sku"
+                placeholder="Auto-generated if left empty"
+                value={sku}
+                onChange={(e) => setSku(e.target.value)}
+              />
+            </div>
+          )}
+          {isVisible('category') && (
+            <div className="field">
+              <span className="field-label">Category</span>
+              <Select
+                value={category}
+                options={PRODUCT_CATEGORIES.map((c) => ({ value: c, label: c }))}
+                onChange={setCategory}
+                testId="product-category"
+              />
+            </div>
+          )}
+          {isVisible('price') && (
+            <div className="field">
+              <span className="field-label">Price ($) *</span>
+              <input
+                className="input"
+                data-testid="product-price"
+                placeholder="e.g. 14900"
+                value={priceText}
+                onChange={(e) => setPriceText(e.target.value)}
+              />
+              {errors.price && <span className="field-error">{errors.price}</span>}
+            </div>
+          )}
+          {isVisible('description') && (
+            <div className="field field-span">
+              <span className="field-label">Description</span>
+              <textarea
+                className="input"
+                rows={3}
+                data-testid="product-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+          )}
+          {isVisible('active') && (
+            <label className="switch-row field-span">
+              <label className="switch">
+                <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+                <span className="switch-slider" />
+              </label>
+              Active (available for lead generation)
             </label>
-            Active (available for lead generation)
-          </label>
+          )}
           <CustomFieldsSection
             module="products"
             target="form"
@@ -126,6 +166,7 @@ export function ProductForm() {
             values={customFields}
             onChange={(k, v) => setCustomFields({ ...customFields, [k]: v })}
             errors={customErrors}
+            includeIds={layout ? activeTabCustomIds : undefined}
           />
         </div>
 

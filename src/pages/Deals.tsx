@@ -1,14 +1,17 @@
-import { DragEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAll, upsert, removeMany } from '../data/store';
 import { Account, Deal, DealStage, DEAL_STAGES, User } from '../types';
 import { Modal } from '../components/Modal';
 import { SearchableSelect, Select } from '../components/Select';
 import { DatePicker } from '../components/DatePicker';
+import { Kanban } from '../components/Kanban';
+import { ToolBoxPanel } from '../components/ToolBoxPanel';
 import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { autoCloseDate, formatCurrency, formatDate } from '../utils';
+import { getStatusOptions } from '../utils/rules';
 
 export function Deals() {
   const toast = useToast();
@@ -19,7 +22,6 @@ export function Deals() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [editing, setEditing] = useState<Deal | null>(null);
-  const [dragOverStage, setDragOverStage] = useState<DealStage | null>(null);
 
   const load = async () => {
     const [d, a, u] = await Promise.all([getAll<Deal>('deals'), getAll<Account>('accounts'), getAll<User>('users')]);
@@ -35,15 +37,12 @@ export function Deals() {
 
   const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name ?? 'No account';
 
-  const onDrop = async (e: DragEvent, stage: DealStage) => {
-    e.preventDefault();
-    setDragOverStage(null);
-    const id = e.dataTransfer.getData('text/deal-id');
-    const deal = deals.find((d) => d.id === id);
+  const onDrop = async (dealId: string, stage: string) => {
+    const deal = deals.find((d) => d.id === dealId);
     if (!deal || deal.stage === stage) return;
-    const updated = autoCloseDate(deal.stage, { ...deal, stage });
+    const updated = autoCloseDate(deal.stage, { ...deal, stage: stage as DealStage });
     // Optimistic UI so the card moves instantly, then persist.
-    setDeals((prev) => prev.map((d) => (d.id === id ? updated : d)));
+    setDeals((prev) => prev.map((d) => (d.id === dealId ? updated : d)));
     await upsert('deals', updated);
     toast.push('success', `"${deal.name}" moved to ${stage}.`);
   };
@@ -73,60 +72,48 @@ export function Deals() {
       <div className="page-header">
         <h1>Deals</h1>
         <div className="page-actions">
-          <button className="btn btn-primary" onClick={() => navigate('/deals/new')}>
+          <button className="btn btn-create" onClick={() => navigate('/deals/new')}>
             + New Deal
           </button>
         </div>
       </div>
 
+      <ToolBoxPanel
+        module="deals"
+        links={[
+          { label: 'Assignment Rules', to: '/setup/assignment-rules' },
+          { label: 'Status Codes', to: '/setup/status-codes' },
+          { label: 'Custom Fields', to: '/admin/objects/deals' },
+          { label: 'Customise Page Layout', to: '/setup/layouts/deals' },
+        ]}
+      />
+
       {loading ? (
         <SkeletonRows rows={6} />
       ) : (
-        <div className="kanban" data-testid="kanban-board">
-          {DEAL_STAGES.map((stage) => {
+        <Kanban
+          testId="kanban-board"
+          emptyLabel="Drop deals here"
+          columns={DEAL_STAGES.map((stage) => {
             const stageDeals = deals.filter((d) => d.stage === stage);
             const total = stageDeals.reduce((sum, d) => sum + d.amount, 0);
-            return (
-              <div
-                key={stage}
-                className={`kanban-col${dragOverStage === stage ? ' drag-over' : ''}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOverStage(stage);
-                }}
-                onDragLeave={() => setDragOverStage(null)}
-                onDrop={(e) => onDrop(e, stage)}
-              >
-                <div className="kanban-head">
-                  <span className="kanban-title">{stage}</span>
-                  <span className="kanban-meta">
-                    {stageDeals.length} · {formatCurrency(total)}
-                  </span>
-                </div>
-                <div className="kanban-cards">
-                  {stageDeals.map((deal) => (
-                    <div
-                      key={deal.id}
-                      className="kanban-card"
-                      draggable
-                      onDragStart={(e) => e.dataTransfer.setData('text/deal-id', deal.id)}
-                      onClick={() => setEditing(deal)}
-                    >
-                      <div className="kanban-card-title">{deal.name}</div>
-                      <div className="kanban-card-account">{accountName(deal.accountId)}</div>
-                      <div className="kanban-card-foot">
-                        <span className="kanban-amount">{formatCurrency(deal.amount)}</span>
-                        <span className="kanban-prob">{deal.probability}%</span>
-                      </div>
-                      <div className="kanban-card-date">Close: {formatDate(deal.closeDate)}</div>
-                    </div>
-                  ))}
-                  {stageDeals.length === 0 && <div className="kanban-empty">Drop deals here</div>}
-                </div>
-              </div>
-            );
+            return { key: stage, label: stage, items: stageDeals, headerMeta: `${stageDeals.length} · ${formatCurrency(total)}` };
           })}
-        </div>
+          getId={(deal) => deal.id}
+          onCardClick={setEditing}
+          onDrop={onDrop}
+          cardRenderer={(deal) => (
+            <>
+              <div className="kanban-card-title">{deal.name}</div>
+              <div className="kanban-card-account">{accountName(deal.accountId)}</div>
+              <div className="kanban-card-foot">
+                <span className="kanban-amount">{formatCurrency(deal.amount)}</span>
+                <span className="kanban-prob">{deal.probability}%</span>
+              </div>
+              <div className="kanban-card-date">Close: {formatDate(deal.closeDate)}</div>
+            </>
+          )}
+        />
       )}
 
       {editing && (
@@ -229,7 +216,7 @@ function DealModal({
           <span className="field-label">Stage</span>
           <Select
             value={draft.stage}
-            options={DEAL_STAGES.map((s) => ({ value: s, label: s }))}
+            options={getStatusOptions('deals', 'stage', DEAL_STAGES).map((s) => ({ value: s, label: s }))}
             onChange={(v) => setDraft({ ...draft, stage: v as DealStage })}
             testId="deal-stage"
           />

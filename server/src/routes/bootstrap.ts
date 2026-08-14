@@ -27,6 +27,13 @@ bootstrapRouter.get('/', requireAuth, (_req, res) => {
     quotes: store.quotes.all(),
     customFieldDefs: store.customFieldDefs.all(),
     layouts: store.layouts.all(),
+    roleDefs: store.roleDefs.all(),
+    assignmentRules: store.assignmentRules.all(),
+    dedupeRules: store.dedupeRules.all(),
+    statusCodeSets: store.statusCodeSets.all(),
+    slaConfigs: store.slaConfigs.all(),
+    pageLayouts: store.pageLayouts.all(),
+    autoFlowProcesses: store.autoFlowProcesses.all(),
     audit: store.audit.all(),
   });
 });

@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Pencil, Trash2 } from 'lucide-react';
 import { getAll, getAllSync, getById, removeMany, saveAll, upsert } from '../data/store';
 import { Campaign, CAMPAIGN_CHANNELS, CAMPAIGN_STATUSES, Deal, Lead } from '../types';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
 import { DatePicker } from '../components/DatePicker';
 import { CustomFieldsSection } from '../components/CustomFieldsSection';
+import { RecordShell } from '../components/RecordShell';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { formatCurrency, formatDate } from '../utils';
+import { getStatusOptions } from '../utils/rules';
 
 const STATUS_PILL: Record<Campaign['status'], string> = {
   Planned: 'status-new',
@@ -31,6 +35,7 @@ export function CampaignDetail() {
   const [deleting, setDeleting] = useState(false);
   const [confirmName, setConfirmName] = useState('');
   const { user } = useAuth();
+  const { recordView } = useRecentlyViewed();
 
   useEffect(() => {
     (async () => {
@@ -48,6 +53,11 @@ export function CampaignDetail() {
       setDeals(d.filter((deal) => deal.campaignId === c.id));
     })();
   }, [id]);
+
+  useEffect(() => {
+    if (campaign) recordView({ module: 'campaigns', id: campaign.id, label: campaign.name, link: `/campaigns/${campaign.id}`, meta: { Channel: campaign.channel, Status: campaign.status } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [campaign?.id]);
 
   if (notFound) {
     return (
@@ -93,121 +103,73 @@ export function CampaignDetail() {
 
   const hasDependents = leads.length > 0 || deals.length > 0;
 
-  return (
-    <div data-testid="campaign-detail-page">
-      <nav className="breadcrumbs">
-        <Link to="/campaigns">Campaigns</Link> <span>/</span> <span>{campaign.name}</span>
-      </nav>
-
-      <div className="page-header">
-        <h1>{campaign.name}</h1>
-        <div className="page-actions">
-          <span className={`pill ${STATUS_PILL[campaign.status]}`} data-testid="campaign-status">
-            {campaign.status}
-          </span>
-          {!editing ? (
-            <>
-              <button
-                className="btn"
-                data-testid="edit-campaign-btn"
-                onClick={() => {
-                  setDraft({ ...campaign });
-                  setEditing(true);
-                }}
-              >
-                ✏️ Edit
-              </button>
-              <button
-                className="btn btn-danger"
-                data-testid="delete-campaign-btn"
-                onClick={() => {
-                  setConfirmName('');
-                  setDeleting(true);
-                }}
-              >
-                🗑 Delete
-              </button>
-            </>
-          ) : (
-            <>
-              <button className="btn" onClick={() => setEditing(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" data-testid="save-campaign-btn" onClick={save}>
-                Save
-              </button>
-            </>
-          )}
+  const detailsTab = !editing ? (
+    <dl className="detail-list">
+      <dt>Channel</dt>
+      <dd>{campaign.channel}</dd>
+      <dt>Budget</dt>
+      <dd>{formatCurrency(campaign.budget)}</dd>
+      <dt>Start date</dt>
+      <dd>{formatDate(campaign.startDate)}</dd>
+      <dt>End date</dt>
+      <dd>{formatDate(campaign.endDate)}</dd>
+      <dt>Created</dt>
+      <dd>{formatDate(campaign.createdAt)}</dd>
+      <CustomFieldsSection module="campaigns" target="detail" mode="view" values={campaign.customFields ?? {}} />
+    </dl>
+  ) : (
+    draft && (
+      <div className="form-grid">
+        <div className="field">
+          <span className="field-label">Campaign name *</span>
+          <input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
         </div>
+        <div className="field">
+          <span className="field-label">Channel</span>
+          <Select
+            value={draft.channel}
+            options={getStatusOptions('campaigns', 'channel', CAMPAIGN_CHANNELS).map((c) => ({ value: c, label: c }))}
+            onChange={(v) => setDraft({ ...draft, channel: v })}
+          />
+        </div>
+        <div className="field">
+          <span className="field-label">Budget ($)</span>
+          <input
+            className="input"
+            type="number"
+            value={draft.budget}
+            onChange={(e) => setDraft({ ...draft, budget: Number(e.target.value) })}
+          />
+        </div>
+        <div className="field">
+          <span className="field-label">Status</span>
+          <Select
+            value={draft.status}
+            options={getStatusOptions('campaigns', 'status', CAMPAIGN_STATUSES).map((s) => ({ value: s, label: s }))}
+            onChange={(v) => setDraft({ ...draft, status: v as Campaign['status'] })}
+          />
+        </div>
+        <div className="field">
+          <span className="field-label">Start date</span>
+          <DatePicker value={draft.startDate} onChange={(iso) => setDraft({ ...draft, startDate: iso })} />
+        </div>
+        <div className="field">
+          <span className="field-label">End date</span>
+          <DatePicker value={draft.endDate} onChange={(iso) => setDraft({ ...draft, endDate: iso })} />
+        </div>
+        <CustomFieldsSection
+          module="campaigns"
+          target="detail"
+          mode="edit"
+          values={draft.customFields ?? {}}
+          onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+        />
       </div>
+    )
+  );
 
-      <div className="card">
-        {!editing ? (
-          <dl className="detail-list">
-            <dt>Channel</dt>
-            <dd>{campaign.channel}</dd>
-            <dt>Budget</dt>
-            <dd>{formatCurrency(campaign.budget)}</dd>
-            <dt>Start date</dt>
-            <dd>{formatDate(campaign.startDate)}</dd>
-            <dt>End date</dt>
-            <dd>{formatDate(campaign.endDate)}</dd>
-            <dt>Created</dt>
-            <dd>{formatDate(campaign.createdAt)}</dd>
-            <CustomFieldsSection module="campaigns" target="detail" mode="view" values={campaign.customFields ?? {}} />
-          </dl>
-        ) : (
-          draft && (
-            <div className="form-grid">
-              <div className="field">
-                <span className="field-label">Campaign name *</span>
-                <input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className="field-label">Channel</span>
-                <Select
-                  value={draft.channel}
-                  options={CAMPAIGN_CHANNELS.map((c) => ({ value: c, label: c }))}
-                  onChange={(v) => setDraft({ ...draft, channel: v })}
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Budget ($)</span>
-                <input
-                  className="input"
-                  type="number"
-                  value={draft.budget}
-                  onChange={(e) => setDraft({ ...draft, budget: Number(e.target.value) })}
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Status</span>
-                <Select
-                  value={draft.status}
-                  options={CAMPAIGN_STATUSES.map((s) => ({ value: s, label: s }))}
-                  onChange={(v) => setDraft({ ...draft, status: v as Campaign['status'] })}
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Start date</span>
-                <DatePicker value={draft.startDate} onChange={(iso) => setDraft({ ...draft, startDate: iso })} />
-              </div>
-              <div className="field">
-                <span className="field-label">End date</span>
-                <DatePicker value={draft.endDate} onChange={(iso) => setDraft({ ...draft, endDate: iso })} />
-              </div>
-              <CustomFieldsSection
-                module="campaigns"
-                target="detail"
-                mode="edit"
-                values={draft.customFields ?? {}}
-                onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
-              />
-            </div>
-          )
-        )}
-      </div>
-
+  const relatedTab = (
+    <>
       <div className="card">
         <h3>Return on investment</h3>
         <dl className="detail-list">
@@ -219,7 +181,7 @@ export function CampaignDetail() {
       </div>
 
       <div className="card">
-        <div className="page-header">
+        <div className="page-header" style={{ border: 'none', marginBottom: 12, paddingBottom: 0 }}>
           <h3>Leads generated ({leads.length})</h3>
           <button
             className="btn btn-small"
@@ -260,6 +222,62 @@ export function CampaignDetail() {
           </ul>
         </div>
       )}
+    </>
+  );
+
+  return (
+    <>
+      <RecordShell
+        testId="campaign-detail-page"
+        breadcrumbs={[{ label: 'Campaigns', to: '/campaigns' }, { label: campaign.name }]}
+        title={campaign.name}
+        keyInfo={[
+          { label: 'Status', value: <span className={`pill ${STATUS_PILL[campaign.status]}`} data-testid="campaign-status">{campaign.status}</span> },
+          { label: 'Channel', value: campaign.channel },
+          { label: 'Budget', value: formatCurrency(campaign.budget) },
+          { label: 'Start', value: formatDate(campaign.startDate) },
+          { label: 'End', value: formatDate(campaign.endDate) },
+        ]}
+        tabs={[
+          { id: 'details', label: 'Details', content: <div className="card">{detailsTab}</div> },
+          { id: 'related', label: 'ROI & Related', content: relatedTab },
+        ]}
+        actions={
+          !editing ? (
+            <>
+              <button
+                className="btn"
+                data-testid="edit-campaign-btn"
+                onClick={() => {
+                  setDraft({ ...campaign });
+                  setEditing(true);
+                }}
+              >
+                <Pencil size={14} /> Edit
+              </button>
+              <button
+                className="btn btn-danger"
+                data-testid="delete-campaign-btn"
+                onClick={() => {
+                  setConfirmName('');
+                  setDeleting(true);
+                }}
+              >
+                <Trash2 size={14} /> Delete
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="btn" onClick={() => setEditing(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" data-testid="save-campaign-btn" onClick={save}>
+                Save
+              </button>
+            </>
+          )
+        }
+      />
 
       {deleting && (
         <Modal
@@ -303,6 +321,6 @@ export function CampaignDetail() {
           )}
         </Modal>
       )}
-    </div>
+    </>
   );
 }

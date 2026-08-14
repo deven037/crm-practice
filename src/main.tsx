@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { App } from './App';
 import { getValue } from './data/store';
 import { apiFetch } from './data/apiFetch';
+import '@fontsource-variable/inter';
 import './styles.css';
 
 async function boot() {

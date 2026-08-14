@@ -1,15 +1,31 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Pencil, Trash2 } from 'lucide-react';
 import { getAllSync, getById, removeMany, upsert } from '../data/store';
 import { Account, Deal, DealStage, DEAL_STAGES, Quote, User } from '../types';
 import { Modal } from '../components/Modal';
 import { SearchableSelect, Select } from '../components/Select';
 import { DatePicker } from '../components/DatePicker';
 import { CustomFieldsSection } from '../components/CustomFieldsSection';
+import { ProcessStepper, ProcessStepDef } from '../components/ProcessStepper';
+import { ActivityInsightsSidebar } from '../components/ActivityInsightsSidebar';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { autoCloseDate, formatCurrency, formatDate } from '../utils';
+import { getStatusOptions } from '../utils/rules';
+
+const STEP_ORDER = ['Qualification', 'Proposal', 'Negotiation', 'Closed'];
+
+function dealSteps(stage: DealStage): ProcessStepDef[] {
+  const currentIndex = stage.startsWith('Closed') ? 3 : STEP_ORDER.indexOf(stage);
+  return STEP_ORDER.map((label, i) => ({
+    id: label,
+    label: label === 'Closed' && stage.startsWith('Closed') ? stage : label,
+    state: i < currentIndex ? 'completed' : i === currentIndex ? 'current' : 'locked',
+  }));
+}
 
 export function DealDetail() {
   const { id } = useParams();
@@ -22,6 +38,7 @@ export function DealDetail() {
   const [confirmText, setConfirmText] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { recordView } = useRecentlyViewed();
 
   useEffect(() => {
     (async () => {
@@ -30,6 +47,11 @@ export function DealDetail() {
       else setDeal(d);
     })();
   }, [id]);
+
+  useEffect(() => {
+    if (deal) recordView({ module: 'deals', id: deal.id, label: deal.name, link: `/deals/${deal.id}`, meta: { Stage: deal.stage } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deal?.id]);
 
   if (notFound) {
     return (
@@ -82,7 +104,7 @@ export function DealDetail() {
                   setEditing(true);
                 }}
               >
-                ✏️ Edit
+                <Pencil size={14} /> Edit
               </button>
               <button
                 className="btn btn-danger"
@@ -92,7 +114,7 @@ export function DealDetail() {
                   setDeleting(true);
                 }}
               >
-                🗑 Delete
+                <Trash2 size={14} /> Delete
               </button>
             </>
           ) : (
@@ -108,85 +130,91 @@ export function DealDetail() {
         </div>
       </div>
 
-      <div className="card">
-        {!editing ? (
-          <dl className="detail-list">
-            <dt>Account</dt>
-            <dd>{account ? <Link to={`/accounts/${account.id}`}>{account.name}</Link> : '—'}</dd>
-            <dt>Amount</dt>
-            <dd>{formatCurrency(deal.amount)}</dd>
-            <dt>Stage</dt>
-            <dd>{deal.stage}</dd>
-            <dt>Win probability</dt>
-            <dd>{deal.probability}%</dd>
-            <dt>Expected close</dt>
-            <dd>{formatDate(deal.closeDate)}</dd>
-            <dt>Owner</dt>
-            <dd>{ownerName}</dd>
-            <dt>Created</dt>
-            <dd>{formatDate(deal.createdAt)}</dd>
-            <dt>Linked quote</dt>
-            <dd>{linkedQuote ? <Link to={`/quotes/${linkedQuote.id}`}>{linkedQuote.quoteNumber}</Link> : '—'}</dd>
-            <CustomFieldsSection module="deals" target="detail" mode="view" values={deal.customFields ?? {}} />
-          </dl>
-        ) : (
-          draft && (
-            <div className="form-grid">
-              <div className="field">
-                <span className="field-label">Deal name *</span>
-                <input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className="field-label">Account</span>
-                <SearchableSelect
-                  value={draft.accountId ?? ''}
-                  options={accounts.map((a) => ({ value: a.id, label: a.name }))}
-                  onChange={(v) => setDraft({ ...draft, accountId: v })}
-                  placeholder="Search accounts…"
+      <ProcessStepper testId="deal-stage-stepper" steps={dealSteps(deal.stage)} showLegend />
+
+      <div className="two-col-layout">
+        <div className="card">
+          {!editing ? (
+            <dl className="detail-list">
+              <dt>Account</dt>
+              <dd>{account ? <Link to={`/accounts/${account.id}`}>{account.name}</Link> : '—'}</dd>
+              <dt>Amount</dt>
+              <dd>{formatCurrency(deal.amount)}</dd>
+              <dt>Stage</dt>
+              <dd>{deal.stage}</dd>
+              <dt>Win probability</dt>
+              <dd>{deal.probability}%</dd>
+              <dt>Expected close</dt>
+              <dd>{formatDate(deal.closeDate)}</dd>
+              <dt>Owner</dt>
+              <dd>{ownerName}</dd>
+              <dt>Created</dt>
+              <dd>{formatDate(deal.createdAt)}</dd>
+              <dt>Linked quote</dt>
+              <dd>{linkedQuote ? <Link to={`/quotes/${linkedQuote.id}`}>{linkedQuote.quoteNumber}</Link> : '—'}</dd>
+              <CustomFieldsSection module="deals" target="detail" mode="view" values={deal.customFields ?? {}} />
+            </dl>
+          ) : (
+            draft && (
+              <div className="form-grid">
+                <div className="field">
+                  <span className="field-label">Deal name *</span>
+                  <input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+                </div>
+                <div className="field">
+                  <span className="field-label">Account</span>
+                  <SearchableSelect
+                    value={draft.accountId ?? ''}
+                    options={accounts.map((a) => ({ value: a.id, label: a.name }))}
+                    onChange={(v) => setDraft({ ...draft, accountId: v })}
+                    placeholder="Search accounts…"
+                  />
+                </div>
+                <div className="field">
+                  <span className="field-label">Amount ($)</span>
+                  <input
+                    className="input"
+                    type="number"
+                    value={draft.amount}
+                    onChange={(e) => setDraft({ ...draft, amount: Number(e.target.value) })}
+                  />
+                </div>
+                <div className="field">
+                  <span className="field-label">Stage</span>
+                  <Select
+                    value={draft.stage}
+                    options={getStatusOptions('deals', 'stage', DEAL_STAGES).map((s) => ({ value: s, label: s }))}
+                    onChange={(v) => setDraft({ ...draft, stage: v as DealStage })}
+                  />
+                </div>
+                <div className="field">
+                  <span className="field-label">Expected close date</span>
+                  <DatePicker value={draft.closeDate} onChange={(iso) => setDraft({ ...draft, closeDate: iso })} />
+                </div>
+                <div className="field field-span">
+                  <span className="field-label">Win probability: {draft.probability}%</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={draft.probability}
+                    onChange={(e) => setDraft({ ...draft, probability: Number(e.target.value) })}
+                  />
+                </div>
+                <CustomFieldsSection
+                  module="deals"
+                  target="detail"
+                  mode="edit"
+                  values={draft.customFields ?? {}}
+                  onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
                 />
               </div>
-              <div className="field">
-                <span className="field-label">Amount ($)</span>
-                <input
-                  className="input"
-                  type="number"
-                  value={draft.amount}
-                  onChange={(e) => setDraft({ ...draft, amount: Number(e.target.value) })}
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Stage</span>
-                <Select
-                  value={draft.stage}
-                  options={DEAL_STAGES.map((s) => ({ value: s, label: s }))}
-                  onChange={(v) => setDraft({ ...draft, stage: v as DealStage })}
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Expected close date</span>
-                <DatePicker value={draft.closeDate} onChange={(iso) => setDraft({ ...draft, closeDate: iso })} />
-              </div>
-              <div className="field field-span">
-                <span className="field-label">Win probability: {draft.probability}%</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={draft.probability}
-                  onChange={(e) => setDraft({ ...draft, probability: Number(e.target.value) })}
-                />
-              </div>
-              <CustomFieldsSection
-                module="deals"
-                target="detail"
-                mode="edit"
-                values={draft.customFields ?? {}}
-                onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
-              />
-            </div>
-          )
-        )}
+            )
+          )}
+        </div>
+
+        <ActivityInsightsSidebar deal={deal} />
       </div>
 
       {deleting && (

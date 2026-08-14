@@ -260,3 +260,172 @@ export interface LayoutDef {
   target: LayoutTarget;
   fieldIds: string[];
 }
+
+export interface LayoutTab {
+  id: string;
+  label: string;
+  /** System field keys (e.g. 'status') and/or CustomFieldDef ids, mixed freely in one tab. */
+  fieldKeys: string[];
+}
+
+/**
+ * A named, tabbed page layout for a module — the "Customise Page Layout" ToolBox feature.
+ * Distinct from `LayoutDef` above (the single form/detail field-order list the existing
+ * Custom Fields designer already writes and `CustomFieldsSection` already reads at
+ * runtime) — this is a newer, richer, multi-layout/multi-tab config surface. Selectable
+ * at record-creation time via the `?layout=` query param (see LayoutPickerPanel.tsx).
+ */
+export interface PageLayout {
+  id: string;
+  module: CustomFieldModule;
+  name: string;
+  isDefault: boolean;
+  tabs: LayoutTab[];
+}
+
+export type RoleOperation = 'view' | 'create' | 'edit' | 'delete';
+export const ROLE_OPERATIONS: RoleOperation[] = ['view', 'create', 'edit', 'delete'];
+
+export type AutoFlowNodeType = 'start' | 'end' | 'state' | 'wait' | 'decision' | 'gateway';
+
+export interface AutoFlowCondition {
+  /** System field key or CustomFieldDef id — same convention as AssignmentRule.conditions. */
+  field: string;
+  operator: 'equals' | 'contains';
+  value: string;
+}
+
+export interface AutoFlowNodeData {
+  label: string;
+  /** 'state' nodes only — this step's visible fields (embedded, not a PageLayout reference). */
+  fieldKeys?: string[];
+  /** 'state' nodes only — calls into rules.ts rather than reimplementing dedupe/assignment. */
+  action?: 'dedupe' | 'assign' | null;
+  /** 'wait' nodes only — meaningful once a runtime engine (future work) exists. */
+  waitMinutes?: number;
+  /** 'decision' nodes only — single true/false branch. */
+  condition?: AutoFlowCondition;
+}
+
+export interface AutoFlowNode {
+  id: string;
+  type: AutoFlowNodeType;
+  position: { x: number; y: number };
+  laneId: string;
+  milestoneId: string;
+  data: AutoFlowNodeData;
+}
+
+export interface AutoFlowEdge {
+  id: string;
+  source: string;
+  target: string;
+  sourceHandle?: string | null;
+  targetHandle?: string | null;
+  /** Gateway/decision branch label, e.g. "Call Later" / "Interested". */
+  branchLabel?: string;
+  /** Gateway edges — first matching edge wins; a condition-less edge is the "else" branch. */
+  condition?: AutoFlowCondition;
+}
+
+export interface AutoFlowLane {
+  id: string;
+  label: string;
+  order: number;
+}
+
+export interface AutoFlowMilestone {
+  id: string;
+  label: string;
+  order: number;
+}
+
+/**
+ * A visual, canvas-based process/flow layout tied to exactly one Product — "AutoFlow".
+ * `productId` is immutable once created (enforced server-side). Once `published`, becomes
+ * selectable as a record-creation path in `targetModule` via the `?autoflow=` query param,
+ * sequencing multiple step-forms/branches instead of one flat form (see LeadForm.tsx).
+ */
+export interface AutoFlowProcess {
+  id: string;
+  name: string;
+  productId: string;
+  /** Access control — which roles may select this published process at record-creation time. */
+  allowedRoles: Role[];
+  targetModule: CustomFieldModule;
+  status: 'draft' | 'published';
+  lanes: AutoFlowLane[];
+  milestones: AutoFlowMilestone[];
+  nodes: AutoFlowNode[];
+  edges: AutoFlowEdge[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RolePermission {
+  module: CustomFieldModule;
+  operations: RoleOperation[];
+}
+
+/**
+ * A named entry in the Roles directory (Setup → Roles) — purely informational metadata
+ * about a role name/description, plus a per-module operations checklist the admin fills
+ * in for reference (e.g. "Call Executive" → Leads: view). Distinct from `Role`, the
+ * 3-value permission union that actually gates access via `requireRole`/`Protected
+ * roles={[...]}` — creating or editing a RoleDef, including its `permissions`, never
+ * grants any actual access; nothing here is read by any auth check. `isSystem` rows
+ * mirror the 3 real permission tiers and cannot be deleted; custom rows are just labels
+ * (with an optional permissions checklist) teams can use for their own reference.
+ */
+export interface RoleDef {
+  id: string;
+  name: string;
+  description: string;
+  isSystem: boolean;
+  permissions?: RolePermission[];
+}
+
+// ---- Setup → ToolBox: 6 curated admin/config features ----
+
+export type AssignmentRuleModule = 'leads' | 'contacts' | 'deals';
+export type RuleOperator = 'equals' | 'contains';
+
+export interface AssignmentRule {
+  id: string;
+  module: AssignmentRuleModule;
+  name: string;
+  active: boolean;
+  conditions: { field: string; operator: RuleOperator; value: string }[];
+  assignTo: string; // userId
+  priority: number; // lower number = evaluated first; first active match wins
+}
+
+export type DedupeRuleModule = 'leads' | 'contacts';
+export type DedupeMatchType = 'exact' | 'fuzzy';
+
+export interface DedupeRule {
+  id: string;
+  module: DedupeRuleModule;
+  name: string;
+  active: boolean;
+  matchFields: string[];
+  matchType: DedupeMatchType;
+}
+
+/** Fields whose options are safe to reconfigure — never Ticket/Quote status, which have protected transition maps. */
+export type StatusCodeModule = 'leads' | 'deals' | 'campaigns';
+
+export interface StatusCodeSet {
+  id: string;
+  module: StatusCodeModule;
+  field: string; // e.g. 'status', 'stage', 'channel'
+  name: string;
+  options: string[];
+  isSystem: boolean;
+}
+
+export interface SlaConfig {
+  id: string;
+  priority: TicketPriority;
+  hours: number;
+}

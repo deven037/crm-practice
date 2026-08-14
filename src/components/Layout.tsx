@@ -1,17 +1,17 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import {
+  Bell, Building2, CheckSquare, ChevronDown, ChevronRight, DollarSign, FlaskConical, LayoutDashboard,
+  LogOut, Megaphone, Menu, Moon, Package, Receipt, Search, Settings, Shield, Sun, Target, Ticket, User,
+  type LucideIcon,
+} from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { getAllSync, getValue, setValue } from '../data/store';
-import { Account, AppNotification, Campaign, Contact, Deal, Lead, Product, Quote } from '../types';
+import { AppNotification } from '../types';
 import { initials, timeAgo } from '../utils';
+import { useMediaQuery } from '../hooks/useMediaQuery';
+import { CommandBar } from './CommandBar';
 import './feedback-widget';
-
-interface SearchResult {
-  type: string;
-  id: string;
-  label: string;
-  link: string;
-}
 
 function useOutside(onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
@@ -25,98 +25,13 @@ function useOutside(onClose: () => void) {
   return ref;
 }
 
-function GlobalSearch() {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[] | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
-  const ref = useOutside(() => setOpen(false));
-
-  useEffect(() => {
-    if (query.trim().length < 2) {
-      setResults(null);
-      setSearching(false);
-      return;
-    }
-    setSearching(true);
-    setOpen(true);
-    const timer = setTimeout(() => {
-      const q = query.trim().toLowerCase();
-      const found: SearchResult[] = [
-        ...getAllSync<Lead>('leads')
-          .filter((l) => l.name.toLowerCase().includes(q) || l.company.toLowerCase().includes(q))
-          .slice(0, 4)
-          .map((l) => ({ type: 'Lead', id: l.id, label: `${l.name} · ${l.company}`, link: '/leads' })),
-        ...getAllSync<Contact>('contacts')
-          .filter((c) => c.name.toLowerCase().includes(q))
-          .slice(0, 4)
-          .map((c) => ({ type: 'Contact', id: c.id, label: c.name, link: `/contacts/${c.id}` })),
-        ...getAllSync<Account>('accounts')
-          .filter((a) => a.name.toLowerCase().includes(q))
-          .slice(0, 3)
-          .map((a) => ({ type: 'Account', id: a.id, label: a.name, link: `/accounts/${a.id}` })),
-        ...getAllSync<Product>('products')
-          .filter((p) => p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
-          .slice(0, 3)
-          .map((p) => ({ type: 'Product', id: p.id, label: `${p.name} (${p.sku})`, link: `/products/${p.id}` })),
-        ...getAllSync<Deal>('deals')
-          .filter((d) => d.name.toLowerCase().includes(q))
-          .slice(0, 3)
-          .map((d) => ({ type: 'Deal', id: d.id, label: d.name, link: `/deals/${d.id}` })),
-        ...getAllSync<Campaign>('campaigns')
-          .filter((c) => c.name.toLowerCase().includes(q) || c.channel.toLowerCase().includes(q))
-          .slice(0, 3)
-          .map((c) => ({ type: 'Campaign', id: c.id, label: c.name, link: `/campaigns/${c.id}` })),
-        ...getAllSync<Quote>('quotes')
-          .filter((qt) => {
-            const account = getAllSync<Account>('accounts').find((a) => a.id === qt.accountId);
-            return qt.quoteNumber.toLowerCase().includes(q) || (account?.name.toLowerCase().includes(q) ?? false);
-          })
-          .slice(0, 3)
-          .map((qt) => {
-            const account = getAllSync<Account>('accounts').find((a) => a.id === qt.accountId);
-            return { type: 'Quote', id: qt.id, label: `${qt.quoteNumber} — ${account?.name ?? '—'}`, link: `/quotes/${qt.id}` };
-          }),
-      ];
-      setResults(found);
-      setSearching(false);
-    }, 600); // simulated async search latency
-    return () => clearTimeout(timer);
-  }, [query]);
-
+function GlobalSearchTrigger({ onOpen }: { onOpen: () => void }) {
   return (
-    <div className="global-search" ref={ref}>
-      <input
-        type="search"
-        className="input"
-        placeholder="Search leads, contacts, accounts…"
-        data-testid="global-search"
-        value={query}
-        onFocus={() => query.trim().length >= 2 && setOpen(true)}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      {open && (
-        <div className="search-dropdown">
-          {searching && <div className="search-hint">Searching…</div>}
-          {!searching && results && results.length === 0 && <div className="search-hint">No results for “{query}”</div>}
-          {!searching &&
-            results?.map((r) => (
-              <button
-                key={`${r.type}-${r.id}`}
-                className="search-result"
-                onClick={() => {
-                  setOpen(false);
-                  setQuery('');
-                  navigate(r.link);
-                }}
-              >
-                <span className="search-type">{r.type}</span> {r.label}
-              </button>
-            ))}
-        </div>
-      )}
-    </div>
+    <button className="global-search-trigger" data-testid="global-search" onClick={onOpen}>
+      <Search size={15} />
+      <span>Search leads, contacts, accounts…</span>
+      <kbd>⌘K</kbd>
+    </button>
   );
 }
 
@@ -135,7 +50,7 @@ function NotificationsBell() {
   return (
     <div className="bell-wrap" ref={ref}>
       <button className="icon-btn" aria-label="Notifications" onClick={() => setOpen((o) => !o)}>
-        🔔
+        <Bell size={18} />
         {unread > 0 && <span className="bell-badge">{unread}</span>}
       </button>
       {open && (
@@ -179,13 +94,24 @@ function AvatarMenu() {
               {user.email} · {user.role}
             </span>
           </div>
+          {(user.role === 'admin' || user.role === 'rep') && (
+            <button
+              data-testid="setup-menu-item"
+              onClick={() => {
+                setOpen(false);
+                navigate('/setup');
+              }}
+            >
+              <Shield size={15} /> Setup
+            </button>
+          )}
           <button
             onClick={() => {
               setOpen(false);
               navigate('/settings');
             }}
           >
-            Profile settings
+            <Settings size={15} /> Profile settings
           </button>
           <button
             data-testid="logout-btn"
@@ -195,7 +121,7 @@ function AvatarMenu() {
               navigate('/login');
             }}
           >
-            Log out
+            <LogOut size={15} /> Log out
           </button>
         </div>
       )}
@@ -203,33 +129,32 @@ function AvatarMenu() {
   );
 }
 
-const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: string; adminOnly?: boolean }[] }[] = [
-  { label: 'Main', items: [{ to: '/', label: 'Dashboard', icon: '📊' }] },
+const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: LucideIcon; adminOnly?: boolean }[] }[] = [
+  { label: 'Main', items: [{ to: '/', label: 'Dashboard', icon: LayoutDashboard }] },
   {
     label: 'Sales',
     items: [
-      { to: '/leads', label: 'Leads', icon: '🎯' },
-      { to: '/contacts', label: 'Contacts', icon: '👤' },
-      { to: '/accounts', label: 'Accounts', icon: '🏢' },
-      { to: '/products', label: 'Products', icon: '📦' },
-      { to: '/campaigns', label: 'Campaigns', icon: '📣' },
-      { to: '/quotes', label: 'Quotes', icon: '🧾' },
-      { to: '/deals', label: 'Deals', icon: '💰' },
+      { to: '/leads', label: 'Leads', icon: Target },
+      { to: '/contacts', label: 'Contacts', icon: User },
+      { to: '/accounts', label: 'Accounts', icon: Building2 },
+      { to: '/products', label: 'Products', icon: Package },
+      { to: '/campaigns', label: 'Campaigns', icon: Megaphone },
+      { to: '/quotes', label: 'Quotes', icon: Receipt },
+      { to: '/deals', label: 'Deals', icon: DollarSign },
     ],
   },
   {
     label: 'Work',
     items: [
-      { to: '/tasks', label: 'Tasks', icon: '✅' },
-      { to: '/tickets', label: 'Tickets', icon: '🎫' },
+      { to: '/tasks', label: 'Tasks', icon: CheckSquare },
+      { to: '/tickets', label: 'Tickets', icon: Ticket },
     ],
   },
   {
     label: 'System',
     items: [
-      { to: '/admin', label: 'Admin', icon: '🛡️', adminOnly: true },
-      { to: '/testcases', label: 'Test Cases', icon: '🧪' },
-      { to: '/settings', label: 'Settings', icon: '⚙️' },
+      { to: '/testcases', label: 'Test Cases', icon: FlaskConical },
+      { to: '/settings', label: 'Settings', icon: Settings },
     ],
   },
 ];
@@ -239,11 +164,32 @@ export function Layout({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [closedGroups, setClosedGroups] = useState<string[]>([]);
   const [theme, setTheme] = useState<string>(() => getValue('theme', 'light'));
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 780px)');
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     setValue('theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (!isMobile) setMobileOpen(false);
+  }, [isMobile]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandOpen((o) => !o);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+  const toggleSidebar = () => (isMobile ? setMobileOpen((o) => !o) : setCollapsed((c) => !c));
+  const contentCollapsed = collapsed && !isMobile;
 
   const groups = useMemo(
     () =>
@@ -255,18 +201,20 @@ export function Layout({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className={`app-shell${collapsed ? ' sidebar-collapsed' : ''}`}>
+    <div className={`app-shell${collapsed ? ' sidebar-collapsed' : ''}${mobileOpen ? ' sidebar-mobile-open' : ''}`}>
+      {isMobile && mobileOpen && <div className="sidebar-backdrop" onClick={() => setMobileOpen(false)} />}
+      <CommandBar open={commandOpen} onClose={() => setCommandOpen(false)} />
       <aside className="sidebar" data-testid="sidebar">
         <div className="brand">
           <span className="brand-logo">◆</span>
-          {!collapsed && <span className="brand-name">Practice CRM</span>}
+          {!contentCollapsed && <span className="brand-name">Practice CRM</span>}
         </div>
         <nav>
           {groups.map((group) => {
             const closed = closedGroups.includes(group.label);
             return (
               <div key={group.label} className="nav-group">
-                {!collapsed && (
+                {!contentCollapsed && (
                   <button
                     className="nav-group-label"
                     aria-expanded={!closed}
@@ -276,19 +224,22 @@ export function Layout({ children }: { children: ReactNode }) {
                       )
                     }
                   >
-                    {group.label} <span className="caret">{closed ? '▸' : '▾'}</span>
+                    {group.label} <span className="caret">{closed ? <ChevronRight size={12} /> : <ChevronDown size={12} />}</span>
                   </button>
                 )}
-                {(collapsed || !closed) &&
+                {(contentCollapsed || !closed) &&
                   group.items.map((item) => (
                     <NavLink
                       key={item.to}
                       to={item.to}
                       end={item.to === '/'}
                       className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+                      onClick={() => isMobile && setMobileOpen(false)}
                     >
-                      <span className="nav-icon">{item.icon}</span>
-                      {!collapsed && <span>{item.label}</span>}
+                      <span className="nav-icon">
+                        <item.icon size={17} />
+                      </span>
+                      {!contentCollapsed && <span>{item.label}</span>}
                     </NavLink>
                   ))}
               </div>
@@ -302,11 +253,11 @@ export function Layout({ children }: { children: ReactNode }) {
             className="icon-btn"
             aria-label="Toggle sidebar"
             data-testid="sidebar-toggle"
-            onClick={() => setCollapsed((c) => !c)}
+            onClick={toggleSidebar}
           >
-            ☰
+            <Menu size={18} />
           </button>
-          <GlobalSearch />
+          <GlobalSearchTrigger onOpen={() => setCommandOpen(true)} />
           <div className="topbar-right">
             <button
               className="icon-btn"
@@ -314,7 +265,7 @@ export function Layout({ children }: { children: ReactNode }) {
               data-testid="theme-toggle"
               onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
             >
-              {theme === 'light' ? '🌙' : '☀️'}
+              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
             <NotificationsBell />
             <AvatarMenu />

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { newId, upsert } from '../data/store';
-import { Ticket, TicketPriority, TICKET_PRIORITIES } from '../types';
+import { getAllSync, newId, upsert } from '../data/store';
+import { SlaConfig, Ticket, TicketPriority, TICKET_PRIORITIES } from '../types';
 import { Select } from '../components/Select';
 import { CustomFieldsSection, CustomFieldValues, validateCustomFields } from '../components/CustomFieldsSection';
 import { useToast } from '../components/Toast';
@@ -30,6 +30,9 @@ export function TicketForm() {
     setCustomErrors(cErrs);
     if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) return;
 
+    // Setup → SLA Management: hours-per-priority, seeded at 48h for every priority to
+    // match the app's previous flat hardcoded value exactly until someone edits it.
+    const slaHours = getAllSync<SlaConfig>('slaConfigs').find((c) => c.priority === priority)?.hours ?? 48;
     const ticket: Ticket = {
       id: newId('ticket'),
       subject: subject.trim(),
@@ -37,7 +40,7 @@ export function TicketForm() {
       requester: requester.trim(),
       priority,
       status: 'Open',
-      slaDue: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+      slaDue: new Date(Date.now() + slaHours * 60 * 60 * 1000).toISOString(),
       createdAt: new Date().toISOString(),
       comments: [],
       attachments: [],

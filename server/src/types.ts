@@ -264,3 +264,141 @@ export interface LayoutDef {
   target: LayoutTarget;
   fieldIds: string[];
 }
+
+export interface LayoutTab {
+  id: string;
+  label: string;
+  fieldKeys: string[];
+}
+
+/** "Customise Page Layout" ToolBox feature — see client src/types.ts for full rationale. */
+export interface PageLayout {
+  id: string;
+  module: CustomFieldModule;
+  name: string;
+  isDefault: boolean;
+  tabs: LayoutTab[];
+}
+
+export type RoleOperation = 'view' | 'create' | 'edit' | 'delete';
+
+export type AutoFlowNodeType = 'start' | 'end' | 'state' | 'wait' | 'decision' | 'gateway';
+
+export interface AutoFlowCondition {
+  field: string;
+  operator: 'equals' | 'contains';
+  value: string;
+}
+
+export interface AutoFlowNodeData {
+  label: string;
+  fieldKeys?: string[];
+  action?: 'dedupe' | 'assign' | null;
+  waitMinutes?: number;
+  condition?: AutoFlowCondition;
+}
+
+export interface AutoFlowNode {
+  id: string;
+  type: AutoFlowNodeType;
+  position: { x: number; y: number };
+  laneId: string;
+  milestoneId: string;
+  data: AutoFlowNodeData;
+}
+
+export interface AutoFlowEdge {
+  id: string;
+  source: string;
+  target: string;
+  sourceHandle?: string | null;
+  targetHandle?: string | null;
+  branchLabel?: string;
+  condition?: AutoFlowCondition;
+}
+
+export interface AutoFlowLane {
+  id: string;
+  label: string;
+  order: number;
+}
+
+export interface AutoFlowMilestone {
+  id: string;
+  label: string;
+  order: number;
+}
+
+/** "AutoFlow" process/flow designer, tied to exactly one Product — see client src/types.ts for full rationale. */
+export interface AutoFlowProcess {
+  id: string;
+  name: string;
+  productId: string;
+  allowedRoles: Role[];
+  targetModule: CustomFieldModule;
+  status: 'draft' | 'published';
+  lanes: AutoFlowLane[];
+  milestones: AutoFlowMilestone[];
+  nodes: AutoFlowNode[];
+  edges: AutoFlowEdge[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RolePermission {
+  module: CustomFieldModule;
+  operations: RoleOperation[];
+}
+
+/** Informational Roles-directory entry — distinct from `Role`, the 3-value permission union. See client src/types.ts for full rationale. */
+export interface RoleDef {
+  id: string;
+  name: string;
+  description: string;
+  isSystem: boolean;
+  permissions?: RolePermission[];
+}
+
+// ---- Setup → ToolBox: 6 curated admin/config features ----
+
+export type AssignmentRuleModule = 'leads' | 'contacts' | 'deals';
+export type RuleOperator = 'equals' | 'contains';
+
+export interface AssignmentRule {
+  id: string;
+  module: AssignmentRuleModule;
+  name: string;
+  active: boolean;
+  conditions: { field: string; operator: RuleOperator; value: string }[];
+  assignTo: string;
+  priority: number;
+}
+
+export type DedupeRuleModule = 'leads' | 'contacts';
+export type DedupeMatchType = 'exact' | 'fuzzy';
+
+export interface DedupeRule {
+  id: string;
+  module: DedupeRuleModule;
+  name: string;
+  active: boolean;
+  matchFields: string[];
+  matchType: DedupeMatchType;
+}
+
+export type StatusCodeModule = 'leads' | 'deals' | 'campaigns';
+
+export interface StatusCodeSet {
+  id: string;
+  module: StatusCodeModule;
+  field: string;
+  name: string;
+  options: string[];
+  isSystem: boolean;
+}
+
+export interface SlaConfig {
+  id: string;
+  priority: TicketPriority;
+  hours: number;
+}

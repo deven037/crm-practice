@@ -1,5 +1,6 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Calendar, FileText, Paperclip, Pencil, StickyNote, Trash2 } from 'lucide-react';
 import { getAllSync, getById, newId, removeMany, upsert } from '../data/store';
 import { Modal } from '../components/Modal';
 import { useAuth } from '../auth/AuthContext';
@@ -10,7 +11,8 @@ import { SearchableSelect } from '../components/Select';
 import { CustomFieldsSection } from '../components/CustomFieldsSection';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
-import { formatDateTime, initials } from '../utils';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
+import { formatDate, formatDateTime, initials } from '../utils';
 
 const TAG_OPTIONS = ['vip', 'newsletter', 'partner', 'decision-maker', 'follow-up', 'imported'].map((t) => ({
   value: t,
@@ -30,6 +32,7 @@ export function ContactDetail() {
   const avatarInput = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { recordView } = useRecentlyViewed();
 
   useEffect(() => {
     (async () => {
@@ -38,6 +41,11 @@ export function ContactDetail() {
       else setContact(c);
     })();
   }, [id]);
+
+  useEffect(() => {
+    if (contact) recordView({ module: 'contacts', id: contact.id, label: contact.name, link: `/contacts/${contact.id}`, meta: { Title: contact.title } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contact?.id]);
 
   if (notFound) {
     return (
@@ -108,8 +116,27 @@ export function ContactDetail() {
         </div>
         <div className="page-actions" style={{ marginLeft: 'auto' }}>
           <button className="btn btn-danger" data-testid="delete-contact-btn" onClick={() => setDeleting(true)}>
-            🗑 Delete
+            <Trash2 size={14} /> Delete
           </button>
+        </div>
+      </div>
+
+      <div className="key-info-strip">
+        <div className="key-info-item">
+          <span className="key-info-label">Email</span>
+          <span className="key-info-value">{contact.email}</span>
+        </div>
+        <div className="key-info-item">
+          <span className="key-info-label">Phone</span>
+          <span className="key-info-value">{contact.phone || '—'}</span>
+        </div>
+        <div className="key-info-item">
+          <span className="key-info-label">Account</span>
+          <span className="key-info-value">{accountName ?? '—'}</span>
+        </div>
+        <div className="key-info-item">
+          <span className="key-info-label">Created</span>
+          <span className="key-info-value">{formatDate(contact.createdAt)}</span>
         </div>
       </div>
 
@@ -182,7 +209,7 @@ export function ContactDetail() {
                         setEditing(true);
                       }}
                     >
-                      ✏️ Edit
+                      <Pencil size={14} /> Edit
                     </button>
                   </>
                 ) : (
@@ -252,13 +279,13 @@ export function ContactDetail() {
             content: (
               <div className="card">
                 <div className="activity-item">
-                  <span className="activity-icon">📅</span>
+                  <span className="activity-icon"><Calendar size={14} /></span>
                   <span className="activity-text">Contact created</span>
                   <span className="activity-time">{formatDateTime(contact.createdAt)}</span>
                 </div>
                 {contact.notes.map((n) => (
                   <div key={n.id} className="activity-item">
-                    <span className="activity-icon">📝</span>
+                    <span className="activity-icon"><StickyNote size={14} /></span>
                     <span className="activity-text">Note added: “{n.text.slice(0, 60)}”</span>
                     <span className="activity-time">{formatDateTime(n.createdAt)}</span>
                   </div>
@@ -309,14 +336,14 @@ export function ContactDetail() {
             content: (
               <div className="card">
                 <button className="btn" data-testid="attach-file-btn" onClick={() => fileInput.current?.click()}>
-                  📎 Attach file
+                  <Paperclip size={14} /> Attach file
                 </button>
                 <input ref={fileInput} type="file" hidden data-testid="file-input" onChange={onFileAttach} />
                 <ul className="file-list">
                   {contact.files.length === 0 && <li className="muted">No files attached yet.</li>}
                   {contact.files.map((file) => (
                     <li key={file.id}>
-                      📄 {file.name} <span className="muted">({Math.max(1, Math.round(file.size / 1024))} KB)</span>
+                      <FileText size={14} /> {file.name} <span className="muted">({Math.max(1, Math.round(file.size / 1024))} KB)</span>
                       <button
                         className="link-btn"
                         onClick={() =>

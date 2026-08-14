@@ -47,6 +47,7 @@ export function CustomFieldsSection({
   values,
   onChange,
   errors,
+  includeIds,
 }: {
   module: CustomFieldModule;
   target: LayoutTarget;
@@ -54,8 +55,11 @@ export function CustomFieldsSection({
   values: CustomFieldValues;
   onChange?: (key: string, value: string | number | boolean | null) => void;
   errors?: Record<string, string>;
+  /** When set (e.g. by a Page Layout's tab), only these CustomFieldDef ids render — everything else is omitted, not just hidden. */
+  includeIds?: string[];
 }) {
-  const fields = getLayoutFields(module, target);
+  const allFields = getLayoutFields(module, target);
+  const fields = includeIds ? allFields.filter((f) => includeIds.includes(f.id)) : allFields;
   if (fields.length === 0) return null;
 
   // Renders bare dt/dd or field blocks — no card/heading of its own — so callers embed
