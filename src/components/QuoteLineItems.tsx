@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { X } from 'lucide-react';
 import { getAllSync, newId } from '../data/store';
 import { Product, QuoteLineItem, QuoteStatus } from '../types';
 import { SearchableSelect } from './Select';
@@ -111,7 +112,7 @@ export function QuoteLineItemsEditor({
               <td className="num">{formatCurrency(line.lineTotal, true)}</td>
               <td>
                 <button className="link-btn" data-testid="remove-line-item" onClick={() => removeLine(line.id)}>
-                  ✕
+                  <X size={14} />
                 </button>
               </td>
             </tr>

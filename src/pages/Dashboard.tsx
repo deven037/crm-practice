@@ -176,7 +176,7 @@ export function Dashboard() {
                   </div>
                 ))}
                 {feedLoading && <div className="search-hint">Loading more…</div>}
-                {visibleActivities >= activities.length && <div className="search-hint">You're all caught up 🎉</div>}
+                {visibleActivities >= activities.length && <div className="search-hint">You're all caught up.</div>}
               </div>
             </section>
           </div>

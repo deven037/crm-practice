@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Pencil, Trash2 } from 'lucide-react';
 import { getAllSync, getById, removeMany, upsert } from '../data/store';
 import { Campaign, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Product, User } from '../types';
 import { Modal } from '../components/Modal';
 import { SearchableSelect, Select } from '../components/Select';
 import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
+import { RecordShell } from '../components/RecordShell';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { formatCurrency, formatDate } from '../utils';
+import { getStatusOptions } from '../utils/rules';
 
 export function LeadDetail() {
   const { id } = useParams();
@@ -20,6 +24,7 @@ export function LeadDetail() {
   const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { recordView } = useRecentlyViewed();
 
   useEffect(() => {
     (async () => {
@@ -28,6 +33,11 @@ export function LeadDetail() {
       else setLead(l);
     })();
   }, [id]);
+
+  useEffect(() => {
+    if (lead) recordView({ module: 'leads', id: lead.id, label: lead.name, link: `/leads/${lead.id}`, meta: { Company: lead.company, Status: lead.status } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lead?.id]);
 
   if (notFound) {
     return (
@@ -62,19 +72,125 @@ export function LeadDetail() {
     toast.push('success', 'Lead updated.');
   };
 
-  return (
-    <div data-testid="lead-detail-page">
-      <nav className="breadcrumbs">
-        <Link to="/leads">Leads</Link> <span>/</span> <span>{lead.name}</span>
-      </nav>
+  const detailsTab = !editing ? (
+    <dl className="detail-list">
+      <dt>Company</dt>
+      <dd>{lead.company || '—'}</dd>
+      <dt>Email</dt>
+      <dd>{lead.email}</dd>
+      <dt>Phone</dt>
+      <dd>{lead.phone || '—'}</dd>
+      <dt>Source</dt>
+      <dd>{lead.source}</dd>
+      <dt>Owner</dt>
+      <dd>{ownerName}</dd>
+      <dt>Estimated value</dt>
+      <dd>{formatCurrency(lead.value)}</dd>
+      <dt>Interested product</dt>
+      <dd>{product ? <Link to={`/products/${product.id}`}>{product.name}</Link> : '—'}</dd>
+      <dt>Campaign</dt>
+      <dd>{campaign ? <Link to={`/campaigns/${campaign.id}`}>{campaign.name}</Link> : '—'}</dd>
+      <dt>Created</dt>
+      <dd>{formatDate(lead.createdAt)}</dd>
+      <CustomFieldsSection module="leads" target="detail" mode="view" values={lead.customFields ?? {}} />
+    </dl>
+  ) : (
+    draft && (
+      <div className="form-grid">
+        <div className="field">
+          <span className="field-label">Full name *</span>
+          <input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+        </div>
+        <div className="field">
+          <span className="field-label">Company</span>
+          <input className="input" value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} />
+        </div>
+        <div className="field">
+          <span className="field-label">Email *</span>
+          <input className="input" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
+        </div>
+        <div className="field">
+          <span className="field-label">Phone</span>
+          <input className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
+        </div>
+        <div className="field">
+          <span className="field-label">Status</span>
+          <Select
+            value={draft.status}
+            options={getStatusOptions('leads', 'status', LEAD_STATUSES).map((s) => ({ value: s, label: s }))}
+            onChange={(v) => setDraft({ ...draft, status: v as LeadStatus })}
+          />
+        </div>
+        <div className="field">
+          <span className="field-label">Source</span>
+          <Select
+            value={draft.source}
+            options={LEAD_SOURCES.map((s) => ({ value: s, label: s }))}
+            onChange={(v) => setDraft({ ...draft, source: v })}
+          />
+        </div>
+        <div className="field">
+          <span className="field-label">Interested product</span>
+          <SearchableSelect
+            value={draft.productId ?? ''}
+            options={[{ value: '', label: 'No product' }, ...products.map((p) => ({ value: p.id, label: p.name }))]}
+            onChange={(v) => setDraft({ ...draft, productId: v || null })}
+            placeholder="Search products…"
+          />
+        </div>
+        <div className="field">
+          <span className="field-label">Campaign</span>
+          <SearchableSelect
+            value={draft.campaignId ?? ''}
+            options={[{ value: '', label: 'No campaign' }, ...campaigns.map((c) => ({ value: c.id, label: c.name }))]}
+            onChange={(v) => setDraft({ ...draft, campaignId: v || null })}
+            placeholder="Search campaigns…"
+          />
+        </div>
+        <div className="field">
+          <span className="field-label">Owner</span>
+          <Select
+            value={draft.ownerId}
+            options={users.map((u) => ({ value: u.id, label: u.name }))}
+            onChange={(v) => setDraft({ ...draft, ownerId: v })}
+          />
+        </div>
+        <div className="field">
+          <span className="field-label">Estimated value ($)</span>
+          <input
+            className="input"
+            type="number"
+            value={draft.value}
+            onChange={(e) => setDraft({ ...draft, value: Number(e.target.value) })}
+          />
+        </div>
+        <CustomFieldsSection
+          module="leads"
+          target="detail"
+          mode="edit"
+          values={draft.customFields ?? {}}
+          onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+        />
+      </div>
+    )
+  );
 
-      <div className="page-header">
-        <h1>{lead.name}</h1>
-        <div className="page-actions">
-          <span className={`pill status-${lead.status.toLowerCase()}`} data-testid="lead-detail-status">
-            {lead.status}
-          </span>
-          {!editing ? (
+  return (
+    <>
+      <RecordShell
+        testId="lead-detail-page"
+        breadcrumbs={[{ label: 'Leads', to: '/leads' }, { label: lead.name }]}
+        title={lead.name}
+        keyInfo={[
+          { label: 'Status', value: <span className={`pill status-${lead.status.toLowerCase()}`} data-testid="lead-detail-status">{lead.status}</span> },
+          { label: 'Company', value: lead.company || '—' },
+          { label: 'Source', value: lead.source },
+          { label: 'Owner', value: ownerName },
+          { label: 'Created', value: formatDate(lead.createdAt) },
+        ]}
+        tabs={[{ id: 'details', label: 'Details', content: <div className="card">{detailsTab}</div> }]}
+        actions={
+          !editing ? (
             <>
               <button
                 className="btn"
@@ -84,10 +200,10 @@ export function LeadDetail() {
                   setEditing(true);
                 }}
               >
-                ✏️ Edit
+                <Pencil size={14} /> Edit
               </button>
               <button className="btn btn-danger" data-testid="delete-lead-btn" onClick={() => setDeleting(true)}>
-                🗑 Delete
+                <Trash2 size={14} /> Delete
               </button>
             </>
           ) : (
@@ -99,114 +215,9 @@ export function LeadDetail() {
                 Save
               </button>
             </>
-          )}
-        </div>
-      </div>
-
-      <div className="card">
-        {!editing ? (
-          <dl className="detail-list">
-            <dt>Company</dt>
-            <dd>{lead.company || '—'}</dd>
-            <dt>Email</dt>
-            <dd>{lead.email}</dd>
-            <dt>Phone</dt>
-            <dd>{lead.phone || '—'}</dd>
-            <dt>Source</dt>
-            <dd>{lead.source}</dd>
-            <dt>Owner</dt>
-            <dd>{ownerName}</dd>
-            <dt>Estimated value</dt>
-            <dd>{formatCurrency(lead.value)}</dd>
-            <dt>Interested product</dt>
-            <dd>{product ? <Link to={`/products/${product.id}`}>{product.name}</Link> : '—'}</dd>
-            <dt>Campaign</dt>
-            <dd>{campaign ? <Link to={`/campaigns/${campaign.id}`}>{campaign.name}</Link> : '—'}</dd>
-            <dt>Created</dt>
-            <dd>{formatDate(lead.createdAt)}</dd>
-            <CustomFieldsSection module="leads" target="detail" mode="view" values={lead.customFields ?? {}} />
-          </dl>
-        ) : (
-          draft && (
-            <div className="form-grid">
-              <div className="field">
-                <span className="field-label">Full name *</span>
-                <input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className="field-label">Company</span>
-                <input className="input" value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className="field-label">Email *</span>
-                <input className="input" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className="field-label">Phone</span>
-                <input className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className="field-label">Status</span>
-                <Select
-                  value={draft.status}
-                  options={LEAD_STATUSES.map((s) => ({ value: s, label: s }))}
-                  onChange={(v) => setDraft({ ...draft, status: v as LeadStatus })}
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Source</span>
-                <Select
-                  value={draft.source}
-                  options={LEAD_SOURCES.map((s) => ({ value: s, label: s }))}
-                  onChange={(v) => setDraft({ ...draft, source: v })}
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Interested product</span>
-                <SearchableSelect
-                  value={draft.productId ?? ''}
-                  options={[{ value: '', label: 'No product' }, ...products.map((p) => ({ value: p.id, label: p.name }))]}
-                  onChange={(v) => setDraft({ ...draft, productId: v || null })}
-                  placeholder="Search products…"
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Campaign</span>
-                <SearchableSelect
-                  value={draft.campaignId ?? ''}
-                  options={[{ value: '', label: 'No campaign' }, ...campaigns.map((c) => ({ value: c.id, label: c.name }))]}
-                  onChange={(v) => setDraft({ ...draft, campaignId: v || null })}
-                  placeholder="Search campaigns…"
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Owner</span>
-                <Select
-                  value={draft.ownerId}
-                  options={users.map((u) => ({ value: u.id, label: u.name }))}
-                  onChange={(v) => setDraft({ ...draft, ownerId: v })}
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Estimated value ($)</span>
-                <input
-                  className="input"
-                  type="number"
-                  value={draft.value}
-                  onChange={(e) => setDraft({ ...draft, value: Number(e.target.value) })}
-                />
-              </div>
-              <CustomFieldsSection
-                module="leads"
-                target="detail"
-                mode="edit"
-                values={draft.customFields ?? {}}
-                onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
-              />
-            </div>
           )
-        )}
-      </div>
+        }
+      />
 
       {deleting && (
         <Modal
@@ -240,6 +251,6 @@ export function LeadDetail() {
           )}
         </Modal>
       )}
-    </div>
+    </>
   );
 }

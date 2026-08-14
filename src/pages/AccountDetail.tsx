@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Pencil, Trash2 } from 'lucide-react';
 import { getAll, getAllSync, getById, removeMany, saveAll, upsert } from '../data/store';
 import { Account, Contact, Deal, Quote } from '../types';
 import { computeQuoteTotals, QUOTE_STATUS_PILL } from '../components/QuoteLineItems';
 import { Accordion } from '../components/Accordion';
 import { CustomFieldsSection } from '../components/CustomFieldsSection';
 import { Modal } from '../components/Modal';
+import { RecordShell } from '../components/RecordShell';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { formatCurrency, formatDate } from '../utils';
 
 export function AccountDetail() {
@@ -25,6 +28,7 @@ export function AccountDetail() {
   const [cascade, setCascade] = useState<'unlink' | 'cascade'>('unlink');
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { recordView } = useRecentlyViewed();
 
   useEffect(() => {
     (async () => {
@@ -44,6 +48,11 @@ export function AccountDetail() {
       setQuotes(q.filter((x) => x.accountId === a.id));
     })();
   }, [id]);
+
+  useEffect(() => {
+    if (account) recordView({ module: 'accounts', id: account.id, label: account.name, link: `/accounts/${account.id}`, meta: { Industry: account.industry } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account?.id]);
 
   if (notFound) {
     return (
@@ -85,103 +94,65 @@ export function AccountDetail() {
     navigate('/accounts');
   };
 
-  return (
-    <div data-testid="account-detail-page">
-      <nav className="breadcrumbs">
-        <Link to="/accounts">Accounts</Link> <span>/</span> <span>{account.name}</span>
-      </nav>
-
-      <div className="page-header">
-        <h1>{account.name}</h1>
-        <div className="page-actions">
-          {!editing ? (
-            <>
-              <button
-                className="btn"
-                data-testid="edit-account-btn"
-                onClick={() => {
-                  setDraft({ ...account });
-                  setEditing(true);
-                }}
-              >
-                ✏️ Edit
-              </button>
-              <button className="btn btn-danger" data-testid="delete-account-btn" onClick={() => setDeleting(true)}>
-                🗑 Delete
-              </button>
-            </>
-          ) : (
-            <>
-              <button className="btn" onClick={() => setEditing(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" data-testid="save-account-btn" onClick={save}>
-                Save
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="card">
-        {!editing ? (
-          <dl className="detail-list">
-            <dt>Industry</dt>
-            <dd>{account.industry}</dd>
-            <dt>Employees</dt>
-            <dd>{account.employees.toLocaleString()}</dd>
-            <dt>Annual revenue</dt>
-            <dd>{formatCurrency(account.revenue)}</dd>
-            <dt>Phone</dt>
-            <dd>{account.phone}</dd>
-            <dt>Website</dt>
-            <dd>
-              {account.website ? (
-                <a href={account.website} target="_blank" rel="noreferrer">
-                  {account.website} ↗
-                </a>
-              ) : (
-                '—'
-              )}
-            </dd>
-            <CustomFieldsSection module="accounts" target="detail" mode="view" values={account.customFields ?? {}} />
-          </dl>
+  const detailsTab = !editing ? (
+    <dl className="detail-list">
+      <dt>Industry</dt>
+      <dd>{account.industry}</dd>
+      <dt>Employees</dt>
+      <dd>{account.employees.toLocaleString()}</dd>
+      <dt>Annual revenue</dt>
+      <dd>{formatCurrency(account.revenue)}</dd>
+      <dt>Phone</dt>
+      <dd>{account.phone}</dd>
+      <dt>Website</dt>
+      <dd>
+        {account.website ? (
+          <a href={account.website} target="_blank" rel="noreferrer">
+            {account.website} ↗
+          </a>
         ) : (
-          draft && (
-            <div className="form-grid">
-              <div className="field">
-                <span className="field-label">Industry</span>
-                <input className="input" value={draft.industry} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className="field-label">Employees</span>
-                <input
-                  className="input"
-                  type="number"
-                  value={draft.employees}
-                  onChange={(e) => setDraft({ ...draft, employees: Number(e.target.value) })}
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Phone</span>
-                <input className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className="field-label">Website</span>
-                <input className="input" value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
-              </div>
-              <CustomFieldsSection
-                module="accounts"
-                target="detail"
-                mode="edit"
-                values={draft.customFields ?? {}}
-                onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
-              />
-            </div>
-          )
+          '—'
         )}
+      </dd>
+      <CustomFieldsSection module="accounts" target="detail" mode="view" values={account.customFields ?? {}} />
+    </dl>
+  ) : (
+    draft && (
+      <div className="form-grid">
+        <div className="field">
+          <span className="field-label">Industry</span>
+          <input className="input" value={draft.industry} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} />
+        </div>
+        <div className="field">
+          <span className="field-label">Employees</span>
+          <input
+            className="input"
+            type="number"
+            value={draft.employees}
+            onChange={(e) => setDraft({ ...draft, employees: Number(e.target.value) })}
+          />
+        </div>
+        <div className="field">
+          <span className="field-label">Phone</span>
+          <input className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
+        </div>
+        <div className="field">
+          <span className="field-label">Website</span>
+          <input className="input" value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
+        </div>
+        <CustomFieldsSection
+          module="accounts"
+          target="detail"
+          mode="edit"
+          values={draft.customFields ?? {}}
+          onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+        />
       </div>
+    )
+  );
 
+  const relatedTab = (
+    <>
       {/* Nested accordions: outer sections contain inner per-deal accordions */}
       <Accordion title="Related contacts" badge={contacts.length} defaultOpen>
         {contacts.length === 0 && <p className="muted">No contacts linked to this account.</p>}
@@ -225,6 +196,54 @@ export function AccountDetail() {
           ))}
         </ul>
       </Accordion>
+    </>
+  );
+
+  return (
+    <>
+      <RecordShell
+        testId="account-detail-page"
+        breadcrumbs={[{ label: 'Accounts', to: '/accounts' }, { label: account.name }]}
+        title={account.name}
+        keyInfo={[
+          { label: 'Industry', value: account.industry },
+          { label: 'Employees', value: account.employees.toLocaleString() },
+          { label: 'Annual revenue', value: formatCurrency(account.revenue) },
+          { label: 'Phone', value: account.phone || '—' },
+        ]}
+        tabs={[
+          { id: 'details', label: 'Details', content: <div className="card">{detailsTab}</div> },
+          { id: 'related', label: 'Related', content: relatedTab },
+        ]}
+        actions={
+          !editing ? (
+            <>
+              <button
+                className="btn"
+                data-testid="edit-account-btn"
+                onClick={() => {
+                  setDraft({ ...account });
+                  setEditing(true);
+                }}
+              >
+                <Pencil size={14} /> Edit
+              </button>
+              <button className="btn btn-danger" data-testid="delete-account-btn" onClick={() => setDeleting(true)}>
+                <Trash2 size={14} /> Delete
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="btn" onClick={() => setEditing(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" data-testid="save-account-btn" onClick={save}>
+                Save
+              </button>
+            </>
+          )
+        }
+      />
 
       {deleting && openDeals.length > 0 && (
         <Modal
@@ -285,6 +304,6 @@ export function AccountDetail() {
           </div>
         </Modal>
       )}
-    </div>
+    </>
   );
 }

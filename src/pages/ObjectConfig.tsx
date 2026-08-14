@@ -72,7 +72,7 @@ export function ObjectConfig() {
   if (!isValidModule) {
     return (
       <div className="empty-cell">
-        Unknown module. <Link to="/admin">Back to Admin</Link>
+        Unknown module. <Link to="/setup/custom-fields">Back to Custom Fields</Link>
       </div>
     );
   }
@@ -136,7 +136,7 @@ export function ObjectConfig() {
   return (
     <div data-testid="object-config-page">
       <nav className="breadcrumbs">
-        <Link to="/admin">Admin</Link> <span>/</span> <Link to="/admin">Object Configuration</Link> <span>/</span>{' '}
+        <Link to="/setup">Setup</Link> <span>/</span> <Link to="/setup/custom-fields">Custom Fields</Link> <span>/</span>{' '}
         <span>{MODULE_LABELS[mod]}</span>
       </nav>
 

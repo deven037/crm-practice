@@ -8,29 +8,30 @@ class FeedbackWidget extends HTMLElement {
     const root = this.attachShadow({ mode: 'open' });
     root.innerHTML = `
       <style>
-        :host { position: fixed; bottom: 20px; right: 20px; z-index: 900; font-family: inherit; }
+        :host { position: fixed; bottom: 20px; right: 20px; z-index: 900; font-family: var(--font-sans, inherit); }
         #fab {
-          background: #4f46e5; color: #fff; border: none; border-radius: 24px;
-          padding: 10px 18px; font-size: 14px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.25);
+          background: var(--accent-create, #d6336c); color: #fff; border: none; border-radius: var(--radius-pill, 24px);
+          padding: 10px 18px; font-size: 14px; cursor: pointer; box-shadow: var(--shadow-md, 0 4px 14px rgba(0,0,0,.25));
         }
         #panel {
-          position: absolute; bottom: 52px; right: 0; width: 280px; background: #fff; color: #1f2937;
-          border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.2);
+          position: absolute; bottom: 52px; right: 0; width: 280px; background: var(--surface, #fff); color: var(--text, #1f2937);
+          border: 1px solid var(--border, #e5e7eb); border-radius: var(--radius-lg, 12px); padding: 16px; box-shadow: var(--shadow-lg, 0 10px 30px rgba(0,0,0,.2));
         }
         #panel h4 { margin: 0 0 10px; font-size: 15px; }
         .stars { display: flex; gap: 4px; margin-bottom: 10px; }
-        .star { font-size: 22px; cursor: pointer; color: #d1d5db; background: none; border: none; padding: 0; }
-        .star.on { color: #f59e0b; }
+        .star { font-size: 22px; cursor: pointer; color: var(--border, #d1d5db); background: none; border: none; padding: 0; }
+        .star.on { color: var(--warning, #f59e0b); }
         textarea {
           width: 100%; box-sizing: border-box; height: 70px; resize: none; font-family: inherit;
-          border: 1px solid #d1d5db; border-radius: 8px; padding: 8px; font-size: 13px;
+          border: 1px solid var(--border, #d1d5db); border-radius: var(--radius-sm, 8px); padding: 8px; font-size: 13px;
+          background: var(--surface, #fff); color: var(--text, #1f2937);
         }
         #submit {
-          margin-top: 10px; width: 100%; background: #4f46e5; color: #fff; border: none;
-          border-radius: 8px; padding: 8px; font-size: 14px; cursor: pointer;
+          margin-top: 10px; width: 100%; background: var(--accent-create, #d6336c); color: #fff; border: none;
+          border-radius: var(--radius-sm, 8px); padding: 8px; font-size: 14px; cursor: pointer;
         }
         #submit:disabled { opacity: .5; cursor: not-allowed; }
-        #thanks { color: #059669; font-size: 14px; margin: 8px 0 0; }
+        #thanks { color: var(--success, #059669); font-size: 14px; margin: 8px 0 0; }
         [hidden] { display: none !important; }
       </style>
       <div id="panel" hidden>

@@ -3,15 +3,22 @@ import {
   Account,
   Activity,
   AppNotification,
+  AssignmentRule,
   AuditEntry,
+  AutoFlowProcess,
   Campaign,
   Contact,
   CustomFieldDef,
   Deal,
+  DedupeRule,
   LayoutDef,
   Lead,
+  PageLayout,
   Product,
   Quote,
+  RoleDef,
+  SlaConfig,
+  StatusCodeSet,
   TaskItem,
   Ticket,
   User,
@@ -149,6 +156,13 @@ class Store {
   notifications = new Collection<AppNotification>('notifications', []);
   customFieldDefs = new Collection<CustomFieldDef>('customFieldDefs', []);
   layouts = new Collection<LayoutDef>('layouts', []);
+  pageLayouts = new Collection<PageLayout>('pageLayouts', ['name']);
+  roleDefs = new Collection<RoleDef>('roleDefs', ['name']);
+  assignmentRules = new Collection<AssignmentRule>('assignmentRules', ['name']);
+  dedupeRules = new Collection<DedupeRule>('dedupeRules', ['name']);
+  statusCodeSets = new Collection<StatusCodeSet>('statusCodeSets', ['name']);
+  slaConfigs = new Collection<SlaConfig>('slaConfigs', []);
+  autoFlowProcesses = new Collection<AutoFlowProcess>('autoFlowProcesses', ['name']);
   audit = new Collection<AuditEntry>('audit', []);
 
   private auditCounter = 0;
@@ -169,6 +183,13 @@ class Store {
     this.notifications.seed(data.notifications);
     this.customFieldDefs.seed(data.customFieldDefs);
     this.layouts.seed(data.layouts);
+    this.pageLayouts.seed(data.pageLayouts);
+    this.roleDefs.seed(data.roleDefs);
+    this.assignmentRules.seed(data.assignmentRules);
+    this.dedupeRules.seed(data.dedupeRules);
+    this.statusCodeSets.seed(data.statusCodeSets);
+    this.slaConfigs.seed(data.slaConfigs);
+    this.autoFlowProcesses.seed(data.autoFlowProcesses);
     this.audit.seed(data.audit);
     this.auditCounter = 0;
   }

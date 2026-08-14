@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
 import { apiFetch } from '../data/apiFetch';
@@ -149,7 +150,7 @@ export function Login() {
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                   onClick={() => setShowPassword((s) => !s)}
                 >
-                  {showPassword ? '🙈' : '👁️'}
+                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
               {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}

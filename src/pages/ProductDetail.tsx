@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Pencil, Trash2 } from 'lucide-react';
 import { getAll, getAllSync, getById, removeMany, saveAll, upsert } from '../data/store';
 import { Lead, Product, PRODUCT_CATEGORIES, Quote } from '../types';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
 import { CustomFieldsSection } from '../components/CustomFieldsSection';
+import { RecordShell } from '../components/RecordShell';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { formatCurrency, formatDate } from '../utils';
 
 export function ProductDetail() {
@@ -23,6 +26,7 @@ export function ProductDetail() {
   const [deleting, setDeleting] = useState(false);
   const [confirmName, setConfirmName] = useState('');
   const { user } = useAuth();
+  const { recordView } = useRecentlyViewed();
 
   useEffect(() => {
     (async () => {
@@ -40,6 +44,11 @@ export function ProductDetail() {
       setAffectedQuotes(q.filter((quote) => quote.lineItems.some((li) => li.productId === p.id)));
     })();
   }, [id]);
+
+  useEffect(() => {
+    if (product) recordView({ module: 'products', id: product.id, label: product.name, link: `/products/${product.id}`, meta: { SKU: product.sku, Category: product.category } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id]);
 
   if (notFound) {
     return (
@@ -80,19 +89,121 @@ export function ProductDetail() {
 
   const hasDependents = leads.length > 0 || affectedQuotes.length > 0;
 
-  return (
-    <div data-testid="product-detail-page">
-      <nav className="breadcrumbs">
-        <Link to="/products">Products</Link> <span>/</span> <span>{product.name}</span>
-      </nav>
+  const detailsTab = !editing ? (
+    <dl className="detail-list">
+      <dt>SKU</dt>
+      <dd>
+        <code>{product.sku}</code>
+      </dd>
+      <dt>Category</dt>
+      <dd>{product.category}</dd>
+      <dt>Price</dt>
+      <dd>{formatCurrency(product.price)}</dd>
+      <dt>Description</dt>
+      <dd>{product.description || '—'}</dd>
+      <dt>Created</dt>
+      <dd>{formatDate(product.createdAt)}</dd>
+      <CustomFieldsSection module="products" target="detail" mode="view" values={product.customFields ?? {}} />
+    </dl>
+  ) : (
+    draft && (
+      <div className="form-grid">
+        <div className="field">
+          <span className="field-label">Product name *</span>
+          <input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+        </div>
+        <div className="field">
+          <span className="field-label">Category</span>
+          <Select
+            value={draft.category}
+            options={PRODUCT_CATEGORIES.map((c) => ({ value: c, label: c }))}
+            onChange={(v) => setDraft({ ...draft, category: v })}
+          />
+        </div>
+        <div className="field">
+          <span className="field-label">Price ($)</span>
+          <input
+            className="input"
+            type="number"
+            value={draft.price}
+            onChange={(e) => setDraft({ ...draft, price: Number(e.target.value) })}
+          />
+        </div>
+        <label className="switch-row">
+          <label className="switch">
+            <input type="checkbox" checked={draft.active} onChange={(e) => setDraft({ ...draft, active: e.target.checked })} />
+            <span className="switch-slider" />
+          </label>
+          Active
+        </label>
+        <div className="field field-span">
+          <span className="field-label">Description</span>
+          <textarea
+            className="input"
+            rows={3}
+            value={draft.description}
+            onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+          />
+        </div>
+        <CustomFieldsSection
+          module="products"
+          target="detail"
+          mode="edit"
+          values={draft.customFields ?? {}}
+          onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+        />
+      </div>
+    )
+  );
 
-      <div className="page-header">
-        <h1>{product.name}</h1>
-        <div className="page-actions">
-          <span className={`pill ${product.active ? 'status-qualified' : 'status-unqualified'}`} data-testid="product-status">
-            {product.active ? 'Active' : 'Inactive'}
-          </span>
-          {!editing ? (
+  const leadsTab = (
+    <div className="card">
+      <div className="page-header" style={{ border: 'none', marginBottom: 12, paddingBottom: 0 }}>
+        <h3>Leads generated ({leads.length})</h3>
+        <button
+          className="btn btn-small"
+          data-testid="new-lead-for-product-btn"
+          onClick={() => navigate(`/leads/new?productId=${product.id}`)}
+        >
+          + New lead for this product
+        </button>
+      </div>
+      {leads.length === 0 ? (
+        <p className="muted">No leads yet for this product.</p>
+      ) : (
+        <ul className="related-list">
+          {leads.map((lead) => (
+            <li key={lead.id}>
+              <Link to={`/leads/${lead.id}`}>{lead.name}</Link>{' '}
+              <span className="muted">
+                — {lead.company} · <span className={`pill status-${lead.status.toLowerCase()}`}>{lead.status}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      <RecordShell
+        testId="product-detail-page"
+        breadcrumbs={[{ label: 'Products', to: '/products' }, { label: product.name }]}
+        title={product.name}
+        keyInfo={[
+          { label: 'Status', value: <span className={`pill ${product.active ? 'status-qualified' : 'status-unqualified'}`} data-testid="product-status">{product.active ? 'Active' : 'Inactive'}</span> },
+          { label: 'SKU', value: <code>{product.sku}</code> },
+          { label: 'Category', value: product.category },
+          { label: 'Price', value: formatCurrency(product.price) },
+          { label: 'Created', value: formatDate(product.createdAt) },
+        ]}
+        tabs={[
+          { id: 'details', label: 'Details', content: <div className="card">{detailsTab}</div> },
+          { id: 'leads', label: `Leads (${leads.length})`, content: leadsTab },
+        ]}
+        actions={
+          !editing ? (
             <>
               <button
                 className="btn"
@@ -102,7 +213,7 @@ export function ProductDetail() {
                   setEditing(true);
                 }}
               >
-                ✏️ Edit
+                <Pencil size={14} /> Edit
               </button>
               <button
                 className="btn btn-danger"
@@ -112,7 +223,7 @@ export function ProductDetail() {
                   setDeleting(true);
                 }}
               >
-                🗑 Delete
+                <Trash2 size={14} /> Delete
               </button>
             </>
           ) : (
@@ -124,105 +235,9 @@ export function ProductDetail() {
                 Save
               </button>
             </>
-          )}
-        </div>
-      </div>
-
-      <div className="card">
-        {!editing ? (
-          <dl className="detail-list">
-            <dt>SKU</dt>
-            <dd>
-              <code>{product.sku}</code>
-            </dd>
-            <dt>Category</dt>
-            <dd>{product.category}</dd>
-            <dt>Price</dt>
-            <dd>{formatCurrency(product.price)}</dd>
-            <dt>Description</dt>
-            <dd>{product.description || '—'}</dd>
-            <dt>Created</dt>
-            <dd>{formatDate(product.createdAt)}</dd>
-            <CustomFieldsSection module="products" target="detail" mode="view" values={product.customFields ?? {}} />
-          </dl>
-        ) : (
-          draft && (
-            <div className="form-grid">
-              <div className="field">
-                <span className="field-label">Product name *</span>
-                <input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className="field-label">Category</span>
-                <Select
-                  value={draft.category}
-                  options={PRODUCT_CATEGORIES.map((c) => ({ value: c, label: c }))}
-                  onChange={(v) => setDraft({ ...draft, category: v })}
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Price ($)</span>
-                <input
-                  className="input"
-                  type="number"
-                  value={draft.price}
-                  onChange={(e) => setDraft({ ...draft, price: Number(e.target.value) })}
-                />
-              </div>
-              <label className="switch-row">
-                <label className="switch">
-                  <input type="checkbox" checked={draft.active} onChange={(e) => setDraft({ ...draft, active: e.target.checked })} />
-                  <span className="switch-slider" />
-                </label>
-                Active
-              </label>
-              <div className="field field-span">
-                <span className="field-label">Description</span>
-                <textarea
-                  className="input"
-                  rows={3}
-                  value={draft.description}
-                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                />
-              </div>
-              <CustomFieldsSection
-                module="products"
-                target="detail"
-                mode="edit"
-                values={draft.customFields ?? {}}
-                onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
-              />
-            </div>
           )
-        )}
-      </div>
-
-      <div className="card">
-        <div className="page-header">
-          <h3>Leads generated ({leads.length})</h3>
-          <button
-            className="btn btn-small"
-            data-testid="new-lead-for-product-btn"
-            onClick={() => navigate(`/leads/new?productId=${product.id}`)}
-          >
-            + New lead for this product
-          </button>
-        </div>
-        {leads.length === 0 ? (
-          <p className="muted">No leads yet for this product.</p>
-        ) : (
-          <ul className="related-list">
-            {leads.map((lead) => (
-              <li key={lead.id}>
-                <Link to={`/leads/${lead.id}`}>{lead.name}</Link>{' '}
-                <span className="muted">
-                  — {lead.company} · <span className={`pill status-${lead.status.toLowerCase()}`}>{lead.status}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+        }
+      />
 
       {deleting && (
         <Modal
@@ -276,6 +291,6 @@ export function ProductDetail() {
           )}
         </Modal>
       )}
-    </div>
+    </>
   );
 }

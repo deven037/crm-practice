@@ -1,4 +1,5 @@
 import { DragEvent, useEffect, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { getAll, newId, removeMany, saveAll, upsert } from '../data/store';
 import { TaskItem, TaskPriority, TASK_PRIORITIES } from '../types';
 import { Select } from '../components/Select';
@@ -173,7 +174,7 @@ export function Tasks() {
                   onChange={(v) => changePriority(task, v as TaskPriority)}
                 />
                 <button className="icon-btn" aria-label={`Delete ${task.title}`} onClick={() => deleteTask(task)}>
-                  🗑
+                  <Trash2 size={15} />
                 </button>
               </li>
             );

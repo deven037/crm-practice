@@ -5,21 +5,33 @@ import {
   Account,
   Activity,
   AppNotification,
+  AssignmentRule,
+  AutoFlowEdge,
+  AutoFlowNode,
+  AutoFlowProcess,
   Campaign,
   CampaignStatus,
   CAMPAIGN_CHANNELS,
+  CAMPAIGN_STATUSES,
   Contact,
   CustomFieldDef,
+  CUSTOM_FIELD_MODULES,
+  CustomFieldModule,
   Deal,
   DEAL_STAGES,
+  DedupeRule,
   LayoutDef,
   Lead,
   LEAD_SOURCES,
   LEAD_STATUSES,
+  PageLayout,
   Product,
   Quote,
   QuoteLineItem,
   QUOTE_STATUSES,
+  RoleDef,
+  SlaConfig,
+  StatusCodeSet,
   TaskItem,
   Ticket,
   User,
@@ -361,12 +373,228 @@ function seedCustomFieldDefs(): CustomFieldDef[] {
   ];
 }
 
+// Mirrors today's 3 real permission tiers (Role union in types.ts) as a directory entry
+// only — isSystem rows are non-deletable and never consulted by requireRole/Protected.
+function seedRoleDefs(): RoleDef[] {
+  return [
+    { id: 'role-admin', name: 'Admin', description: 'Full access to all records and Setup.', isSystem: true },
+    { id: 'role-rep', name: 'Sales Rep', description: 'Can manage records but has read-only Setup access.', isSystem: true },
+    { id: 'role-viewer', name: 'Viewer', description: 'Read-only access across all modules.', isSystem: true },
+  ];
+}
+
+// Genuinely new features (no prior hardcoded behavior to preserve) — seeded active with a
+// realistic example so Setup shows working data, not an empty state.
+function seedAssignmentRules(): AssignmentRule[] {
+  return [
+    {
+      id: 'assign-web-leads',
+      module: 'leads',
+      name: 'Web leads → Riya Rep',
+      active: true,
+      conditions: [{ field: 'source', operator: 'equals', value: 'Web' }],
+      assignTo: 'user-2',
+      priority: 1,
+    },
+    {
+      id: 'assign-referral-leads',
+      module: 'leads',
+      name: 'Referral leads → Sam Sales',
+      active: false,
+      conditions: [{ field: 'source', operator: 'equals', value: 'Referral' }],
+      assignTo: 'user-4',
+      priority: 2,
+    },
+  ];
+}
+
+function seedDedupeRules(): DedupeRule[] {
+  return [
+    { id: 'dedupe-leads-email', module: 'leads', name: 'Match leads by email', active: true, matchFields: ['email'], matchType: 'exact' },
+    {
+      id: 'dedupe-contacts-email',
+      module: 'contacts',
+      name: 'Match contacts by email',
+      active: true,
+      matchFields: ['email'],
+      matchType: 'exact',
+    },
+  ];
+}
+
+// isSystem: true rows reproduce today's hardcoded option lists exactly (LEAD_STATUSES,
+// DEAL_STAGES, CAMPAIGN_STATUSES, CAMPAIGN_CHANNELS) so wiring the relevant <Select>s up
+// to read from here is a no-op until someone actually edits a set.
+function seedStatusCodeSets(): StatusCodeSet[] {
+  return [
+    { id: 'status-lead-status', module: 'leads', field: 'status', name: 'Lead Status', options: [...LEAD_STATUSES], isSystem: true },
+    { id: 'status-deal-stage', module: 'deals', field: 'stage', name: 'Deal Stage', options: [...DEAL_STAGES], isSystem: true },
+    {
+      id: 'status-campaign-status',
+      module: 'campaigns',
+      field: 'status',
+      name: 'Campaign Status',
+      options: [...CAMPAIGN_STATUSES],
+      isSystem: true,
+    },
+    {
+      id: 'status-campaign-channel',
+      module: 'campaigns',
+      field: 'channel',
+      name: 'Campaign Channel',
+      options: [...CAMPAIGN_CHANNELS],
+      isSystem: true,
+    },
+  ];
+}
+
+// Every priority at 48h — matches today's flat `now + 48h` computation in TicketForm.tsx
+// exactly, so switching tickets to config-driven SLA hours is a no-op until edited.
+function seedSlaConfigs(): SlaConfig[] {
+  return [
+    { id: 'sla-low', priority: 'Low', hours: 48 },
+    { id: 'sla-medium', priority: 'Medium', hours: 48 },
+    { id: 'sla-high', priority: 'High', hours: 48 },
+    { id: 'sla-urgent', priority: 'Urgent', hours: 48 },
+  ];
+}
+
 function seedLayouts(): LayoutDef[] {
   return [
     { id: 'layout-leads-form', module: 'leads', target: 'form', fieldIds: ['cf-lead-referral', 'cf-lead-risk'] },
     { id: 'layout-leads-detail', module: 'leads', target: 'detail', fieldIds: ['cf-lead-referral', 'cf-lead-risk'] },
     { id: 'layout-accounts-form', module: 'accounts', target: 'form', fieldIds: ['cf-account-contract'] },
     { id: 'layout-accounts-detail', module: 'accounts', target: 'detail', fieldIds: ['cf-account-contract'] },
+  ];
+}
+
+// One isSystem "Default" PageLayout per module — field keys mirror each module's core
+// system fields (see client src/utils/moduleFields.ts, kept in sync manually). Purely a
+// config-preview surface for now; not yet read by any real Form/Detail page.
+const DEFAULT_LAYOUT_FIELDS: Record<CustomFieldModule, string[]> = {
+  leads: ['name', 'company', 'email', 'phone', 'status', 'source', 'value', 'ownerId'],
+  contacts: ['name', 'email', 'phone', 'title', 'accountId'],
+  accounts: ['name', 'industry', 'employees', 'revenue', 'website', 'phone', 'ownerId'],
+  deals: ['name', 'accountId', 'amount', 'stage', 'probability', 'closeDate', 'ownerId'],
+  products: ['name', 'sku', 'category', 'price', 'description', 'active'],
+  tickets: ['subject', 'requester', 'priority', 'description'],
+  campaigns: ['name', 'channel', 'budget', 'status', 'startDate', 'endDate'],
+  quotes: ['quoteNumber', 'accountId', 'validUntil'],
+};
+
+function seedPageLayouts(): PageLayout[] {
+  return CUSTOM_FIELD_MODULES.map((module) => ({
+    id: `layout-default-${module}`,
+    module,
+    name: 'Default',
+    isDefault: true,
+    tabs: [{ id: `tab-details-${module}`, label: 'Details', fieldKeys: DEFAULT_LAYOUT_FIELDS[module] }],
+  }));
+}
+
+// One example published AutoFlow process, tied to the first seeded product, exercising
+// start/state/decision/wait/end node types and a true/false branch — demonstrates the
+// canvas designer (Phase 2+) with real, non-empty data out of the box.
+function seedAutoFlowProcesses(products: Product[]): AutoFlowProcess[] {
+  const lane = { id: 'lane-sales', label: 'Sales Team', order: 0 };
+  const milestones = [
+    { id: 'milestone-intake', label: 'Intake', order: 0 },
+    { id: 'milestone-qualification', label: 'Qualification', order: 1 },
+    { id: 'milestone-assignment', label: 'Assignment', order: 2 },
+  ];
+
+  const nodes: AutoFlowNode[] = [
+    { id: 'af-start', type: 'start', position: { x: 40, y: 80 }, laneId: lane.id, milestoneId: 'milestone-intake', data: { label: 'Start' } },
+    {
+      id: 'af-screen',
+      type: 'state',
+      position: { x: 260, y: 80 },
+      laneId: lane.id,
+      milestoneId: 'milestone-intake',
+      data: { label: 'Screen', fieldKeys: ['name', 'email', 'phone'] },
+    },
+    {
+      id: 'af-dedupe',
+      type: 'state',
+      position: { x: 480, y: 80 },
+      laneId: lane.id,
+      milestoneId: 'milestone-intake',
+      data: { label: 'De-dupe Check', action: 'dedupe' },
+    },
+    {
+      id: 'af-web-source',
+      type: 'decision',
+      position: { x: 700, y: 80 },
+      laneId: lane.id,
+      milestoneId: 'milestone-qualification',
+      data: { label: 'Web Source?', condition: { field: 'source', operator: 'equals', value: 'Web' } },
+    },
+    {
+      id: 'af-assign',
+      type: 'state',
+      position: { x: 920, y: 20 },
+      laneId: lane.id,
+      milestoneId: 'milestone-assignment',
+      data: { label: 'Assign Rep', action: 'assign' },
+    },
+    {
+      id: 'af-cooldown',
+      type: 'wait',
+      position: { x: 1140, y: 20 },
+      laneId: lane.id,
+      milestoneId: 'milestone-assignment',
+      data: { label: 'Cooldown', waitMinutes: 30 },
+    },
+    {
+      id: 'af-manual-review',
+      type: 'state',
+      position: { x: 920, y: 160 },
+      laneId: lane.id,
+      milestoneId: 'milestone-assignment',
+      data: { label: 'Manual Review' },
+    },
+    { id: 'af-end', type: 'end', position: { x: 1360, y: 80 }, laneId: lane.id, milestoneId: 'milestone-assignment', data: { label: 'End' } },
+  ];
+
+  const edges: AutoFlowEdge[] = [
+    { id: 'af-e-start-screen', source: 'af-start', target: 'af-screen' },
+    { id: 'af-e-screen-dedupe', source: 'af-screen', target: 'af-dedupe' },
+    { id: 'af-e-dedupe-decision', source: 'af-dedupe', target: 'af-web-source' },
+    {
+      id: 'af-e-decision-assign',
+      source: 'af-web-source',
+      target: 'af-assign',
+      sourceHandle: 'true',
+      branchLabel: 'Web lead',
+      condition: { field: 'source', operator: 'equals', value: 'Web' },
+    },
+    {
+      id: 'af-e-decision-review',
+      source: 'af-web-source',
+      target: 'af-manual-review',
+      sourceHandle: 'false',
+      branchLabel: 'Other source',
+    },
+    { id: 'af-e-assign-cooldown', source: 'af-assign', target: 'af-cooldown' },
+    { id: 'af-e-cooldown-end', source: 'af-cooldown', target: 'af-end' },
+    { id: 'af-e-review-end', source: 'af-manual-review', target: 'af-end' },
+  ];
+
+  return [
+    {
+      id: 'autoflow-example-1',
+      name: `New Process — ${products[0]?.name ?? 'Product'}`,
+      productId: products[0]?.id ?? 'product-1',
+      allowedRoles: ['admin', 'rep'],
+      targetModule: 'leads',
+      status: 'published',
+      lanes: [lane],
+      milestones,
+      nodes,
+      edges,
+      createdAt: daysAgo(14),
+      updatedAt: daysAgo(2),
+    },
   ];
 }
 
@@ -411,6 +639,13 @@ export function buildSeedData() {
   const quotes = seedQuotes(accounts, deals, products);
   const customFieldDefs = seedCustomFieldDefs();
   const layouts = seedLayouts();
+  const pageLayouts = seedPageLayouts();
+  const roleDefs = seedRoleDefs();
+  const assignmentRules = seedAssignmentRules();
+  const dedupeRules = seedDedupeRules();
+  const statusCodeSets = seedStatusCodeSets();
+  const slaConfigs = seedSlaConfigs();
+  const autoFlowProcesses = seedAutoFlowProcesses(products);
   applyCustomFieldExamples(leadsWithCampaigns, accounts);
 
   return {
@@ -428,6 +663,13 @@ export function buildSeedData() {
     quotes,
     customFieldDefs,
     layouts,
+    pageLayouts,
+    roleDefs,
+    assignmentRules,
+    dedupeRules,
+    statusCodeSets,
+    slaConfigs,
+    autoFlowProcesses,
     audit: [
       { id: 'audit-1', user: 'Alex Admin', action: 'seed', detail: 'Database seeded with sample data', when: new Date().toISOString() },
     ] as { id: string; user: string; action: string; detail: string; when: string }[],

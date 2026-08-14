@@ -1,23 +1,42 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getAll, getAllSync } from '../data/store';
+import { LayoutGrid, List } from 'lucide-react';
+import { getAll, getAllSync, removeMany } from '../data/store';
 import { Account, Contact } from '../types';
 import { SkeletonRows } from '../components/Spinner';
+import { BulkActionsBar } from '../components/BulkActionsBar';
+import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
+import { ToolBoxPanel } from '../components/ToolBoxPanel';
+import { useToast } from '../components/Toast';
 import { classNames, initials } from '../utils';
 
 export function Contacts() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [query, setQuery] = useState('');
+  const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const load = async () => {
+    setLoading(true);
+    setContacts(await getAll<Contact>('contacts'));
+    setLoading(false);
+  };
 
   useEffect(() => {
-    (async () => {
-      setContacts(await getAll<Contact>('contacts'));
-      setLoading(false);
-    })();
+    load();
   }, []);
+
+  const bulkDelete = async () => {
+    if (!window.confirm(`Delete ${selected.length} selected contact(s)? This cannot be undone.`)) return;
+    await removeMany('contacts', selected);
+    toast.push('success', `${selected.length} contact(s) deleted.`);
+    setSelected([]);
+    load();
+  };
 
   const accounts = getAllSync<Account>('accounts');
   const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name ?? '—';
@@ -33,7 +52,7 @@ export function Contacts() {
       <div className="page-header">
         <h1>Contacts</h1>
         <div className="page-actions">
-          <button className="btn btn-primary" onClick={() => navigate('/contacts/new')}>
+          <button className="btn btn-create" onClick={() => setLayoutPickerOpen(true)}>
             + New Contact
           </button>
           <div className="view-toggle" role="group" aria-label="View mode">
@@ -41,9 +60,12 @@ export function Contacts() {
               className={classNames('btn', view === 'grid' && 'btn-active')}
               aria-label="Grid view"
               data-testid="view-grid"
-              onClick={() => setView('grid')}
+              onClick={() => {
+                setView('grid');
+                setSelected([]);
+              }}
             >
-              ▦ Grid
+              <LayoutGrid size={14} /> Grid
             </button>
             <button
               className={classNames('btn', view === 'list' && 'btn-active')}
@@ -51,11 +73,21 @@ export function Contacts() {
               data-testid="view-list"
               onClick={() => setView('list')}
             >
-              ☰ List
+              <List size={14} /> List
             </button>
           </div>
         </div>
       </div>
+
+      <ToolBoxPanel
+        module="contacts"
+        links={[
+          { label: 'Dedupe Rule', to: '/setup/dedupe-rules' },
+          { label: 'Import Data', to: '/setup/import' },
+          { label: 'Custom Fields', to: '/admin/objects/contacts' },
+          { label: 'Customise Page Layout', to: '/setup/layouts/contacts' },
+        ]}
+      />
 
       <div className="toolbar">
         <input
@@ -103,45 +135,82 @@ export function Contacts() {
           {filtered.length === 0 && <div className="empty-cell">No contacts match “{query}”.</div>}
         </div>
       ) : (
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Title</th>
-                <th>Account</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Tags</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((contact) => (
-                <tr key={contact.id} className="row-clickable" onClick={() => navigate(`/contacts/${contact.id}`)}>
-                  <td>
-                    <span className="table-avatar">
-                      {contact.avatar ? <img src={contact.avatar} alt="" /> : initials(contact.name)}
-                    </span>
-                    {contact.name}
-                  </td>
-                  <td>{contact.title}</td>
-                  <td>{accountName(contact.accountId)}</td>
-                  <td className="truncate has-tooltip" data-tooltip={contact.email}>
-                    {contact.email}
-                  </td>
-                  <td>{contact.phone}</td>
-                  <td>
-                    {contact.tags.map((tag) => (
-                      <span key={tag} className="chip chip-tag">
-                        {tag}
-                      </span>
-                    ))}
-                  </td>
+        <>
+          <div className="table-wrap">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th className="checkbox-cell">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all"
+                      checked={filtered.length > 0 && filtered.every((c) => selected.includes(c.id))}
+                      onChange={() =>
+                        setSelected((sel) =>
+                          filtered.every((c) => sel.includes(c.id)) ? sel.filter((id) => !filtered.some((c) => c.id === id)) : [...new Set([...sel, ...filtered.map((c) => c.id)])]
+                        )
+                      }
+                    />
+                  </th>
+                  <th>Name</th>
+                  <th>Title</th>
+                  <th>Account</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Tags</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.map((contact) => (
+                  <tr
+                    key={contact.id}
+                    className={classNames('row-clickable', selected.includes(contact.id) && 'row-selected')}
+                    onClick={() => navigate(`/contacts/${contact.id}`)}
+                  >
+                    <td className="checkbox-cell" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${contact.name}`}
+                        checked={selected.includes(contact.id)}
+                        onChange={() =>
+                          setSelected((sel) => (sel.includes(contact.id) ? sel.filter((id) => id !== contact.id) : [...sel, contact.id]))
+                        }
+                      />
+                    </td>
+                    <td>
+                      <span className="table-avatar">
+                        {contact.avatar ? <img src={contact.avatar} alt="" /> : initials(contact.name)}
+                      </span>
+                      {contact.name}
+                    </td>
+                    <td>{contact.title}</td>
+                    <td>{accountName(contact.accountId)}</td>
+                    <td className="truncate has-tooltip" data-tooltip={contact.email}>
+                      {contact.email}
+                    </td>
+                    <td>{contact.phone}</td>
+                    <td>
+                      {contact.tags.map((tag) => (
+                        <span key={tag} className="chip chip-tag">
+                          {tag}
+                        </span>
+                      ))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <BulkActionsBar count={selected.length} onClear={() => setSelected([])}>
+            <button className="btn btn-danger" onClick={bulkDelete}>
+              Delete
+            </button>
+          </BulkActionsBar>
+        </>
+      )}
+
+      {layoutPickerOpen && (
+        <LayoutPickerPanel module="contacts" basePath="/contacts" onClose={() => setLayoutPickerOpen(false)} />
       )}
     </div>
   );

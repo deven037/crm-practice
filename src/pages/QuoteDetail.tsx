@@ -1,29 +1,41 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Pencil, Trash2 } from 'lucide-react';
 import { getAllSync, getById, removeMany, upsert } from '../data/store';
 import { apiFetch } from '../data/apiFetch';
-import { Account, Deal, Product, Quote, QuoteLineItem, QuoteStatus, QUOTE_TRANSITIONS } from '../types';
-import { SearchableSelect } from '../components/Select';
-import { DatePicker } from '../components/DatePicker';
-import { QuoteLineItemsEditor, QuoteLineItemsView, QUOTE_STATUS_PILL } from '../components/QuoteLineItems';
-import { CustomFieldsSection } from '../components/CustomFieldsSection';
+import { Account, Deal, Product, Quote, QuoteStatus, QUOTE_TRANSITIONS } from '../types';
+import { QuoteBuilder, QuoteDraft } from '../components/QuoteBuilder';
+import { QuoteDocument } from '../components/QuoteDocument';
+import { QUOTE_STATUS_PILL } from '../components/QuoteLineItems';
+import { ProcessStepper, ProcessStepDef } from '../components/ProcessStepper';
 import { Modal } from '../components/Modal';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
-import { useAuth } from '../auth/AuthContext';
-import { formatDate } from '../utils';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
+
+const STEP_ORDER = ['Draft', 'Sent', 'Accepted'];
+
+function quoteSteps(status: QuoteStatus): ProcessStepDef[] {
+  const terminal = status === 'Rejected' || status === 'Expired';
+  const currentIndex = terminal ? 2 : STEP_ORDER.indexOf(status);
+  return STEP_ORDER.map((label, i) => ({
+    id: label,
+    label: label === 'Accepted' && terminal ? status : label,
+    state: i < currentIndex ? 'completed' : i === currentIndex ? 'current' : 'locked',
+  }));
+}
 
 export function QuoteDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
-  const { user } = useAuth();
   const [quote, setQuote] = useState<Quote | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<Quote | null>(null);
+  const [draft, setDraft] = useState<QuoteDraft | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [dealAlreadyClosedNote, setDealAlreadyClosedNote] = useState(false);
+  const { recordView } = useRecentlyViewed();
 
   useEffect(() => {
     (async () => {
@@ -32,6 +44,11 @@ export function QuoteDetail() {
       else setQuote(q);
     })();
   }, [id]);
+
+  useEffect(() => {
+    if (quote) recordView({ module: 'quotes', id: quote.id, label: quote.quoteNumber, link: `/quotes/${quote.id}`, meta: { Status: quote.status } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quote?.id]);
 
   if (notFound) {
     return (
@@ -43,16 +60,36 @@ export function QuoteDetail() {
   if (!quote) return <Spinner label="Loading quote…" />;
 
   const accounts = getAllSync<Account>('accounts');
-  const deals = getAllSync<Deal>('deals');
+  const allDeals = getAllSync<Deal>('deals');
   const products = getAllSync<Product>('products');
   const account = accounts.find((a) => a.id === quote.accountId);
-  const linkedDeal = deals.find((d) => d.id === quote.dealId);
-  const accountDeals = deals.filter((d) => d.accountId === (draft?.accountId ?? quote.accountId));
+  const linkedDeal = allDeals.find((d) => d.id === quote.dealId);
+  const accountDeals = allDeals.filter((d) => d.accountId === (draft?.accountId ?? quote.accountId));
+
+  const startEdit = () => {
+    setDraft({
+      quoteNumber: quote.quoteNumber,
+      accountId: quote.accountId,
+      dealId: quote.dealId ?? null,
+      validUntil: quote.validUntil,
+      lineItems: quote.lineItems,
+      customFields: quote.customFields ?? {},
+    });
+    setEditing(true);
+  };
 
   const save = async () => {
     if (!draft) return;
-    await upsert('quotes', draft);
-    setQuote(draft);
+    const next: Quote = {
+      ...quote,
+      accountId: draft.accountId,
+      dealId: draft.dealId,
+      validUntil: draft.validUntil,
+      lineItems: draft.lineItems,
+      customFields: draft.customFields,
+    };
+    await upsert('quotes', next);
+    setQuote(next);
     setEditing(false);
     toast.push('success', 'Quote updated.');
   };
@@ -103,18 +140,11 @@ export function QuoteDetail() {
           </span>
           {!editing ? (
             <>
-              <button
-                className="btn"
-                data-testid="edit-quote-btn"
-                onClick={() => {
-                  setDraft({ ...quote });
-                  setEditing(true);
-                }}
-              >
-                ✏️ Edit
+              <button className="btn" data-testid="edit-quote-btn" onClick={startEdit}>
+                <Pencil size={14} /> Edit
               </button>
               <button className="btn btn-danger" data-testid="delete-quote-btn" onClick={() => setDeleting(true)}>
-                🗑 Delete
+                <Trash2 size={14} /> Delete
               </button>
             </>
           ) : (
@@ -130,78 +160,33 @@ export function QuoteDetail() {
         </div>
       </div>
 
-      <div className="card">
-        {!editing ? (
-          <dl className="detail-list">
-            <dt>Account</dt>
-            <dd>{account ? <Link to={`/accounts/${account.id}`}>{account.name}</Link> : '—'}</dd>
-            <dt>Linked deal</dt>
-            <dd>
-              {linkedDeal ? <Link to={`/deals/${linkedDeal.id}`}>{linkedDeal.name}</Link> : '—'}
-              {dealAlreadyClosedNote && (
-                <span className="muted"> — this quote's linked deal was already closed when accepted.</span>
-              )}
-            </dd>
-            <dt>Valid until</dt>
-            <dd>{formatDate(quote.validUntil)}</dd>
-            <dt>Created</dt>
-            <dd>{formatDate(quote.createdAt)}</dd>
-            <CustomFieldsSection module="quotes" target="detail" mode="view" values={quote.customFields ?? {}} />
-          </dl>
-        ) : (
-          draft && (
-            <div className="form-grid">
-              <div className="field">
-                <span className="field-label">Account</span>
-                <SearchableSelect
-                  value={draft.accountId}
-                  options={accounts.map((a) => ({ value: a.id, label: a.name }))}
-                  onChange={(v) => setDraft({ ...draft, accountId: v, dealId: null })}
-                  placeholder="Search accounts…"
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Linked deal</span>
-                <SearchableSelect
-                  value={draft.dealId ?? ''}
-                  options={[{ value: '', label: 'No deal (optional)' }, ...accountDeals.map((d) => ({ value: d.id, label: d.name }))]}
-                  onChange={(v) => setDraft({ ...draft, dealId: v || null })}
-                  placeholder="Search this account's deals…"
-                  emptyText="This account has no deals yet"
-                />
-              </div>
-              <div className="field">
-                <span className="field-label">Valid until</span>
-                <DatePicker value={draft.validUntil} onChange={(iso) => setDraft({ ...draft, validUntil: iso })} />
-              </div>
-              <CustomFieldsSection
-                module="quotes"
-                target="detail"
-                mode="edit"
-                values={draft.customFields ?? {}}
-                onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
-              />
-            </div>
-          )
-        )}
+      <div className="no-print">
+        <ProcessStepper testId="quote-status-stepper" steps={quoteSteps(quote.status)} showLegend />
       </div>
 
-      <div className="card">
-        <h3>Line items</h3>
-        {!editing ? (
-          <QuoteLineItemsView lineItems={quote.lineItems} />
-        ) : (
-          draft && (
-            <QuoteLineItemsEditor
-              lineItems={draft.lineItems}
-              onChange={(items: QuoteLineItem[]) => setDraft({ ...draft, lineItems: items })}
-              products={products}
-            />
-          )
-        )}
-      </div>
+      {editing && draft ? (
+        <QuoteBuilder
+          draft={draft}
+          onDraftChange={setDraft}
+          status={quote.status}
+          accounts={accounts}
+          accountDeals={accountDeals}
+          products={products}
+          showQuoteNumberField={false}
+          testId="quote-builder"
+        />
+      ) : (
+        <>
+          <QuoteDocument quote={quote} account={account} deal={linkedDeal} showPrintButton />
+          {dealAlreadyClosedNote && (
+            <p className="muted" style={{ marginTop: 8 }}>
+              This quote's linked deal was already closed when accepted.
+            </p>
+          )}
+        </>
+      )}
 
-      <div className="card">
+      <div className="card no-print">
         <div className="transition-row">
           <span className="muted">Move to:</span>
           {QUOTE_TRANSITIONS[quote.status].map((next) => (

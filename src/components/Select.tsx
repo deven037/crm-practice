@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface Option {
   value: string;
@@ -9,12 +10,52 @@ function useOutsideClose(onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      const target = e.target as Element;
+      // The dropdown panel itself renders in a `.select-portal` under document.body (see
+      // PortalMenu below), outside this ref's DOM subtree — without this check, clicking
+      // an option would register as an "outside" click and close the menu before the
+      // option's own onClick fires.
+      if (ref.current && !ref.current.contains(target) && !target.closest?.('.select-portal')) {
+        onClose();
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [onClose]);
   return ref;
+}
+
+/**
+ * Renders dropdown content into document.body at a fixed position computed from the
+ * trigger's bounding rect, so it's never clipped by an ancestor with overflow:auto/hidden
+ * (e.g. a Select inside a `.table-wrap` table cell). Closes on scroll/resize rather than
+ * tracking live position — dropdowns are short-lived, so this keeps the fix simple.
+ */
+function PortalMenu({ anchorRef, onClose, children }: { anchorRef: RefObject<HTMLElement>; onClose: () => void; children: ReactNode }) {
+  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  useEffect(() => {
+    const el = anchorRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setRect({ top: r.bottom + 4, left: r.left, width: r.width });
+    const close = () => onClose();
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => {
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!rect) return null;
+  return createPortal(
+    <div className="select-portal" style={{ position: 'fixed', top: rect.top, left: rect.left, width: rect.width, zIndex: 900 }}>
+      {children}
+    </div>,
+    document.body
+  );
 }
 
 interface SelectProps {
@@ -47,22 +88,24 @@ export function Select({ value, options, onChange, placeholder = 'Select…', te
         <span className="caret" aria-hidden="true">▾</span>
       </button>
       {open && (
-        <ul className="select-menu" role="listbox">
-          {options.map((option) => (
-            <li
-              key={option.value}
-              role="option"
-              aria-selected={option.value === value}
-              className={option.value === value ? 'selected' : ''}
-              onClick={() => {
-                onChange(option.value);
-                setOpen(false);
-              }}
-            >
-              {option.label}
-            </li>
-          ))}
-        </ul>
+        <PortalMenu anchorRef={ref} onClose={() => setOpen(false)}>
+          <ul className="select-menu" role="listbox">
+            {options.map((option) => (
+              <li
+                key={option.value}
+                role="option"
+                aria-selected={option.value === value}
+                className={option.value === value ? 'selected' : ''}
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+              >
+                {option.label}
+              </li>
+            ))}
+          </ul>
+        </PortalMenu>
       )}
     </div>
   );
@@ -102,32 +145,34 @@ export function SearchableSelect({ value, options, onChange, placeholder = 'Sele
         <span className="caret" aria-hidden="true">▾</span>
       </button>
       {open && (
-        <div className="select-menu select-menu-searchable">
-          <input
-            className="select-search"
-            placeholder="Type to filter…"
-            value={query}
-            autoFocus
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <ul role="listbox">
-            {filtered.length === 0 && <li className="select-empty">{emptyText}</li>}
-            {filtered.map((option) => (
-              <li
-                key={option.value}
-                role="option"
-                aria-selected={option.value === value}
-                className={option.value === value ? 'selected' : ''}
-                onClick={() => {
-                  onChange(option.value);
-                  setOpen(false);
-                }}
-              >
-                {option.label}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <PortalMenu anchorRef={ref} onClose={() => setOpen(false)}>
+          <div className="select-menu select-menu-searchable">
+            <input
+              className="select-search"
+              placeholder="Type to filter…"
+              value={query}
+              autoFocus
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <ul role="listbox">
+              {filtered.length === 0 && <li className="select-empty">{emptyText}</li>}
+              {filtered.map((option) => (
+                <li
+                  key={option.value}
+                  role="option"
+                  aria-selected={option.value === value}
+                  className={option.value === value ? 'selected' : ''}
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                >
+                  {option.label}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </PortalMenu>
       )}
     </div>
   );
@@ -185,18 +230,20 @@ export function MultiSelect({ values, options, onChange, placeholder = 'Select�
         <span className="caret" aria-hidden="true">▾</span>
       </button>
       {open && (
-        <ul className="select-menu" role="listbox" aria-multiselectable="true">
-          {options.map((option) => (
-            <li
-              key={option.value}
-              role="option"
-              aria-selected={values.includes(option.value)}
-              onClick={() => toggle(option.value)}
-            >
-              <input type="checkbox" readOnly checked={values.includes(option.value)} tabIndex={-1} /> {option.label}
-            </li>
-          ))}
-        </ul>
+        <PortalMenu anchorRef={ref} onClose={() => setOpen(false)}>
+          <ul className="select-menu" role="listbox" aria-multiselectable="true">
+            {options.map((option) => (
+              <li
+                key={option.value}
+                role="option"
+                aria-selected={values.includes(option.value)}
+                onClick={() => toggle(option.value)}
+              >
+                <input type="checkbox" readOnly checked={values.includes(option.value)} tabIndex={-1} /> {option.label}
+              </li>
+            ))}
+          </ul>
+        </PortalMenu>
       )}
     </div>
   );

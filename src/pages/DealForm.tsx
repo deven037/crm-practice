@@ -7,6 +7,7 @@ import { DatePicker } from '../components/DatePicker';
 import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
+import { getStatusOptions } from '../utils/rules';
 
 export function DealForm() {
   const navigate = useNavigate();
@@ -94,7 +95,7 @@ export function DealForm() {
             <span className="field-label">Stage</span>
             <Select
               value={draft.stage}
-              options={DEAL_STAGES.map((s) => ({ value: s, label: s }))}
+              options={getStatusOptions('deals', 'stage', DEAL_STAGES).map((s) => ({ value: s, label: s }))}
               onChange={(v) => setDraft({ ...draft, stage: v as DealStage })}
               testId="deal-stage"
             />
