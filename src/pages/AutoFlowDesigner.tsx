@@ -23,7 +23,7 @@ import { Select } from '../components/Select';
 import { Modal } from '../components/Modal';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
-import { getAllModuleFields, ModuleFieldDef } from '../utils/moduleFields';
+import { getAllModuleFields, getConditionFields, ModuleFieldDef } from '../utils/moduleFields';
 import { autoFlowNodeTypes } from '../components/autoflow/AutoFlowNodeTypes';
 import { classNames } from '../utils';
 
@@ -323,6 +323,7 @@ function NodeInspector({
   readOnly: boolean;
 }) {
   const allFields = useMemo(() => getAllModuleFields(process.targetModule), [process.targetModule]);
+  const conditionFields = useMemo(() => getConditionFields(process.targetModule), [process.targetModule]);
   const included = (node.data.fieldKeys ?? [])
     .map((k) => allFields.find((f) => f.key === k))
     .filter((f): f is ModuleFieldDef => Boolean(f));
@@ -400,7 +401,7 @@ function NodeInspector({
       {node.type === 'decision' && (
         <ConditionEditor
           condition={node.data.condition}
-          fields={allFields}
+          fields={conditionFields}
           disabled={readOnly}
           onChange={(condition) => onChange({ data: { ...node.data, condition } })}
         />
@@ -534,7 +535,7 @@ function EdgeInspector({
   onDelete: () => void;
   readOnly: boolean;
 }) {
-  const allFields = useMemo(() => getAllModuleFields(process.targetModule), [process.targetModule]);
+  const allFields = useMemo(() => getConditionFields(process.targetModule), [process.targetModule]);
   return (
     <div className="card" data-testid="autoflow-edge-inspector">
       <div className="page-header" style={{ border: 'none', marginBottom: 8, paddingBottom: 0 }}>

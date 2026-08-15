@@ -6,7 +6,7 @@ import { AssignmentRule, User } from '../types';
 import { Modal } from '../components/Modal';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
-import { getAllModuleFields } from '../utils/moduleFields';
+import { getConditionFields } from '../utils/moduleFields';
 
 const MODULE_LABELS: Record<AssignmentRule['module'], string> = { leads: 'Leads', contacts: 'Contacts', deals: 'Deals' };
 
@@ -37,7 +37,7 @@ export function AssignmentRuleDetail() {
 
   const users = getAllSync<User>('users');
   const assignee = users.find((u) => u.id === rule.assignTo)?.name ?? '—';
-  const fields = getAllModuleFields(rule.module);
+  const fields = getConditionFields(rule.module);
   const fieldLabel = (key: string) => fields.find((f) => f.key === key)?.label ?? key;
 
   const doDelete = async () => {

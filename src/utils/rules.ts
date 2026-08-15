@@ -7,8 +7,18 @@ export function getStatusOptions(module: StatusCodeModule, field: string, fallba
   return set && set.options.length > 0 ? set.options : fallback;
 }
 
-/** `field` is either a literal system-field key (e.g. 'status') or a CustomFieldDef id — resolves either to the record's actual value. */
-export function fieldOf(record: object, field: string): unknown {
+/** Synthetic, non-persisted values a condition can reference alongside real record fields —
+ * currently just "which Page Layout is active in the create-form right now." Never stored on
+ * the record itself; supplied fresh by the caller at rule-evaluation time (see LeadForm.tsx). */
+export interface ConditionContext {
+  layoutName?: string | null;
+}
+
+/** `field` is either a literal system-field key (e.g. 'status'), a CustomFieldDef id, or the
+ * synthetic 'layoutName' key — resolves to the record's actual value, or (for 'layoutName') to
+ * whatever layout is active in the calling form right now, via `context`. */
+export function fieldOf(record: object, field: string, context?: ConditionContext): unknown {
+  if (field === 'layoutName') return context?.layoutName ?? undefined;
   const rec = record as Record<string, unknown>;
   if (field in rec) return rec[field];
   const customFields = rec.customFields as Record<string, unknown> | undefined;
@@ -20,19 +30,24 @@ export function fieldOf(record: object, field: string): unknown {
 }
 
 /** Shared by Assignment Rules, Dedupe Rules, and AutoFlow's decision/gateway branch routing — one condition-matching implementation, not reimplemented per feature. */
-export function matchesCondition(record: object, condition: { field: string; operator: string; value: string }): boolean {
-  const fieldValue = String(fieldOf(record, condition.field) ?? '');
+export function matchesCondition(
+  record: object,
+  condition: { field: string; operator: string; value: string },
+  context?: ConditionContext
+): boolean {
+  const fieldValue = String(fieldOf(record, condition.field, context) ?? '');
   if (condition.operator === 'equals') return fieldValue === condition.value;
   return fieldValue.toLowerCase().includes(condition.value.toLowerCase());
 }
 
-/** First active rule (by ascending priority) whose every condition matches — returns the userId to assign, or null. */
-export function applyAssignmentRule<T extends object>(module: AssignmentRuleModule, record: T): string | null {
+/** First active rule (by ascending priority) whose every condition matches — returns the userId to assign, or null.
+ * `context` carries synthetic condition values (e.g. the active Page Layout) that aren't stored on `record`. */
+export function applyAssignmentRule<T extends object>(module: AssignmentRuleModule, record: T, context?: ConditionContext): string | null {
   const rules = getAllSync<AssignmentRule>('assignmentRules')
     .filter((r) => r.module === module && r.active)
     .sort((a, b) => a.priority - b.priority);
   for (const rule of rules) {
-    if (rule.conditions.length > 0 && rule.conditions.every((c) => matchesCondition(record, c))) return rule.assignTo;
+    if (rule.conditions.length > 0 && rule.conditions.every((c) => matchesCondition(record, c, context))) return rule.assignTo;
   }
   return null;
 }

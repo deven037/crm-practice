@@ -478,13 +478,13 @@ div.empty-cell { border: 1px dashed var(--border); border-radius: var(--radius-l
 .select-menu {
   width: 100%; z-index: 400;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg); max-height: 240px; overflow-y: auto;
+  box-shadow: var(--shadow-lg); max-height: var(--menu-max-height, 240px); overflow-y: auto;
   list-style: none; margin: 0; padding: 4px;
 }
 .select-menu li, .select-menu-searchable li { padding: 7px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13.5px; }
 .select-menu li:hover, .select-menu-searchable li:hover { background: var(--surface-2); }
 .select-menu li.selected, .select-menu-searchable li.selected { background: var(--accent); color: #fff; }
-.select-menu-searchable ul { list-style: none; margin: 0; padding: 4px; max-height: 190px; overflow-y: auto; }
+.select-menu-searchable ul { list-style: none; margin: 0; padding: 4px; max-height: var(--menu-max-height, 190px); overflow-y: auto; }
 .select-search { width: calc(100% - 8px); margin: 4px; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text); }
 .select-empty { color: var(--text-muted); cursor: default !important; }
 .select-trigger.multi { min-height: 38px; flex-wrap: wrap; }
