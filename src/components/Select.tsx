@@ -1,4 +1,4 @@
-import { ReactNode, RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, ReactNode, RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 export interface Option {
@@ -31,15 +31,35 @@ function useOutsideClose(onClose: () => void) {
  * (e.g. a Select inside a `.table-wrap` table cell). Closes on scroll/resize rather than
  * tracking live position — dropdowns are short-lived, so this keeps the fix simple.
  */
+const MENU_MAX_HEIGHT = 240;
+
 function PortalMenu({ anchorRef, onClose, children }: { anchorRef: RefObject<HTMLElement>; onClose: () => void; children: ReactNode }) {
-  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [rect, setRect] = useState<{ top?: number; bottom?: number; left: number; width: number; maxHeight: number } | null>(null);
 
   useEffect(() => {
     const el = anchorRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    setRect({ top: r.bottom + 4, left: r.left, width: r.width });
-    const close = () => onClose();
+    // Flip upward when there isn't enough room below for the menu at its usual max-height —
+    // otherwise, for a trigger low on the page, the menu (fixed-positioned, so never clipped by
+    // an ancestor's overflow) still ends up clipped by the viewport itself, with no way to scroll
+    // the rest of it into view (e.g. "Layout" as the last option in a long field list).
+    const spaceBelow = window.innerHeight - r.bottom - 4;
+    const spaceAbove = r.top - 4;
+    const openUpward = spaceBelow < MENU_MAX_HEIGHT && spaceAbove > spaceBelow;
+    setRect(
+      openUpward
+        ? { bottom: window.innerHeight - r.top + 4, left: r.left, width: r.width, maxHeight: Math.min(MENU_MAX_HEIGHT, spaceAbove) }
+        : { top: r.bottom + 4, left: r.left, width: r.width, maxHeight: Math.min(MENU_MAX_HEIGHT, spaceBelow) }
+    );
+    // Scroll events don't bubble but still fire on `window` during the capture phase for any
+    // descendant target — including the menu's own scrollable list. Without this check, a user
+    // scrolling the option list itself (e.g. to reach "Layout" at the bottom) would immediately
+    // close the menu instead of scrolling it.
+    const close = (e: Event) => {
+      if ((e.target as Element | null)?.closest?.('.select-portal')) return;
+      onClose();
+    };
     window.addEventListener('scroll', close, true);
     window.addEventListener('resize', close);
     return () => {
@@ -50,8 +70,24 @@ function PortalMenu({ anchorRef, onClose, children }: { anchorRef: RefObject<HTM
   }, []);
 
   if (!rect) return null;
+  // `--menu-max-height` is consumed by `.select-menu`/`.select-menu-searchable ul` in styles.css
+  // instead of their own hardcoded max-height, so the actual scrollable list (not just this
+  // positioning wrapper) is capped to whatever room is genuinely available in the viewport.
   return createPortal(
-    <div className="select-portal" style={{ position: 'fixed', top: rect.top, left: rect.left, width: rect.width, zIndex: 1050 }}>
+    <div
+      className="select-portal"
+      style={
+        {
+          position: 'fixed',
+          top: rect.top,
+          bottom: rect.bottom,
+          left: rect.left,
+          width: rect.width,
+          zIndex: 1050,
+          '--menu-max-height': `${rect.maxHeight}px`,
+        } as CSSProperties
+      }
+    >
       {children}
     </div>,
     document.body

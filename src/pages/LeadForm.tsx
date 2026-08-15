@@ -6,17 +6,17 @@ import { SearchableSelect, Select } from '../components/Select';
 import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
-import { applyAssignmentRule, findDuplicate, getStatusOptions, matchesCondition } from '../utils/rules';
+import { applyAssignmentRule, ConditionContext, findDuplicate, getStatusOptions, matchesCondition } from '../utils/rules';
 import { getCustomFieldsAsModuleFields } from '../utils/moduleFields';
 import { classNames } from '../utils';
 
 /** First outgoing edge from `nodeId` whose condition matches `record`, falling back to the
  * first condition-less ("else") edge — shared by decision/gateway routing and plain single-edge
  * pass-through (start/wait nodes have exactly one condition-less edge, so this handles both). */
-function pickEdge(process: AutoFlowProcess, nodeId: string, record: object): AutoFlowEdge | null {
+function pickEdge(process: AutoFlowProcess, nodeId: string, record: object, context?: ConditionContext): AutoFlowEdge | null {
   const outs = process.edges.filter((e) => e.source === nodeId);
   if (outs.length === 0) return null;
-  const matched = outs.find((e) => e.condition && matchesCondition(record, e.condition));
+  const matched = outs.find((e) => e.condition && matchesCondition(record, e.condition, context));
   if (matched) return matched;
   return outs.find((e) => !e.condition) ?? null;
 }
@@ -29,16 +29,22 @@ type WizardStep =
 /** Walks forward from `nodeId`, auto-resolving start/wait/decision/gateway nodes (no interactive
  * step of their own in v1 — see AutoFlow plan's Phase 6 for real Wait-node async semantics) until
  * landing on a 'state' node (the next visible wizard step), 'end' (finalize), or a broken graph. */
-function resolveStep(process: AutoFlowProcess, nodeId: string, record: object, visited = new Set<string>()): WizardStep {
+function resolveStep(
+  process: AutoFlowProcess,
+  nodeId: string,
+  record: object,
+  visited = new Set<string>(),
+  context?: ConditionContext
+): WizardStep {
   if (visited.has(nodeId)) return { kind: 'blocked', message: 'This process has a loop and cannot continue.' };
   visited.add(nodeId);
   const node = process.nodes.find((n) => n.id === nodeId);
   if (!node) return { kind: 'blocked', message: 'This process references a missing step.' };
   if (node.type === 'end') return { kind: 'end' };
   if (node.type === 'state') return { kind: 'state', node };
-  const edge = pickEdge(process, nodeId, record);
+  const edge = pickEdge(process, nodeId, record, context);
   if (!edge) return { kind: 'blocked', message: `"${node.data.label}" has no next step for this data.` };
-  return resolveStep(process, edge.target, record, visited);
+  return resolveStep(process, edge.target, record, visited, context);
 }
 
 export function LeadForm() {
@@ -58,6 +64,9 @@ export function LeadForm() {
   const activeTab = layout?.tabs.find((t) => t.id === activeTabId) ?? layout?.tabs[0];
   const customFieldIds = new Set(getCustomFieldsAsModuleFields('leads').map((f) => f.key));
   const activeTabCustomIds = activeTab?.fieldKeys.filter((k) => customFieldIds.has(k)) ?? [];
+  // Layout is never stored on the record — conditions that reference it compare against whichever
+  // Page Layout is active in this form session right now, supplied here rather than persisted.
+  const conditionContext: ConditionContext = { layoutName: layout?.name ?? null };
 
   const autoflowId = params.get('autoflow');
   const autoflowProcess = autoflowId
@@ -84,14 +93,14 @@ export function LeadForm() {
   const [busy, setBusy] = useState(false);
   const [duplicate, setDuplicate] = useState<Lead | null>(null);
 
-  const step = autoflowProcess && cursor ? resolveStep(autoflowProcess, cursor, draft) : null;
+  const step = autoflowProcess && cursor ? resolveStep(autoflowProcess, cursor, draft, undefined, conditionContext) : null;
   const currentNode = step?.kind === 'state' ? step.node : null;
   const isVisible = (key: string) =>
     currentNode ? (currentNode.data.fieldKeys ?? []).includes(key) : !layout || (activeTab?.fieldKeys.includes(key) ?? true);
   const currentNodeCustomIds = currentNode?.data.fieldKeys?.filter((k) => customFieldIds.has(k)) ?? [];
 
-  const previewEdge = autoflowProcess && currentNode ? pickEdge(autoflowProcess, currentNode.id, draft) : null;
-  const previewStep = autoflowProcess && previewEdge ? resolveStep(autoflowProcess, previewEdge.target, draft) : null;
+  const previewEdge = autoflowProcess && currentNode ? pickEdge(autoflowProcess, currentNode.id, draft, conditionContext) : null;
+  const previewStep = autoflowProcess && previewEdge ? resolveStep(autoflowProcess, previewEdge.target, draft, undefined, conditionContext) : null;
   const isLastWizardStep = previewStep?.kind === 'end';
 
   // Debounced, non-blocking — a Setup → Dedupe Rule match just surfaces a warning banner.
@@ -113,7 +122,7 @@ export function LeadForm() {
     if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) return;
 
     // Setup → Assignment Rules: first active, priority-ordered match sets the owner.
-    const assignedTo = applyAssignmentRule('leads', draft);
+    const assignedTo = applyAssignmentRule('leads', draft, conditionContext);
     const toSave = assignedTo ? { ...draft, ownerId: assignedTo } : draft;
 
     setBusy(true);
@@ -141,19 +150,19 @@ export function LeadForm() {
       setDuplicate(findDuplicate('leads', working, getAllSync<Lead>('leads')));
     }
     if (currentNode.data.action === 'assign') {
-      const assignedTo = applyAssignmentRule('leads', working);
+      const assignedTo = applyAssignmentRule('leads', working, conditionContext);
       if (assignedTo) {
         working = { ...working, ownerId: assignedTo };
         setDraft(working);
       }
     }
 
-    const edge = pickEdge(autoflowProcess, currentNode.id, working);
+    const edge = pickEdge(autoflowProcess, currentNode.id, working, conditionContext);
     if (!edge) {
       toast.push('error', `"${currentNode.data.label}" has no next step configured for this data.`);
       return;
     }
-    const result = resolveStep(autoflowProcess, edge.target, working);
+    const result = resolveStep(autoflowProcess, edge.target, working, undefined, conditionContext);
     if (result.kind === 'blocked') {
       toast.push('error', result.message);
       return;

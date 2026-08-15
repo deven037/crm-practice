@@ -5,7 +5,7 @@ import { AssignmentRule, AssignmentRuleModule, RuleOperator, User } from '../typ
 import { Select } from '../components/Select';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
-import { getAllModuleFields, ModuleFieldDef } from '../utils/moduleFields';
+import { getConditionFields, ModuleFieldDef } from '../utils/moduleFields';
 
 const MODULE_OPTIONS: { value: AssignmentRuleModule; label: string }[] = [
   { value: 'leads', label: 'Leads' },
@@ -61,7 +61,7 @@ export function AssignmentRuleForm() {
   }
   if (loading) return <Spinner label="Loading rule…" />;
 
-  const fields: ModuleFieldDef[] = getAllModuleFields(rule.module);
+  const fields: ModuleFieldDef[] = getConditionFields(rule.module);
   const fieldFor = (key: string) => fields.find((f) => f.key === key);
 
   const updateCondition = (index: number, patch: Partial<AssignmentRule['conditions'][number]>) => {
@@ -124,7 +124,7 @@ export function AssignmentRuleForm() {
               value={rule.module}
               options={MODULE_OPTIONS}
               onChange={(v) => {
-                const nextFields = getAllModuleFields(v as AssignmentRuleModule);
+                const nextFields = getConditionFields(v as AssignmentRuleModule);
                 setRule({
                   ...rule,
                   module: v as AssignmentRuleModule,

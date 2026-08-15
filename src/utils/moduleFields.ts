@@ -7,6 +7,7 @@ import {
   DEAL_STAGES,
   LEAD_SOURCES,
   LEAD_STATUSES,
+  PageLayout,
   PRODUCT_CATEGORIES,
 } from '../types';
 import { getStatusOptions } from './rules';
@@ -118,4 +119,25 @@ export function getCustomFieldsAsModuleFields(module: CustomFieldModule): Module
 /** System fields followed by this module's custom fields — every field a record of this module actually has. */
 export function getAllModuleFields(module: CustomFieldModule): ModuleFieldDef[] {
   return [...getSystemFields(module), ...getCustomFieldsAsModuleFields(module)];
+}
+
+/** Modules whose create forms offer a Page Layout picker (see LayoutPickerPanel.tsx) — the only
+ * modules where a "which layout was this created with" condition is meaningful. */
+const MODULES_WITH_LAYOUT_PICKER: CustomFieldModule[] = ['leads', 'contacts', 'accounts', 'products', 'campaigns'];
+
+/**
+ * getAllModuleFields() plus a synthetic "Layout" option — for condition pickers only
+ * (Assignment Rule conditions, AutoFlow Decision/Gateway conditions). Deliberately NOT folded
+ * into getAllModuleFields, since Dedupe Rule's match-fields picker reuses that registry too and
+ * "Layout" isn't a real record property to compare between two existing records — it's evaluated
+ * at rule-check time against whichever layout is currently active in the create-form UI, not
+ * persisted data (see rules.ts's `context` param on fieldOf/matchesCondition/applyAssignmentRule).
+ */
+export function getConditionFields(module: CustomFieldModule): ModuleFieldDef[] {
+  const fields = getAllModuleFields(module);
+  if (!MODULES_WITH_LAYOUT_PICKER.includes(module)) return fields;
+  const layoutNames = getAllSync<PageLayout>('pageLayouts')
+    .filter((l) => l.module === module)
+    .map((l) => l.name);
+  return [...fields, { key: 'layoutName', label: 'Layout', kind: 'select', options: layoutNames }];
 }
