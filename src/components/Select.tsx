@@ -51,7 +51,7 @@ function PortalMenu({ anchorRef, onClose, children }: { anchorRef: RefObject<HTM
 
   if (!rect) return null;
   return createPortal(
-    <div className="select-portal" style={{ position: 'fixed', top: rect.top, left: rect.left, width: rect.width, zIndex: 900 }}>
+    <div className="select-portal" style={{ position: 'fixed', top: rect.top, left: rect.left, width: rect.width, zIndex: 1050 }}>
       {children}
     </div>,
     document.body
