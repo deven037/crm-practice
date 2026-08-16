@@ -210,6 +210,7 @@ export function AccountDetail() {
           { label: 'Employees', value: account.employees.toLocaleString() },
           { label: 'Annual revenue', value: formatCurrency(account.revenue) },
           { label: 'Phone', value: account.phone || '—' },
+          { label: 'Layout', value: account.layoutName || '—' },
         ]}
         tabs={[
           { id: 'details', label: 'Details', content: <div className="card">{detailsTab}</div> },

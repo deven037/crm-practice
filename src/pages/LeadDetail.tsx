@@ -190,6 +190,7 @@ export function LeadDetail() {
           { label: 'Company', value: lead.company || '—' },
           { label: 'Source', value: lead.source },
           { label: 'Owner', value: ownerName },
+          { label: 'Layout', value: lead.layoutName || '—' },
           { label: 'Created', value: formatDate(lead.createdAt) },
         ]}
         tabs={[{ id: 'details', label: 'Details', content: <div className="card">{detailsTab}</div> }]}

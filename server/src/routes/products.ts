@@ -25,6 +25,7 @@ function buildProduct(body: any): Product {
     price: body.price,
     description: body.description ?? '',
     active: body.active ?? true,
+    layoutName: body.layoutName ?? null,
     createdAt: new Date().toISOString(),
     customFields: body.customFields,
   };
@@ -42,6 +43,7 @@ export const productsRouter: Router = crudRouter<Product>({
       ...buildProduct(body),
       id,
       sku: existing?.sku ?? buildProduct(body).sku, // SKU immutable after creation, mirrors client
+      layoutName: existing?.layoutName ?? null, // Layout immutable after creation, same reasoning
       createdAt: existing?.createdAt ?? new Date().toISOString(),
     };
   },

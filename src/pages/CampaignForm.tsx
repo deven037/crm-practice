@@ -56,6 +56,7 @@ export function CampaignForm() {
       startDate,
       endDate,
       status,
+      layoutName: layout?.name ?? null,
       createdAt: new Date().toISOString(),
       customFields,
     };

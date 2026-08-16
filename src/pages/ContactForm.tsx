@@ -42,6 +42,7 @@ export function ContactForm() {
     avatar: null,
     notes: [],
     files: [],
+    layoutName: layout?.name ?? null,
     createdAt: new Date().toISOString(),
   });
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});

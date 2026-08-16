@@ -31,6 +31,7 @@ export interface Lead {
   productId?: string | null;
   campaignId?: string | null;
   createdAt: string;
+  layoutName?: string | null;
   customFields?: Record<string, string | number | boolean | null>;
 }
 
@@ -45,6 +46,7 @@ export interface Product {
   description: string;
   active: boolean;
   createdAt: string;
+  layoutName?: string | null;
   customFields?: Record<string, string | number | boolean | null>;
 }
 
@@ -72,6 +74,7 @@ export interface Contact {
   notes: ContactNote[];
   files: FileRef[];
   createdAt: string;
+  layoutName?: string | null;
   customFields?: Record<string, string | number | boolean | null>;
 }
 
@@ -85,6 +88,7 @@ export interface Account {
   phone: string;
   ownerId: string;
   createdAt: string;
+  layoutName?: string | null;
   customFields?: Record<string, string | number | boolean | null>;
 }
 
@@ -126,6 +130,7 @@ export interface Campaign {
   endDate: string;
   status: CampaignStatus;
   createdAt: string;
+  layoutName?: string | null;
   customFields?: Record<string, string | number | boolean | null>;
 }
 

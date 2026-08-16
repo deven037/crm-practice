@@ -10,5 +10,6 @@ export const productSchema = z.object({
   price: z.number().positive('Enter a valid price greater than 0.'),
   description: z.string().default(''),
   active: z.boolean().default(true),
+  layoutName: z.string().nullable().optional(),
   customFields: customFieldsSchema,
 });

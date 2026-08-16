@@ -237,6 +237,7 @@ export function CampaignDetail() {
           { label: 'Budget', value: formatCurrency(campaign.budget) },
           { label: 'Start', value: formatDate(campaign.startDate) },
           { label: 'End', value: formatDate(campaign.endDate) },
+          { label: 'Layout', value: campaign.layoutName || '—' },
         ]}
         tabs={[
           { id: 'details', label: 'Details', content: <div className="card">{detailsTab}</div> },

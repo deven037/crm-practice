@@ -60,6 +60,7 @@ export function ProductForm() {
       price: Math.round(price),
       description: description.trim(),
       active,
+      layoutName: layout?.name ?? null,
       createdAt: new Date().toISOString(),
       customFields,
     };

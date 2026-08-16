@@ -196,6 +196,7 @@ export function ProductDetail() {
           { label: 'SKU', value: <code>{product.sku}</code> },
           { label: 'Category', value: product.category },
           { label: 'Price', value: formatCurrency(product.price) },
+          { label: 'Layout', value: product.layoutName || '—' },
           { label: 'Created', value: formatDate(product.createdAt) },
         ]}
         tabs={[

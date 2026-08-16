@@ -36,6 +36,7 @@ export function AccountForm() {
     website: '',
     phone: '',
     ownerId: user?.id ?? 'user-2',
+    layoutName: layout?.name ?? null,
     createdAt: new Date().toISOString(),
   });
   const [errors, setErrors] = useState<{ name?: string; website?: string }>({});
