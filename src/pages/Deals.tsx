@@ -11,7 +11,7 @@ import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { autoCloseDate, formatCurrency, formatDate } from '../utils';
-import { getStatusOptions } from '../utils/rules';
+import { applyAssignmentRule, getStatusOptions } from '../utils/rules';
 
 export function Deals() {
   const toast = useToast();
@@ -40,7 +40,10 @@ export function Deals() {
   const onDrop = async (dealId: string, stage: string) => {
     const deal = deals.find((d) => d.id === dealId);
     if (!deal || deal.stage === stage) return;
-    const updated = autoCloseDate(deal.stage, { ...deal, stage: stage as DealStage });
+    const stamped = autoCloseDate(deal.stage, { ...deal, stage: stage as DealStage });
+    // Setup → Assignment Rules: a stage change (e.g. into Closed Won) can itself be a rule condition.
+    const assignedTo = applyAssignmentRule('deals', stamped);
+    const updated = assignedTo ? { ...stamped, ownerId: assignedTo } : stamped;
     // Optimistic UI so the card moves instantly, then persist.
     setDeals((prev) => prev.map((d) => (d.id === dealId ? updated : d)));
     await upsert('deals', updated);
@@ -48,7 +51,9 @@ export function Deals() {
   };
 
   const saveDeal = async (deal: Deal) => {
-    const toSave = editing ? autoCloseDate(editing.stage, deal) : deal;
+    const stamped = editing ? autoCloseDate(editing.stage, deal) : deal;
+    const assignedTo = applyAssignmentRule('deals', stamped);
+    const toSave = assignedTo ? { ...stamped, ownerId: assignedTo } : stamped;
     await upsert('deals', toSave);
     toast.push('success', `Deal "${deal.name}" saved.`);
     setEditing(null);

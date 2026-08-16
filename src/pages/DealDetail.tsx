@@ -14,7 +14,7 @@ import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { autoCloseDate, formatCurrency, formatDate } from '../utils';
-import { getStatusOptions } from '../utils/rules';
+import { applyAssignmentRule, getStatusOptions } from '../utils/rules';
 
 const STEP_ORDER = ['Qualification', 'Proposal', 'Negotiation', 'Closed'];
 
@@ -75,11 +75,15 @@ export function DealDetail() {
       toast.push('error', 'Deal name is required.');
       return;
     }
-    const toSave = autoCloseDate(deal.stage, draft);
+    const stamped = autoCloseDate(deal.stage, draft);
+    // Setup → Assignment Rules: re-check on every save, not just at creation, so a rule whose
+    // condition only becomes true on edit (e.g. a stage change) still reassigns.
+    const assignedTo = applyAssignmentRule('deals', stamped);
+    const toSave = assignedTo ? { ...stamped, ownerId: assignedTo } : stamped;
     await upsert('deals', toSave);
     setDeal(toSave);
     setEditing(false);
-    toast.push('success', 'Deal updated.');
+    toast.push('success', assignedTo && assignedTo !== deal.ownerId ? 'Deal updated and auto-assigned.' : 'Deal updated.');
   };
 
   return (
