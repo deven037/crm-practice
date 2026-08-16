@@ -14,7 +14,7 @@ import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { classNames, downloadCsv, formatCurrency, formatDate } from '../utils';
-import { getStatusOptions } from '../utils/rules';
+import { applyAssignmentRule, getStatusOptions } from '../utils/rules';
 
 type SortKey = 'name' | 'company' | 'status' | 'source' | 'value' | 'createdAt';
 type SortDir = 'asc' | 'desc';
@@ -158,7 +158,12 @@ export function Leads() {
 
   // Setup → Mass Update, reusing the existing per-item upsert in a loop (same pattern as bulkAssign).
   const applyMassUpdate = async (fieldKey: string, value: string) => {
-    const next = leads.map((l) => (selected.includes(l.id) ? { ...l, [fieldKey]: fieldKey === 'value' ? Number(value) : value } : l));
+    const next = leads.map((l) => {
+      if (!selected.includes(l.id)) return l;
+      const updated = { ...l, [fieldKey]: fieldKey === 'value' ? Number(value) : value };
+      const assignedTo = applyAssignmentRule('leads', updated);
+      return assignedTo ? { ...updated, ownerId: assignedTo } : updated;
+    });
     await saveAll('leads', next);
     toast.push('success', `${selected.length} lead(s) updated.`);
     setSelected([]);
@@ -166,7 +171,9 @@ export function Leads() {
   };
 
   const triageSetStatus = async (lead: Lead, status: LeadStatus) => {
-    await upsert('leads', { ...lead, status });
+    const updated = { ...lead, status };
+    const assignedTo = applyAssignmentRule('leads', updated);
+    await upsert('leads', assignedTo ? { ...updated, ownerId: assignedTo } : updated);
     toast.push('success', `${lead.name} marked ${status}.`);
     load();
   };
@@ -243,9 +250,12 @@ export function Leads() {
         campaignId: wizard.lead.campaignId ?? null,
         createdAt: new Date().toISOString(),
       };
-      await upsert('deals', deal);
+      const dealAssignedTo = applyAssignmentRule('deals', deal);
+      await upsert('deals', dealAssignedTo ? { ...deal, ownerId: dealAssignedTo } : deal);
     }
-    await upsert('leads', { ...wizard.lead, status: 'Converted' as LeadStatus });
+    const convertedLead = { ...wizard.lead, status: 'Converted' as LeadStatus };
+    const leadAssignedTo = applyAssignmentRule('leads', convertedLead);
+    await upsert('leads', leadAssignedTo ? { ...convertedLead, ownerId: leadAssignedTo } : convertedLead);
     toast.push('success', `Lead "${wizard.lead.name}" converted successfully.`);
     setWizard(null);
     load();

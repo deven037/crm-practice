@@ -12,7 +12,7 @@ import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { formatCurrency, formatDate } from '../utils';
-import { getStatusOptions } from '../utils/rules';
+import { applyAssignmentRule, getStatusOptions } from '../utils/rules';
 
 export function LeadDetail() {
   const { id } = useParams();
@@ -66,10 +66,14 @@ export function LeadDetail() {
       toast.push('error', Object.values(cErrs)[0]);
       return;
     }
-    await upsert('leads', draft);
-    setLead(draft);
+    // Setup → Assignment Rules: re-check on every save, not just at creation, so a rule whose
+    // condition only becomes true on edit (e.g. "Status equals Converted") still reassigns.
+    const assignedTo = applyAssignmentRule('leads', draft);
+    const toSave = assignedTo ? { ...draft, ownerId: assignedTo } : draft;
+    await upsert('leads', toSave);
+    setLead(toSave);
     setEditing(false);
-    toast.push('success', 'Lead updated.');
+    toast.push('success', assignedTo && assignedTo !== lead.ownerId ? 'Lead updated and auto-assigned.' : 'Lead updated.');
   };
 
   const detailsTab = !editing ? (

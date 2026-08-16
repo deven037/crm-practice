@@ -47,8 +47,8 @@ export function AssignmentRules() {
         <h1>Assignment Rules</h1>
       </div>
       <p className="muted">
-        When a new lead is created, the first active rule (lowest priority number first) whose conditions match sets
-        its owner automatically.
+        Whenever a record is created or saved, the first active rule (lowest priority number first) whose conditions
+        match sets its owner automatically.
       </p>
 
       {loading ? (

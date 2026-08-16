@@ -163,7 +163,7 @@ export function AssignmentRuleForm() {
 
       <div className="card">
         <h3>Conditions</h3>
-        <p className="muted">A lead must match every condition below for this rule to apply.</p>
+        <p className="muted">A record must match every condition below for this rule to apply, on create or edit.</p>
         <div className="table-wrap">
           <table className="table">
             <thead>

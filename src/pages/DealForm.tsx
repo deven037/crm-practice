@@ -7,7 +7,7 @@ import { DatePicker } from '../components/DatePicker';
 import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
-import { getStatusOptions } from '../utils/rules';
+import { applyAssignmentRule, getStatusOptions } from '../utils/rules';
 
 export function DealForm() {
   const navigate = useNavigate();
@@ -49,9 +49,12 @@ export function DealForm() {
     setCustomErrors(cErrs);
     if (Object.keys(cErrs).length > 0) return;
     setBusy(true);
-    await upsert('deals', draft);
-    toast.push('success', `Deal "${draft.name}" created.`);
-    navigate(`/deals/${draft.id}`);
+    // Setup → Assignment Rules: first active, priority-ordered match sets the owner.
+    const assignedTo = applyAssignmentRule('deals', draft);
+    const toSave = assignedTo ? { ...draft, ownerId: assignedTo } : draft;
+    await upsert('deals', toSave);
+    toast.push('success', assignedTo ? `Deal "${draft.name}" created and auto-assigned.` : `Deal "${draft.name}" created.`);
+    navigate(`/deals/${toSave.id}`);
   };
 
   return (
