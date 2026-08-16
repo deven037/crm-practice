@@ -12,6 +12,7 @@ export const campaignSchema = z
     startDate: z.string().min(1, 'Start date is required.'),
     endDate: z.string().min(1, 'End date is required.'),
     status: z.enum(CAMPAIGN_STATUSES as [string, ...string[]]).default('Planned'),
+    layoutName: z.string().nullable().optional(),
     customFields: customFieldsSchema,
   })
   .refine((data) => new Date(data.endDate).getTime() > new Date(data.startDate).getTime(), {

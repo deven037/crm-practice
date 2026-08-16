@@ -20,6 +20,7 @@ function buildLead(body: any): Lead {
     value: body.value ?? 0,
     productId: body.productId ?? null,
     campaignId: body.campaignId ?? null,
+    layoutName: body.layoutName ?? null,
     createdAt: new Date().toISOString(),
     customFields: body.customFields,
   };
@@ -31,7 +32,11 @@ export const leadsRouter: Router = crudRouter<Lead>({
   auditAction: 'lead',
   createSchema: leadSchema,
   buildCreate: (body) => buildLead(body),
-  buildUpdate: (body, id) => ({ ...buildLead(body), id, createdAt: store.leads.get(id)?.createdAt ?? new Date().toISOString() }),
+  buildUpdate: (body, id) => {
+    const existing = store.leads.get(id);
+    // Layout is set once at creation and never editable afterward, mirrors Product's sku lock.
+    return { ...buildLead(body), id, layoutName: existing?.layoutName ?? null, createdAt: existing?.createdAt ?? new Date().toISOString() };
+  },
 });
 
 leadsRouter.delete('/:id', requireAuth, requireRole('admin', 'rep'), (req, res) => {

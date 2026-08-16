@@ -18,6 +18,7 @@ function buildContact(body: any): Contact {
     avatar: body.avatar ?? null,
     notes: body.notes ?? [],
     files: body.files ?? [],
+    layoutName: body.layoutName ?? null,
     createdAt: new Date().toISOString(),
     customFields: body.customFields,
   };
@@ -29,7 +30,10 @@ export const contactsRouter: Router = crudRouter<Contact>({
   auditAction: 'contact',
   createSchema: contactSchema,
   buildCreate: (body) => buildContact(body),
-  buildUpdate: (body, id) => ({ ...buildContact(body), id, createdAt: store.contacts.get(id)?.createdAt ?? new Date().toISOString() }),
+  buildUpdate: (body, id) => {
+    const existing = store.contacts.get(id);
+    return { ...buildContact(body), id, layoutName: existing?.layoutName ?? null, createdAt: existing?.createdAt ?? new Date().toISOString() };
+  },
 });
 
 contactsRouter.delete('/:id', requireAuth, requireRole('admin', 'rep'), (req, res) => {

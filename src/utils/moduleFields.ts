@@ -126,12 +126,12 @@ export function getAllModuleFields(module: CustomFieldModule): ModuleFieldDef[] 
 const MODULES_WITH_LAYOUT_PICKER: CustomFieldModule[] = ['leads', 'contacts', 'accounts', 'products', 'campaigns'];
 
 /**
- * getAllModuleFields() plus a synthetic "Layout" option — for condition pickers only
- * (Assignment Rule conditions, AutoFlow Decision/Gateway conditions). Deliberately NOT folded
- * into getAllModuleFields, since Dedupe Rule's match-fields picker reuses that registry too and
- * "Layout" isn't a real record property to compare between two existing records — it's evaluated
- * at rule-check time against whichever layout is currently active in the create-form UI, not
- * persisted data (see rules.ts's `context` param on fieldOf/matchesCondition/applyAssignmentRule).
+ * getAllModuleFields() plus a "Layout" option (maps to the record's own `layoutName`) — for
+ * condition pickers only (Assignment Rule conditions, AutoFlow Decision/Gateway conditions).
+ * Deliberately NOT folded into getAllModuleFields: Dedupe Rule's match-fields picker reuses that
+ * registry too, and matching two records because they share the same Layout would just over-match
+ * (most records share the default layout); AutoFlow's State-node field-picker reuses it as well,
+ * and Layout isn't a fillable/visible form field there.
  */
 export function getConditionFields(module: CustomFieldModule): ModuleFieldDef[] {
   const fields = getAllModuleFields(module);

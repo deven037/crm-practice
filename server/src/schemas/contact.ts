@@ -15,5 +15,6 @@ export const contactSchema = z.object({
     .array(z.object({ id: z.string(), text: z.string(), createdAt: z.string() }))
     .default([]),
   files: z.array(z.object({ id: z.string(), name: z.string(), size: z.number() })).default([]),
+  layoutName: z.string().nullable().optional(),
   customFields: customFieldsSchema,
 });

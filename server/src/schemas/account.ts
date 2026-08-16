@@ -11,5 +11,6 @@ export const accountSchema = z.object({
   website: z.string().default(''),
   phone: z.string().default(''),
   ownerId: z.string().min(1, 'Owner is required.'),
+  layoutName: z.string().nullable().optional(),
   customFields: customFieldsSchema,
 });

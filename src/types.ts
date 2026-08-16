@@ -27,6 +27,10 @@ export interface Lead {
   productId?: string | null;
   campaignId?: string | null;
   createdAt: string;
+  /** Which Page Layout this record was created with — set once at creation, never editable
+   * afterward. Lets rule/AutoFlow conditions reference "Layout" against real record data instead
+   * of a runtime-only signal, so they still evaluate correctly on later edits. */
+  layoutName?: string | null;
   customFields?: Record<string, string | number | boolean | null>;
 }
 
@@ -41,6 +45,7 @@ export interface Product {
   description: string;
   active: boolean;
   createdAt: string;
+  layoutName?: string | null;
   customFields?: Record<string, string | number | boolean | null>;
 }
 
@@ -68,6 +73,7 @@ export interface Contact {
   notes: ContactNote[];
   files: FileRef[];
   createdAt: string;
+  layoutName?: string | null;
   customFields?: Record<string, string | number | boolean | null>;
 }
 
@@ -81,6 +87,7 @@ export interface Account {
   phone: string;
   ownerId: string;
   createdAt: string;
+  layoutName?: string | null;
   customFields?: Record<string, string | number | boolean | null>;
 }
 
@@ -122,6 +129,7 @@ export interface Campaign {
   endDate: string;
   status: CampaignStatus;
   createdAt: string;
+  layoutName?: string | null;
   customFields?: Record<string, string | number | boolean | null>;
 }
 

@@ -16,6 +16,7 @@ function buildAccount(body: any): Account {
     website: body.website ?? '',
     phone: body.phone ?? '',
     ownerId: body.ownerId,
+    layoutName: body.layoutName ?? null,
     createdAt: new Date().toISOString(),
     customFields: body.customFields,
   };
@@ -27,7 +28,10 @@ export const accountsRouter: Router = crudRouter<Account>({
   auditAction: 'account',
   createSchema: accountSchema,
   buildCreate: (body) => buildAccount(body),
-  buildUpdate: (body, id) => ({ ...buildAccount(body), id, createdAt: store.accounts.get(id)?.createdAt ?? new Date().toISOString() }),
+  buildUpdate: (body, id) => {
+    const existing = store.accounts.get(id);
+    return { ...buildAccount(body), id, layoutName: existing?.layoutName ?? null, createdAt: existing?.createdAt ?? new Date().toISOString() };
+  },
 });
 
 // DELETE /api/accounts/:id?cascade=true|false (default false = unlink) — mirrors

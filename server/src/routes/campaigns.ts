@@ -15,6 +15,7 @@ function buildCampaign(body: any): Campaign {
     startDate: body.startDate,
     endDate: body.endDate,
     status: body.status ?? 'Planned',
+    layoutName: body.layoutName ?? null,
     createdAt: new Date().toISOString(),
     customFields: body.customFields,
   };
@@ -26,7 +27,10 @@ export const campaignsRouter: Router = crudRouter<Campaign>({
   auditAction: 'campaign',
   createSchema: campaignSchema,
   buildCreate: (body) => buildCampaign(body),
-  buildUpdate: (body, id) => ({ ...buildCampaign(body), id, createdAt: store.campaigns.get(id)?.createdAt ?? new Date().toISOString() }),
+  buildUpdate: (body, id) => {
+    const existing = store.campaigns.get(id);
+    return { ...buildCampaign(body), id, layoutName: existing?.layoutName ?? null, createdAt: existing?.createdAt ?? new Date().toISOString() };
+  },
 });
 
 // DELETE /api/campaigns/:id — unlinks both referencing Leads and Deals (campaignId -> null).

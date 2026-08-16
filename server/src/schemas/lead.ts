@@ -15,6 +15,7 @@ export const leadSchema = z.object({
   value: z.number().nonnegative().default(0),
   productId: z.string().nullable().optional(),
   campaignId: z.string().nullable().optional(),
+  layoutName: z.string().nullable().optional(),
   customFields: customFieldsSchema,
 });
 
