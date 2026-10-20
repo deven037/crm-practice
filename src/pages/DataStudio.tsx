@@ -43,6 +43,18 @@ interface SavedDataset {
   size_bytes: number;
 }
 
+interface HostedSavedDataset {
+  id: string;
+  artifact_id: number;
+  run_id: number;
+  name: string;
+  category: DatasetKey;
+  file_name: string;
+  kind: 'processed';
+  created_at: string;
+  size_bytes: number;
+}
+
 type SavedDatasetFilter = 'all' | 'raw' | 'processed';
 
 interface HostedAnalysisConfig {
@@ -55,6 +67,7 @@ interface HostedAnalysisJob {
   status: 'queued' | 'running' | 'complete' | 'failed';
   report?: AnalysisReport;
   error?: string;
+  artifact_id?: number;
 }
 
 const BRIDGE_URL = 'http://127.0.0.1:8765';
@@ -106,10 +119,11 @@ function datasetFileName(value: string): string {
 }
 
 const ANALYSIS_STAGES = [
-  'Checking analysis connection',
-  'Preparing the selected dataset',
-  'Running the Python analysis',
-  'Collecting analysis results',
+  'Create the named dataset file from the selected rows and fields',
+  'Send the created dataset to GitHub Actions',
+  'Run the Python analysis',
+  'Save the cleaned dataset and report as an artifact',
+  'Collect analysis results',
 ];
 
 const wait = (milliseconds: number) => new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds));
@@ -137,10 +151,15 @@ export function DataStudio() {
   const [lastDatasetPath, setLastDatasetPath] = useState('');
   const [runDialogOpen, setRunDialogOpen] = useState(false);
   const [runStage, setRunStage] = useState(-1);
+  const [runStages, setRunStages] = useState<string[]>(ANALYSIS_STAGES);
   const [runError, setRunError] = useState('');
   const [savedDatasets, setSavedDatasets] = useState<SavedDataset[]>([]);
   const [selectedDatasetPath, setSelectedDatasetPath] = useState(() => (location.state as { selectDatasetPath?: string } | null)?.selectDatasetPath ?? '');
   const [savedDatasetFilter, setSavedDatasetFilter] = useState<SavedDatasetFilter>('all');
+  const [hostedSavedDatasets, setHostedSavedDatasets] = useState<HostedSavedDataset[]>([]);
+  const [selectedHostedArtifactId, setSelectedHostedArtifactId] = useState('');
+  const [savedCategoryFilter, setSavedCategoryFilter] = useState<DatasetKey | 'all'>('all');
+  const [hostedDatasetError, setHostedDatasetError] = useState('');
 
   const [bridgeConfig, setBridgeConfig] = useState<BridgeConfig>(() => getValue<BridgeConfig>('dataStudioBridge', {
     project_dir: '', analysis_script: 'analysis.py', python_executable: '', output_dir: 'outputs',
@@ -155,6 +174,14 @@ export function DataStudio() {
     if (!response.ok) throw new Error(body.error ?? `Could not read saved datasets (${response.status}).`);
     const items = (body.datasets ?? []) as SavedDataset[];
     setSavedDatasets(items);
+    return items;
+  };
+
+  const refreshHostedSavedDatasets = async () => {
+    const result = await apiFetch<{ datasets: HostedSavedDataset[] }>('/analysis/datasets');
+    const items = result.datasets ?? [];
+    setHostedSavedDatasets(items);
+    setHostedDatasetError('');
     return items;
   };
 
@@ -223,6 +250,14 @@ export function DataStudio() {
   }, []);
 
   useEffect(() => {
+    let current = true;
+    refreshHostedSavedDatasets().catch((error: unknown) => {
+      if (current) setHostedDatasetError(error instanceof Error ? error.message : 'Could not load processed datasets from GitHub Actions.');
+    });
+    return () => { current = false; };
+  }, []);
+
+  useEffect(() => {
     apiFetch<HostedAnalysisConfig>('/analysis/config')
       .then((config) => {
         setHostedAnalysisReady(config.ready);
@@ -251,12 +286,21 @@ export function DataStudio() {
   const visibleSavedDatasets = savedDatasetFilter === 'all'
     ? savedDatasets
     : savedDatasets.filter((item) => item.kind === savedDatasetFilter);
+  const visibleHostedSavedDatasets = savedCategoryFilter === 'all'
+    ? hostedSavedDatasets
+    : hostedSavedDatasets.filter((item) => item.category === savedCategoryFilter);
 
   useEffect(() => {
     if (visibleSavedDatasets.length > 0 && !visibleSavedDatasets.some((item) => item.dataset_path === selectedDatasetPath)) {
       setSelectedDatasetPath(visibleSavedDatasets[0].dataset_path);
     }
   }, [selectedDatasetPath, visibleSavedDatasets]);
+
+  useEffect(() => {
+    if (selectedHostedArtifactId && !visibleHostedSavedDatasets.some((item) => String(item.artifact_id) === selectedHostedArtifactId)) {
+      setSelectedHostedArtifactId('');
+    }
+  }, [selectedHostedArtifactId, visibleHostedSavedDatasets]);
 
   useEffect(() => setHostedConsent(false), [datasetKey, datasetName, query, selectedFields]);
 
@@ -330,14 +374,35 @@ export function DataStudio() {
   };
 
   const getAnalysis = async () => {
-    const useHostedPipeline = !bridgeOnline;
+    const selectedHostedDataset = hostedSavedDatasets.find((item) => String(item.artifact_id) === selectedHostedArtifactId);
+    const useHostedPipeline = Boolean(selectedHostedDataset) || !bridgeOnline;
+    const runName = selectedHostedDataset?.name || datasetFileName(datasetName) || datasetKey;
+    setRunStages(selectedHostedDataset ? [
+      `Load ${selectedHostedDataset.file_name} from the saved artifacts`,
+      'Send the selected processed dataset to GitHub Actions',
+      'Run the Python analysis',
+      `Save ${runName}-cleaned.csv and its report as an artifact`,
+      'Collect analysis results',
+    ] : useHostedPipeline ? [
+      `Create ${runName || datasetKey}.csv from the selected rows and fields`,
+      'Send the created dataset to GitHub Actions',
+      'Run the Python analysis',
+      `Save ${runName || datasetKey}-cleaned.csv and its report as an artifact`,
+      'Collect analysis results',
+    ] : [
+      'Check the local Python bridge',
+      'Load the selected saved dataset',
+      'Run the Python analysis',
+      'Collect the cleaned dataset and charts',
+      'Show analysis results',
+    ]);
     if (useHostedPipeline && !hostedAnalysisReady) {
       setRunError('The hosted analysis pipeline is not configured yet. Contact the CRM administrator.');
       setRunStage(-1);
       setRunDialogOpen(true);
       return;
     }
-    if (useHostedPipeline && !hostedConsent) {
+    if (useHostedPipeline && !selectedHostedDataset && !hostedConsent) {
       setRunError('Confirm that you want to send this selected dataset to the hosted GitHub Actions runner.');
       setRunStage(-1);
       setRunDialogOpen(true);
@@ -359,15 +424,20 @@ export function DataStudio() {
       await nextPaint();
       await wait(250);
       if (useHostedPipeline) {
-        const name = datasetFileName(datasetName);
+        const name = selectedHostedDataset?.name ?? datasetFileName(datasetName);
         if (!name) throw new Error('Enter a dataset name using letters, numbers, spaces, hyphens, or underscores.');
-        const selected = fields.filter((field) => effectiveFields.includes(field.key));
-        if (selected.length === 0 || filteredRows.length === 0) throw new Error('Select at least one field and one matching record.');
+        const selected = selectedHostedDataset ? [] : fields.filter((field) => effectiveFields.includes(field.key));
+        if (!selectedHostedDataset && (selected.length === 0 || filteredRows.length === 0)) throw new Error('Select at least one field and one matching record.');
         setRunStage(1);
         const created = await apiFetch<{ id: string }>('/analysis/jobs', {
           method: 'POST',
-          body: JSON.stringify({
+          body: JSON.stringify(selectedHostedDataset ? {
             name,
+            category: selectedHostedDataset.category,
+            source_artifact_id: selectedHostedDataset.artifact_id,
+          } : {
+            name,
+            category: datasetKey,
             fields: selected.map((field) => field.label),
             rows: filteredRows.map((row) => selected.map((field) => {
               const value = fieldValue(row, field.key, customFields);
@@ -391,14 +461,22 @@ export function DataStudio() {
         if (!completed?.report) throw new Error('The hosted analysis did not return results within five minutes.');
         const report = completed.report;
         setRunStage(3);
-        setLastDatasetPath(`GitHub Actions · ${name}`);
+        let updatedHostedDatasets = hostedSavedDatasets;
+        try {
+          updatedHostedDatasets = await refreshHostedSavedDatasets();
+        } catch (error) {
+          setHostedDatasetError(error instanceof Error ? error.message : 'Analysis finished, but the saved dataset list could not be refreshed.');
+        }
+        const savedArtifact = updatedHostedDatasets.find((item) => item.artifact_id === completed.artifact_id);
+        if (savedArtifact) setSelectedHostedArtifactId(String(savedArtifact.artifact_id));
+        setLastDatasetPath(savedArtifact ? `${savedArtifact.category} · ${savedArtifact.file_name}` : `GitHub Actions · ${name}-cleaned.csv`);
         await wait(Math.max(0, 1400 - (Date.now() - startedAt)));
         setRunStage(4);
         await wait(250);
         navigate('/data-studio/analysis', {
           state: {
             report,
-            datasetPath: `GitHub Actions · ${hostedRepositoryUrl}`,
+          datasetPath: savedArtifact ? `GitHub Actions · ${savedArtifact.file_name}` : `GitHub Actions · ${hostedRepositoryUrl}`,
             datasetName: name,
             completedAt: new Date().toISOString(),
           },
@@ -605,15 +683,49 @@ export function DataStudio() {
                 )}
               </>
             ) : (
-              <p className="muted data-studio-library-empty">{bridgeOnline ? <>No saved datasets in this project yet. Build a selection above, name it, then choose <strong>Save dataset</strong>.</> : 'Hosted analysis uses the current filtered selection directly and does not create a local project file.'}</p>
+              <p className="muted data-studio-library-empty">{bridgeOnline ? <>No local datasets in this project yet. Build a selection above, name it, then choose <strong>Save dataset</strong>.</> : 'Local project files require the Python bridge. Hosted processed datasets are listed below.'}</p>
+            )}
+          </section>
+          <section className="data-studio-library" aria-labelledby="hosted-saved-datasets-title">
+            <div className="data-studio-library-heading">
+              <div><span className="data-studio-kicker">GITHUB ACTIONS · MAX 10</span><h3 id="hosted-saved-datasets-title">Processed datasets</h3></div>
+              <button type="button" className="btn btn-small" disabled={bridgeWorking} onClick={() => refreshHostedSavedDatasets().catch((error: unknown) => setHostedDatasetError(error instanceof Error ? error.message : 'Could not refresh processed datasets.'))}><RefreshCw size={13} /> Refresh list</button>
+            </div>
+            <label className="field data-studio-kind-filter" htmlFor="hosted-saved-dataset-category">
+              <span className="field-label">Filter by CRM category</span>
+              <select id="hosted-saved-dataset-category" className="input" value={savedCategoryFilter} onChange={(event) => setSavedCategoryFilter(event.target.value as DatasetKey | 'all')}>
+                <option value="all">All categories</option>
+                {DATASETS.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
+              </select>
+            </label>
+            {visibleHostedSavedDatasets.length > 0 ? (
+              <>
+                <label className="field" htmlFor="hosted-saved-dataset">
+                  <span className="field-label">Choose a processed dataset to analyze</span>
+                  <select id="hosted-saved-dataset" className="input" value={selectedHostedArtifactId} onChange={(event) => setSelectedHostedArtifactId(event.target.value)}>
+                    <option value="">Choose a saved processed dataset</option>
+                    {visibleHostedSavedDatasets.map((item) => <option key={item.artifact_id} value={item.artifact_id}>{DATASETS.find((definition) => definition.key === item.category)?.label ?? item.category} · {item.file_name} · {new Date(item.created_at).toLocaleString()}</option>)}
+                  </select>
+                </label>
+                {visibleHostedSavedDatasets.find((item) => String(item.artifact_id) === selectedHostedArtifactId) && (() => {
+                  const selected = visibleHostedSavedDatasets.find((item) => String(item.artifact_id) === selectedHostedArtifactId)!;
+                  return <div className="data-studio-library-meta">
+                    <span><strong>Category</strong> {DATASETS.find((definition) => definition.key === selected.category)?.label ?? selected.category}</span>
+                    <span><strong>File</strong> <code>{selected.file_name}</code></span>
+                    <span><strong>Stored</strong> {new Date(selected.created_at).toLocaleString()}</span>
+                  </div>;
+                })()}
+              </>
+            ) : (
+              <p className="muted data-studio-library-empty">{hostedDatasetError || (hostedSavedDatasets.length === 0 ? 'No processed datasets saved yet. Run an analysis to create one.' : 'No processed datasets in this category.')}</p>
             )}
           </section>
           <div className="data-studio-handoff">
             <div className="data-studio-handoff-mark">PY</div>
-            <div><strong>{bridgeOnline ? 'Analyze a saved dataset' : 'Analyze the current selection'}</strong><p>{bridgeOnline ? `Connected to ${bridgeConfig.project_dir}. Saved CSVs remain in data/raw for later runs.` : hostedAnalysisReady ? `The selected CRM rows will run in GitHub Actions from ${hostedRepositoryUrl}.` : 'Start the local bridge or configure the hosted analysis pipeline in Settings.'}</p></div>
+            <div><strong>{selectedHostedArtifactId ? 'Analyze a processed dataset' : bridgeOnline ? 'Analyze a saved dataset' : 'Analyze the current selection'}</strong><p>{selectedHostedArtifactId ? `The selected processed file will be loaded from GitHub Actions and analyzed again. ${hostedSavedDatasets.length} of 10 saved slots are in use.` : bridgeOnline ? `Connected to ${bridgeConfig.project_dir}. Saved CSVs remain in data/raw for later runs.` : hostedAnalysisReady ? `The named dataset and its cleaned result will be saved in GitHub Actions from ${hostedRepositoryUrl}.` : 'Start the local bridge or configure the hosted analysis pipeline in Settings.'}</p></div>
             <div className="data-studio-python-actions">
               <button type="button" className="btn" onClick={saveToProject} disabled={!bridgeOnline || bridgeWorking || loading || filteredRows.length === 0 || effectiveFields.length === 0 || !datasetFileName(datasetName)}><FolderDown size={15} /> Save dataset</button>
-              <button type="button" className="btn btn-primary" onClick={getAnalysis} disabled={bridgeWorking || (bridgeOnline ? !selectedDatasetPath : (!hostedAnalysisReady || !hostedConsent || loading || filteredRows.length === 0 || effectiveFields.length === 0))}><Play size={14} /> Get Analysis</button>
+              <button type="button" className="btn btn-primary" onClick={getAnalysis} disabled={bridgeWorking || (selectedHostedArtifactId ? !hostedAnalysisReady : bridgeOnline ? !selectedDatasetPath : (!hostedAnalysisReady || !hostedConsent || loading || filteredRows.length === 0 || effectiveFields.length === 0))}><Play size={14} /> Get Analysis</button>
               <Link to="/settings" className="data-studio-settings-link">Settings</Link>
             </div>
           </div>
@@ -621,7 +733,7 @@ export function DataStudio() {
             <div className="banner banner-info data-studio-hosted-consent" data-testid="hosted-analysis-consent">
               <label className="checkbox-label">
                 <input type="checkbox" checked={hostedConsent} onChange={(event) => setHostedConsent(event.target.checked)} />
-                Send the selected rows and fields to the GitHub Actions runner at <strong>{hostedRepositoryUrl}</strong> for analysis. The dataset is temporary and is not committed to the repository.
+                Create <strong>{datasetFileName(datasetName) || datasetKey}.csv</strong> from the selected rows and fields, then send that dataset to the GitHub Actions runner at <strong>{hostedRepositoryUrl}</strong>. Its cleaned file and analysis report will be saved as a processed dataset.
               </label>
             </div>
           )}
@@ -629,7 +741,7 @@ export function DataStudio() {
             <div className="banner banner-info">The hosted analysis pipeline is not configured yet. The repository URL and setup status are available in Settings.</div>
           )}
           {bridgeMessage && <div className="banner banner-info" role="status">{bridgeMessage}</div>}
-          {lastDatasetPath && <div className="data-studio-saved-path">Last project dataset: <code>{lastDatasetPath}</code></div>}
+          {lastDatasetPath && <div className="data-studio-saved-path">Last dataset: <code>{lastDatasetPath}</code></div>}
         </section>
       </div>
       {runDialogOpen && (
@@ -640,7 +752,7 @@ export function DataStudio() {
             </div>
             <p className="analysis-progress-lead">{runError ? 'The analysis did not finish.' : 'Preparing your dataset and running the configured project script.'}</p>
             <ol className="analysis-progress-steps">
-              {ANALYSIS_STAGES.map((stage, index) => (
+              {runStages.map((stage, index) => (
                 <li key={stage} className={index < runStage ? 'complete' : index === runStage && !runError ? 'current' : ''}>
                   <span className="analysis-step-icon">{index < runStage ? <Check size={13} /> : index === runStage && !runError ? <LoaderCircle size={13} className="analysis-progress-spinner" /> : index + 1}</span>
                   <span>{stage}</span>

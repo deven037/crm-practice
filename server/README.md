@@ -53,18 +53,23 @@ and it builds/starts itself. Set `CORS_ORIGIN` to your deployed frontend's URL.
 ## Hosted GitHub Actions analysis
 
 The hosted pipeline uses the trusted shared repository at
-`https://github.com/deven037/crm-data-science-lab`. It sends selected CRM rows
-to a short-lived API job, dispatches that repository's `analyze.yml` workflow,
-and returns the JSON report to the signed-in user. Datasets are not committed
-or uploaded as workflow artifacts. The Data Studio requires users to consent
-before sending rows to the runner.
+`https://github.com/deven037/crm-data-science-lab`. After the user consents, it
+creates a named input CSV from the selected CRM rows and fields, dispatches
+that repository's `analyze.yml` workflow, and returns the JSON report to the
+signed-in user. Each successful run stores `{name}-cleaned.csv`,
+`analysis-report.json`, and `dataset-metadata.json` as a GitHub Actions artifact
+with a 90-day retention period. The workflow keeps only the ten newest CRM
+processed artifacts, deleting the oldest when a new one exceeds that limit.
+Data Studio can filter the saved datasets by CRM category and submit a saved
+processed CSV for another analysis run.
 
 Configure the following environment on the API service:
 
 - `ANALYSIS_GITHUB_REPOSITORY=deven037/crm-data-science-lab`
 - `ANALYSIS_GITHUB_REF=main`
 - `ANALYSIS_GITHUB_TOKEN`: fine-grained GitHub token with **Actions: write** on
-  the shared repository.
+  the shared repository. The workflow also needs the repository's Actions
+  token permission set to allow artifact read/write operations.
 - `ANALYSIS_WORKFLOW_SECRET`: a random secret shared with the repository
   Actions secret of the same name.
 - `PUBLIC_API_URL`: the public base URL of this API service, without a trailing
@@ -78,9 +83,10 @@ dashboard.
 
 Hosted jobs accept at most 20 MB and 50,000 rows, with a 120-second script
 limit, ten runs per signed-in user per hour, and two active jobs per user (eight
-globally). Job data is held in API memory for up to ten minutes and on the
-temporary GitHub runner; a service restart clears pending jobs. The report is capped at 2 MB. Runner output files and
-charts are not retained or returned.
+globally). Pending job data is held in API memory for up to ten minutes and a
+service restart clears pending jobs. The report is capped at 2 MB. The saved
+artifact contains the processed CSV, report, and dataset metadata; temporary
+runner files and chart images are not included.
 
 **Free-tier trade-off**: Render's free Web Service has no persistent disk and
 sleeps after ~15 minutes of inactivity. The next request cold-starts the
