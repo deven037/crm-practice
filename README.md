@@ -78,10 +78,10 @@ its configured script; see **[python_bridge/README.md](python_bridge/README.md)*
 for setup and the starter script contract.
 
 The hosted option dispatches the selected dataset to the trusted GitHub Actions
-workflow in `deven037/crm-data-science-lab`. Users must consent before sending
-data. The CRM API holds the dataset temporarily, the runner fetches it once,
-runs `analysis.py`, and posts the report back. Raw datasets and runner output
-files are not committed to GitHub or retained as workflow artifacts. Configure
+workflow in `deven037/crm-data-science-lab`. After consent, the runner creates
+the named CSV, runs `analysis.py`, and saves the cleaned CSV, JSON report, and
+dataset metadata as a GitHub Actions artifact. Data Studio lists the ten newest
+saved processed datasets by CRM category and can analyze one again. Configure
 the API secrets and public URL as described in **[server/README.md](server/README.md)**
 before enabling hosted runs.
 
