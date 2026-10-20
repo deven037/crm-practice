@@ -10,7 +10,10 @@ import { openapiDocument } from './openapi.js';
 const app = express();
 
 app.use(cors({ origin: env.corsOrigin }));
-app.use(express.json());
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/analysis/')) return next();
+  return express.json()(req, res, next);
+});
 app.use(simulatedLatency);
 
 app.get('/api/health', (_req, res) => {

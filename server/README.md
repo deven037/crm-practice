@@ -50,6 +50,38 @@ before it has a token.
 `render.yaml` is a Blueprint — point Render at this repo with `rootDir: server`
 and it builds/starts itself. Set `CORS_ORIGIN` to your deployed frontend's URL.
 
+## Hosted GitHub Actions analysis
+
+The hosted pipeline uses the trusted shared repository at
+`https://github.com/deven037/crm-data-science-lab`. It sends selected CRM rows
+to a short-lived API job, dispatches that repository's `analyze.yml` workflow,
+and returns the JSON report to the signed-in user. Datasets are not committed
+or uploaded as workflow artifacts. The Data Studio requires users to consent
+before sending rows to the runner.
+
+Configure the following environment on the API service:
+
+- `ANALYSIS_GITHUB_REPOSITORY=deven037/crm-data-science-lab`
+- `ANALYSIS_GITHUB_REF=main`
+- `ANALYSIS_GITHUB_TOKEN`: fine-grained GitHub token with **Actions: write** on
+  the shared repository.
+- `ANALYSIS_WORKFLOW_SECRET`: a random secret shared with the repository
+  Actions secret of the same name.
+- `PUBLIC_API_URL`: the public base URL of this API service, without a trailing
+  slash.
+
+In the shared GitHub repository, add the Actions secret
+`ANALYSIS_WORKFLOW_SECRET` with the same value. Keep credentials out of
+frontend variables and source control. The Render Blueprint lists the new
+variables; for an already-created Render service, add the secret values in its
+dashboard.
+
+Hosted jobs accept at most 20 MB and 50,000 rows, with a 120-second script
+limit, ten runs per signed-in user per hour, and two active jobs per user (eight
+globally). Job data is held in API memory for up to ten minutes and on the
+temporary GitHub runner; a service restart clears pending jobs. The report is capped at 2 MB. Runner output files and
+charts are not retained or returned.
+
 **Free-tier trade-off**: Render's free Web Service has no persistent disk and
 sleeps after ~15 minutes of inactivity. The next request cold-starts the
 process, which re-seeds from scratch — so any data created via the API since

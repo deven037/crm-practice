@@ -55,6 +55,8 @@ import { AutoFlowIntakeForm } from './pages/AutoFlowIntakeForm';
 import { Settings } from './pages/Settings';
 import { TestCases } from './pages/TestCases';
 import { Forbidden } from './pages/Forbidden';
+import { DataStudio } from './pages/DataStudio';
+import { AnalysisResults } from './pages/AnalysisResults';
 
 /**
  * Assigns a session-salted `id` to every input/button/textarea that lacks one
@@ -123,6 +125,8 @@ export function App() {
             <Route path="/tickets" element={<Protected><Tickets /></Protected>} />
             <Route path="/tickets/new" element={<Protected><TicketForm /></Protected>} />
             <Route path="/tickets/:id" element={<Protected><TicketDetail /></Protected>} />
+            <Route path="/data-studio" element={<Protected><DataStudio /></Protected>} />
+            <Route path="/data-studio/analysis" element={<Protected><AnalysisResults /></Protected>} />
             <Route path="/admin" element={<Protected roles={['admin', 'rep']}><Navigate to="/setup" replace /></Protected>} />
             <Route path="/admin/objects/:module" element={<Protected roles={['admin', 'rep']}><ObjectConfig /></Protected>} />
             <Route path="/setup" element={<Protected roles={['admin', 'rep']}><Setup /></Protected>} />

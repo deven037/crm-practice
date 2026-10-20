@@ -68,6 +68,23 @@ Users/Auth, Tasks, Notifications, and the Custom Fields/Layouts config, with:
 
 See **[server/README.md](server/README.md)** for the full endpoint list and deployment notes.
 
+## Data Studio and Python analysis
+
+Data Studio lets signed-in users choose a CRM dataset, select fields, preview rows,
+and save a CSV extract for analysis. For local analysis, start the loopback Python
+bridge and configure the project folder and interpreter in **Settings → Python
+project bridge**. The bridge writes extracts into the selected project and runs
+its configured script; see **[python_bridge/README.md](python_bridge/README.md)**
+for setup and the starter script contract.
+
+The hosted option dispatches the selected dataset to the trusted GitHub Actions
+workflow in `deven037/crm-data-science-lab`. Users must consent before sending
+data. The CRM API holds the dataset temporarily, the runner fetches it once,
+runs `analysis.py`, and posts the report back. Raw datasets and runner output
+files are not committed to GitHub or retained as workflow artifacts. Configure
+the API secrets and public URL as described in **[server/README.md](server/README.md)**
+before enabling hosted runs.
+
 ## Modules
 
 Dashboard (charts, infinite scroll) · Leads (full-featured table, inline edit, context menu, bulk

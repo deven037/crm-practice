@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  Bell, Building2, CheckSquare, ChevronDown, ChevronRight, DollarSign, FlaskConical, LayoutDashboard,
+  Bell, Building2, CheckSquare, ChevronDown, ChevronRight, Database, DollarSign, FlaskConical, LayoutDashboard,
   LogOut, Megaphone, Menu, Moon, Package, Receipt, Search, Settings, Shield, Sun, Target, Ticket, User,
   type LucideIcon,
 } from 'lucide-react';
@@ -153,6 +153,7 @@ const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: Luc
   {
     label: 'System',
     items: [
+      { to: '/data-studio', label: 'Data Studio', icon: Database },
       { to: '/testcases', label: 'Test Cases', icon: FlaskConical },
       { to: '/settings', label: 'Settings', icon: Settings },
     ],
