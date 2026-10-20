@@ -24,6 +24,7 @@ import { slaConfigsRouter } from './slaConfigs.js';
 import { pageLayoutsRouter } from './pageLayouts.js';
 import { autoFlowProcessesRouter } from './autoFlowProcesses.js';
 import { auditRouter } from './audit.js';
+import { analysisRouter } from './analysis.js';
 
 export const apiRouter = Router();
 
@@ -52,3 +53,4 @@ apiRouter.use('/slaConfigs', slaConfigsRouter);
 apiRouter.use('/pageLayouts', pageLayoutsRouter);
 apiRouter.use('/autoFlowProcesses', autoFlowProcessesRouter);
 apiRouter.use('/audit', auditRouter);
+apiRouter.use('/analysis', analysisRouter);

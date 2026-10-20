@@ -17,3 +17,13 @@ services:
         value: "50"
       - key: RESET_RATE_LIMIT_MAX
         value: "10"
+      - key: ANALYSIS_GITHUB_REPOSITORY
+        value: deven037/crm-data-science-lab
+      - key: ANALYSIS_GITHUB_REF
+        value: main
+      - key: ANALYSIS_GITHUB_TOKEN
+        sync: false
+      - key: ANALYSIS_WORKFLOW_SECRET
+        sync: false
+      - key: PUBLIC_API_URL
+        value: https://crm-practice-api.onrender.com
