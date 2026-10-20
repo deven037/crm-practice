@@ -733,7 +733,7 @@ export function DataStudio() {
             <div className="banner banner-info data-studio-hosted-consent" data-testid="hosted-analysis-consent">
               <label className="checkbox-label">
                 <input type="checkbox" checked={hostedConsent} onChange={(event) => setHostedConsent(event.target.checked)} />
-                Create <strong>{datasetFileName(datasetName) || datasetKey}.csv</strong> from the selected rows and fields, then send that dataset to the GitHub Actions runner at <strong>{hostedRepositoryUrl}</strong>. Its cleaned file and analysis report will be saved as a processed dataset.
+                Create the file <strong>{datasetFileName(datasetName) || datasetKey}.csv</strong> and run the analysis.
               </label>
             </div>
           )}
