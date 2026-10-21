@@ -381,7 +381,7 @@ export function DataStudio() {
       `Load ${selectedHostedDataset.file_name} from the saved artifacts`,
       'Send the selected processed dataset to GitHub Actions',
       'Run the Python analysis',
-      `Save ${runName}-cleaned.csv and its report as an artifact`,
+      'Return the analysis report without saving another dataset',
       'Collect analysis results',
     ] : useHostedPipeline ? [
       `Create ${runName || datasetKey}.csv from the selected rows and fields`,
@@ -468,8 +468,13 @@ export function DataStudio() {
           setHostedDatasetError(error instanceof Error ? error.message : 'Analysis finished, but the saved dataset list could not be refreshed.');
         }
         const savedArtifact = updatedHostedDatasets.find((item) => item.artifact_id === completed.artifact_id);
-        if (savedArtifact) setSelectedHostedArtifactId(String(savedArtifact.artifact_id));
-        setLastDatasetPath(savedArtifact ? `${savedArtifact.category} · ${savedArtifact.file_name}` : `GitHub Actions · ${name}-cleaned.csv`);
+        if (selectedHostedDataset) {
+          setSelectedHostedArtifactId(String(selectedHostedDataset.artifact_id));
+          setLastDatasetPath(`${selectedHostedDataset.category} · ${selectedHostedDataset.file_name}`);
+        } else {
+          if (savedArtifact) setSelectedHostedArtifactId(String(savedArtifact.artifact_id));
+          setLastDatasetPath(savedArtifact ? `${savedArtifact.category} · ${savedArtifact.file_name}` : `GitHub Actions · ${name}-cleaned.csv`);
+        }
         await wait(Math.max(0, 1400 - (Date.now() - startedAt)));
         setRunStage(4);
         await wait(250);
@@ -722,7 +727,7 @@ export function DataStudio() {
           </section>
           <div className="data-studio-handoff">
             <div className="data-studio-handoff-mark">PY</div>
-            <div><strong>{selectedHostedArtifactId ? 'Analyze a processed dataset' : bridgeOnline ? 'Analyze a saved dataset' : 'Analyze the current selection'}</strong><p>{selectedHostedArtifactId ? `The selected processed file will be loaded from GitHub Actions and analyzed again. ${hostedSavedDatasets.length} of 10 saved slots are in use.` : bridgeOnline ? `Connected to ${bridgeConfig.project_dir}. Saved CSVs remain in data/raw for later runs.` : hostedAnalysisReady ? `The named dataset and its cleaned result will be saved in GitHub Actions from ${hostedRepositoryUrl}.` : 'Start the local bridge or configure the hosted analysis pipeline in Settings.'}</p></div>
+            <div><strong>{selectedHostedArtifactId ? 'Analyze a processed dataset' : bridgeOnline ? 'Analyze a saved dataset' : 'Analyze the current selection'}</strong><p>{selectedHostedArtifactId ? `The selected processed file will be analyzed again. Its existing saved copy will be reused, so this run will not create another saved dataset. ${hostedSavedDatasets.length} of 10 saved slots are in use.` : bridgeOnline ? `Connected to ${bridgeConfig.project_dir}. Saved CSVs remain in data/raw for later runs.` : hostedAnalysisReady ? `The named dataset and its cleaned result will be saved in GitHub Actions from ${hostedRepositoryUrl}.` : 'Start the local bridge or configure the hosted analysis pipeline in Settings.'}</p></div>
             <div className="data-studio-python-actions">
               <button type="button" className="btn" onClick={saveToProject} disabled={!bridgeOnline || bridgeWorking || loading || filteredRows.length === 0 || effectiveFields.length === 0 || !datasetFileName(datasetName)}><FolderDown size={15} /> Save dataset</button>
               <button type="button" className="btn btn-primary" onClick={getAnalysis} disabled={bridgeWorking || (selectedHostedArtifactId ? !hostedAnalysisReady : bridgeOnline ? !selectedDatasetPath : (!hostedAnalysisReady || !hostedConsent || loading || filteredRows.length === 0 || effectiveFields.length === 0))}><Play size={14} /> Get Analysis</button>
