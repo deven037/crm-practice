@@ -56,12 +56,16 @@ The hosted pipeline uses the trusted shared repository at
 `https://github.com/deven037/crm-data-science-lab`. After the user consents, it
 creates a named input CSV from the selected CRM rows and fields, dispatches
 that repository's `analyze.yml` workflow, and returns the JSON report to the
-signed-in user. Each successful run stores `{name}-cleaned.csv`,
+signed-in user. A run on the current CRM selection stores `{name}-cleaned.csv`,
 `analysis-report.json`, and `dataset-metadata.json` as a GitHub Actions artifact
 with a 90-day retention period. The workflow keeps only the ten newest CRM
 processed artifacts, deleting the oldest when a new one exceeds that limit.
 Data Studio can filter the saved datasets by CRM category and submit a saved
-processed CSV for another analysis run.
+processed CSV for another analysis run. For those reruns, the CRM dispatches
+`save_processed_dataset=false`; `analyze.yml` should use the selected existing
+artifact as input, return the report without uploading a new processed-dataset
+artifact, and may omit `artifact_id` from its result callback. The CRM keeps the
+existing dataset selected in the library.
 
 Configure the following environment on the API service:
 

@@ -185,8 +185,8 @@ analysisRouter.post('/jobs/:id/result', requireWorkflow, express.json({ limit: '
   if (!body.report || typeof body.report !== 'object' || Array.isArray(body.report)) {
     throw new ApiError(400, 'invalid_report', 'Workflow result must include a JSON report.');
   }
-  const artifactId = Number(body.artifact_id);
-  if (!Number.isSafeInteger(artifactId) || artifactId <= 0) {
+  const returnedArtifactId = body.artifact_id === undefined ? undefined : Number(body.artifact_id);
+  if (!job.sourceArtifactId && (!Number.isSafeInteger(returnedArtifactId) || (returnedArtifactId ?? 0) <= 0)) {
     throw new ApiError(400, 'invalid_artifact', 'Workflow result must include the saved dataset artifact ID.');
   }
   if (jsonBytes(body.report) > MAX_RESULT_BYTES) {
@@ -203,7 +203,9 @@ analysisRouter.post('/jobs/:id/result', requireWorkflow, express.json({ limit: '
   delete report.processed_dataset_info;
   delete report.artifacts;
   job.report = report;
-  job.artifactId = artifactId;
+  // Reanalyzing a saved processed dataset reuses its current library entry.
+  // The workflow must skip uploading a replacement processed-dataset artifact.
+  job.artifactId = job.sourceArtifactId ?? returnedArtifactId;
   job.status = 'complete';
   job.csv = '';
   res.status(202).json({ ok: true });
@@ -307,6 +309,7 @@ analysisRouter.post('/jobs', analysisLimiter, express.json({ limit: '25mb' }), a
           dataset_category: category,
           source_artifact_id: sourceArtifact ? String(sourceArtifact.id) : '',
           source_run_id: sourceArtifact?.workflow_run?.id ? String(sourceArtifact.workflow_run.id) : '',
+          save_processed_dataset: sourceArtifact ? 'false' : 'true',
         },
       }),
     });
