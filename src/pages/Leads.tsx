@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, ListChecks, SlidersHorizontal, Table2 } from 'lucide-react';
 import { getAll, getAllSync, newId, removeMany, saveAll, upsert } from '../data/store';
-import { Account, Contact, Deal, DealStage, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, User } from '../types';
+import { Account, Contact, Deal, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, User } from '../types';
 import { Modal } from '../components/Modal';
-import { MultiSelect, SearchableSelect, Select } from '../components/Select';
+import { Select } from '../components/Select';
 import { ContextMenu } from '../components/ContextMenu';
 import { LeadTriageMode } from '../components/LeadTriageMode';
 import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
@@ -13,32 +13,14 @@ import { ToolBoxPanel } from '../components/ToolBoxPanel';
 import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
-import { classNames, downloadCsv, formatCurrency, formatDate } from '../utils';
+import { classNames, downloadCsv, formatDate } from '../utils';
 import { applyAssignmentRule, getStatusOptions } from '../utils/rules';
+import { LeadConvertWizard, WizardState } from './leads/LeadConvertWizard';
+import { LeadFilterPanel } from './leads/LeadFilterPanel';
+import { LeadsPagination } from './leads/LeadsPagination';
+import { LeadsTable, SortKey } from './leads/LeadsTable';
 
-type SortKey = 'name' | 'company' | 'status' | 'source' | 'value' | 'createdAt';
 type SortDir = 'asc' | 'desc';
-
-const PAGE_SIZES = [
-  { value: '10', label: '10 / page' },
-  { value: '25', label: '25 / page' },
-  { value: '50', label: '50 / page' },
-];
-
-interface WizardState {
-  lead: Lead;
-  step: number;
-  contactName: string;
-  contactEmail: string;
-  contactPhone: string;
-  accountMode: 'new' | 'existing';
-  accountName: string;
-  existingAccountId: string;
-  createDeal: boolean;
-  dealName: string;
-  dealAmount: number;
-  dealStage: DealStage;
-}
 
 export function Leads() {
   const toast = useToast();
@@ -354,155 +336,66 @@ export function Leads() {
       </div>
 
       {showFilters && (
-        <div className="filter-panel" data-testid="filter-panel">
-          <div className="field">
-            <span className="field-label">Status</span>
-            <MultiSelect
-              values={statusFilter}
-              options={LEAD_STATUSES.map((s) => ({ value: s, label: s }))}
-              onChange={(v) => {
-                setStatusFilter(v);
-                setPage(1);
-              }}
-              placeholder="Any status"
-            />
-          </div>
-          <div className="field">
-            <span className="field-label">Source</span>
-            <Select
-              value={sourceFilter}
-              options={[{ value: '', label: 'Any source' }, ...LEAD_SOURCES.map((s) => ({ value: s, label: s }))]}
-              onChange={(v) => {
-                setSourceFilter(v);
-                setPage(1);
-              }}
-            />
-          </div>
-          <div className="field">
-            <span className="field-label">Owner</span>
-            <Select
-              value={ownerFilter}
-              options={[{ value: '', label: 'Any owner' }, ...ownerOptions]}
-              onChange={(v) => {
-                setOwnerFilter(v);
-                setPage(1);
-              }}
-            />
-          </div>
-          <button
-            className="link-btn"
-            onClick={() => {
-              setStatusFilter([]);
-              setSourceFilter('');
-              setOwnerFilter('');
-            }}
-          >
-            Clear filters
-          </button>
-        </div>
+        <LeadFilterPanel
+          statusFilter={statusFilter}
+          sourceFilter={sourceFilter}
+          ownerFilter={ownerFilter}
+          ownerOptions={ownerOptions}
+          onStatusChange={(v) => {
+            setStatusFilter(v);
+            setPage(1);
+          }}
+          onSourceChange={(v) => {
+            setSourceFilter(v);
+            setPage(1);
+          }}
+          onOwnerChange={(v) => {
+            setOwnerFilter(v);
+            setPage(1);
+          }}
+          onClear={() => {
+            setStatusFilter([]);
+            setSourceFilter('');
+            setOwnerFilter('');
+          }}
+        />
       )}
 
       {loading ? (
         <SkeletonRows rows={8} />
       ) : (
         <>
-          <div className="table-wrap">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th className="checkbox-cell">
-                    <input type="checkbox" aria-label="Select all" checked={allPageSelected} onChange={toggleSelectAll} />
-                  </th>
-                  <th onClick={() => toggleSort('name')} className="sortable">Name{sortIndicator('name')}</th>
-                  <th onClick={() => toggleSort('company')} className="sortable">Company{sortIndicator('company')}</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th onClick={() => toggleSort('status')} className="sortable">Status{sortIndicator('status')}</th>
-                  <th onClick={() => toggleSort('source')} className="sortable">Source{sortIndicator('source')}</th>
-                  <th>Owner</th>
-                  <th onClick={() => toggleSort('value')} className="sortable num">Value{sortIndicator('value')}</th>
-                  <th onClick={() => toggleSort('createdAt')} className="sortable">Created{sortIndicator('createdAt')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageRows.length === 0 && (
-                  <tr>
-                    <td colSpan={10} className="empty-cell">
-                      No leads match the current filters.
-                    </td>
-                  </tr>
-                )}
-                {pageRows.map((lead) => (
-                  <tr
-                    key={lead.id}
-                    className={`row-clickable${selected.includes(lead.id) ? ' row-selected' : ''}`}
-                    onClick={() => navigate(`/leads/${lead.id}`)}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      // Without this, right-clicking a second row while the first row's
-                      // menu is open bubbles to ContextMenu's own document-level listener,
-                      // which closes the menu we just opened for this row.
-                      e.stopPropagation();
-                      setMenu({ x: e.clientX, y: e.clientY, lead });
-                    }}
-                  >
-                    <td className="checkbox-cell" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        aria-label={`Select ${lead.name}`}
-                        checked={selected.includes(lead.id)}
-                        onChange={() =>
-                          setSelected((sel) => (sel.includes(lead.id) ? sel.filter((id) => id !== lead.id) : [...sel, lead.id]))
-                        }
-                      />
-                    </td>
-                    <td>{lead.name}</td>
-                    <td>{lead.company}</td>
-                    <td>{lead.email}</td>
-                    <td>{lead.phone}</td>
-                    <td>
-                      <span className={`pill status-${lead.status.toLowerCase()}`}>{lead.status}</span>
-                    </td>
-                    <td>{lead.source}</td>
-                    <td>{ownerName(lead.ownerId)}</td>
-                    <td className="num">{formatCurrency(lead.value)}</td>
-                    <td>{formatDate(lead.createdAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <LeadsTable
+            rows={pageRows}
+            selected={selected}
+            allPageSelected={allPageSelected}
+            ownerName={ownerName}
+            sortIndicator={sortIndicator}
+            onToggleSort={toggleSort}
+            onToggleSelectAll={toggleSelectAll}
+            onToggleSelect={(id) => setSelected((sel) => (sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]))}
+            onOpen={(lead) => navigate(`/leads/${lead.id}`)}
+            onContextMenu={(e, lead) => {
+              e.preventDefault();
+              // Without this, right-clicking a second row while the first row's
+              // menu is open bubbles to ContextMenu's own document-level listener,
+              // which closes the menu we just opened for this row.
+              e.stopPropagation();
+              setMenu({ x: e.clientX, y: e.clientY, lead });
+            }}
+          />
 
-          <div className="pagination" data-testid="pagination">
-            <span className="muted">
-              {filtered.length} lead(s) · page {currentPage} of {totalPages}
-            </span>
-            <div className="pagination-controls">
-              <Select
-                value={String(pageSize)}
-                options={PAGE_SIZES}
-                onChange={(v) => {
-                  setPageSize(Number(v));
-                  setPage(1);
-                }}
-              />
-              <button className="btn" disabled={currentPage <= 1} onClick={() => setPage((p) => p - 1)} aria-label="Previous page">
-                ‹ Prev
-              </button>
-              {Array.from({ length: totalPages }).slice(0, 7).map((_, i) => (
-                <button
-                  key={i}
-                  className={classNames('btn btn-page', currentPage === i + 1 && 'btn-active')}
-                  onClick={() => setPage(i + 1)}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button className="btn" disabled={currentPage >= totalPages} onClick={() => setPage((p) => p + 1)} aria-label="Next page">
-                Next ›
-              </button>
-            </div>
-          </div>
+          <LeadsPagination
+            total={filtered.length}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+            onPageChange={setPage}
+          />
         </>
       )}
         </>
@@ -559,129 +452,7 @@ export function Leads() {
         />
       )}
 
-      {wizard && (
-        <Modal title={`Convert lead — Step ${wizard.step} of 3`} onClose={() => setWizard(null)} wide>
-          <div className="wizard-steps">
-            {['Contact', 'Account', 'Deal'].map((label, i) => (
-              <span key={label} className={classNames('wizard-step', wizard.step === i + 1 && 'active', wizard.step > i + 1 && 'done')}>
-                {i + 1}. {label}
-              </span>
-            ))}
-          </div>
-
-          {wizard.step === 1 && (
-            <>
-              <div className="field">
-                <span className="field-label">Contact name</span>
-                <input className="input" value={wizard.contactName} onChange={(e) => setWizard({ ...wizard, contactName: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className="field-label">Email</span>
-                <input className="input" value={wizard.contactEmail} onChange={(e) => setWizard({ ...wizard, contactEmail: e.target.value })} />
-              </div>
-              <div className="field">
-                <span className="field-label">Phone</span>
-                <input className="input" value={wizard.contactPhone} onChange={(e) => setWizard({ ...wizard, contactPhone: e.target.value })} />
-              </div>
-            </>
-          )}
-
-          {wizard.step === 2 && (
-            <>
-              <div className="field">
-                <span className="field-label">Account</span>
-                <div className="radio-row">
-                  <label className="checkbox-label">
-                    <input
-                      type="radio"
-                      name="account-mode"
-                      checked={wizard.accountMode === 'new'}
-                      onChange={() => setWizard({ ...wizard, accountMode: 'new' })}
-                    />
-                    Create new account
-                  </label>
-                  <label className="checkbox-label">
-                    <input
-                      type="radio"
-                      name="account-mode"
-                      checked={wizard.accountMode === 'existing'}
-                      onChange={() => setWizard({ ...wizard, accountMode: 'existing' })}
-                    />
-                    Link existing account
-                  </label>
-                </div>
-              </div>
-              {wizard.accountMode === 'new' ? (
-                <div className="field">
-                  <span className="field-label">Account name</span>
-                  <input className="input" value={wizard.accountName} onChange={(e) => setWizard({ ...wizard, accountName: e.target.value })} />
-                </div>
-              ) : (
-                <div className="field">
-                  <span className="field-label">Existing account</span>
-                  <SearchableSelect
-                    value={wizard.existingAccountId}
-                    options={accounts.map((a) => ({ value: a.id, label: a.name }))}
-                    onChange={(v) => setWizard({ ...wizard, existingAccountId: v })}
-                    placeholder="Search accounts…"
-                  />
-                </div>
-              )}
-            </>
-          )}
-
-          {wizard.step === 3 && (
-            <>
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={wizard.createDeal}
-                  onChange={(e) => setWizard({ ...wizard, createDeal: e.target.checked })}
-                />
-                Also create a deal for this conversion
-              </label>
-              {wizard.createDeal && (
-                <>
-                  <div className="field">
-                    <span className="field-label">Deal name</span>
-                    <input className="input" value={wizard.dealName} onChange={(e) => setWizard({ ...wizard, dealName: e.target.value })} />
-                  </div>
-                  <div className="field">
-                    <span className="field-label">Amount ($)</span>
-                    <input
-                      className="input"
-                      type="number"
-                      value={wizard.dealAmount}
-                      onChange={(e) => setWizard({ ...wizard, dealAmount: Number(e.target.value) })}
-                    />
-                  </div>
-                </>
-              )}
-            </>
-          )}
-
-          <div className="modal-footer wizard-footer">
-            {wizard.step > 1 && (
-              <button className="btn" onClick={() => setWizard({ ...wizard, step: wizard.step - 1 })}>
-                ‹ Back
-              </button>
-            )}
-            {wizard.step < 3 ? (
-              <button
-                className="btn btn-primary"
-                disabled={wizard.step === 2 && wizard.accountMode === 'existing' && !wizard.existingAccountId}
-                onClick={() => setWizard({ ...wizard, step: wizard.step + 1 })}
-              >
-                Next ›
-              </button>
-            ) : (
-              <button className="btn btn-primary" data-testid="wizard-finish" onClick={finishWizard}>
-                Finish conversion
-              </button>
-            )}
-          </div>
-        </Modal>
-      )}
+      {wizard && <LeadConvertWizard wizard={wizard} setWizard={setWizard} accounts={accounts} onFinish={finishWizard} />}
     </div>
   );
 }
