@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Activity states · {PRODUCT_NAME}</title>
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--border:#e1e4e8;--text:#1f2937;--muted:#5b6472;--chrome:#0b0f19;--chrome-text:#c4cad9;--bank-primary:#1d3a6e;--bank-on:#fff;--danger:#dc2626;--focus:var(--text);--r-sm:6px;--r-md:10px;--r-lg:14px;--sans:'Inter Variable',Inter,-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/20px var(--sans)}
+a,button{font:inherit}a{color:inherit}:focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:var(--r-sm)}
+.skip{position:absolute;left:-10000px;top:8px;background:white;padding:10px}.skip:focus{left:8px}
+.shell{min-height:100vh;display:grid;grid-template-columns:220px 1fr}
+nav{background:var(--chrome);color:var(--chrome-text);padding:18px 12px}.brand{color:#fff;font-size:16px;font-weight:700;padding:8px 10px}
+main{width:min(100%,1120px);padding:36px 48px 56px}
+h1{font-size:24px;line-height:32px;margin:0 0 6px;letter-spacing:-.4px}.lead{margin:0;color:var(--muted)}
+.states{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:28px}
+section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;min-height:210px}
+h2{font-size:15px;line-height:22px;margin:0 0 16px}
+.skeleton{height:16px;margin:0 0 14px;border-radius:4px;background:#e6e9ee}.skeleton.short{width:48%}.skeleton.mid{width:72%}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.empty{min-height:112px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;border-left:2px solid var(--bank-primary);padding-left:16px}
+.empty p{margin:0 0 5px}.muted{color:var(--muted)}
+.alert{border-left:3px solid var(--danger);padding:2px 0 2px 14px}.alert p{margin:0 0 12px}
+button{min-height:44px;padding:9px 14px;color:var(--bank-on);background:var(--bank-primary);border:0;border-radius:var(--r-md);font-weight:600;cursor:pointer}
+button:hover{filter:brightness(.92)}button:active{transform:translateY(1px)}
+@media(max-width:760px){.shell{grid-template-columns:1fr}nav{padding:10px 14px}.brand{padding:4px}main{padding:24px 20px 40px}.states{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important}}
+</style>
+</head>
+<body><a class="skip" href="#main">Skip to activity states</a>
+<div class="shell"><nav aria-label="Main navigation"><div class="brand">{PRODUCT_NAME}</div></nav>
+<main id="main"><h1>Activity states</h1><p class="lead">Replace the activity list with one of these states when its request requires it.</p>
+<div class="states">
+<section aria-labelledby="loading-title" aria-busy="true"><h2 id="loading-title">Loading</h2><span class="sr">Loading recent activity</span><div aria-hidden="true"><div class="skeleton mid"></div><div class="skeleton short"></div><div class="skeleton"></div><div class="skeleton mid"></div></div></section>
+<section aria-labelledby="empty-title"><h2 id="empty-title">No activity yet</h2><div class="empty"><p>Activity will appear here as your team updates records.</p><p class="muted">There are no recent changes to show.</p></div></section>
+<section aria-labelledby="error-title"><h2 id="error-title">Activity could not load</h2><div class="alert" role="alert"><p>We couldn’t load recent activity. Try again.</p><button type="button">Retry</button></div></section>
+<section aria-labelledby="ready-title"><h2 id="ready-title">Loaded</h2><p class="muted">Use the chronological list in <a href="activity.html">Activity</a>. Each item keeps the same wording and relative time shown in the Dashboard feed.</p></section>
+</div></main></div></body></html>

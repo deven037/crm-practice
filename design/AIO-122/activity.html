@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Activity · {PRODUCT_NAME}</title>
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--border:#e1e4e8;--text:#1f2937;--muted:#5b6472;--chrome:#0b0f19;--chrome-text:#c4cad9;--bank-primary:#1d3a6e;--bank-on:#fff;--focus:var(--text);--r-sm:6px;--r-md:10px;--r-lg:14px;--sans:'Inter Variable',Inter,-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;color:var(--text);font:14px/20px var(--sans);font-variant-numeric:tabular-nums}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:var(--r-sm)}
+.skip{position:absolute;top:8px;left:-10000px;padding:10px 14px;background:var(--surface);z-index:2}.skip:focus{left:8px}
+.shell{min-height:100vh;display:grid;grid-template-columns:220px minmax(0,1fr)}
+nav{background:var(--chrome);color:var(--chrome-text);padding:18px 12px;display:flex;flex-direction:column;gap:4px}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;font-size:16px;font-weight:700;padding:8px 10px;margin-bottom:12px}
+.brand-mark{width:24px;height:24px;display:grid;place-items:center;border-radius:7px;background:var(--bank-primary);color:var(--bank-on);font-size:12px}
+nav a{padding:9px 12px;border-radius:8px;text-decoration:none;color:var(--chrome-text)}
+nav a:hover{background:#171e2e;color:#fff}
+nav a[aria-current=page]{background:#171e2e;color:#fff;box-shadow:inset 3px 0 #fff}
+main{width:min(100%,1120px);padding:36px 48px 64px}
+.header{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+h1{font-size:24px;line-height:32px;letter-spacing:-.45px;margin:0;font-weight:700}
+.intro{margin:5px 0 0;color:var(--muted)}
+.org{font-size:13px;color:var(--muted);text-align:right}
+.feed-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin:28px 0 12px}
+h2{font-size:15px;line-height:22px;margin:0;font-weight:600}
+.count{font-size:12px;color:var(--muted)}
+.timeline{list-style:none;margin:0;padding:0 0 0 23px;border-left:2px solid #cbd3df}
+.item{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;padding:16px 0 16px 18px;border-bottom:1px solid var(--border)}
+.item::before{content:"";position:absolute;left:-29px;top:22px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--bank-primary)}
+.item p{margin:0;max-width:68ch}
+.item .relative-time{color:var(--muted);white-space:nowrap;font-size:13px}
+.footer{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:18px;color:var(--muted);font-size:13px}
+.back{color:var(--bank-primary);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+@media(max-width:760px){.shell{grid-template-columns:1fr}nav{flex-direction:row;align-items:center;flex-wrap:wrap;padding:10px 12px}.brand{margin:0 auto 0 0;padding:4px}.brand-mark{width:22px;height:22px}nav a{padding:8px 10px}main{padding:24px 20px 40px}.header{align-items:flex-start;flex-direction:column;gap:8px;padding-bottom:20px}.org{text-align:left}.feed-head{margin-top:24px}}
+@media(max-width:430px){nav{gap:2px}nav a{font-size:13px;padding:8px}.item{grid-template-columns:minmax(0,1fr);gap:4px;padding:14px 0 14px 14px}.item::before{left:-25px;top:19px}.item .relative-time{font-size:12px}.timeline{padding-left:19px}.footer{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to activity</a>
+<div class="shell">
+<nav aria-label="Main navigation">
+  <div class="brand"><span class="brand-mark" aria-hidden="true">◆</span><span>{PRODUCT_NAME}</span></div>
+  <a href="/dashboard">Dashboard</a><a href="/leads">Leads</a><a href="/deals">Deals</a><a href="/tasks">Tasks</a><a href="/tickets">Tickets</a><a href="/activity" aria-current="page">Activity</a>
+</nav>
+<main id="main">
+  <header class="header">
+    <div><h1>Activity</h1><p class="intro">Recent changes across your leads, deals, tasks and tickets.</p></div>
+    <div class="org">{BANK_NAME}</div>
+  </header>
+  <section aria-labelledby="feed-title">
+    <div class="feed-head"><h2 id="feed-title">Latest activity</h2><span class="count">Latest first</span></div>
+    <ol class="timeline" aria-label="Recent activity, latest first">
+      <li class="item"><p>Priya Nair moved “Westfield loan renewal” to Negotiation</p><span class="relative-time">12 min ago</span></li>
+      <li class="item"><p>New lead from web form: Calder Logistics</p><span class="relative-time">1 h ago</span></li>
+      <li class="item"><p>Ticket #482 closed by Marcus Lee</p><span class="relative-time">3 h ago</span></li>
+      <li class="item"><p>Task “Send term sheet” completed</p><span class="relative-time">Yesterday</span></li>
+      <li class="item"><p>Quote Q-2210 accepted</p><span class="relative-time">2 days ago</span></li>
+    </ol>
+    <div class="footer"><span>Showing the activity available in Recent activity.</span><a class="back" href="/dashboard">Back to Dashboard</a></div>
+  </section>
+</main>
+</div>
+</body>
+</html>
