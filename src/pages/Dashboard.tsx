@@ -342,9 +342,9 @@ export function Dashboard() {
                   {visibleActivities < activities.length && (
                     <p className="activity-all">
                       Scroll to load more, or{' '}
-                      <button type="button" className="btn-link" data-testid="activity-view-all" onClick={() => setVisibleActivities(activities.length)}>
+                      <Link to="/activity" className="btn-link" data-testid="activity-view-all" aria-label="View all activity">
                         view all activity
-                      </button>
+                      </Link>
                       .
                     </p>
                   )}

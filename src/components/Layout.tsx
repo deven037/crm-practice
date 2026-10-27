@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  Bell, Building2, CheckSquare, ChevronDown, ChevronRight, Database, DollarSign, FlaskConical, LayoutDashboard,
+  Activity as ActivityIcon, Bell, Building2, CheckSquare, ChevronDown, ChevronRight, Database, DollarSign, FlaskConical, LayoutDashboard,
   LogOut, Megaphone, Menu, Moon, Package, Receipt, Search, Settings, Shield, Sun, Target, Ticket, User,
   type LucideIcon,
 } from 'lucide-react';
@@ -130,7 +130,7 @@ function AvatarMenu() {
 }
 
 const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: LucideIcon; adminOnly?: boolean }[] }[] = [
-  { label: 'Main', items: [{ to: '/', label: 'Dashboard', icon: LayoutDashboard }] },
+  { label: 'Main', items: [{ to: '/', label: 'Dashboard', icon: LayoutDashboard }, { to: '/activity', label: 'Activity', icon: ActivityIcon }] },
   {
     label: 'Sales',
     items: [
