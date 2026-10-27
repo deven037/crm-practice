@@ -151,7 +151,7 @@ export function Dashboard() {
     label: stage.replace('Closed ', ''),
     value: rangedDeals.filter((d) => d.stage === stage).length,
   }));
-  const leadsByStatus = LEAD_STATUSES.filter((s) => s !== 'Converted').map((status) => ({
+  const leadsByStatus = LEAD_STATUSES.map((status) => ({
     label: status,
     value: rangedLeads.filter((l) => l.status === status).length,
   }));
