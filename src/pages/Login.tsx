@@ -47,7 +47,6 @@ export function Login() {
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [touched, setTouched] = useState<{ email?: boolean; password?: boolean }>({});
   const [busy, setBusy] = useState(false);
-
   const [resetEmail, setResetEmail] = useState('');
 
   const check = (nextEmail: string, nextPassword: string) => {
@@ -78,9 +77,8 @@ export function Login() {
     setBusy(true);
     try {
       const err = await login(email, password, remember);
-      if (err) {
-        setError(err);
-      } else {
+      if (err) setError(err);
+      else {
         const from = (location.state as { from?: string } | null)?.from ?? '/';
         navigate(from, { replace: true });
       }
@@ -113,9 +111,7 @@ export function Login() {
           <span>{PRODUCT_NAME}</span>
         </div>
         <svg viewBox="0 0 800 400" preserveAspectRatio="none" aria-hidden="true">
-          {TIDES.map((t) => (
-            <path key={t.d} opacity={t.opacity} d={t.d} />
-          ))}
+          {TIDES.map((t) => <path key={t.d} opacity={t.opacity} d={t.d} />)}
         </svg>
         <div className="lg-pitch">
           <h2>Every customer, every deal, in one calm place.</h2>
@@ -152,7 +148,7 @@ export function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   onBlur={() => blurField('email')}
                 />
-                {emailError && <span id="login-email-error" className="lg-err">{emailError}</span>}
+                {emailError && <span id="login-email-error" className="lg-err" role="alert">{emailError}</span>}
               </label>
               <label className="lg-field">
                 <span>Password</span>
@@ -168,16 +164,11 @@ export function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     onBlur={() => blurField('password')}
                   />
-                  <button
-                    type="button"
-                    className="lg-eye"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    onClick={() => setShowPassword((s) => !s)}
-                  >
+                  <button type="button" className="lg-eye" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((s) => !s)}>
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
-                {passwordError && <span id="login-password-error" className="lg-err">{passwordError}</span>}
+                {passwordError && <span id="login-password-error" className="lg-err" role="alert">{passwordError}</span>}
               </label>
               <div className="lg-row">
                 <label className="lg-chk">
@@ -212,13 +203,7 @@ export function Login() {
               )}
               <label className="lg-field">
                 <span>Email</span>
-                <input
-                  type="email"
-                  autoComplete="username"
-                  placeholder="you@company.com"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                />
+                <input type="email" autoComplete="username" placeholder="you@company.com" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
               </label>
               <button type="submit" className="lg-btn">Request reset</button>
               <button type="button" className="lg-btn lg-btn-quiet" onClick={() => { setError(null); setMode('login'); }}>
