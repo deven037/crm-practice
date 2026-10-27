@@ -10,6 +10,8 @@ type Mode = 'login' | 'forgot-email' | 'forgot-code' | 'forgot-password';
 const BANK_NAME = import.meta.env.VITE_BANK_NAME?.trim() || 'Your bank';
 const BANK_LOGO_URL = import.meta.env.VITE_BANK_LOGO_URL?.trim();
 
+export const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -32,7 +34,7 @@ export function Login() {
   const validate = () => {
     const errs: { email?: string; password?: string } = {};
     if (!email.trim()) errs.email = 'Email is required.';
-    else if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email.trim())) errs.email = 'Enter a valid email address.';
+    else if (!EMAIL_PATTERN.test(email.trim())) errs.email = 'Enter a valid email address.';
     if (!password) errs.password = 'Password is required.';
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
@@ -61,7 +63,7 @@ export function Login() {
   const handleForgotEmail = (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(resetEmail.trim())) {
+    if (!EMAIL_PATTERN.test(resetEmail.trim())) {
       setError('Enter a valid email address.');
       return;
     }
