@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Account, DealStage, Lead } from '../../types';
 import { Modal } from '../../components/Modal';
 import { SearchableSelect } from '../../components/Select';
@@ -23,9 +24,19 @@ interface Props {
   setWizard: (w: WizardState | null) => void;
   accounts: Account[];
   onFinish: () => void;
+  isFinishing: boolean;
 }
 
-export function LeadConvertWizard({ wizard, setWizard, accounts, onFinish }: Props) {
+export function LeadConvertWizard({ wizard, setWizard, accounts, onFinish, isFinishing }: Props) {
+  const [stepOneErrors, setStepOneErrors] = useState<Partial<Record<'contactName' | 'contactEmail', string>>>({});
+  const continueFromStepOne = () => {
+    const errors: Partial<Record<'contactName' | 'contactEmail', string>> = {};
+    if (!wizard.contactName.trim()) errors.contactName = 'Enter a contact name.';
+    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(wizard.contactEmail.trim())) errors.contactEmail = 'Enter a valid email address.';
+    setStepOneErrors(errors);
+    if (Object.keys(errors).length === 0) setWizard({ ...wizard, step: wizard.step + 1 });
+  };
+
   return (
     <Modal title={`Convert lead — Step ${wizard.step} of 3`} onClose={() => setWizard(null)} wide>
       <div className="wizard-steps">
@@ -39,12 +50,14 @@ export function LeadConvertWizard({ wizard, setWizard, accounts, onFinish }: Pro
       {wizard.step === 1 && (
         <>
           <div className="field">
-            <span className="field-label">Contact name</span>
-            <input className="input" value={wizard.contactName} onChange={(e) => setWizard({ ...wizard, contactName: e.target.value })} />
+            <label className="field-label" htmlFor="convert-contact-name">Contact name</label>
+            <input id="convert-contact-name" className="input" value={wizard.contactName} aria-invalid={Boolean(stepOneErrors.contactName)} aria-describedby={stepOneErrors.contactName ? 'convert-contact-name-error' : undefined} onChange={(e) => setWizard({ ...wizard, contactName: e.target.value })} />
+            {stepOneErrors.contactName && <div id="convert-contact-name-error" className="field-error" role="alert">{stepOneErrors.contactName}</div>}
           </div>
           <div className="field">
-            <span className="field-label">Email</span>
-            <input className="input" value={wizard.contactEmail} onChange={(e) => setWizard({ ...wizard, contactEmail: e.target.value })} />
+            <label className="field-label" htmlFor="convert-contact-email">Email</label>
+            <input id="convert-contact-email" className="input" type="email" value={wizard.contactEmail} aria-invalid={Boolean(stepOneErrors.contactEmail)} aria-describedby={stepOneErrors.contactEmail ? 'convert-contact-email-error' : undefined} onChange={(e) => setWizard({ ...wizard, contactEmail: e.target.value })} />
+            {stepOneErrors.contactEmail && <div id="convert-contact-email-error" className="field-error" role="alert">{stepOneErrors.contactEmail}</div>}
           </div>
           <div className="field">
             <span className="field-label">Phone</span>
@@ -137,13 +150,13 @@ export function LeadConvertWizard({ wizard, setWizard, accounts, onFinish }: Pro
           <button
             className="btn btn-primary"
             disabled={wizard.step === 2 && wizard.accountMode === 'existing' && !wizard.existingAccountId}
-            onClick={() => setWizard({ ...wizard, step: wizard.step + 1 })}
+            onClick={wizard.step === 1 ? continueFromStepOne : () => setWizard({ ...wizard, step: wizard.step + 1 })}
           >
             Next ›
           </button>
         ) : (
-          <button className="btn btn-primary" data-testid="wizard-finish" onClick={onFinish}>
-            Finish conversion
+          <button className="btn btn-primary" data-testid="wizard-finish" disabled={isFinishing} onClick={onFinish}>
+            {isFinishing ? 'Converting…' : 'Finish conversion'}
           </button>
         )}
       </div>

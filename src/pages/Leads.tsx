@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Download, ListChecks, SlidersHorizontal, Table2 } from 'lucide-react';
 import { getAll, getAllSync, newId, removeMany, saveAll, upsert } from '../data/store';
@@ -47,6 +47,8 @@ export function Leads() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selected, setSelected] = useState<string[]>([]);
+  const [converting, setConverting] = useState(false);
+  const convertingRef = useRef(false);
 
   // interactions
   const [menu, setMenu] = useState<{ x: number; y: number; lead: Lead } | null>(null);
@@ -193,7 +195,10 @@ export function Leads() {
     });
 
   const finishWizard = async () => {
-    if (!wizard) return;
+    if (!wizard || convertingRef.current) return;
+    convertingRef.current = true;
+    setConverting(true);
+    try {
     const accounts = getAllSync<Account>('accounts');
     let accountId: string;
     if (wizard.accountMode === 'existing' && wizard.existingAccountId) {
@@ -249,6 +254,10 @@ export function Leads() {
     toast.push('success', `Lead "${wizard.lead.name}" converted successfully.`);
     setWizard(null);
     load();
+    } finally {
+      convertingRef.current = false;
+      setConverting(false);
+    }
   };
 
   const ownerOptions = users.map((u) => ({ value: u.id, label: u.name }));
@@ -323,7 +332,10 @@ export function Leads() {
           className="input search-input"
           placeholder="Search name, company, email…"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setSelected([]);
+          }}
         />
         <button
           className={classNames('btn', showFilters && 'btn-active')}
@@ -357,20 +369,25 @@ export function Leads() {
           ownerOptions={ownerOptions}
           onStatusChange={(v) => {
             setStatusFilter(v);
+            setSelected([]);
             setPage(1);
           }}
           onSourceChange={(v) => {
             setSourceFilter(v);
+            setSelected([]);
             setPage(1);
           }}
           onOwnerChange={(v) => {
             setOwnerFilter(v);
+            setSelected([]);
             setPage(1);
           }}
           onClear={() => {
             setStatusFilter([]);
             setSourceFilter('');
             setOwnerFilter('');
+            setSelected([]);
+            setPage(1);
           }}
         />
       )}
@@ -408,7 +425,10 @@ export function Leads() {
               setPageSize(size);
               setPage(1);
             }}
-            onPageChange={setPage}
+            onPageChange={(nextPage) => {
+              setPage(nextPage);
+              setSelected([]);
+            }}
           />
         </>
       )}
@@ -466,7 +486,7 @@ export function Leads() {
         />
       )}
 
-      {wizard && <LeadConvertWizard wizard={wizard} setWizard={setWizard} accounts={accounts} onFinish={finishWizard} />}
+      {wizard && <LeadConvertWizard wizard={wizard} setWizard={setWizard} accounts={accounts} onFinish={finishWizard} isFinishing={converting} />}
     </div>
   );
 }
