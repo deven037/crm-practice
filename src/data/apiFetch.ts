@@ -34,7 +34,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     },
   });
 
-  if (res.status === 401) {
+  if (res.status === 401 && path !== '/auth/login') {
     clearToken();
     if (window.location.pathname !== '/login') window.location.href = '/login';
     throw new Error('Session expired');

@@ -74,12 +74,14 @@ export function Login() {
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors((prev) => ({ ...prev, password: undefined }));
     if (!validate()) return;
     setBusy(true);
     try {
       const err = await login(email, password, remember);
       if (err) {
-        setError(err);
+        setTouched((prev) => ({ ...prev, password: true }));
+        setFieldErrors((prev) => ({ ...prev, password: err }));
       } else {
         const from = (location.state as { from?: string } | null)?.from ?? '/';
         navigate(from, { replace: true });
