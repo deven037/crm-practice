@@ -1,0 +1,20 @@
+{
+  "_note": "Mirrors :root in src/styles.css (Verified). Only bank.* and range-chip tokens are new (AIO-93).",
+  "color": {
+    "bg": "#f4f6f8", "surface": "#ffffff", "surface-2": "#f1f3f5", "border": "#e1e4e8",
+    "text": "#1f2937", "text-muted": "#6b7280", "chrome-bg": "#0b0f19",
+    "accent": "#2563eb", "success": "#16a34a", "warning": "#d97706", "danger": "#dc2626",
+    "dark": { "bg": "#10151f", "surface": "#1a2130", "border": "#313b52", "text": "#e7eaf0", "text-muted": "#8b93a7" }
+  },
+  "bank": {
+    "--bank-primary": "per bank, from config; falls back to --accent",
+    "--bank-on": "text on a bank-primary fill: #ffffff or #14110a, whichever gives >= 4.5:1",
+    "rule": "Bank colour is for fills, bars and icons only. Never use it as text colour on --surface."
+  },
+  "font": { "sans": "'Inter Variable', -apple-system, 'Segoe UI', Roboto, sans-serif", "numerals": "tabular-nums" },
+  "type": { "page-title": "24/32 700", "tile-value": "32/36 800", "body": "14/20 400", "label": "13/18 600", "hint": "12/16 400" },
+  "space": [4, 8, 12, 16, 24, 32, 48],
+  "radius": { "sm": 6, "md": 10, "lg": 14, "xl": 18, "pill": 999 },
+  "focus": "2px solid var(--text), offset 2px (never relies on bank colour)",
+  "motion": { "fast": "120ms", "base": "200ms", "reduced": "no transitions under prefers-reduced-motion" }
+}

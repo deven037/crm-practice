@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard states – Harbor CRM</title>
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--border:#e1e4e8;--text:#1f2937;--text-muted:#5b6472;--danger:#b91c1c;--danger-bg:#fef2f2;
+--bank-primary:#1d3a6e;--bank-on:#fff;--font:'Inter Variable',Inter,-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/20px var(--font);padding:24px 32px}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:6px}
+h1{font-size:24px;line-height:32px;margin:0 0 4px}
+.lead{color:var(--text-muted);margin:0 0 24px;max-width:70ch}
+h2{font-size:15px;margin:32px 0 4px}
+.cap{color:var(--text-muted);font-size:12px;margin:0 0 12px}
+.frame{max-width:1100px;background:var(--bg);border:1px dashed #9aa3b2;border-radius:14px;padding:20px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.head h3{margin:0;font-size:20px}
+select{font:inherit;padding:8px 32px 8px 12px;border:1px solid #9aa3b2;border-radius:10px;background:#fff;color:var(--text);min-height:40px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.sk{background:var(--surface);border:1px solid var(--border);border-left:6px solid var(--bank-primary);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.sk i{display:block;height:12px;border-radius:6px;background:linear-gradient(90deg,#e9ecef 25%,#f6f7f9 50%,#e9ecef 75%);background-size:200% 100%;animation:sh 1.4s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.err{display:flex;gap:16px;align-items:flex-start;background:var(--danger-bg);border:1px solid #f5b5b5;border-left:6px solid var(--danger);border-radius:14px;padding:20px}
+.err svg{flex:none;margin-top:2px}
+.err h3{margin:0 0 4px;font-size:16px;line-height:24px}
+.err p{margin:0 0 14px;max-width:62ch}
+.btn{font:inherit;font-weight:600;min-height:40px;padding:8px 18px;border-radius:10px;border:1px solid var(--bank-primary);background:var(--bank-primary);color:var(--bank-on);cursor:pointer}
+.btn.ghost{background:#fff;color:var(--text);border-color:#9aa3b2}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn[aria-busy=true]{opacity:.7;cursor:progress}
+.empty{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px 24px;text-align:left;display:grid;gap:6px;max-width:60ch}
+.empty h3{margin:0;font-size:16px}.empty p{margin:0;color:var(--text-muted)}
+.partial{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px}
+.card h3{margin:0 0 6px;font-size:15px}
+.inline{display:flex;gap:12px;align-items:center;flex-wrap:wrap;color:var(--text-muted)}
+.inline a{color:var(--text);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+ul.notes{max-width:75ch;color:var(--text-muted);font-size:13px}
+@media(max-width:760px){body{padding:16px}.partial{grid-template-columns:1fr}.frame{padding:12px}}
+@media(prefers-reduced-motion:reduce){.sk i{animation:none}}
+</style>
+</head>
+<body>
+<h1>Dashboard states</h1>
+<p class="lead">Loading, load failure with Retry, and empty. Shown in the Navy bank theme; every state uses the same tokens in any bank colour.</p>
+
+<h2>Loading</h2>
+<p class="cap">Skeletons keep the tile and card layout, so nothing jumps. Announced to screen readers as “Loading dashboard”. After 10 seconds without a response, switch to the error state.</p>
+<div class="frame" role="status" aria-label="Loading dashboard">
+  <div class="head"><h3>Dashboard</h3><select aria-label="Date range"><option>Last 30 days</option></select></div>
+  <div class="tiles">
+    <div class="sk"><i style="width:50%"></i><i style="width:35%;height:28px"></i><i style="width:60%"></i></div>
+    <div class="sk"><i style="width:50%"></i><i style="width:35%;height:28px"></i><i style="width:60%"></i></div>
+    <div class="sk"><i style="width:50%"></i><i style="width:35%;height:28px"></i><i style="width:60%"></i></div>
+    <div class="sk"><i style="width:50%"></i><i style="width:35%;height:28px"></i><i style="width:60%"></i></div>
+  </div>
+</div>
+
+<h2>Error with Retry</h2>
+<p class="cap">Replaces the skeleton when any request fails. The date range stays usable. Retry reloads all metrics, shows “Retrying…” and disables itself while loading (press it below).</p>
+<div class="frame">
+  <div class="head"><h3>Dashboard</h3><select aria-label="Date range"><option>Last 30 days</option></select></div>
+  <div class="err" role="alert">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 7v6M12 16.5v.5"/></svg>
+    <div>
+      <h3>Dashboard didn’t load</h3>
+      <p>We couldn’t reach the server, so no figures are shown. Your data is unchanged. Check your connection and try again.</p>
+      <div class="acts"><button class="btn" id="retry" type="button">Retry</button><a href="#" class="btn ghost" style="display:inline-block;text-decoration:none;line-height:22px">Go to Leads</a></div>
+    </div>
+  </div>
+</div>
+
+<h2>Part of the page failed</h2>
+<p class="cap">If only some data fails, show the metrics that loaded and mark the failed card, with its own Retry.</p>
+<div class="frame">
+  <div class="partial">
+    <div class="card"><h3>Open tickets</h3><div class="inline"><span>Couldn’t load tickets.</span><a href="#">Retry</a></div></div>
+    <div class="card"><h3>Open pipeline</h3><p style="margin:0;font-size:28px;font-weight:800">$2.46M</p></div>
+  </div>
+</div>
+
+<h2>Empty</h2>
+<p class="cap">New bank, no records yet. Tiles show 0 and stay links; the first card tells the user what to do.</p>
+<div class="frame">
+  <div class="empty">
+    <h3>No activity yet</h3>
+    <p>Leads, deals and tasks you add will appear here as figures. Start by adding your first lead.</p>
+    <div><a class="btn" href="#" style="display:inline-block;text-decoration:none;line-height:22px;margin-top:8px">Add lead</a></div>
+  </div>
+</div>
+
+<h2>Build notes</h2>
+<ul class="notes">
+  <li>Catch failures from all five requests (today one rejection leaves the skeleton forever, AIO-61 P15). Error text says what happened and what to do; no apology.</li>
+  <li>Error container is <code>role="alert"</code>; move focus to the Retry button when it appears only after a user-triggered retry, not on first load.</li>
+  <li>Danger red text <code>#b91c1c</code> on <code>#fef2f2</code> is above 4.5:1. The error panel never relies on bank colour for its meaning; its Retry button takes bank fill with <code>--bank-on</code>.</li>
+</ul>
+<script>
+const r=document.getElementById('retry');
+r.addEventListener('click',()=>{r.setAttribute('aria-busy','true');r.textContent='Retrying…';setTimeout(()=>{r.removeAttribute('aria-busy');r.textContent='Retry'},1500)});
+</script>
+</body>
+</html>
