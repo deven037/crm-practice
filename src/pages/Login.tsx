@@ -179,7 +179,7 @@ export function Login() {
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
-                {passwordError && <span id="login-password-error" className="lg-err">{passwordError}</span>}
+                {passwordError && <span id="login-password-error" className="lg-err" data-testid={fieldErrors.password ? 'login-error' : undefined} role={fieldErrors.password ? 'alert' : undefined}>{passwordError}</span>}
               </label>
               <div className="lg-row">
                 <label className="lg-chk">
