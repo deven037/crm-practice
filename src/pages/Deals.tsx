@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getAll, upsert, removeMany } from '../data/store';
 import { Account, Deal, DealStage, DEAL_STAGES, User } from '../types';
 import { Modal } from '../components/Modal';
@@ -17,6 +17,9 @@ export function Deals() {
   const toast = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  // Dashboard tile link: /deals?stage=open hides the Closed columns.
+  const openOnly = params.get('stage') === 'open';
   const [loading, setLoading] = useState(true);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -77,6 +80,11 @@ export function Deals() {
       <div className="page-header">
         <h1>Deals</h1>
         <div className="page-actions">
+          {openOnly && (
+            <button className="btn" onClick={() => setParams({})}>
+              Showing open deals · Show all
+            </button>
+          )}
           <button className="btn btn-create" onClick={() => navigate('/deals/new')}>
             + New Deal
           </button>
@@ -99,7 +107,7 @@ export function Deals() {
         <Kanban
           testId="kanban-board"
           emptyLabel="Drop deals here"
-          columns={DEAL_STAGES.map((stage) => {
+          columns={DEAL_STAGES.filter((stage) => !openOnly || !stage.startsWith('Closed')).map((stage) => {
             const stageDeals = deals.filter((d) => d.stage === stage);
             const total = stageDeals.reduce((sum, d) => sum + d.amount, 0);
             return { key: stage, label: stage, items: stageDeals, headerMeta: `${stageDeals.length} · ${formatCurrency(total)}` };

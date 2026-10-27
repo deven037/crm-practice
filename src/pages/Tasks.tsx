@@ -1,4 +1,5 @@
 import { DragEvent, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
 import { getAll, newId, removeMany, saveAll, upsert } from '../data/store';
 import { TaskItem, TaskPriority, TASK_PRIORITIES } from '../types';
@@ -6,13 +7,14 @@ import { Select } from '../components/Select';
 import { DatePicker } from '../components/DatePicker';
 import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
-import { classNames, formatDate, isOverdue } from '../utils';
+import { classNames, formatDate, isDueToday, isOverdue } from '../utils';
 
-type Filter = 'all' | 'open' | 'completed' | 'overdue';
+type Filter = 'all' | 'open' | 'today' | 'completed' | 'overdue';
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'open', label: 'Open' },
+  { id: 'today', label: 'Due today' },
   { id: 'completed', label: 'Completed' },
   { id: 'overdue', label: 'Overdue' },
 ];
@@ -21,7 +23,9 @@ export function Tasks() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<TaskItem[]>([]);
-  const [filter, setFilter] = useState<Filter>('all');
+  const [params] = useSearchParams();
+  // Dashboard tile link: /tasks?due=today
+  const [filter, setFilter] = useState<Filter>(params.get('due') === 'today' ? 'today' : 'all');
   const [newTitle, setNewTitle] = useState('');
   const [newPriority, setNewPriority] = useState<TaskPriority>('Medium');
   const [newDue, setNewDue] = useState<string | null>(null);
@@ -39,6 +43,7 @@ export function Tasks() {
 
   const visible = tasks.filter((t) => {
     if (filter === 'open') return !t.completed;
+    if (filter === 'today') return !t.completed && isDueToday(t.dueDate);
     if (filter === 'completed') return t.completed;
     if (filter === 'overdue') return !t.completed && isOverdue(t.dueDate);
     return true;
