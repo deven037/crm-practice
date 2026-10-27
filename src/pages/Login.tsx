@@ -7,11 +7,8 @@ import { apiFetch } from '../data/apiFetch';
 
 type Mode = 'login' | 'forgot-email' | 'forgot-code' | 'forgot-password';
 
-// Cosmetic pacing only, for the forgot-password flow's fake email/code steps (no
-// server round-trip backs those two — the real network call for the password
-// change itself already provides realistic latency).
-const delay = (min: number, max: number) =>
-  new Promise<void>((resolve) => setTimeout(resolve, min + Math.random() * (max - min)));
+const BANK_NAME = import.meta.env.VITE_BANK_NAME?.trim() || 'Your bank';
+const BANK_LOGO_URL = import.meta.env.VITE_BANK_LOGO_URL?.trim();
 
 export function Login() {
   const { login } = useAuth();
@@ -28,7 +25,6 @@ export function Login() {
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [busy, setBusy] = useState(false);
 
-  // forgot-password flow state
   const [resetEmail, setResetEmail] = useState('');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -36,7 +32,7 @@ export function Login() {
   const validate = () => {
     const errs: { email?: string; password?: string } = {};
     if (!email.trim()) errs.email = 'Email is required.';
-    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) errs.email = 'Enter a valid email address.';
+    else if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email.trim())) errs.email = 'Enter a valid email address.';
     if (!password) errs.password = 'Password is required.';
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
@@ -47,37 +43,35 @@ export function Login() {
     setError(null);
     if (!validate()) return;
     setBusy(true);
-    const err = await login(email, password, remember);
-    setBusy(false);
-    if (err) {
-      setError(err);
-    } else {
-      const from = (location.state as { from?: string } | null)?.from ?? '/';
-      navigate(from, { replace: true });
+    try {
+      const err = await login(email, password, remember);
+      if (err) {
+        setError(err);
+      } else {
+        const from = (location.state as { from?: string } | null)?.from ?? '/';
+        navigate(from, { replace: true });
+      }
+    } catch {
+      setError('Unable to sign in right now. Please try again.');
+    } finally {
+      setBusy(false);
     }
   };
 
   const handleForgotEmail = (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(resetEmail.trim())) {
+    if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(resetEmail.trim())) {
       setError('Enter a valid email address.');
       return;
     }
-    setError('Password reset is unavailable here. Please contact your administrator.');
+    // No email reset request endpoint exists yet. Do not claim a code was sent.
+    setError('Password reset is unavailable right now. Please contact your administrator.');
   };
 
-  const handleForgotCode = async (e: FormEvent) => {
+  const handleForgotCode = (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setBusy(true);
-    await delay(300, 700);
-    setBusy(false);
-    if (code.trim() !== '123456') {
-      setError('Incorrect code. Try again.');
-      return;
-    }
-    setMode('forgot-password');
+    setError('Password reset is unavailable right now. Please contact your administrator.');
   };
 
   const handleForgotPassword = async (e: FormEvent) => {
@@ -97,10 +91,11 @@ export function Login() {
       setMode('login');
       setEmail(resetEmail);
       setPassword('');
+      setResetEmail('');
       setCode('');
       setNewPassword('');
     } catch {
-      setError('We could not update your password. Please try again.');
+      setError('Unable to update your password. Please try again.');
     } finally {
       setBusy(false);
     }
@@ -113,29 +108,28 @@ export function Login() {
           <span className="brand-logo">◆</span>
           <span className="brand-name">Harbor CRM</span>
         </div>
+        <div className="login-bank-brand" aria-label={BANK_NAME}>
+          {BANK_LOGO_URL && <img className="login-bank-logo" src={BANK_LOGO_URL} alt="" />}
+          <span>{BANK_NAME}</span>
+        </div>
 
         {mode === 'login' && (
           <form onSubmit={handleLogin} noValidate>
             <h2>Sign in</h2>
-            {error && (
-              <div className="banner banner-error" data-testid="login-error" role="alert">
-                {error}
-              </div>
-            )}
+            {error && <div className="banner banner-error" data-testid="login-error" role="alert">{error}</div>}
             <label className="field">
               <span className="field-label">Email</span>
               <input
                 type="email"
                 className="input"
-                id="login-email"
-                aria-invalid={Boolean(fieldErrors.email)}
-                aria-describedby={fieldErrors.email ? "login-email-error" : undefined}
                 data-testid="login-email"
+                aria-invalid={Boolean(fieldErrors.email)}
+                aria-describedby={fieldErrors.email ? 'login-email-error' : undefined}
                 placeholder="you@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              {fieldErrors.email && <span className="field-error" id="login-email-error">{fieldErrors.email}</span>}
+              {fieldErrors.email && <span id="login-email-error" className="field-error">{fieldErrors.email}</span>}
             </label>
             <label className="field">
               <span className="field-label">Password</span>
@@ -143,10 +137,9 @@ export function Login() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   className="input"
-                  id="login-password"
-                  aria-invalid={Boolean(fieldErrors.password)}
-                  aria-describedby={fieldErrors.password ? "login-password-error" : undefined}
                   data-testid="login-password"
+                  aria-invalid={Boolean(fieldErrors.password)}
+                  aria-describedby={fieldErrors.password ? 'login-password-error' : undefined}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -160,13 +153,13 @@ export function Login() {
                   {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
-              {fieldErrors.password && <span className="field-error" id="login-password-error">{fieldErrors.password}</span>}
+              {fieldErrors.password && <span id="login-password-error" className="field-error">{fieldErrors.password}</span>}
             </label>
             <div className="login-row">
               <label className="checkbox-label">
                 <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Remember me
               </label>
-              <button type="button" className="link-btn" onClick={() => setMode('forgot-email')}>
+              <button type="button" className="link-btn" onClick={() => { setError(null); setMode('forgot-email'); }}>
                 Forgot password?
               </button>
             </div>
@@ -179,16 +172,14 @@ export function Login() {
         {mode === 'forgot-email' && (
           <form onSubmit={handleForgotEmail} noValidate>
             <h2>Reset password</h2>
-            <p className="muted">Step 1 of 3 — enter your account email.</p>
-            {error && <div className="banner banner-error" role="alert">{error}</div>}
+            <p className="muted">Enter your account email to request a password reset.</p>
+            {error && <div className="banner banner-error" data-testid="reset-error" role="alert">{error}</div>}
             <label className="field">
               <span className="field-label">Email</span>
               <input type="email" className="input" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
             </label>
-            <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
-              {busy ? 'Sending…' : 'Send reset code'}
-            </button>
-            <button type="button" className="link-btn btn-block" onClick={() => setMode('login')}>
+            <button type="submit" className="btn btn-primary btn-block" disabled={busy}>Request reset</button>
+            <button type="button" className="link-btn btn-block" onClick={() => { setError(null); setMode('login'); }}>
               Back to sign in
             </button>
           </form>
@@ -197,26 +188,20 @@ export function Login() {
         {mode === 'forgot-code' && (
           <form onSubmit={handleForgotCode} noValidate>
             <h2>Enter code</h2>
-            <p className="muted">Step 2 of 3 — enter the 6-digit code we sent.</p>
             {error && <div className="banner banner-error" role="alert">{error}</div>}
             <label className="field">
               <span className="field-label">Reset code</span>
               <input className="input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value)} />
             </label>
-            <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
-              {busy ? 'Verifying…' : 'Verify code'}
-            </button>
-            <button type="button" className="link-btn btn-block" onClick={() => setMode('login')}>
-              Back to sign in
-            </button>
+            <button type="submit" className="btn btn-primary btn-block">Verify code</button>
+            <button type="button" className="link-btn btn-block" onClick={() => setMode('login')}>Back to sign in</button>
           </form>
         )}
 
         {mode === 'forgot-password' && (
           <form onSubmit={handleForgotPassword} noValidate>
             <h2>New password</h2>
-            <p className="muted">Step 3 of 3 — choose a new password.</p>
-            {error && <div className="banner banner-error" role="alert">{error}</div>}
+            {error && <div className="banner banner-error" data-testid="reset-error" role="alert">{error}</div>}
             <label className="field">
               <span className="field-label">New password</span>
               <input
@@ -232,8 +217,6 @@ export function Login() {
           </form>
         )}
       </div>
-
-      
     </div>
   );
 }
