@@ -3,6 +3,7 @@ import { Account, DealStage, Lead } from '../../types';
 import { Modal } from '../../components/Modal';
 import { SearchableSelect } from '../../components/Select';
 import { classNames } from '../../utils';
+import { StepOneErrors, validateStepOne } from './convertValidation';
 
 export interface WizardState {
   lead: Lead;
@@ -28,11 +29,9 @@ interface Props {
 }
 
 export function LeadConvertWizard({ wizard, setWizard, accounts, onFinish, isFinishing }: Props) {
-  const [stepOneErrors, setStepOneErrors] = useState<Partial<Record<'contactName' | 'contactEmail', string>>>({});
+  const [stepOneErrors, setStepOneErrors] = useState<StepOneErrors>({});
   const continueFromStepOne = () => {
-    const errors: Partial<Record<'contactName' | 'contactEmail', string>> = {};
-    if (!wizard.contactName.trim()) errors.contactName = 'Enter a contact name.';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(wizard.contactEmail.trim())) errors.contactEmail = 'Enter a valid email address.';
+    const errors = validateStepOne(wizard.contactName, wizard.contactEmail);
     setStepOneErrors(errors);
     if (Object.keys(errors).length === 0) setWizard({ ...wizard, step: wizard.step + 1 });
   };
