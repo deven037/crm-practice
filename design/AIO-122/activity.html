@@ -31,11 +31,11 @@ h2{font-size:15px;line-height:22px;margin:0;font-weight:600}
 .item{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;padding:16px 0 16px 18px;border-bottom:1px solid var(--border)}
 .item::before{content:"";position:absolute;left:-29px;top:22px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--bank-primary)}
 .item p{margin:0;max-width:68ch}
-.item time{color:var(--muted);white-space:nowrap;font-size:13px}
+.item .relative-time{color:var(--muted);white-space:nowrap;font-size:13px}
 .footer{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:18px;color:var(--muted);font-size:13px}
 .back{color:var(--bank-primary);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 @media(max-width:760px){.shell{grid-template-columns:1fr}nav{flex-direction:row;align-items:center;flex-wrap:wrap;padding:10px 12px}.brand{margin:0 auto 0 0;padding:4px}.brand-mark{width:22px;height:22px}nav a{padding:8px 10px}main{padding:24px 20px 40px}.header{align-items:flex-start;flex-direction:column;gap:8px;padding-bottom:20px}.org{text-align:left}.feed-head{margin-top:24px}}
-@media(max-width:430px){nav{gap:2px}nav a{font-size:13px;padding:8px}.item{grid-template-columns:minmax(0,1fr);gap:4px;padding:14px 0 14px 14px}.item::before{left:-25px;top:19px}.item time{font-size:12px}.timeline{padding-left:19px}.footer{align-items:flex-start;flex-direction:column}}
+@media(max-width:430px){nav{gap:2px}nav a{font-size:13px;padding:8px}.item{grid-template-columns:minmax(0,1fr);gap:4px;padding:14px 0 14px 14px}.item::before{left:-25px;top:19px}.item .relative-time{font-size:12px}.timeline{padding-left:19px}.footer{align-items:flex-start;flex-direction:column}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 </style>
 </head>
@@ -54,11 +54,11 @@ h2{font-size:15px;line-height:22px;margin:0;font-weight:600}
   <section aria-labelledby="feed-title">
     <div class="feed-head"><h2 id="feed-title">Latest activity</h2><span class="count">Latest first</span></div>
     <ol class="timeline" aria-label="Recent activity, latest first">
-      <li class="item"><p>Priya Nair moved “Westfield loan renewal” to Negotiation</p><time>12 min ago</time></li>
-      <li class="item"><p>New lead from web form: Calder Logistics</p><time>1 h ago</time></li>
-      <li class="item"><p>Ticket #482 closed by Marcus Lee</p><time>3 h ago</time></li>
-      <li class="item"><p>Task “Send term sheet” completed</p><time>Yesterday</time></li>
-      <li class="item"><p>Quote Q-2210 accepted</p><time>2 days ago</time></li>
+      <li class="item"><p>Priya Nair moved “Westfield loan renewal” to Negotiation</p><span class="relative-time">12 min ago</span></li>
+      <li class="item"><p>New lead from web form: Calder Logistics</p><span class="relative-time">1 h ago</span></li>
+      <li class="item"><p>Ticket #482 closed by Marcus Lee</p><span class="relative-time">3 h ago</span></li>
+      <li class="item"><p>Task “Send term sheet” completed</p><span class="relative-time">Yesterday</span></li>
+      <li class="item"><p>Quote Q-2210 accepted</p><span class="relative-time">2 days ago</span></li>
     </ol>
     <div class="footer"><span>Showing the activity available in Recent activity.</span><a class="back" href="/dashboard">Back to Dashboard</a></div>
   </section>
