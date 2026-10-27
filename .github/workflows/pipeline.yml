@@ -1,0 +1,105 @@
+name: CRM pipeline
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [release, main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to redeploy (run it from that environment's branch)
+        type: choice
+        options: [staging, production]
+
+permissions:
+  contents: read
+  deployments: read
+
+concurrency:
+  group: crm-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    name: Checks (typecheck + build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+      - name: Front end (tsc + vite build)
+        run: |
+          npm ci
+          npm run build
+      - name: API (tsc build)
+        working-directory: server
+        run: |
+          npm ci
+          npm run build
+
+  deploy:
+    name: Deploy ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    needs: checks
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      url: ${{ vars.WEB_URL }}
+    steps:
+      - name: Only from the environment's own branch
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          want="${{ inputs.environment == 'production' && 'main' || 'release' }}"
+          if [ "$GITHUB_REF_NAME" != "$want" ]; then echo "::error::Run ${{ inputs.environment }} from branch $want, not $GITHUB_REF_NAME"; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Build the front end for this environment
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          npm ci
+          npm run build
+          grep -rqF "$VITE_API_BASE_URL" dist/assets || { echo "::error::The build doesn't contain $VITE_API_BASE_URL"; exit 1; }
+      - name: Deploy the front end to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
+        run: npx --yes netlify-cli@17.38.1 deploy --dir=dist --prod --site="$NETLIFY_SITE_ID" --message="${GITHUB_REF_NAME} ${GITHUB_SHA::7} (pipeline run ${GITHUB_RUN_ID})"
+      - name: Deploy the API on Render
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK" -o /dev/null
+      - name: Wait for the API deploy of this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          API: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          for i in $(seq 1 90); do
+            state=$(gh api "repos/$GITHUB_REPOSITORY/deployments?sha=$GITHUB_SHA&per_page=10" --jq '.[0].statuses_url // empty' | xargs -r -I{} gh api {} --jq '.[0].state // empty' || true)
+            echo "attempt $i: deployment ${state:-not reported yet}"
+            if [ "$state" = "success" ]; then break; fi
+            if [ "$state" = "failure" ] || [ "$state" = "error" ]; then echo "::error::Render reported the API deploy as $state"; exit 1; fi
+            sleep 10
+          done
+          [ "$state" = "success" ] || echo "::warning::Render didn't report a deployment for this commit; checking health only"
+          curl -fsS --retry 12 --retry-delay 10 --retry-all-errors "$API/api/health"
+      - name: Verify the front end
+        env:
+          WEB: ${{ vars.WEB_URL }}
+          API: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          curl -fsS -o /dev/null "$WEB/"
+          bundle=$(curl -fsS "$WEB/" | grep -o 'assets/index-[^"]*\.js' | head -1)
+          curl -fsS "$WEB/$bundle" | grep -qF "$API" || { echo "::error::$WEB doesn't serve a build that calls $API"; exit 1; }
+          echo "Live: $WEB on ${GITHUB_SHA::7}, API $API"
