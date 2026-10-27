@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard – Harbor CRM</title>
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--border:#e1e4e8;--text:#1f2937;--text-muted:#5b6472;--chrome:#0b0f19;--chrome-text:#c4cad9;--accent:#2563eb;--danger:#dc2626;
+--bank-primary:#1d3a6e;--bank-on:#fff;--r-md:10px;--r-lg:14px;--font:'Inter Variable',Inter,-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/20px var(--font);font-variant-numeric:tabular-nums}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:6px}
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.side{background:var(--chrome);color:var(--chrome-text);padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+.brand{display:flex;gap:8px;align-items:center;color:#fff;font-weight:700;font-size:16px;padding:8px;margin-bottom:8px}
+.brand i{font-style:normal;color:var(--bank-primary);filter:brightness(1.8)}
+.side a{padding:8px 10px;border-radius:8px;color:var(--chrome-text)}
+.side a[aria-current]{background:#171e2e;color:#fff;box-shadow:inset 3px 0 0 var(--bank-primary)}
+.side a:focus-visible{outline-color:#fff}
+.bank{margin-top:auto;padding:10px;border-top:1px solid #1e2635;font-size:12px;color:#aab2c5;display:flex;gap:8px;align-items:center}
+.bank b{display:grid;place-items:center;width:28px;height:28px;border-radius:6px;background:var(--bank-primary);color:var(--bank-on);font-size:12px}
+main{padding:24px 32px;max-width:1280px;width:100%}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+h1{margin:0;font-size:24px;line-height:32px;font-weight:700}
+.sub{color:var(--text-muted);margin:2px 0 0}
+.range label{display:block;font-weight:600;font-size:13px;margin-bottom:4px}
+select{font:inherit;padding:8px 32px 8px 12px;border:1px solid #9aa3b2;border-radius:var(--r-md);background:var(--surface);color:var(--text);min-height:40px}
+.themes{display:flex;gap:8px;align-items:center;margin:0 0 16px;font-size:12px;color:var(--text-muted);flex-wrap:wrap}
+.themes button{font:inherit;display:inline-flex;gap:6px;align-items:center;padding:4px 10px 4px 6px;border:1px solid var(--border);background:var(--surface);border-radius:999px;cursor:pointer;color:var(--text);min-height:32px}
+.themes button[aria-pressed=true]{border-color:var(--text);font-weight:600}
+.themes span.sw{width:14px;height:14px;border-radius:50%}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+.tile{position:relative;display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 16px 14px 20px;overflow:hidden;transition:border-color .12s,box-shadow .12s}
+.tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--bank-primary)}
+.tile:hover{border-color:#9aa3b2;box-shadow:0 2px 8px rgba(15,23,42,.08)}
+.t-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.t-name{font-weight:600;font-size:13px}
+.chip{font-size:12px;line-height:16px;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.chip.range{background:var(--surface-2);border:1px solid var(--border);color:var(--text)}
+.chip.now{border:1px dashed #7b8494;color:var(--text-muted)}
+.t-val{font-size:32px;line-height:36px;font-weight:800;letter-spacing:-.5px}
+.t-hint{font-size:12px;color:var(--text-muted)}
+.t-go{margin-top:4px;font-size:13px;font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:#9aa3b2}
+.tile:hover .t-go{text-decoration-color:var(--text)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 20px}
+.card h2{margin:0 0 2px;font-size:15px;line-height:22px}
+.card .chip{display:inline-block;margin-bottom:12px}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:96px 1fr 36px;gap:10px;align-items:center;font-size:13px}
+.bar div{height:12px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+.bar div i{display:block;height:100%;background:var(--bank-primary);border-radius:6px}
+.bar b{text-align:right}
+.feed{list-style:none;margin:0;padding:0;max-height:260px;overflow:auto}
+.feed li{display:grid;grid-template-columns:1fr auto;gap:12px;padding:10px 0;border-top:1px solid var(--border)}
+.feed li:first-child{border-top:0}
+.feed time{color:var(--text-muted);font-size:12px}
+.note{margin-top:32px;padding:16px 20px;border:1px dashed #9aa3b2;border-radius:var(--r-lg);font-size:13px;color:var(--text-muted)}
+.note h2{font-size:14px;margin:0 0 6px;color:var(--text)}
+.note ul{margin:0;padding-left:18px}
+.skip{position:absolute;left:-999px}.skip:focus{left:8px;top:8px;background:#fff;padding:8px;z-index:9}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+@media(max-width:760px){.shell{grid-template-columns:1fr}.side{flex-direction:row;flex-wrap:wrap;align-items:center}.bank{display:none}main{padding:16px}.bar{grid-template-columns:80px 1fr 32px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="shell">
+  <nav class="side" aria-label="Main">
+    <div class="brand"><i>◆</i><span data-product-name>Harbor CRM</span></div>
+    <a href="#" aria-current="page">Dashboard</a><a href="#">Leads</a><a href="#">Deals</a><a href="#">Tasks</a><a href="#">Tickets</a>
+    <div class="bank"><b id="bk-mark">NB</b><span id="bk-name">Northbridge Bank</span></div>
+  </nav>
+  <main id="main">
+    <div class="head">
+      <div>
+        <h1>Dashboard</h1>
+        <p class="sub" id="sub">Northbridge Bank · Metrics marked with a range follow the date range you pick.</p>
+      </div>
+      <div class="range"><label for="range">Date range</label>
+        <select id="range"><option>Last 7 days</option><option selected>Last 30 days</option><option>Last 90 days</option><option>Last year</option></select></div>
+    </div>
+
+    <div class="themes" role="group" aria-label="Preview bank colour (design review only)">Preview bank colour:
+      <button aria-pressed="true" data-c="#1d3a6e" data-on="#fff" data-n="Northbridge Bank" data-m="NB"><span class="sw" style="background:#1d3a6e"></span>Navy</button>
+      <button aria-pressed="false" data-c="#f2b705" data-on="#14110a" data-n="Goldcrest Bank" data-m="GC"><span class="sw" style="background:#f2b705"></span>Amber (light)</button>
+      <button aria-pressed="false" data-c="#c8102e" data-on="#fff" data-n="Redfern Bank" data-m="RF"><span class="sw" style="background:#c8102e"></span>Red</button>
+      <button aria-pressed="false" data-c="#00855a" data-on="#fff" data-n="Greenway Bank" data-m="GW"><span class="sw" style="background:#00855a"></span>Green</button>
+    </div>
+
+    <section class="tiles" aria-label="Key metrics">
+      <a class="tile" href="/leads?created=30d">
+        <div class="t-top"><span class="t-name">New leads</span><span class="chip range">Last 30 days</span></div>
+        <span class="t-val">128</span><span class="t-hint">412 leads in total</span><span class="t-go">View new leads</span>
+      </a>
+      <a class="tile" href="/deals?stage=open">
+        <div class="t-top"><span class="t-name">Open pipeline</span><span class="chip now">Right now</span></div>
+        <span class="t-val">$2.46M</span><span class="t-hint">37 open deals</span><span class="t-go">View open deals</span>
+      </a>
+      <a class="tile" href="/tasks?due=today">
+        <div class="t-top"><span class="t-name">Tasks due</span><span class="chip now">Today</span></div>
+        <span class="t-val">9</span><span class="t-hint">24 open tasks in total</span><span class="t-go">View today’s tasks</span>
+      </a>
+      <a class="tile" href="/tickets?status=open">
+        <div class="t-top"><span class="t-name">Open tickets</span><span class="chip now">Right now</span></div>
+        <span class="t-val">14</span><span class="t-hint">of 63 tickets</span><span class="t-go">View open tickets</span>
+      </a>
+    </section>
+
+    <div class="grid">
+      <section class="card" aria-labelledby="c1"><h2 id="c1">Deals by stage</h2><span class="chip range">Deals created in the last 30 days</span>
+        <div class="bars" role="list">
+          <div class="bar" role="listitem"><span>Prospecting</span><div><i style="width:70%"></i></div><b>14</b></div>
+          <div class="bar" role="listitem"><span>Proposal</span><div><i style="width:50%"></i></div><b>10</b></div>
+          <div class="bar" role="listitem"><span>Negotiation</span><div><i style="width:30%"></i></div><b>6</b></div>
+          <div class="bar" role="listitem"><span>Won</span><div><i style="width:20%"></i></div><b>4</b></div>
+          <div class="bar" role="listitem"><span>Lost</span><div><i style="width:10%"></i></div><b>2</b></div>
+        </div></section>
+      <section class="card" aria-labelledby="c2"><h2 id="c2">Leads by status</h2><span class="chip range">Last 30 days</span>
+        <div class="bars" role="list">
+          <div class="bar" role="listitem"><span>New</span><div><i style="width:80%"></i></div><b>52</b></div>
+          <div class="bar" role="listitem"><span>Contacted</span><div><i style="width:55%"></i></div><b>36</b></div>
+          <div class="bar" role="listitem"><span>Qualified</span><div><i style="width:32%"></i></div><b>21</b></div>
+          <div class="bar" role="listitem"><span>Converted</span><div><i style="width:19%"></i></div><b>12</b></div>
+        </div></section>
+      <section class="card" aria-labelledby="c3"><h2 id="c3">Won revenue</h2><span class="chip range">Last 30 days</span>
+        <p style="margin:0;font-size:32px;line-height:36px;font-weight:800">$418k</p><p class="t-hint" style="margin:4px 0 0">4 deals closed won. Previous 30 days: $362k.</p></section>
+      <section class="card" aria-labelledby="c4"><h2 id="c4">Recent activity</h2><span class="chip now">Latest first</span>
+        <ul class="feed" tabindex="0" aria-label="Recent activity, scrollable">
+          <li><span>Priya Nair moved “Westfield loan renewal” to Negotiation</span><time>12 min ago</time></li>
+          <li><span>New lead from web form: Calder Logistics</span><time>1 h ago</time></li>
+          <li><span>Ticket #482 closed by Marcus Lee</span><time>3 h ago</time></li>
+          <li><span>Task “Send term sheet” completed</span><time>Yesterday</time></li>
+          <li><span>Quote Q-2210 accepted</span><time>2 days ago</time></li>
+        </ul>
+        <p class="t-hint" style="margin:8px 0 0">Scroll to load more, or <a href="#" style="text-decoration:underline">view all activity</a>.</p></section>
+    </div>
+
+    <aside class="note"><h2>Build notes for AIO-94</h2><ul>
+      <li>Product name from one token (Harbor CRM today). Bank name, logo and colour reuse Login’s <code>VITE_BANK_NAME</code>, <code>VITE_BANK_LOGO_URL</code>, <code>--bank-primary</code>; add <code>--bank-on</code>.</li>
+      <li>Whole tile is one link. Links use query strings (<code>?created=30d</code>, <code>?stage=open</code>, <code>?due=today</code>, <code>?status=open</code>); the list pages must read them (Unknown: they don’t today). Link wording names the destination.</li>
+      <li>One page-level range. Solid chip = follows the range; dashed chip = ignores it. Chart cards state their basis the same way.</li>
+      <li>Bank colour is used on bars, tile edge, nav marker and the bank mark only. Text stays <code>--text</code>. Navy, red and green carry white; amber carries <code>#14110a</code>.</li>
+      <li>Currency and number formats come from the bank’s locale and currency settings, not fixed “en-US” or “$k”. The preview shows $ as a sample.</li>
+      <li>Remove the artificial 700 ms delay on the activity feed; add “view all activity” as the keyboard route.</li>
+    </ul></aside>
+  </main>
+</div>
+<script>
+document.querySelectorAll('.themes button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.themes button').forEach(x=>x.setAttribute('aria-pressed','false'));
+  b.setAttribute('aria-pressed','true');
+  const r=document.documentElement.style;r.setProperty('--bank-primary',b.dataset.c);r.setProperty('--bank-on',b.dataset.on);
+  document.getElementById('bk-name').textContent=b.dataset.n;document.getElementById('bk-mark').textContent=b.dataset.m;
+  document.getElementById('sub').textContent=b.dataset.n+' · Metrics marked with a range follow the date range you pick.';
+}));
+</script>
+</body>
+</html>
