@@ -59,6 +59,10 @@ export function isOverdue(iso: string): boolean {
   return new Date(iso).getTime() < Date.now();
 }
 
+export function isDueToday(iso: string): boolean {
+  return new Date(iso).toDateString() === new Date().toDateString();
+}
+
 export function initials(name: string): string {
   return name
     .split(' ')

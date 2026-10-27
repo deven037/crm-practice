@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Download, ListChecks, SlidersHorizontal, Table2 } from 'lucide-react';
 import { getAll, getAllSync, newId, removeMany, saveAll, upsert } from '../data/store';
 import { Account, Contact, Deal, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, User } from '../types';
@@ -26,6 +26,10 @@ export function Leads() {
   const toast = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  // Dashboard tile link: /leads?created=30d shows leads created in the last 30 days.
+  const createdMatch = /^(\d{1,3})d$/.exec(params.get('created') ?? '');
+  const createdDays = createdMatch && Number(createdMatch[1]) > 0 ? Number(createdMatch[1]) : null;
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -85,6 +89,10 @@ export function Leads() {
           l.email.toLowerCase().includes(q)
       );
     }
+    if (createdDays) {
+      const since = Date.now() - createdDays * 24 * 60 * 60 * 1000;
+      rows = rows.filter((l) => new Date(l.createdAt).getTime() >= since);
+    }
     if (statusFilter.length > 0) rows = rows.filter((l) => statusFilter.includes(l.status));
     if (sourceFilter) rows = rows.filter((l) => l.source === sourceFilter);
     if (ownerFilter) rows = rows.filter((l) => l.ownerId === ownerFilter);
@@ -95,7 +103,7 @@ export function Leads() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return rows;
-  }, [leads, debouncedQuery, statusFilter, sourceFilter, ownerFilter, sortKey, sortDir]);
+  }, [leads, debouncedQuery, statusFilter, sourceFilter, ownerFilter, createdDays, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
@@ -251,6 +259,11 @@ export function Leads() {
       <div className="page-header">
         <h1>Leads</h1>
         <div className="page-actions">
+          {createdDays && (
+            <button className="btn" data-testid="clear-created-filter" onClick={() => setParams({})}>
+              Created in the last {createdDays} days · Show all
+            </button>
+          )}
           <button className="btn" onClick={exportCsv} data-testid="export-csv-btn">
             <Download size={14} /> Export CSV
           </button>

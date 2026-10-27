@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Inbox, KanbanSquare } from 'lucide-react';
 import { getAll, upsert } from '../data/store';
 import { Ticket, TicketPriority, TICKET_PRIORITIES } from '../types';
@@ -11,14 +11,17 @@ import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { classNames, formatDateTime, isOverdue } from '../utils';
 
-const STATUS_FILTERS = ['All', 'Open', 'In Progress', 'Resolved', 'Closed'];
+const ACTIVE_FILTER = 'Open + In Progress';
+const STATUS_FILTERS = ['All', ACTIVE_FILTER, 'Open', 'In Progress', 'Resolved', 'Closed'];
 
 export function Tickets() {
   const navigate = useNavigate();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [params] = useSearchParams();
+  // Dashboard tile link: /tickets?status=open (the tile counts Open and In Progress)
+  const [statusFilter, setStatusFilter] = useState(params.get('status') === 'open' ? ACTIVE_FILTER : 'All');
   const [mode, setMode] = useState<'inbox' | 'board'>('inbox');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -30,7 +33,11 @@ export function Tickets() {
   }, []);
 
   const visible = useMemo(
-    () => (statusFilter === 'All' ? tickets : tickets.filter((t) => t.status === statusFilter)),
+    () => {
+      if (statusFilter === 'All') return tickets;
+      if (statusFilter === ACTIVE_FILTER) return tickets.filter((t) => t.status === 'Open' || t.status === 'In Progress');
+      return tickets.filter((t) => t.status === statusFilter);
+    },
     [tickets, statusFilter]
   );
 
