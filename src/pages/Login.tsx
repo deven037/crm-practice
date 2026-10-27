@@ -2,21 +2,19 @@ import { FormEvent, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { useToast } from '../components/Toast';
-import { apiFetch } from '../data/apiFetch';
+import { EMAIL_PATTERN, RESET_UNAVAILABLE_MESSAGE } from './loginValidation';
 
-type Mode = 'login' | 'forgot-email' | 'forgot-code' | 'forgot-password';
+// Only the email-request step exists. The code and new-password steps were removed
+// because no reset endpoint exists yet; add them back together with that endpoint.
+type Mode = 'login' | 'forgot-email';
 
 const BANK_NAME = import.meta.env.VITE_BANK_NAME?.trim() || 'Your bank';
 const BANK_LOGO_URL = import.meta.env.VITE_BANK_LOGO_URL?.trim();
-
-export const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const toast = useToast();
 
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
@@ -28,8 +26,6 @@ export function Login() {
   const [busy, setBusy] = useState(false);
 
   const [resetEmail, setResetEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
 
   const validate = () => {
     const errs: { email?: string; password?: string } = {};
@@ -68,39 +64,7 @@ export function Login() {
       return;
     }
     // No email reset request endpoint exists yet. Do not claim a code was sent.
-    setError('Password reset is unavailable right now. Please contact your administrator.');
-  };
-
-  const handleForgotCode = (e: FormEvent) => {
-    e.preventDefault();
-    setError('Password reset is unavailable right now. Please contact your administrator.');
-  };
-
-  const handleForgotPassword = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters.');
-      return;
-    }
-    setBusy(true);
-    try {
-      await apiFetch('/auth/forgot-password', {
-        method: 'POST',
-        body: JSON.stringify({ email: resetEmail, newPassword }),
-      });
-      toast.push('success', 'Password updated. You can sign in now.');
-      setMode('login');
-      setEmail(resetEmail);
-      setPassword('');
-      setResetEmail('');
-      setCode('');
-      setNewPassword('');
-    } catch {
-      setError('Unable to update your password. Please try again.');
-    } finally {
-      setBusy(false);
-    }
+    setError(RESET_UNAVAILABLE_MESSAGE);
   };
 
   return (
@@ -180,41 +144,9 @@ export function Login() {
               <span className="field-label">Email</span>
               <input type="email" className="input" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
             </label>
-            <button type="submit" className="btn btn-primary btn-block" disabled={busy}>Request reset</button>
+            <button type="submit" className="btn btn-primary btn-block">Request reset</button>
             <button type="button" className="link-btn btn-block" onClick={() => { setError(null); setMode('login'); }}>
               Back to sign in
-            </button>
-          </form>
-        )}
-
-        {mode === 'forgot-code' && (
-          <form onSubmit={handleForgotCode} noValidate>
-            <h2>Enter code</h2>
-            {error && <div className="banner banner-error" role="alert">{error}</div>}
-            <label className="field">
-              <span className="field-label">Reset code</span>
-              <input className="input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value)} />
-            </label>
-            <button type="submit" className="btn btn-primary btn-block">Verify code</button>
-            <button type="button" className="link-btn btn-block" onClick={() => setMode('login')}>Back to sign in</button>
-          </form>
-        )}
-
-        {mode === 'forgot-password' && (
-          <form onSubmit={handleForgotPassword} noValidate>
-            <h2>New password</h2>
-            {error && <div className="banner banner-error" data-testid="reset-error" role="alert">{error}</div>}
-            <label className="field">
-              <span className="field-label">New password</span>
-              <input
-                type="password"
-                className="input"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-            </label>
-            <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
-              {busy ? 'Saving…' : 'Save password'}
             </button>
           </form>
         )}
