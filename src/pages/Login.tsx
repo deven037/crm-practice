@@ -57,23 +57,14 @@ export function Login() {
     }
   };
 
-  const handleForgotEmail = async (e: FormEvent) => {
+  const handleForgotEmail = (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(resetEmail.trim())) {
       setError('Enter a valid email address.');
       return;
     }
-    setBusy(true);
-    try {
-      await delay(500, 1200);
-      toast.push('info', 'If an account matches that email, reset instructions will be sent.');
-      setMode('forgot-code');
-    } catch {
-      setError('We could not start the password reset. Please try again.');
-    } finally {
-      setBusy(false);
-    }
+    setError('Password reset is unavailable here. Please contact your administrator.');
   };
 
   const handleForgotCode = async (e: FormEvent) => {
