@@ -332,21 +332,22 @@ export function Leads() {
         >
           <SlidersHorizontal size={14} /> Filters{(statusFilter.length > 0 || sourceFilter || ownerFilter) && ' •'}
         </button>
-        {selected.length > 0 && (
-          <div className="bulk-bar" data-testid="bulk-bar">
-            <span>{selected.length} selected</span>
-            <button className="btn" onClick={() => setAssignOpen(true)}>
-              Assign owner
-            </button>
-            <button className="btn" data-testid="mass-update-btn" onClick={() => setMassUpdateOpen(true)}>
-              Mass update
-            </button>
-            <button className="btn btn-danger" onClick={bulkDelete}>
-              Delete
-            </button>
-          </div>
-        )}
       </div>
+
+      {selected.length > 0 && (
+        <div className="bulk-bar" data-testid="bulk-bar" role="status" aria-live="polite">
+          <span>{selected.length} selected</span>
+          <button className="btn" onClick={() => setAssignOpen(true)}>
+            Assign owner
+          </button>
+          <button className="btn" data-testid="mass-update-btn" onClick={() => setMassUpdateOpen(true)}>
+            Mass update
+          </button>
+          <button className="btn btn-danger" onClick={bulkDelete}>
+            Delete
+          </button>
+        </div>
+      )}
 
       {showFilters && (
         <LeadFilterPanel
