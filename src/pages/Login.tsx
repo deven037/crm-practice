@@ -77,7 +77,7 @@ export function Login() {
     setBusy(true);
     try {
       const err = await login(email, password, remember);
-      if (err) setError(err);
+      if (err) setFieldErrors((prev) => ({ ...prev, password: err }));
       else {
         const from = (location.state as { from?: string } | null)?.from ?? '/';
         navigate(from, { replace: true });
@@ -168,7 +168,7 @@ export function Login() {
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
-                {passwordError && <span id="login-password-error" className="lg-err" role="alert">{passwordError}</span>}
+                {passwordError && <span id="login-password-error" className="lg-err" data-testid="login-error" role="alert">{passwordError}</span>}
               </label>
               <div className="lg-row">
                 <label className="lg-chk">
