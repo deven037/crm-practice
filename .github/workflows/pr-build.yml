@@ -1,0 +1,36 @@
+name: PR build check
+
+on:
+  pull_request:
+    branches: [release, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-build-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (web + server)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
+      - name: Web typecheck and build
+        run: |
+          npm ci
+          npm run build
+      - name: Server typecheck and build
+        working-directory: server
+        run: |
+          npm ci
+          npm run build
