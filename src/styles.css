@@ -9,9 +9,13 @@
   --text: #1f2937;
   --text-muted: #5b6472; /* 6:1 on white; matches design/AIO-93 and AIO-101 (was #6b7280) */
 
-  /* bank identity (design/DESIGN.md): fills only. --bank-on is the text on a --bank-primary fill, #fff or #14110a, whichever gives 4.5:1+ */
+  /* Pair each bank fill with its accessible foreground. Set data-bank-tone="amber" on :root for the AIO-93 amber identity. */
   --bank-primary: #1d3a6e;
   --bank-on: #ffffff;
+
+  /* Keep bank foreground and fill together so controls, marks and brand panels stay legible. */
+  --bank-tone-amber: #f2b705;
+  --bank-tone-amber-on: #14110a;
 
   /* chrome (topbar + sidebar) — deliberately theme-independent, always dark, per the reference app */
   --chrome-bg: #0b0f19;
@@ -1179,4 +1183,10 @@ div.empty-cell { border: 1px dashed var(--border); border-radius: var(--radius-l
 .autoflow-inspector-col { position: sticky; top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
 @media (max-width: 980px) {
   .autoflow-layout { grid-template-columns: 1fr; }
+}
+
+
+:root[data-bank-tone='amber'] {
+  --bank-primary: var(--bank-tone-amber);
+  --bank-on: var(--bank-tone-amber-on);
 }
