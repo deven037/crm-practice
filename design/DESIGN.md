@@ -14,4 +14,5 @@ Screens: `design/<KEY>/<screen>.html`.
 Every metric states its time basis. Solid chip = follows the page range ("Last 30 days"). Dashed chip = not affected by the range ("Right now", "Today").
 
 ## Screens
+- AIO-101: `login.html` (split screen, bank-colour brand side, quiet form side), `login-states.html` (field errors, sign-in failed, loading, focus, reset).
 - AIO-93: `dashboard.html` (loaded view, bank themes), `dashboard-states.html` (loading, error with Retry, empty).

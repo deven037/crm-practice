@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in states – Harbor CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--border:#d5dae1;--text:#1f2937;--text-muted:#5b6472;--danger:#b91c1c;--danger-bg:#fef2f2;--danger-line:#f5c2c2;--bank-primary:#1d3a6e;--bank-on:#fff;--r-sm:6px;--r-md:10px;--r-lg:14px;--ease:cubic-bezier(.4,0,.2,1);--font:'Inter Variable',Inter,-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;font:15px/22px var(--font);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;padding:32px 24px 48px}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+header{max-width:1200px;margin:0 auto 24px}
+header h1{margin:0 0 4px;font-size:24px;line-height:32px}
+header p{margin:0;color:var(--text-muted);max-width:68ch}
+.grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+figure{margin:0}
+figcaption{font-size:13px;font-weight:600;margin:0 0 8px}
+figcaption span{display:block;font-weight:400;color:var(--text-muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px}
+h2{margin:0 0 4px;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.01em}
+.sub{margin:0 0 20px;color:var(--text-muted)}
+.field{display:block;margin-bottom:16px}
+.field>span{display:block;font-size:13px;line-height:18px;font-weight:600;margin-bottom:6px}
+.ctl{position:relative}
+.in{width:100%;height:46px;padding:0 14px;font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);display:flex;align-items:center}
+.in.ph{color:#6b7280}
+.in.focus{border-color:var(--text);box-shadow:0 0 0 3px color-mix(in srgb,var(--text) 18%,transparent)}
+.in.bad{border-color:var(--danger)}
+.eye{position:absolute;right:2px;top:2px;width:42px;height:42px;display:grid;place-items:center;color:var(--text-muted)}
+.err{display:block;margin-top:6px;font-size:13px;line-height:18px;color:var(--danger)}
+.row{display:flex;justify-content:space-between;align-items:center;margin:4px 0 20px;min-height:44px;font-size:14px}
+.row a{font-weight:600;color:var(--text);text-underline-offset:3px}
+.chk{display:flex;align-items:center;gap:10px}
+.chk i{width:18px;height:18px;border-radius:4px;background:var(--bank-primary);display:grid;place-items:center;color:var(--bank-on);font-style:normal;font-size:12px}
+.btn{width:100%;height:48px;display:flex;align-items:center;justify-content:center;gap:10px;font:inherit;font-weight:600;font-size:15px;border-radius:var(--r-md);border:1px solid var(--bank-primary);background:var(--bank-primary);color:var(--bank-on);cursor:pointer;transition:background-color .12s var(--ease),transform .12s var(--ease)}
+.btn:hover{background:color-mix(in srgb,var(--bank-primary) 88%,#000)}
+.btn:active{transform:translateY(1px)}
+.btn.ring{outline:2px solid var(--text);outline-offset:3px}
+.btn[disabled]{opacity:.6;cursor:not-allowed}
+.btn.quiet{background:transparent;color:var(--text);border-color:var(--border);margin-top:12px}
+.btn.quiet:hover{background:var(--surface-2)}
+.spin{width:16px;height:16px;border:2px solid color-mix(in srgb,var(--bank-on) 35%,transparent);border-top-color:var(--bank-on);border-radius:50%;animation:s .7s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+.banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;margin-bottom:16px;border:1px solid var(--danger-line);background:var(--danger-bg);color:var(--danger);border-radius:var(--r-md);font-size:14px;line-height:20px}
+.banner svg{flex:none;margin-top:2px}
+.note{max-width:1200px;margin:32px auto 0;font-size:14px;color:var(--text-muted)}
+.note h3{margin:0 0 8px;font-size:15px;color:var(--text)}
+.note ul{margin:0;padding-left:20px;max-width:80ch}.note li{margin-bottom:4px}
+.note code{font-size:13px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation-duration:2s!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Sign in: states</h1>
+  <p>Companion to <code>login.html</code>. Each panel is the form side only; the brand side never changes between states.</p>
+</header>
+<div class="grid">
+
+<figure><figcaption>Field errors<span>After the field is touched or the form is submitted. Email stays as typed.</span></figcaption>
+<div class="card"><h2>Sign in</h2><p class="sub">Use your work email to continue.</p>
+<label class="field"><span>Email</span><div class="in bad">maria@harbor</div><span class="err" id="e1">Enter a valid email address.</span></label>
+<label class="field"><span>Password</span><div class="ctl"><div class="in bad ph">Enter your password</div><span class="eye">●</span></div><span class="err">Password is required.</span></label>
+<div class="row"><span class="chk"><i>✓</i> Remember me</span><a href="#">Forgot password?</a></div>
+<button class="btn">Sign in</button></div></figure>
+
+<figure><figcaption>Sign-in failed<span>One calm banner above the button. Fields keep their values.</span></figcaption>
+<div class="card"><h2>Sign in</h2><p class="sub">Use your work email to continue.</p>
+<label class="field"><span>Email</span><div class="in">maria@northshore.example</div></label>
+<label class="field"><span>Password</span><div class="ctl"><div class="in">••••••••••</div><span class="eye">◉</span></div></label>
+<div class="row"><span class="chk"><i>✓</i> Remember me</span><a href="#">Forgot password?</a></div>
+<div class="banner" role="alert"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16.5v.01"/></svg><span>The email or password is incorrect. Check both and try again.</span></div>
+<button class="btn">Sign in</button></div></figure>
+
+<figure><figcaption>Loading and disabled<span>Button disabled with a spinner while the request runs. Label becomes “Signing in…”.</span></figcaption>
+<div class="card"><h2>Sign in</h2><p class="sub">Use your work email to continue.</p>
+<label class="field"><span>Email</span><div class="in">maria@northshore.example</div></label>
+<label class="field"><span>Password</span><div class="ctl"><div class="in">••••••••••</div><span class="eye">◉</span></div></label>
+<div class="row"><span class="chk"><i>✓</i> Remember me</span><a href="#">Forgot password?</a></div>
+<button class="btn" disabled aria-busy="true"><span class="spin"></span>Signing in…</button></div></figure>
+
+<figure><figcaption>Keyboard focus<span>Focus ring uses the text colour, so it holds on any bank colour.</span></figcaption>
+<div class="card"><h2>Sign in</h2><p class="sub">Use your work email to continue.</p>
+<label class="field"><span>Email</span><div class="in focus">maria@northshore.example</div></label>
+<label class="field"><span>Password</span><div class="ctl"><div class="in ph">Enter your password</div><span class="eye">◉</span></div></label>
+<div class="row"><span class="chk"><i>✓</i> Remember me</span><a href="#">Forgot password?</a></div>
+<button class="btn ring">Sign in</button></div></figure>
+
+<figure><figcaption>Reset password<span>Same panel. The unavailable message is the existing <code>RESET_UNAVAILABLE_MESSAGE</code>.</span></figcaption>
+<div class="card"><h2>Reset password</h2><p class="sub">Enter your account email to request a reset.</p>
+<div class="banner" role="alert"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16.5v.01"/></svg><span>Password reset is unavailable right now. Please contact your administrator.</span></div>
+<label class="field"><span>Email</span><div class="in">maria@northshore.example</div></label>
+<button class="btn">Request reset</button><button class="btn quiet">Back to sign in</button></div></figure>
+
+</div>
+
+<section class="note"><h3>Build notes for Alex</h3>
+<ul>
+<li>Layout: split screen from 768 px up (brand 5fr / form 4fr); under 768 px the brand side is hidden and a compact product mark plus bank name sits above the form. Form is 380 px max, 20 px gutters on a phone.</li>
+<li>Product name from the <code>VITE_PRODUCT_NAME</code> token (as Dashboard does), bank name and logo from <code>VITE_BANK_NAME</code> / <code>VITE_BANK_LOGO_URL</code>. The brand side fills with <code>--bank-primary</code>; all text on it uses <code>--bank-on</code>. Tide shapes are inline SVG filled with <code>--bank-on</code> at 5–12% opacity.</li>
+<li>Primary button fills <code>--bank-primary</code> with <code>--bank-on</code> text, 48 px high. Inputs 46 px. Show-password toggle sits inside the field (42 px target).</li>
+<li>Keep every <code>data-testid</code> (login-page, login-email, login-password, login-submit, login-error, reset-error), the validation in <code>loginValidation.ts</code>, and <code>role="alert"</code> on banners. Add <code>aria-invalid</code> and <code>aria-describedby</code> as today.</li>
+<li>Danger text <code>#b91c1c</code> on <code>#fef2f2</code> and on white both pass 4.5:1. Placeholder <code>#6b7280</code> on white is 4.8:1. Muted text <code>#5b6472</code> is 6:1.</li>
+<li>Transitions 120 ms on border, shadow, button; none under <code>prefers-reduced-motion</code>.</li>
+</ul></section>
+</body>
+</html>
