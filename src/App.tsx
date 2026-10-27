@@ -6,6 +6,7 @@ import { ToastProvider } from './components/Toast';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
+import { ActivityPage } from './pages/Activity';
 import { Leads } from './pages/Leads';
 import { LeadForm } from './pages/LeadForm';
 import { LeadDetail } from './pages/LeadDetail';
@@ -100,6 +101,8 @@ export function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<Protected><Dashboard /></Protected>} />
+            <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+            <Route path="/activity" element={<Protected><ActivityPage /></Protected>} />
             <Route path="/leads" element={<Protected><Leads /></Protected>} />
             <Route path="/leads/new" element={<Protected><LeadForm /></Protected>} />
             <Route path="/leads/:id" element={<Protected><LeadDetail /></Protected>} />
