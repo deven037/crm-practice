@@ -19,6 +19,7 @@ import { LeadConvertWizard, WizardState } from './leads/LeadConvertWizard';
 import { LeadFilterPanel } from './leads/LeadFilterPanel';
 import { LeadsPagination } from './leads/LeadsPagination';
 import { LeadsTable, SortKey } from './leads/LeadsTable';
+import { beginOnce, clearSelection } from './leads/leadsGuards';
 
 type SortDir = 'asc' | 'desc';
 
@@ -195,8 +196,7 @@ export function Leads() {
     });
 
   const finishWizard = async () => {
-    if (!wizard || convertingRef.current) return;
-    convertingRef.current = true;
+    if (!wizard || !beginOnce(convertingRef)) return;
     setConverting(true);
     try {
     const accounts = getAllSync<Account>('accounts');
@@ -424,6 +424,7 @@ export function Leads() {
             onPageSizeChange={(size) => {
               setPageSize(size);
               setPage(1);
+              setSelected(clearSelection());
             }}
             onPageChange={(nextPage) => {
               setPage(nextPage);
