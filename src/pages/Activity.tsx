@@ -23,27 +23,14 @@ function loadActivities(): Promise<Activity[]> {
   });
 }
 
-export function ActivityPage() {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
+interface ActivityViewProps {
+  loading: boolean;
+  failed: boolean;
+  activities: Activity[];
+  onRetry: () => void;
+}
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      setActivities(await loadActivities());
-      setFailed(false);
-    } catch {
-      setFailed(true);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
+export function ActivityView({ loading, failed, activities, onRetry }: ActivityViewProps) {
   return (
     <div className="activity-screen">
       <a className="activity-skip" href="#activity-content">Skip to activity</a>
@@ -72,7 +59,7 @@ export function ActivityPage() {
         ) : failed ? (
           <div className="activity-error" role="alert">
             <p>We couldn’t load recent activity. Try again.</p>
-            <button type="button" className="btn btn-primary activity-retry" onClick={() => void load()}>
+            <button type="button" className="btn btn-primary activity-retry" onClick={onRetry}>
               Retry
             </button>
           </div>
@@ -102,4 +89,28 @@ export function ActivityPage() {
       </section>
     </div>
   );
+}
+
+export function ActivityPage() {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setActivities(await loadActivities());
+      setFailed(false);
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  return <ActivityView loading={loading} failed={failed} activities={activities} onRetry={() => void load()} />;
 }
