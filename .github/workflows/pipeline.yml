@@ -5,10 +5,18 @@ on:
     branches: [dev, release, main]
   push:
     branches: [release, main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to redeploy (run it from that environment's branch)
+        type: choice
+        options: [staging, production]
 
 permissions:
   contents: read
+  deployments: read
 
+# One deploy per branch at a time; a newer push waits instead of racing the older one.
 concurrency:
   group: crm-${{ github.ref }}
   cancel-in-progress: false
@@ -29,10 +37,68 @@ jobs:
             server/package-lock.json
       - name: Front end (tsc + vite build)
         run: |
-          npm ci
+          npm ci || npm install
           npm run build
       - name: API (tsc build)
         working-directory: server
         run: |
-          npm ci
+          npm ci || npm install
           npm run build
+
+  deploy:
+    name: Deploy ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    needs: checks
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      url: ${{ vars.WEB_URL }}
+    steps:
+      - name: Only from the environment's own branch
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          want="${{ inputs.environment == 'production' && 'main' || 'release' }}"
+          if [ "$GITHUB_REF_NAME" != "$want" ]; then echo "::error::Run ${{ inputs.environment }} from branch $want, not $GITHUB_REF_NAME"; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Build the front end for this environment
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          npm ci || npm install
+          npm run build
+          grep -rqF "$VITE_API_BASE_URL" dist/assets || { echo "::error::The build doesn't contain $VITE_API_BASE_URL"; exit 1; }
+
+      # Netlify and Render auto-deploy from release/main push; manual redeploy triggers them explicitly
+      - name: Deploy the front end to Netlify
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
+        run: npx --yes netlify-cli@17.38.1 deploy --dir=dist --prod --site="$NETLIFY_SITE_ID" --message="${GITHUB_REF_NAME} ${GITHUB_SHA::7} (pipeline run ${GITHUB_RUN_ID})"
+
+      - name: Deploy the API on Render
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK" -o /dev/null
+
+      - name: Verify API health
+        env:
+          API: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          curl -fsS --retry 12 --retry-delay 10 --retry-all-errors "$API/api/health"
+
+      - name: Verify the front end
+        env:
+          WEB: ${{ vars.WEB_URL }}
+          API: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          curl -fsS -o /dev/null "$WEB/"
+          bundle=$(curl -fsS "$WEB/" | grep -o 'assets/index-[^"]*\.js' | head -1)
+          curl -fsS "$WEB/$bundle" | grep -qF "$API" || { echo "::error::$WEB doesn't serve a build that calls $API"; exit 1; }
+          echo "Live: $WEB on ${GITHUB_SHA::7}, API $API"
