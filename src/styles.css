@@ -7,7 +7,11 @@
   --surface-3: #e9ecef;
   --border: #e1e4e8;
   --text: #1f2937;
-  --text-muted: #6b7280;
+  --text-muted: #5b6472; /* 6:1 on white; matches design/AIO-93 and AIO-101 (was #6b7280) */
+
+  /* bank identity (design/DESIGN.md): fills only. --bank-on is the text on a --bank-primary fill, #fff or #14110a, whichever gives 4.5:1+ */
+  --bank-primary: #1d3a6e;
+  --bank-on: #ffffff;
 
   /* chrome (topbar + sidebar) — deliberately theme-independent, always dark, per the reference app */
   --chrome-bg: #0b0f19;
@@ -119,7 +123,7 @@ code { background: var(--surface-2); border: 1px solid var(--border); border-rad
   transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .nav-link:hover { background: var(--chrome-bg-hover); color: var(--chrome-text-active); }
-.nav-link.active { background: var(--accent); color: #fff; }
+.nav-link.active { background: var(--chrome-bg-hover); color: #fff; box-shadow: inset 3px 0 0 var(--bank-primary); }
 .nav-icon { width: 20px; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
 
 .main-column { flex: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -421,6 +425,8 @@ div.empty-cell { border: 1px dashed var(--border); border-radius: var(--radius-l
 /* ---------- activity feed ---------- */
 .activity-card { grid-row: span 2; }
 .activity-feed { max-height: 420px; overflow-y: auto; }
+.activity-all { margin: 8px 0 0; font-size: 12px; color: var(--text-muted); }
+.dash-bank-mark { display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-sm); background: var(--bank-primary); color: var(--bank-on); font-size: 12px; font-weight: 700; }
 .activity-item { display: flex; align-items: baseline; gap: 8px; padding: 8px 2px; border-bottom: 1px solid var(--border); font-size: 13px; }
 .activity-text { flex: 1; }
 .activity-time { color: var(--text-muted); font-size: 12px; white-space: nowrap; }
@@ -731,25 +737,92 @@ div.empty-cell { border: 1px dashed var(--border); border-radius: var(--radius-l
 @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 
 /* ---------- login ---------- */
-.login-page {
-  --login-accent: var(--bank-primary, var(--accent));
-  min-height: 100vh; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 18px; padding: 20px;
-  background: var(--login-background, var(--bg));
+/* AIO-101 design: split screen from 768px up, bank-colour brand side, quiet form side. Bank colour fills only; text stays on --text tokens. */
+.lg-shell {
+  --lg-danger: #b91c1c; --lg-danger-bg: #fef2f2; --lg-danger-line: #f5c2c2;
+  min-height: 100vh; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
+  background: var(--surface); color: var(--text); font-size: 15px; line-height: 22px;
 }
-.login-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 32px; width: 100%; max-width: 400px; box-shadow: var(--shadow-lg); }
-.login-brand { justify-content: center; margin-bottom: 6px; color: var(--text); font-size: 20px; }
-.login-brand .brand-logo { font-size: 26px; color: var(--login-accent); }
-.login-card h2 { margin: 0 0 14px; }
-.login-card .btn-primary { background: var(--login-accent); border-color: var(--login-accent); }
-.login-card .link-btn { color: var(--login-accent); }
-.login-row { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 10px; }
-.password-wrap { position: relative; }
-.password-wrap .input { padding-right: 40px; }
-.password-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 15px; color: var(--text-muted); display: flex; }
-@media (max-width: 480px) {
-  .login-page { justify-content: flex-start; padding: 16px; }
-  .login-card { padding: 24px 20px; }
+:root[data-theme='dark'] .lg-shell { --lg-danger: #fca5a5; --lg-danger-bg: #450a0a; --lg-danger-line: #7f1d1d; }
+.lg-shell :focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.lg-brand {
+  position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 48px 56px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bank-primary) 82%, #000) 0%, var(--bank-primary) 60%);
+  color: var(--bank-on);
+}
+.lg-brand svg { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 58%; pointer-events: none; }
+.lg-brand svg path { fill: var(--bank-on); }
+.lg-mark { position: relative; display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 18px; }
+.lg-mark i { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--bank-on); color: var(--bank-primary); font-size: 15px; font-style: normal; }
+.lg-pitch { position: relative; max-width: 460px; }
+.lg-pitch h2 { margin: 0 0 12px; font-size: 32px; line-height: 40px; font-weight: 700; letter-spacing: -0.02em; }
+.lg-pitch p { margin: 0; font-size: 16px; line-height: 24px; opacity: 0.88; }
+.lg-bankline { position: relative; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
+.lg-bankline b { display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--bank-on) 18%, transparent); font-size: 12px; }
+.lg-bank-logo { height: 28px; width: auto; max-width: 120px; }
+
+.lg-side { display: flex; flex-direction: column; justify-content: center; padding: 48px 24px 24px; background: var(--surface); }
+.lg-panel { width: 100%; max-width: 380px; margin: auto; }
+.lg-mobile-mark { display: none; }
+.lg-panel h1 { margin: 0 0 4px; font-size: 24px; line-height: 32px; font-weight: 700; letter-spacing: -0.01em; }
+.lg-sub { margin: 0 0 24px; color: var(--text-muted); font-size: 15px; }
+.lg-field { display: block; margin-bottom: 16px; }
+.lg-field > span:first-child { display: block; font-size: 13px; line-height: 18px; font-weight: 600; margin-bottom: 6px; }
+.lg-ctl { position: relative; }
+.lg-field input {
+  width: 100%; height: 46px; padding: 0 14px; font: inherit; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border-strong, #d5dae1); border-radius: var(--radius-md);
+  transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
+}
+.lg-field input::placeholder { color: #6b7280; }
+.lg-field input:hover { border-color: #9aa3b0; }
+.lg-shell .lg-field input:focus-visible { outline: none; border-color: var(--text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--text) 18%, transparent); }
+.lg-field input[aria-invalid='true'] { border-color: var(--lg-danger); }
+.lg-ctl input { padding-right: 48px; }
+.lg-eye { position: absolute; right: 2px; top: 2px; width: 42px; height: 42px; display: grid; place-items: center; border: 0; background: none; border-radius: var(--radius-md); color: var(--text-muted); cursor: pointer; }
+.lg-eye:hover { background: var(--surface-2); color: var(--text); }
+.lg-err { display: block; margin-top: 6px; font-size: 13px; line-height: 18px; color: var(--lg-danger); }
+.lg-row { display: flex; justify-content: space-between; align-items: center; margin: 4px 0 24px; min-height: 44px; }
+.lg-chk { display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; min-height: 44px; }
+.lg-chk input { width: 18px; height: 18px; margin: 0; accent-color: var(--bank-primary); }
+.lg-link { background: none; border: 0; padding: 10px 4px; font: inherit; font-size: 14px; font-weight: 600; color: var(--text); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; border-radius: var(--radius-sm); }
+.lg-link:hover { text-decoration-thickness: 2px; }
+.lg-btn {
+  width: 100%; height: 48px; display: flex; align-items: center; justify-content: center; gap: 10px;
+  font: inherit; font-weight: 600; font-size: 15px; border-radius: var(--radius-md);
+  border: 1px solid var(--bank-primary); background: var(--bank-primary); color: var(--bank-on); cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+}
+.lg-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--bank-primary) 88%, #000); }
+.lg-btn:active:not(:disabled) { transform: translateY(1px); }
+.lg-shell .lg-btn:focus-visible { outline-offset: 3px; }
+.lg-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.lg-btn-quiet { margin-top: 12px; background: transparent; color: var(--text); border-color: var(--border-strong, #d5dae1); }
+.lg-btn-quiet:hover:not(:disabled) { background: var(--surface-2); }
+.lg-spin { width: 16px; height: 16px; border: 2px solid color-mix(in srgb, var(--bank-on) 35%, transparent); border-top-color: var(--bank-on); border-radius: 50%; animation: lg-spin 0.7s linear infinite; }
+@keyframes lg-spin { to { transform: rotate(360deg); } }
+.lg-banner { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-bottom: 16px; border: 1px solid var(--lg-danger-line); background: var(--lg-danger-bg); color: var(--lg-danger); border-radius: var(--radius-md); font-size: 14px; line-height: 20px; }
+.lg-banner svg { flex: none; margin-top: 2px; }
+.lg-foot { display: flex; flex-wrap: wrap; gap: 4px 20px; justify-content: center; align-items: center; padding-top: 32px; font-size: 13px; color: var(--text-muted); }
+.lg-foot a { color: var(--text-muted); padding: 10px 2px; text-decoration: underline; text-underline-offset: 3px; }
+.lg-foot a:hover { color: var(--text); }
+@media (max-width: 1023px) {
+  .lg-brand { padding: 40px 32px; }
+  .lg-pitch h2 { font-size: 26px; line-height: 34px; }
+  .lg-shell { grid-template-columns: minmax(0, 4fr) minmax(0, 5fr); }
+}
+@media (max-width: 767px) {
+  .lg-shell { display: block; }
+  .lg-brand { display: none; }
+  .lg-side { min-height: 100vh; padding: 20px 20px 16px; justify-content: flex-start; }
+  .lg-panel { margin: 0 auto; padding-top: 24px; }
+  .lg-mobile-mark { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; margin-bottom: 32px; }
+  .lg-mobile-mark i { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--bank-primary); color: var(--bank-on); font-size: 15px; font-style: normal; }
+  .lg-mobile-mark small { margin-left: auto; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+  .lg-foot { margin-top: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lg-shell * { transition: none !important; animation-duration: 2s !important; }
 }
 
 /* ---------- global search / topbar dropdowns ---------- */

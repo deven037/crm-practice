@@ -182,7 +182,11 @@ export function Dashboard() {
           <p className="dash-sub" data-testid="dashboard-identity">
             <span className="dash-product">{PRODUCT_NAME}</span>
             <span className="dash-bank">
-              {BANK_LOGO_URL && <img className="dash-bank-logo" src={BANK_LOGO_URL} alt="" />}
+              {BANK_LOGO_URL ? (
+                <img className="dash-bank-logo" src={BANK_LOGO_URL} alt="" />
+              ) : (
+                <b className="dash-bank-mark" aria-hidden="true">{BANK_NAME.charAt(0).toUpperCase()}</b>
+              )}
               <span>{BANK_NAME}</span>
             </span>
           </p>
@@ -290,7 +294,7 @@ export function Dashboard() {
             <section className="card">
               <h3>Deals by stage</h3>
               <span className="range-chip">Deals created in the {rangeLabel.toLowerCase()}</span>
-              {isFailed('deals') ? <Unavailable what="deals" onRetry={retryOne('deals')} /> : <BarChart data={dealsByStage} />}
+              {isFailed('deals') ? <Unavailable what="deals" onRetry={retryOne('deals')} /> : <BarChart data={dealsByStage} color="var(--bank-primary)" />}
             </section>
             <section className="card">
               <h3>Leads by status</h3>
@@ -317,16 +321,34 @@ export function Dashboard() {
               {isFailed('activities') ? (
                 <Unavailable what="activities" onRetry={retryOne('activities')} />
               ) : (
-                <div className="activity-feed" ref={feedRef} onScroll={handleFeedScroll} data-testid="activity-feed">
-                  {activities.slice(0, visibleActivities).map((a) => (
-                    <div key={a.id} className="activity-item">
-                      <span className="activity-icon">{a.icon}</span>
-                      <span className="activity-text">{a.text}</span>
-                      <span className="activity-time">{timeAgo(a.when)}</span>
-                    </div>
-                  ))}
-                  {visibleActivities >= activities.length && <div className="search-hint">You're all caught up.</div>}
-                </div>
+                <>
+                  <div
+                    className="activity-feed"
+                    ref={feedRef}
+                    onScroll={handleFeedScroll}
+                    tabIndex={0}
+                    aria-label="Recent activity, scrollable"
+                    data-testid="activity-feed"
+                  >
+                    {activities.slice(0, visibleActivities).map((a) => (
+                      <div key={a.id} className="activity-item">
+                        <span className="activity-icon">{a.icon}</span>
+                        <span className="activity-text">{a.text}</span>
+                        <span className="activity-time">{timeAgo(a.when)}</span>
+                      </div>
+                    ))}
+                    {visibleActivities >= activities.length && <div className="search-hint">You're all caught up.</div>}
+                  </div>
+                  {visibleActivities < activities.length && (
+                    <p className="activity-all">
+                      Scroll to load more, or{' '}
+                      <button type="button" className="btn-link" data-testid="activity-view-all" onClick={() => setVisibleActivities(activities.length)}>
+                        view all activity
+                      </button>
+                      .
+                    </p>
+                  )}
+                </>
               )}
             </section>
           </div>
