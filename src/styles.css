@@ -711,20 +711,25 @@ div.empty-cell { border: 1px dashed var(--border); border-radius: var(--radius-l
 
 /* ---------- login ---------- */
 .login-page {
+  --login-accent: var(--bank-primary, var(--accent));
   min-height: 100vh; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 18px; padding: 20px;
-  background: var(--chrome-bg);
+  background: var(--login-background, var(--bg));
 }
 .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 32px; width: 100%; max-width: 400px; box-shadow: var(--shadow-lg); }
 .login-brand { justify-content: center; margin-bottom: 6px; color: var(--text); font-size: 20px; }
-.login-brand .brand-logo { font-size: 26px; }
+.login-brand .brand-logo { font-size: 26px; color: var(--login-accent); }
 .login-card h2 { margin: 0 0 14px; }
+.login-card .btn-primary { background: var(--login-accent); border-color: var(--login-accent); }
+.login-card .link-btn { color: var(--login-accent); }
 .login-row { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 10px; }
 .password-wrap { position: relative; }
 .password-wrap .input { padding-right: 40px; }
 .password-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 15px; color: var(--text-muted); display: flex; }
-.login-hints { background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius-lg); padding: 12px 18px; font-size: 13px; max-width: 400px; width: 100%; color: var(--text-muted); }
-.login-hints ul { margin: 8px 0 0; padding-left: 18px; }
+@media (max-width: 480px) {
+  .login-page { justify-content: flex-start; padding: 16px; }
+  .login-card { padding: 24px 20px; }
+}
 
 /* ---------- global search / topbar dropdowns ---------- */
 .global-search { position: relative; flex: 1; max-width: 380px; }

@@ -65,10 +65,15 @@ export function Login() {
       return;
     }
     setBusy(true);
-    await delay(500, 1200);
-    setBusy(false);
-    toast.push('info', `A reset code was "sent" to ${resetEmail} (hint: it is 123456)`);
-    setMode('forgot-code');
+    try {
+      await delay(500, 1200);
+      toast.push('info', 'If an account matches that email, reset instructions will be sent.');
+      setMode('forgot-code');
+    } catch {
+      setError('We could not start the password reset. Please try again.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleForgotCode = async (e: FormEvent) => {
@@ -92,17 +97,22 @@ export function Login() {
       return;
     }
     setBusy(true);
-    await apiFetch('/auth/forgot-password', {
-      method: 'POST',
-      body: JSON.stringify({ email: resetEmail, newPassword }),
-    });
-    setBusy(false);
-    toast.push('success', 'Password updated. You can sign in now.');
-    setMode('login');
-    setEmail(resetEmail);
-    setPassword('');
-    setCode('');
-    setNewPassword('');
+    try {
+      await apiFetch('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email: resetEmail, newPassword }),
+      });
+      toast.push('success', 'Password updated. You can sign in now.');
+      setMode('login');
+      setEmail(resetEmail);
+      setPassword('');
+      setCode('');
+      setNewPassword('');
+    } catch {
+      setError('We could not update your password. Please try again.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -110,7 +120,7 @@ export function Login() {
       <div className="login-card">
         <div className="brand login-brand">
           <span className="brand-logo">◆</span>
-          <span className="brand-name">Practice CRM</span>
+          <span className="brand-name">Harbor CRM</span>
         </div>
 
         {mode === 'login' && (
@@ -126,12 +136,15 @@ export function Login() {
               <input
                 type="email"
                 className="input"
+                id="login-email"
+                aria-invalid={Boolean(fieldErrors.email)}
+                aria-describedby={fieldErrors.email ? "login-email-error" : undefined}
                 data-testid="login-email"
                 placeholder="you@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
+              {fieldErrors.email && <span className="field-error" id="login-email-error">{fieldErrors.email}</span>}
             </label>
             <label className="field">
               <span className="field-label">Password</span>
@@ -139,6 +152,9 @@ export function Login() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   className="input"
+                  id="login-password"
+                  aria-invalid={Boolean(fieldErrors.password)}
+                  aria-describedby={fieldErrors.password ? "login-password-error" : undefined}
                   data-testid="login-password"
                   placeholder="••••••••"
                   value={password}
@@ -153,7 +169,7 @@ export function Login() {
                   {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
-              {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
+              {fieldErrors.password && <span className="field-error" id="login-password-error">{fieldErrors.password}</span>}
             </label>
             <div className="login-row">
               <label className="checkbox-label">
@@ -226,14 +242,7 @@ export function Login() {
         )}
       </div>
 
-      <div className="login-hints">
-        <strong>Demo credentials</strong> (password for all: <code>Pass@123</code>)
-        <ul>
-          <li><code>admin@crm.com</code> — full access</li>
-          <li><code>rep@crm.com</code> — sales rep (read-only admin)</li>
-          <li><code>viewer@crm.com</code> — viewer (no admin)</li>
-        </ul>
-      </div>
+      
     </div>
   );
 }
