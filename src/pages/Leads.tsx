@@ -400,6 +400,8 @@ export function Leads() {
             rows={pageRows}
             selected={selected}
             allPageSelected={allPageSelected}
+            sortKey={sortKey}
+            sortDir={sortDir}
             ownerName={ownerName}
             sortIndicator={sortIndicator}
             onToggleSort={toggleSort}
@@ -414,6 +416,7 @@ export function Leads() {
               e.stopPropagation();
               setMenu({ x: e.clientX, y: e.clientY, lead });
             }}
+            onConvert={openWizard}
           />
 
           <LeadsPagination
