@@ -32,7 +32,7 @@ export function LeadConvertWizard({ wizard, setWizard, accounts, onFinish, isFin
   const continueFromStepOne = () => {
     const errors: Partial<Record<'contactName' | 'contactEmail', string>> = {};
     if (!wizard.contactName.trim()) errors.contactName = 'Enter a contact name.';
-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(wizard.contactEmail.trim())) errors.contactEmail = 'Enter a valid email address.';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(wizard.contactEmail.trim())) errors.contactEmail = 'Enter a valid email address.';
     setStepOneErrors(errors);
     if (Object.keys(errors).length === 0) setWizard({ ...wizard, step: wizard.step + 1 });
   };
