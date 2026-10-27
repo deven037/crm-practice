@@ -85,14 +85,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           API: ${{ vars.VITE_API_BASE_URL }}
         run: |
+          state=
           for i in $(seq 1 90); do
-            state=$(gh api "repos/$GITHUB_REPOSITORY/deployments?sha=$GITHUB_SHA&per_page=10" --jq '.[0].statuses_url // empty' | xargs -r -I{} gh api {} --jq '.[0].state // empty' || true)
+            deployment_id=$(gh api "repos/$GITHUB_REPOSITORY/deployments?sha=$GITHUB_SHA&per_page=10" --jq '.[0].id // empty') || { echo "::error::Could not query deployments for $GITHUB_SHA"; exit 1; }
+            state=
+            if [ -n "$deployment_id" ]; then
+              state=$(gh api "repos/$GITHUB_REPOSITORY/deployments/$deployment_id/statuses" --jq '.[0].state // empty') || { echo "::error::Could not query status for deployment $deployment_id"; exit 1; }
+            fi
             echo "attempt $i: deployment ${state:-not reported yet}"
             if [ "$state" = "success" ]; then break; fi
             if [ "$state" = "failure" ] || [ "$state" = "error" ]; then echo "::error::Render reported the API deploy as $state"; exit 1; fi
             sleep 10
           done
-          [ "$state" = "success" ] || echo "::warning::Render didn't report a deployment for this commit; checking health only"
+          [ "$state" = "success" ] || { echo "::error::No successful API deployment was reported for commit $GITHUB_SHA"; exit 1; }
           curl -fsS --retry 12 --retry-delay 10 --retry-all-errors "$API/api/health"
       - name: Verify the front end
         env:
