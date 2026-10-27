@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in — Harbor CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--border:#e1e4e8;--text:#1f2937;--muted:#6b7280;--bank:#245a68;--bank-on:#fff;--accent:#2563eb;--danger:#b91c1c;--font:Inter,-apple-system,"Segoe UI",sans-serif;--r-sm:6px;--r-md:10px;--r-lg:14px;--ease:cubic-bezier(.2,.7,.2,1)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font:15px/22px var(--font);color:var(--text);background:var(--surface);-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.shell{min-height:100vh;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,4fr)}
+.brand{position:relative;isolation:isolate;overflow:hidden;background:var(--bank);color:var(--bank-on);display:flex;flex-direction:column;justify-content:space-between;padding:48px clamp(28px,5vw,72px)}
+.brand:after{content:"";position:absolute;z-index:-1;left:-8%;right:-8%;bottom:-8%;height:54%;background:var(--bank-on);opacity:.08;clip-path:polygon(0 49%,12% 42%,22% 52%,38% 38%,51% 48%,66% 32%,78% 43%,100% 25%,100% 100%,0 100%);border-radius:50%}
+.brand:before{content:"";position:absolute;z-index:-1;left:-5%;right:-8%;bottom:-11%;height:43%;background:var(--bank-on);opacity:.08;clip-path:polygon(0 43%,16% 36%,31% 45%,47% 30%,61% 39%,78% 26%,100% 35%,100% 100%,0 100%)}
+.mark{display:flex;align-items:center;gap:12px;font-size:18px;font-weight:700}.mark i{font-style:normal;width:34px;height:34px;display:grid;place-items:center;background:var(--bank-on);color:var(--bank);border-radius:var(--r-md)}
+.pitch{max-width:440px}.pitch h2{margin:0 0 12px;font-size:32px;line-height:40px;letter-spacing:-.025em}.pitch p{margin:0;max-width:38ch;font-size:16px;line-height:24px;opacity:.9}
+.bankline{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600}.bankline b{display:grid;place-items:center;width:30px;height:30px;background:rgba(255,255,255,.16);border-radius:var(--r-sm)}
+.side{display:flex;flex-direction:column;justify-content:center;padding:32px 24px 20px}.panel{width:100%;max-width:380px;margin:auto}
+.mobile-mark{display:none}h1{margin:0 0 4px;font-size:24px;line-height:32px;letter-spacing:-.015em}.sub{margin:0 0 24px;color:var(--muted)}
+.field{display:block;margin-bottom:16px}.field>span{display:block;margin-bottom:6px;font-size:13px;line-height:18px;font-weight:600}
+input{width:100%;height:46px;padding:0 14px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface);color:var(--text);font:inherit;transition:border-color 120ms var(--ease),box-shadow 120ms var(--ease)}
+input::placeholder{color:var(--muted)}input:hover{border-color:#9aa3b0}input:focus-visible{outline:0;border-color:var(--text);box-shadow:0 0 0 3px rgba(31,41,55,.14)}
+.password{position:relative}.password input{padding-right:50px}.eye{position:absolute;right:2px;top:2px;width:42px;height:42px;border:0;border-radius:var(--r-md);background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer}.eye:hover{background:var(--surface-2)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;margin:2px 0 20px}.remember{display:flex;align-items:center;gap:9px;min-height:44px;font-size:14px}.remember input{width:18px;height:18px;padding:0;accent-color:var(--bank)}
+.link{min-height:44px;padding:8px 3px;border:0;background:none;color:var(--text);font:600 14px var(--font);text-decoration:underline;text-underline-offset:3px;cursor:pointer;border-radius:var(--r-sm)}
+.submit{width:100%;min-height:48px;border:1px solid var(--bank);border-radius:var(--r-md);background:var(--bank);color:var(--bank-on);font:600 15px var(--font);cursor:pointer;transition:filter 120ms var(--ease),transform 120ms var(--ease)}.submit:hover{filter:brightness(.92)}.submit:active{transform:translateY(1px)}
+.foot{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;padding-top:28px;color:var(--muted);font-size:13px}.foot a{padding:8px 2px;color:inherit;text-underline-offset:3px}
+@media(max-width:767px){.shell{display:block}.brand{display:none}.side{min-height:100svh;padding:20px 20px 14px;justify-content:flex-start}.panel{margin:0 auto;padding-top:24px}.mobile-mark{display:flex;align-items:center;gap:10px;margin-bottom:34px;font-size:17px;font-weight:700}.mobile-mark i{font-style:normal;width:32px;height:32px;display:grid;place-items:center;background:var(--bank);color:var(--bank-on);border-radius:var(--r-md)}.mobile-mark small{margin-left:auto;color:var(--muted);font-size:13px;font-weight:600}.foot{margin-top:auto}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="brand" aria-label="Product and bank identity">
+<div class="mark"><i aria-hidden="true">H</i><span data-product-name>Harbor CRM</span></div>
+<div class="pitch"><h2>Every customer, every deal, in one calm place.</h2><p>Leads, contacts, quotes and tickets for your branch team, ready when you are.</p></div>
+<div class="bankline"><b aria-hidden="true">B</b><span data-bank-name>Your bank</span></div>
+</aside>
+<main class="side" data-testid="login-page">
+<div class="panel">
+<div class="mobile-mark"><i aria-hidden="true">H</i><span data-product-name>Harbor CRM</span><small data-bank-name>Your bank</small></div>
+<form>
+<h1>Sign in</h1><p class="sub">Use your work email to continue.</p>
+<label class="field" for="email"><span>Email</span><input id="email" name="email" type="email" autocomplete="username" placeholder="you@company.com" data-testid="login-email"></label>
+<label class="field" for="password"><span>Password</span><div class="password"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" data-testid="login-password"><button class="eye" type="button" aria-label="Show password"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div></label>
+<div class="row"><label class="remember"><input type="checkbox" name="remember" checked>Remember me</label><button type="button" class="link">Forgot password?</button></div>
+<button class="submit" type="submit" data-testid="login-submit">Sign in</button>
+</form>
+</div>
+<footer class="foot"><a href="#help">Help</a><a href="#privacy">Privacy</a></footer>
+</main>
+</div>
+</body>
+</html>
