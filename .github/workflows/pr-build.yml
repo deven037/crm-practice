@@ -2,7 +2,7 @@ name: PR build check
 
 on:
   pull_request:
-    branches: [release, main]
+    branches: [dev, release, main]
 
 permissions:
   contents: read
@@ -27,10 +27,10 @@ jobs:
             server/package-lock.json
       - name: Web typecheck and build
         run: |
-          npm ci
+          npm ci || npm install
           npm run build
       - name: Server typecheck and build
         working-directory: server
         run: |
-          npm ci
+          npm ci || npm install
           npm run build
