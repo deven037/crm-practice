@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App shell, default (admin, Harbor default theme)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Harbor tokens, same names as src/styles.css. A bank profile only sets --bank-primary and --bank-on; the rest derives. */
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--text:#1f2937;--text-muted:#5b6472;--bank-primary:#1d3a6e;--bank-on:#fff;--bank-accent:color-mix(in srgb,var(--bank-primary) 40%,#fff);--chrome-bg:#0b0f19;--chrome-bg-hover:#171e2e;--chrome-border:#1e2635;--chrome-text:#c4cad9;--chrome-text-muted:#7c8499;--chrome-active:color-mix(in srgb,var(--bank-primary) 38%,var(--chrome-bg));--danger:#dc2626;--tone-ok-bg:#d1fae5;--tone-ok-text:#065f46;--tone-info-bg:#dbeafe;--tone-info-text:#1e40af;--tone-warn-bg:#fef3c7;--tone-warn-text:#92400e;--tone-neutral-bg:#f3f4f6;--tone-neutral-text:#4b5563;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;--ease:cubic-bezier(.4,0,.2,1)}
+*{box-sizing:border-box}
+body{margin:0;font:14px/20px var(--font-sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.sidebar :focus-visible{outline-color:#fff}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;border-top:3px solid var(--bank-accent)}
+.sidebar{background:var(--chrome-bg);color:var(--chrome-text);position:sticky;top:0;height:calc(100vh - 3px);display:flex;flex-direction:column;border-right:1px solid var(--chrome-border)}
+.brand{display:flex;align-items:center;gap:12px;padding:16px 16px 12px}
+.logo{width:36px;height:36px;border-radius:var(--radius-md);background:var(--bank-primary);color:var(--bank-on);display:grid;place-items:center;font-weight:700;font-size:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);flex:none}
+.brand b{display:block;color:#fff;font-size:15px;font-weight:600}.brand span{display:block;color:var(--chrome-text-muted);font-size:12px;line-height:16px}
+nav{flex:1;overflow:auto;padding:8px}
+.group-label{display:flex;align-items:center;justify-content:space-between;width:100%;height:32px;padding:0 12px;margin-top:8px;background:none;border:0;border-radius:var(--radius-sm);color:var(--chrome-text-muted);font-size:12px;font-weight:600}
+.group-label:hover{color:var(--chrome-text)}.group-label .i{width:14px;height:14px}
+.nav-link{position:relative;display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:8px;color:var(--chrome-text);text-decoration:none;font-weight:500;transition:background 120ms var(--ease),color 120ms var(--ease)}
+.nav-link:hover{background:var(--chrome-bg-hover);color:#fff}
+.nav-link.active{background:var(--chrome-active);color:#fff}
+.nav-link.active::before{content:"";position:absolute;left:-8px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--bank-accent)}
+.nav-link.active .i{color:var(--bank-accent)}
+.side-foot{padding:12px 16px;border-top:1px solid var(--chrome-border);font-size:12px;color:var(--chrome-text-muted)}
+.topbar{position:sticky;top:0;z-index:5;height:60px;display:flex;align-items:center;gap:8px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+.icon-btn{position:relative;width:40px;height:40px;display:grid;place-items:center;border:0;background:none;border-radius:var(--radius-md);transition:background 120ms var(--ease)}
+.icon-btn:hover{background:var(--surface-2)}.icon-btn:active{background:var(--surface-3)}
+.search{flex:1;max-width:520px;height:40px;display:flex;align-items:center;gap:8px;padding:0 12px;margin:0 8px;border:1px solid var(--border);background:var(--surface-2);border-radius:var(--radius-md);color:var(--text-muted)}
+.search span{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+kbd{font:500 12px var(--font-sans);padding:1px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface)}
+.right{margin-left:auto;display:flex;gap:4px;align-items:center}
+.badge{position:absolute;top:3px;right:2px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--danger);color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;border:2px solid var(--surface);box-sizing:content-box;transform:scale(.9);transform-origin:top right}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--bank-primary);color:var(--bank-on);display:grid;place-items:center;font-size:13px;font-weight:600}
+.page{max-width:1200px;margin:0 auto;padding:32px 32px 64px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px}
+h1{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.01em}.sub{margin:4px 0 0;color:var(--text-muted);font-size:15px}
+.btn{height:44px;padding:0 24px;border:0;border-radius:var(--radius-md);background:var(--bank-primary);color:var(--bank-on);font-weight:600;font-size:15px;transition:filter 120ms var(--ease)}
+.btn:hover{filter:brightness(1.12)}.btn:active{filter:brightness(.92)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg)}
+.kpi{padding:16px 24px;border-left:1px solid var(--border)}.kpi:first-child{border-left:0}.kpi small{display:block;color:var(--text-muted);font-size:13px}
+.kpi strong{display:block;font-size:32px;line-height:36px;font-weight:800;font-variant-numeric:tabular-nums}
+h2{margin:32px 0 12px;font-size:18px;line-height:24px;font-weight:600}
+table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+th{text-align:left;font-size:13px;font-weight:600;color:var(--text-muted);padding:10px 16px;background:var(--surface-2)}td{padding:14px 16px;border-top:1px solid var(--border)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:99px;font-size:13px;font-weight:500}.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.p-ok{background:var(--tone-ok-bg);color:var(--tone-ok-text)}.p-info{background:var(--tone-info-bg);color:var(--tone-info-text)}.p-warn{background:var(--tone-warn-bg);color:var(--tone-warn-text)}.p-n{background:var(--tone-neutral-bg);color:var(--tone-neutral-text)}
+@media (max-width:780px){
+.app{grid-template-columns:minmax(0,1fr)}.sidebar{position:fixed;left:0;top:3px;bottom:0;width:288px;z-index:20;transform:translateX(-100%)}
+.topbar{padding:0 12px;gap:4px;height:64px}.icon-btn{width:44px;height:44px}.search{margin:0 4px}.search kbd{display:none}
+.page{padding:24px 16px 48px}.page-head{flex-direction:column;align-items:stretch}.btn{width:100%}
+.kpis{grid-template-columns:1fr 1fr}.kpi{padding:12px 16px}.kpi:nth-child(odd){border-left:0}.kpi:nth-child(n+3){border-top:1px solid var(--border)}.kpi strong{font-size:28px}.hide-m{display:none}}
+@media (max-width:420px){.search span{display:none}.search{flex:none;width:44px;padding:0;justify-content:center;border-color:transparent;background:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="dash" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></symbol><symbol id="act" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></symbol><symbol id="tgt" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol><symbol id="usr" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+<symbol id="bld" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18"/><path d="M9 8h2M13 8h2M9 12h2M13 12h2M10 21v-4h4v4"/></symbol><symbol id="pkg" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></symbol><symbol id="mega" viewBox="0 0 24 24"><path d="M3 10v4h4l9 5V5L7 10zM19 9v6"/></symbol><symbol id="rcpt" viewBox="0 0 24 24"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2zM9 8h6M9 12h6"/></symbol>
+<symbol id="dol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M15 9.5c0-1-1.3-1.7-3-1.7s-3 .8-3 2 1.3 1.6 3 2 3 .8 3 2-1.3 2-3 2-3-.8-3-1.8"/></symbol><symbol id="chk" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12l3 3 5-6"/></symbol><symbol id="tkt" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M14 6v12"/></symbol><symbol id="db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+<symbol id="flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-6 10a2 2 0 002 3h12a2 2 0 002-3l-6-10V3"/></symbol><symbol id="cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol><symbol id="srch" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></symbol><symbol id="bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0112 0c0 6 3 8 3 8H3s3-2 3-8M10 21h4"/></symbol>
+<symbol id="menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol><symbol id="moon" viewBox="0 0 24 24"><path d="M21 13A9 9 0 1111 3a7 7 0 0010 10z"/></symbol><symbol id="chv" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+</svg>
+<div class="app">
+  <aside class="sidebar" aria-label="Main navigation" data-testid="sidebar">
+    <div class="brand"><div class="logo" aria-hidden="true">H</div><div><b>Harbor CRM</b><span>Your bank name</span></div></div>
+    <nav>
+      <button class="group-label" aria-expanded="true">Main <svg class="i"><use href="#chv"/></svg></button>
+      <a class="nav-link active" href="#" aria-current="page"><svg class="i"><use href="#dash"/></svg>Dashboard</a>
+      <a class="nav-link" href="#"><svg class="i"><use href="#act"/></svg>Activity</a>
+      <button class="group-label" aria-expanded="true">Sales <svg class="i"><use href="#chv"/></svg></button>
+      <a class="nav-link" href="#"><svg class="i"><use href="#tgt"/></svg>Leads</a>
+      <a class="nav-link" href="#"><svg class="i"><use href="#usr"/></svg>Contacts</a>
+      <a class="nav-link" href="#"><svg class="i"><use href="#bld"/></svg>Accounts</a>
+      <a class="nav-link" href="#"><svg class="i"><use href="#pkg"/></svg>Products</a>
+      <a class="nav-link" href="#"><svg class="i"><use href="#mega"/></svg>Campaigns</a>
+      <a class="nav-link" href="#"><svg class="i"><use href="#rcpt"/></svg>Quotes</a>
+      <a class="nav-link" href="#"><svg class="i"><use href="#dol"/></svg>Deals</a>
+      <button class="group-label" aria-expanded="true">Work <svg class="i"><use href="#chv"/></svg></button>
+      <a class="nav-link" href="#"><svg class="i"><use href="#chk"/></svg>Tasks</a>
+      <a class="nav-link" href="#"><svg class="i"><use href="#tkt"/></svg>Tickets</a>
+      <button class="group-label" aria-expanded="true">System <svg class="i"><use href="#chv"/></svg></button>
+      <a class="nav-link" href="#"><svg class="i"><use href="#db"/></svg>Data Studio</a>
+      <a class="nav-link" href="#"><svg class="i"><use href="#flask"/></svg>Test Cases</a>
+      <a class="nav-link" href="#"><svg class="i"><use href="#cog"/></svg>Settings</a>
+    </nav>
+    <div class="side-foot">Staging environment</div>
+  </aside>
+  <div>
+    <header class="topbar" data-testid="topbar">
+      <button class="icon-btn" aria-label="Toggle sidebar" data-testid="sidebar-toggle"><svg class="i"><use href="#menu"/></svg></button>
+      <button class="search" data-testid="global-search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button>
+      <div class="right">
+        <button class="icon-btn" aria-label="Toggle theme" data-testid="theme-toggle"><svg class="i"><use href="#moon"/></svg></button>
+        <button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg><span class="badge">3</span></button>
+        <button class="icon-btn" aria-label="User menu" data-testid="avatar-menu"><span class="avatar">AD</span></button>
+      </div>
+    </header>
+    <main class="page">
+      <div class="page-head"><div><h1>Dashboard</h1><p class="sub">Where your pipeline stands today.</p></div><button class="btn">New lead</button></div>
+      <section class="kpis" aria-label="Summary">
+        <div class="kpi"><small>Open leads</small><strong>128</strong></div><div class="kpi"><small>Quotes awaiting reply</small><strong>14</strong></div>
+        <div class="kpi"><small>Deals closing this month</small><strong>9</strong></div><div class="kpi"><small>Tasks due today</small><strong>6</strong></div>
+      </section>
+      <h2>Recent leads</h2>
+      <table>
+        <thead><tr><th>Name</th><th class="hide-m">Account</th><th>Stage</th><th class="hide-m">Owner</th></tr></thead>
+        <tbody>
+          <tr><td><b>Priya Raman</b></td><td class="hide-m">Northwind Logistics</td><td><span class="pill p-info">Qualified</span></td><td class="hide-m">Dev Patel</td></tr>
+          <tr><td><b>Tomás Alvarez</b></td><td class="hide-m">Brightside Dental</td><td><span class="pill p-warn">Proposal sent</span></td><td class="hide-m">Mei Tanaka</td></tr>
+          <tr><td><b>Grace Okafor</b></td><td class="hide-m">Linden &amp; Co.</td><td><span class="pill p-ok">Won</span></td><td class="hide-m">Dev Patel</td></tr>
+          <tr><td><b>Sam Whitaker</b></td><td class="hide-m">Orchard Foods</td><td><span class="pill p-n">New</span></td><td class="hide-m">Mei Tanaka</td></tr>
+        </tbody>
+      </table>
+    </main>
+  </div>
+</div>
+</body>
+</html>

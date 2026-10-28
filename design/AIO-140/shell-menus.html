@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App shell, header menus and command bar (roles, empty, no match)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--text:#1f2937;--text-muted:#5b6472;--bank-primary:#1d3a6e;--bank-on:#fff;--danger:#dc2626;--overlay:rgba(11,15,25,.55);--shadow-lg:0 12px 32px rgba(15,23,42,.16);--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;font:14px/20px var(--font-sans);background:#e4e8ee;color:#1f2937;-webkit-font-smoothing:antialiased}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.wrap{max-width:1440px;margin:0 auto;padding:24px 24px 48px}h1{font-size:20px;line-height:28px;margin:0 0 8px;font-weight:600}
+.lead{margin:0 0 24px;color:#4b5563;max-width:70ch}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.cell{background:var(--bg);border-radius:var(--radius-lg);padding:16px}.cell h2{margin:0 0 12px;font-size:15px;line-height:20px;font-weight:600}.why{margin:12px 0 0;font-size:13px;line-height:18px;color:var(--text-muted)}
+.stage{position:relative;height:390px;border-radius:var(--radius-md);background:var(--surface);border:1px solid var(--border);overflow:hidden}
+.bar{height:48px;border-bottom:1px solid var(--border);display:flex;justify-content:flex-end;align-items:center;gap:4px;padding:0 12px}
+.ib{position:relative;width:36px;height:36px;border-radius:var(--radius-md);display:grid;place-items:center;background:none;border:0}.ib.on{background:var(--surface-3)}
+.av{width:30px;height:30px;border-radius:50%;background:var(--bank-primary);color:var(--bank-on);display:grid;place-items:center;font-size:12px;font-weight:600}
+.badge{position:absolute;top:1px;right:0;min-width:16px;height:16px;border-radius:99px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;line-height:16px;text-align:center}
+.pop{position:absolute;top:52px;right:12px;width:300px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);padding:8px}
+.who{padding:12px;border-bottom:1px solid var(--border);margin-bottom:4px}.who strong{display:block}.who span{display:block;font-size:13px;color:var(--text-muted)}
+.who .role{display:inline-block;margin-top:6px;padding:1px 8px;border-radius:99px;background:var(--surface-3);color:#374151;font-size:12px;font-weight:600}
+.mi{display:flex;align-items:center;gap:12px;width:100%;height:44px;padding:0 12px;border:0;background:none;border-radius:8px;text-align:left}.mi.hov{background:var(--surface-2)}.mi.f{outline:2px solid var(--text);outline-offset:-2px}
+.nh{display:flex;justify-content:space-between;align-items:center;padding:8px 12px}
+.lb{background:none;border:0;color:var(--text);font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:3px;padding:6px 4px;border-radius:var(--radius-sm)}.lb:disabled{color:#8b93a1;text-decoration:none;cursor:not-allowed}
+.ni{display:flex;gap:12px;padding:12px;border-radius:8px}.ni.u{background:var(--surface-2)}.ni small{display:block;color:var(--text-muted);font-size:12px}
+.ni .dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex:none;background:var(--text)}.ni:not(.u) .dot{background:transparent;border:1.5px solid #9aa3b2}
+.un{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.emp{padding:24px 16px;text-align:center;color:var(--text-muted)}.emp .ic{width:44px;height:44px;border-radius:50%;background:var(--surface-3);display:grid;place-items:center;margin:0 auto 12px}
+.scrim{position:absolute;inset:0;background:var(--overlay)}
+.cmd{position:absolute;left:50%;top:28px;transform:translateX(-50%);width:calc(100% - 24px);background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);overflow:hidden}
+.cin{display:flex;align-items:center;gap:8px;height:48px;padding:0 16px;border-bottom:1px solid var(--border);font-size:15px}.cin .ph{color:var(--text-muted);flex:1}
+kbd{font:500 12px var(--font-sans);padding:1px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-2)}
+.cg{padding:8px}.cg h3{margin:0;padding:6px 12px;font-size:12px;font-weight:600;color:var(--text-muted)}
+.cr{display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:8px}.cr.sel{background:var(--surface-3)}.cr em{margin-left:auto;font-style:normal;font-size:12px;color:var(--text-muted)}
+.caret{display:inline-block;width:1px;height:18px;background:var(--text);margin-left:1px}
+@media (max-width:1100px){.grid{grid-template-columns:1fr 1fr}}
+@media (max-width:780px){.wrap{padding:16px 16px 32px}.grid{grid-template-columns:1fr;gap:16px}.ib{width:44px;height:44px}.pop{left:12px;right:12px;width:auto}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="moon" viewBox="0 0 24 24"><path d="M21 13A9 9 0 1111 3a7 7 0 0010 10z"/></symbol><symbol id="bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0112 0c0 6 3 8 3 8H3s3-2 3-8M10 21h4"/></symbol><symbol id="shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></symbol><symbol id="cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
+<symbol id="out" viewBox="0 0 24 24"><path d="M9 21H5V3h4M16 17l5-5-5-5M21 12H9"/></symbol><symbol id="srch" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></symbol><symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="tgt" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+</svg>
+<div class="wrap">
+  <h1>Header menus and command bar</h1>
+  <p class="lead">Popovers open under the header button that opened them. Esc or a click outside closes them and returns focus to that button. Rows are 44 px tall. Unread uses a filled dot plus the word "Unread" for screen readers, never colour alone.</p>
+  <div class="grid">
+    <section class="cell"><h2>Avatar menu: admin</h2>
+      <div class="stage"><div class="bar"><button class="ib" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="ib" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button><button class="ib on" aria-label="User menu" aria-expanded="true" data-testid="avatar-menu"><span class="av">AD</span></button></div>
+        <div class="pop" role="menu"><div class="who"><strong>Avery Admin</strong><span>admin@harbor-demo.test</span><span class="role">Admin</span></div>
+          <button class="mi hov" role="menuitem" data-testid="setup-menu-item"><svg class="i"><use href="#shield"/></svg>Setup</button>
+          <button class="mi f" role="menuitem"><svg class="i"><use href="#cog"/></svg>Profile settings</button>
+          <button class="mi" role="menuitem" data-testid="logout-btn"><svg class="i"><use href="#out"/></svg>Log out</button></div></div>
+      <p class="why">Admin and sales rep see Setup. Keyboard focus is on Profile settings. The email is a placeholder.</p></section>
+    <section class="cell"><h2>Avatar menu: viewer</h2>
+      <div class="stage"><div class="bar"><button class="ib" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="ib" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button><button class="ib on" aria-label="User menu" aria-expanded="true"><span class="av">VW</span></button></div>
+        <div class="pop" role="menu"><div class="who"><strong>Val Viewer</strong><span>viewer@harbor-demo.test</span><span class="role">Viewer</span></div>
+          <button class="mi" role="menuitem"><svg class="i"><use href="#cog"/></svg>Profile settings</button>
+          <button class="mi" role="menuitem"><svg class="i"><use href="#out"/></svg>Log out</button></div></div>
+      <p class="why">No Setup entry. Everything else matches the other roles.</p></section>
+    <section class="cell"><h2>Notifications with unread items</h2>
+      <div class="stage"><div class="bar"><button class="ib" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="ib on" aria-label="Notifications, 2 unread" aria-expanded="true"><svg class="i"><use href="#bell"/></svg><span class="badge">2</span></button><button class="ib" aria-label="User menu"><span class="av">AD</span></button></div>
+        <div class="pop"><div class="nh"><strong>Notifications</strong><button class="lb">Mark all read</button></div>
+          <div class="ni u"><span class="dot"></span><div><span class="un">Unread: </span>Quote Q-1042 was accepted<small>12 minutes ago</small></div></div>
+          <div class="ni u"><span class="dot"></span><div><span class="un">Unread: </span>Task "Call Priya Raman" is due today<small>1 hour ago</small></div></div>
+          <div class="ni"><span class="dot"></span><div>Dev Patel assigned you the lead Sam Whitaker<small>Yesterday</small></div></div></div></div>
+      <p class="why">The count badge shows only above 0. Mark all read is the one action in the panel.</p></section>
+    <section class="cell"><h2>Notifications, none</h2>
+      <div class="stage"><div class="bar"><button class="ib" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="ib on" aria-label="Notifications" aria-expanded="true"><svg class="i"><use href="#bell"/></svg></button><button class="ib" aria-label="User menu"><span class="av">AD</span></button></div>
+        <div class="pop"><div class="nh"><strong>Notifications</strong><button class="lb" disabled>Mark all read</button></div>
+          <div class="emp"><div class="ic"><svg class="i"><use href="#bell"/></svg></div><b>No notifications</b><br>Updates on your leads, quotes and tasks show up here.</div></div></div>
+      <p class="why">No badge. Mark all read is disabled. The empty state says what will appear.</p></section>
+    <section class="cell"><h2>Command bar</h2>
+      <div class="stage"><div class="scrim"></div>
+        <div class="cmd" role="dialog" aria-label="Command bar" data-testid="command-bar"><div class="cin"><svg class="i"><use href="#srch"/></svg><span class="ph">Search or jump to…</span><kbd>Esc</kbd></div>
+          <div class="cg"><h3>Create</h3><div class="cr sel"><svg class="i"><use href="#plus"/></svg>New lead<em>Enter</em></div><div class="cr"><svg class="i"><use href="#plus"/></svg>New contact</div><div class="cr"><svg class="i"><use href="#plus"/></svg>New account</div>
+            <h3>Recent</h3><div class="cr"><svg class="i"><use href="#tgt"/></svg>Priya Raman<em>Lead</em></div></div></div></div>
+      <p class="why">Opens with ⌘K or Ctrl+K and from the header search. Seven "New …" actions (three shown) and up to five recent records. The selected row has a filled background.</p></section>
+    <section class="cell"><h2>Command bar, no match</h2>
+      <div class="stage"><div class="scrim"></div>
+        <div class="cmd" role="dialog" aria-label="Command bar"><div class="cin"><svg class="i"><use href="#srch"/></svg><span class="ph" style="color:var(--text)">zzq<span class="caret"></span></span><kbd>Esc</kbd></div>
+          <div class="emp" role="status"><div class="ic"><svg class="i"><use href="#srch"/></svg></div><b>No matches</b><br>Check the spelling, or try a name, email or company.</div></div></div>
+      <p class="why">Search starts at two characters across all modules.</p></section>
+  </div>
+</div>
+</body>
+</html>
