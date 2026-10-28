@@ -247,6 +247,7 @@ export function Layout({ children }: { children: ReactNode }) {
                       to={item.to}
                       end={item.to === '/'}
                       className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+                      aria-label={item.label}
                       onClick={() => isMobile && setMobileOpen(false)}
                     >
                       <span className="nav-icon">
