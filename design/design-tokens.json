@@ -1,5 +1,5 @@
 {
-  "_note": "Mirrors :root in src/styles.css (Verified). Only bank.* and range-chip tokens are new (AIO-93).",
+  "_note": "Mirrors :root in src/styles.css (Verified). Only bank.* and range-chip tokens are new (AIO-93). Shell tokens added in AIO-140.",
   "color": {
     "bg": "#f4f6f8", "surface": "#ffffff", "surface-2": "#f1f3f5", "border": "#e1e4e8",
     "text": "#1f2937", "text-muted": "#6b7280", "chrome-bg": "#0b0f19",
@@ -9,12 +9,19 @@
   "bank": {
     "--bank-primary": "per bank, from config; falls back to --accent",
     "--bank-on": "text on a bank-primary fill: #ffffff or #14110a, whichever gives >= 4.5:1",
-    "rule": "Bank colour is for fills, bars and icons only. Never use it as text colour on --surface."
+    "rule": "Bank colour is for fills, bars and icons only. Never use it as text colour on --surface.",
+    "derived": {
+      "--bank-accent": "color-mix(in srgb, var(--bank-primary) 40%, #fff)",
+      "--chrome-active": "color-mix(in srgb, var(--bank-primary) 38%, var(--chrome-bg))",
+      "note": "Declare derived tokens on the same element as --bank-primary so they follow it."
+    },
+    "sample": { "name": "Northquay Savings", "primary": "#0f6b5c", "on": "#ffffff" }
   },
   "font": { "sans": "'Inter Variable', -apple-system, 'Segoe UI', Roboto, sans-serif", "numerals": "tabular-nums" },
-  "type": { "page-title": "24/32 700", "tile-value": "32/36 800", "body": "14/20 400", "label": "13/18 600", "hint": "12/16 400" },
+  "type": { "page-title": "24/32 700", "tile-value": "32/36 800", "section": "18/24 600", "body": "14/20 400", "control": "14/20 500", "label": "13/18 600", "hint": "12/16 400" },
   "space": [4, 8, 12, 16, 24, 32, 48],
   "radius": { "sm": 6, "md": 10, "lg": 14, "xl": 18, "pill": 999 },
-  "focus": "2px solid var(--text), offset 2px (never relies on bank colour)",
+  "layout": { "sidebar": 248, "rail": 72, "overlay": 288, "header": 60, "header-phone": 64, "page-max": 1200, "phone-breakpoint": 780 },
+  "focus": "2px solid var(--text), offset 2px (never relies on bank colour); on the dark sidebar 2px solid #ffffff",
   "motion": { "fast": "120ms", "base": "200ms", "reduced": "no transitions under prefers-reduced-motion" }
 }

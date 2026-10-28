@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App shell, navigation states (collapsed rail on desktop, overlay on phone)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--text:#1f2937;--text-muted:#5b6472;--bank-primary:#1d3a6e;--bank-on:#fff;--bank-accent:color-mix(in srgb,var(--bank-primary) 40%,#fff);--chrome-bg:#0b0f19;--chrome-bg-hover:#171e2e;--chrome-border:#1e2635;--chrome-text:#c4cad9;--chrome-text-muted:#7c8499;--chrome-active:color-mix(in srgb,var(--bank-primary) 38%,var(--chrome-bg));--danger:#dc2626;--overlay:rgba(11,15,25,.55);--tooltip-bg:#111827;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;font:14px/20px var(--font-sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.sidebar :focus-visible,.is-focus{outline:2px solid #fff;outline-offset:2px}
+.app{display:grid;grid-template-columns:72px minmax(0,1fr);min-height:100vh;border-top:3px solid var(--bank-accent)}
+.sidebar{background:var(--chrome-bg);color:var(--chrome-text);position:sticky;top:0;height:calc(100vh - 3px);display:flex;flex-direction:column;border-right:1px solid var(--chrome-border)}
+.brand{display:flex;align-items:center;gap:12px;padding:16px 16px 12px}
+.logo{width:36px;height:36px;border-radius:var(--radius-md);background:var(--bank-primary);color:var(--bank-on);display:grid;place-items:center;font-weight:700;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);flex:none}
+.brand b{display:block;color:#fff;font-size:15px;font-weight:600}.brand span{display:block;color:var(--chrome-text-muted);font-size:12px;line-height:16px}
+nav{flex:1;overflow:auto;padding:8px}
+.nav-link{position:relative;display:flex;align-items:center;justify-content:center;gap:12px;height:40px;border-radius:8px;color:var(--chrome-text);text-decoration:none;font-weight:500}
+.nav-link:hover{background:var(--chrome-bg-hover);color:#fff}
+.nav-link.active{background:var(--chrome-active);color:#fff}
+.nav-link.active::before{content:"";position:absolute;left:-8px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--bank-accent)}
+.nav-link.active .i{color:var(--bank-accent)}
+.tip{position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);white-space:nowrap;background:var(--tooltip-bg);color:#fff;font-size:13px;padding:4px 10px;border-radius:var(--radius-sm);z-index:3}
+.rule{height:1px;background:var(--chrome-border);margin:8px}
+.group-label,.label,.brand>div:last-child,.side-foot,.close,.m{display:none}
+.topbar{position:sticky;top:0;z-index:5;height:60px;display:flex;align-items:center;gap:8px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+.icon-btn{position:relative;width:40px;height:40px;display:grid;place-items:center;border:0;background:none;border-radius:var(--radius-md)}
+.icon-btn:hover{background:var(--surface-2)}
+.search{flex:1;max-width:520px;height:40px;display:flex;align-items:center;gap:8px;padding:0 12px;margin:0 8px;border:1px solid var(--border);background:var(--surface-2);border-radius:var(--radius-md);color:var(--text-muted)}
+.search span{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+kbd{font:500 12px var(--font-sans);padding:1px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface)}
+.right{margin-left:auto;display:flex;gap:4px;align-items:center}
+.badge{position:absolute;top:3px;right:2px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--danger);color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;border:2px solid var(--surface);box-sizing:content-box;transform:scale(.9);transform-origin:top right}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--bank-primary);color:var(--bank-on);display:grid;place-items:center;font-size:13px;font-weight:600}
+.page{max-width:1200px;margin:0 auto;padding:32px 32px 64px}
+h1{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.01em}.sub{margin:4px 0 24px;color:var(--text-muted);font-size:15px}
+.note{max-width:62ch;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 24px}
+.note p{margin:0 0 8px}.note p:last-child{margin:0}
+@media (max-width:780px){
+.app{grid-template-columns:minmax(0,1fr)}.sidebar{position:fixed;left:0;top:3px;bottom:0;width:288px;z-index:20;box-shadow:0 12px 32px rgba(0,0,0,.5)}
+.label{display:inline}.group-label{display:flex;align-items:center;justify-content:space-between;width:100%;height:32px;padding:0 12px;margin-top:8px;background:none;border:0;color:var(--chrome-text-muted);font-size:12px;font-weight:600}.group-label .i{width:14px;height:14px}
+.brand>div:last-child{display:block}.side-foot{display:block;padding:12px 16px;border-top:1px solid var(--chrome-border);font-size:12px;color:var(--chrome-text-muted)}
+.nav-link{justify-content:flex-start;padding:0 12px}.rule,.tip,.d{display:none}.m{display:block}
+.close{display:grid;position:absolute;top:10px;right:8px;color:var(--chrome-text)}
+.backdrop{position:fixed;inset:0;background:var(--overlay);z-index:10}
+.topbar{padding:0 12px;gap:4px;height:64px}.icon-btn{width:44px;height:44px}
+.search{margin:0 4px;flex:none;width:44px;padding:0;justify-content:center;border-color:transparent;background:none}.search span,.search kbd{display:none}
+.page{padding:24px 16px 48px}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="dash" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></symbol><symbol id="act" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></symbol><symbol id="tgt" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol><symbol id="usr" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+<symbol id="bld" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18"/><path d="M9 8h2M13 8h2M9 12h2M13 12h2M10 21v-4h4v4"/></symbol><symbol id="dol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M15 9.5c0-1-1.3-1.7-3-1.7s-3 .8-3 2 1.3 1.6 3 2 3 .8 3 2-1.3 2-3 2-3-.8-3-1.8"/></symbol><symbol id="db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol><symbol id="cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
+<symbol id="srch" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></symbol><symbol id="bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0112 0c0 6 3 8 3 8H3s3-2 3-8M10 21h4"/></symbol><symbol id="menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol><symbol id="moon" viewBox="0 0 24 24"><path d="M21 13A9 9 0 1111 3a7 7 0 0010 10z"/></symbol><symbol id="chv" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol><symbol id="chr" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol><symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+</svg>
+<div class="backdrop m" aria-hidden="true"></div>
+<div class="app">
+  <aside class="sidebar" aria-label="Main navigation" data-testid="sidebar">
+    <div class="brand"><div class="logo" aria-hidden="true">H</div><div><b>Harbor CRM</b><span>Your bank name appears here</span></div></div>
+    <button class="icon-btn close" aria-label="Close navigation"><svg class="i"><use href="#x"/></svg></button>
+    <nav>
+      <button class="group-label" aria-expanded="true">Main <svg class="i"><use href="#chv"/></svg></button>
+      <a class="nav-link active" href="#" aria-current="page" aria-label="Dashboard"><svg class="i"><use href="#dash"/></svg><span class="label">Dashboard</span><span class="tip d" role="tooltip">Dashboard</span></a>
+      <a class="nav-link is-focus" href="#" aria-label="Activity"><svg class="i"><use href="#act"/></svg><span class="label">Activity</span></a>
+      <div class="rule"></div>
+      <button class="group-label" aria-expanded="true">Sales <svg class="i"><use href="#chv"/></svg></button>
+      <a class="nav-link" href="#" aria-label="Leads"><svg class="i"><use href="#tgt"/></svg><span class="label">Leads</span></a>
+      <a class="nav-link" href="#" aria-label="Contacts"><svg class="i"><use href="#usr"/></svg><span class="label">Contacts</span></a>
+      <a class="nav-link" href="#" aria-label="Accounts"><svg class="i"><use href="#bld"/></svg><span class="label">Accounts</span></a>
+      <a class="nav-link" href="#" aria-label="Deals"><svg class="i"><use href="#dol"/></svg><span class="label">Deals</span></a>
+      <div class="rule"></div>
+      <button class="group-label" aria-expanded="false">Work <svg class="i"><use href="#chr"/></svg></button>
+      <div class="rule"></div>
+      <button class="group-label" aria-expanded="true">System <svg class="i"><use href="#chv"/></svg></button>
+      <a class="nav-link" href="#" aria-label="Data Studio"><svg class="i"><use href="#db"/></svg><span class="label">Data Studio</span></a>
+      <a class="nav-link" href="#" aria-label="Settings"><svg class="i"><use href="#cog"/></svg><span class="label">Settings</span></a>
+    </nav>
+    <div class="side-foot">Staging environment</div>
+  </aside>
+  <div>
+    <header class="topbar" data-testid="topbar">
+      <button class="icon-btn" aria-label="Toggle sidebar" aria-expanded="false" data-testid="sidebar-toggle"><svg class="i"><use href="#menu"/></svg></button>
+      <button class="search" data-testid="global-search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button>
+      <div class="right">
+        <button class="icon-btn" aria-label="Toggle theme" data-testid="theme-toggle"><svg class="i"><use href="#moon"/></svg></button>
+        <button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg><span class="badge">3</span></button>
+        <button class="icon-btn" aria-label="User menu" data-testid="avatar-menu"><span class="avatar">AD</span></button>
+      </div>
+    </header>
+    <main class="page">
+      <h1>Dashboard</h1><p class="sub">Navigation states.</p>
+      <div class="note d"><p><b>Collapsed rail, 72 px.</b> Only icons show. Each link keeps its name for screen readers and shows it as a tooltip on hover and keyboard focus.</p><p><b>Keyboard focus</b> is on Activity: a 2 px white ring. Dashboard is the current page: lighter fill, accent bar, aria-current="page".</p><p><b>Work</b> is collapsed. In the rail the group labels become thin dividers.</p></div>
+      <div class="note m"><p><b>Phone overlay.</b> The sidebar slides in over the page at 288 px with a dimmed backdrop. Choosing a link, tapping the backdrop, the close button or pressing Esc closes it.</p></div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

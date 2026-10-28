@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App shell, states: loading, profile error, no logo or colour, viewer Forbidden</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--text:#1f2937;--text-muted:#5b6472;--bank-primary:#1d3a6e;--bank-on:#fff;--bank-accent:color-mix(in srgb,var(--bank-primary) 40%,#fff);--chrome-bg:#0b0f19;--chrome-border:#1e2635;--chrome-text:#c4cad9;--chrome-text-muted:#7c8499;--chrome-active:color-mix(in srgb,var(--bank-primary) 38%,var(--chrome-bg));--tone-danger-bg:#fee2e2;--tone-danger-text:#991b1b;--tone-danger-line:#fecaca;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;--ease:cubic-bezier(.4,0,.2,1)}
+*{box-sizing:border-box}
+body{margin:0;font:14px/20px var(--font-sans);background:#e4e8ee;color:#1f2937;-webkit-font-smoothing:antialiased}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}.sidebar :focus-visible{outline-color:#fff}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.wrap{max-width:1440px;margin:0 auto;padding:24px 24px 48px}.wrap>h1{font-size:20px;line-height:28px;margin:0 0 8px;font-weight:600}
+.cap{margin:32px 0 4px;font-size:15px;font-weight:600}.capsub{margin:0 0 12px;color:#4b5563;max-width:70ch}
+.frame{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:400px;overflow:hidden;border-radius:var(--radius-lg);background:var(--bg);border-top:3px solid var(--bank-accent);box-shadow:0 12px 32px rgba(15,23,42,.16)}
+.sidebar{background:var(--chrome-bg);color:var(--chrome-text);display:flex;flex-direction:column;border-right:1px solid var(--chrome-border)}
+.brand{display:flex;align-items:center;gap:12px;padding:16px 16px 12px}
+.logo{width:36px;height:36px;border-radius:var(--radius-md);background:var(--bank-primary);color:var(--bank-on);display:grid;place-items:center;font-weight:700;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.brand b{display:block;color:#fff;font-size:15px;font-weight:600}.brand span{display:block;color:var(--chrome-text-muted);font-size:12px;line-height:16px}
+nav{flex:1;padding:8px}
+.group-label{display:flex;align-items:center;justify-content:space-between;width:100%;height:32px;padding:0 12px;margin-top:8px;background:none;border:0;color:var(--chrome-text-muted);font-size:12px;font-weight:600}.group-label .i{width:14px;height:14px}
+.nav-link{position:relative;display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:8px;color:var(--chrome-text);text-decoration:none;font-weight:500}
+.nav-link.active{background:var(--chrome-active);color:#fff}
+.nav-link.active::before{content:"";position:absolute;left:-8px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--bank-accent)}.nav-link.active .i{color:var(--bank-accent)}
+.side-foot{padding:12px 16px;border-top:1px solid var(--chrome-border);font-size:12px;color:var(--chrome-text-muted)}
+.topbar{height:60px;display:flex;align-items:center;gap:8px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+.icon-btn{position:relative;width:40px;height:40px;display:grid;place-items:center;border:0;background:none;border-radius:var(--radius-md)}.icon-btn:hover{background:var(--surface-2)}
+.search{flex:1;max-width:520px;height:40px;display:flex;align-items:center;gap:8px;padding:0 12px;margin:0 8px;border:1px solid var(--border);background:var(--surface-2);border-radius:var(--radius-md);color:var(--text-muted)}
+.search:disabled{opacity:.6;cursor:not-allowed}.search span{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+kbd{font:500 12px var(--font-sans);padding:1px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface)}
+.right{margin-left:auto;display:flex;gap:4px;align-items:center}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--bank-primary);color:var(--bank-on);display:grid;place-items:center;font-size:13px;font-weight:600}
+.main{min-width:0}.page{padding:32px}
+h2.t{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.01em}.sub{margin:4px 0 0;color:var(--text-muted);font-size:15px}
+.btn{height:44px;padding:0 24px;border:0;border-radius:var(--radius-md);background:var(--bank-primary);color:var(--bank-on);font-weight:600;font-size:15px;display:inline-flex;align-items:center;gap:8px;justify-content:center;transition:filter 120ms var(--ease)}.btn:hover{filter:brightness(1.12)}
+.banner{display:flex;gap:12px;align-items:flex-start;max-width:640px;padding:16px;margin-top:24px;background:var(--tone-danger-bg);color:var(--tone-danger-text);border:1px solid var(--tone-danger-line);border-radius:var(--radius-md)}
+.banner b{display:block;font-weight:600}.banner p{margin:2px 0 12px}.banner .btn{height:40px;background:var(--tone-danger-text);color:#fff}
+.sk{border-radius:var(--radius-sm);background:linear-gradient(90deg,var(--surface-3) 0%,var(--surface-2) 50%,var(--surface-3) 100%);background-size:200% 100%;animation:sh 1.4s var(--ease) infinite}
+.sidebar .sk{background:linear-gradient(90deg,#171e2e 0%,#1e2635 50%,#171e2e 100%);background-size:200% 100%}
+@keyframes sh{to{background-position:-200% 0}}
+.kp{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-top:24px}
+.kp>div{padding:16px 24px;border-left:1px solid var(--border)}.kp>div:first-child{border-left:0}
+.empty{text-align:center;max-width:420px;margin:32px auto 0}
+.empty .ic{width:56px;height:56px;border-radius:50%;background:var(--surface-3);color:var(--text-muted);display:grid;place-items:center;margin:0 auto 16px}.empty .ic .i{width:24px;height:24px}
+.empty h3{margin:0 0 4px;font-size:18px;line-height:24px;font-weight:600}.empty p{margin:0 0 16px;color:var(--text-muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.brandbar{display:none;align-items:center;gap:12px;padding:12px 16px;background:var(--chrome-bg);color:#fff;font-weight:600}
+@media (max-width:780px){
+.wrap{padding:12px 12px 32px}.frame{grid-template-columns:minmax(0,1fr);min-height:0}.sidebar{display:none}.brandbar{display:flex}
+.topbar{height:64px;padding:0 12px;gap:4px}.icon-btn{width:44px;height:44px}.search{flex:none;width:44px;padding:0;justify-content:center;border-color:transparent;background:none;margin:0}.search span,.search kbd{display:none}
+.page{padding:24px 16px}.kp{grid-template-columns:1fr 1fr}.kp>div{padding:12px 16px}.kp>div:nth-child(odd){border-left:0}.kp>div:nth-child(n+3){border-top:1px solid var(--border)}.banner .btn{width:100%}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="dash" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></symbol><symbol id="act" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></symbol><symbol id="tgt" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol><symbol id="usr" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+<symbol id="cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol><symbol id="srch" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></symbol><symbol id="bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0112 0c0 6 3 8 3 8H3s3-2 3-8M10 21h4"/></symbol><symbol id="moon" viewBox="0 0 24 24"><path d="M21 13A9 9 0 1111 3a7 7 0 0010 10z"/></symbol>
+<symbol id="chv" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol><symbol id="alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></symbol><symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></symbol><symbol id="retry" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0115-6.7L21 8M21 3v5h-5M21 12a9 9 0 01-15 6.7L3 16M3 21v-5h5"/></symbol>
+</svg>
+<div class="wrap">
+  <h1>App shell states</h1>
+  <p class="capsub">Four states of the same shell. Each stacks to one column on a phone. Test ids and element roles are unchanged from the live app.</p>
+
+  <p class="cap">1. Loading the bank profile</p>
+  <p class="capsub">Neutral placeholders only: "Practice CRM" or a bank name never shows before the profile arrives. Placeholders shimmer; reduced motion makes them static. The page keeps the Dashboard layout so nothing jumps when data arrives.</p>
+  <div class="frame" aria-busy="true">
+    <aside class="sidebar" aria-label="Main navigation (loading)">
+      <div class="brand"><div class="sk" style="width:36px;height:36px;border-radius:10px"></div><div style="flex:1"><div class="sk" style="height:12px;width:120px;margin-bottom:6px"></div><div class="sk" style="height:10px;width:72px"></div></div></div>
+      <nav><div class="sk" style="height:10px;width:48px;margin:16px 12px 12px"></div><div class="sk" style="height:32px;margin-bottom:6px"></div><div class="sk" style="height:32px;margin-bottom:6px"></div><div class="sk" style="height:10px;width:48px;margin:20px 12px 12px"></div><div class="sk" style="height:32px;margin-bottom:6px"></div><div class="sk" style="height:32px"></div></nav>
+    </aside>
+    <div class="main">
+      <div class="brandbar"><div class="sk" style="width:120px;height:14px"></div></div>
+      <header class="topbar">
+        <button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#dash"/></svg></button>
+        <button class="search" disabled><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button>
+        <div class="right"><button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button><span class="avatar" style="background:var(--surface-3)"></span></div>
+      </header>
+      <main class="page">
+        <div class="sk" style="height:28px;width:200px"></div><div class="sk" style="height:14px;width:280px;margin-top:10px"></div>
+        <div class="kp"><div><div class="sk" style="height:12px;width:90px"></div><div class="sk" style="height:32px;width:60px;margin-top:10px"></div></div><div><div class="sk" style="height:12px;width:90px"></div><div class="sk" style="height:32px;width:60px;margin-top:10px"></div></div><div><div class="sk" style="height:12px;width:90px"></div><div class="sk" style="height:32px;width:60px;margin-top:10px"></div></div><div><div class="sk" style="height:12px;width:90px"></div><div class="sk" style="height:32px;width:60px;margin-top:10px"></div></div></div>
+        <span class="sr" role="status">Loading your workspace</span>
+      </main>
+    </div>
+  </div>
+
+  <p class="cap">2. The bank profile cannot load</p>
+  <p class="capsub">The shell still works with the Harbor default name and mark, so people keep working. One calm banner says what happened and offers Retry.</p>
+  <div class="frame">
+    <aside class="sidebar" aria-label="Main navigation">
+      <div class="brand"><div class="logo" aria-hidden="true">H</div><div><b>Harbor CRM</b><span>Standard theme</span></div></div>
+      <nav><button class="group-label" aria-expanded="true">Main <svg class="i"><use href="#chv"/></svg></button><a class="nav-link active" href="#" aria-current="page"><svg class="i"><use href="#dash"/></svg>Dashboard</a><a class="nav-link" href="#"><svg class="i"><use href="#act"/></svg>Activity</a><button class="group-label" aria-expanded="true">Sales <svg class="i"><use href="#chv"/></svg></button><a class="nav-link" href="#"><svg class="i"><use href="#tgt"/></svg>Leads</a><a class="nav-link" href="#"><svg class="i"><use href="#usr"/></svg>Contacts</a></nav>
+      <div class="side-foot">Staging environment</div>
+    </aside>
+    <div class="main">
+      <div class="brandbar"><b>Harbor CRM</b></div>
+      <header class="topbar"><button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#dash"/></svg></button><button class="search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button><div class="right"><button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button><button class="icon-btn" aria-label="User menu"><span class="avatar">AD</span></button></div></header>
+      <main class="page"><h2 class="t">Dashboard</h2><p class="sub">Where your pipeline stands today.</p>
+        <div class="banner" role="alert"><svg class="i" style="margin-top:1px"><use href="#alert"/></svg><div><b>Your bank's name and colours didn't load</b><p>You're seeing the standard Harbor look. Your data is not affected.</p><button class="btn"><svg class="i"><use href="#retry"/></svg>Retry</button></div></div>
+      </main>
+    </div>
+  </div>
+
+  <p class="cap">3. Bank profile without a logo or colour</p>
+  <p class="capsub">No logo: the tile is dropped and the bank name starts at the left edge. No colour: the Harbor navy is used. The bank here is "Redfern Credit Union" with neither. The page shows an empty Leads state.</p>
+  <div class="frame">
+    <aside class="sidebar" aria-label="Main navigation">
+      <div class="brand"><div><b>Redfern Credit Union</b><span>on Harbor CRM</span></div></div>
+      <nav><button class="group-label" aria-expanded="true">Main <svg class="i"><use href="#chv"/></svg></button><a class="nav-link" href="#"><svg class="i"><use href="#dash"/></svg>Dashboard</a><button class="group-label" aria-expanded="true">Sales <svg class="i"><use href="#chv"/></svg></button><a class="nav-link active" href="#" aria-current="page"><svg class="i"><use href="#tgt"/></svg>Leads</a></nav>
+      <div class="side-foot">Staging environment</div>
+    </aside>
+    <div class="main">
+      <div class="brandbar"><b>Redfern Credit Union</b></div>
+      <header class="topbar"><button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#dash"/></svg></button><button class="search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button><div class="right"><button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button><button class="icon-btn" aria-label="User menu"><span class="avatar">RS</span></button></div></header>
+      <main class="page"><h2 class="t">Leads</h2>
+        <div class="empty"><div class="ic"><svg class="i"><use href="#tgt"/></svg></div><h3>No leads yet</h3><p>Add your first lead to start tracking your pipeline.</p><button class="btn">New lead</button></div>
+      </main>
+    </div>
+  </div>
+
+  <p class="cap">4. Viewer opens a page they may not use</p>
+  <p class="capsub">The viewer's avatar menu has no Setup. Typing the Setup address shows Forbidden inside the shell, so navigation stays available. The message says what is blocked and who can change it.</p>
+  <div class="frame">
+    <aside class="sidebar" aria-label="Main navigation">
+      <div class="brand"><div class="logo" aria-hidden="true">H</div><div><b>Harbor CRM</b><span>Your bank name appears here</span></div></div>
+      <nav><button class="group-label" aria-expanded="true">Main <svg class="i"><use href="#chv"/></svg></button><a class="nav-link" href="#"><svg class="i"><use href="#dash"/></svg>Dashboard</a><a class="nav-link" href="#"><svg class="i"><use href="#act"/></svg>Activity</a><button class="group-label" aria-expanded="true">System <svg class="i"><use href="#chv"/></svg></button><a class="nav-link" href="#"><svg class="i"><use href="#cog"/></svg>Settings</a></nav>
+      <div class="side-foot">Staging environment</div>
+    </aside>
+    <div class="main">
+      <div class="brandbar"><b>Harbor CRM</b></div>
+      <header class="topbar"><button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#dash"/></svg></button><button class="search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button><div class="right"><button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button><button class="icon-btn" aria-label="User menu"><span class="avatar">VW</span></button></div></header>
+      <main class="page"><div class="empty" role="alert"><div class="ic"><svg class="i"><use href="#lock"/></svg></div><h3>You don't have access to Setup</h3><p>Setup is for admins and sales reps. Ask an admin if you need a change made.</p><button class="btn">Back to Dashboard</button></div></main>
+    </div>
+  </div>
+</div>
+</body>
+</html>

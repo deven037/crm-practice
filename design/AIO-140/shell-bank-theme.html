@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en" class="bank-northquay">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App shell, sample bank theme (Northquay Savings), light and dark</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--text:#1f2937;--text-muted:#5b6472;--bank-primary:#1d3a6e;--bank-on:#fff;--bank-accent:color-mix(in srgb,var(--bank-primary) 40%,#fff);--chrome-bg:#0b0f19;--chrome-border:#1e2635;--chrome-text:#c4cad9;--chrome-text-muted:#7c8499;--chrome-active:color-mix(in srgb,var(--bank-primary) 38%,var(--chrome-bg));--danger:#dc2626;--tone-ok-bg:#d1fae5;--tone-ok-text:#065f46;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif}
+/* THE BANK PROFILE: these two values are all a bank supplies for colour. Everything else is derived. */
+.bank-northquay{--bank-primary:#0f6b5c;--bank-on:#ffffff}
+[data-theme="dark"]{--bg:#10151f;--surface:#1a2130;--surface-2:#232b3d;--surface-3:#2c3549;--border:#313b52;--text:#e7eaf0;--text-muted:#8b93a7;--tone-ok-bg:#10341f;--tone-ok-text:#86efac}
+*{box-sizing:border-box}
+body{margin:0;font:14px/20px var(--font-sans);background:#e4e8ee;color:#1f2937;-webkit-font-smoothing:antialiased}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}.sidebar :focus-visible{outline-color:#fff}
+.wrap{max-width:1440px;margin:0 auto;padding:24px 24px 48px}
+.spec{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;margin:0 0 24px}
+.spec h1{font-size:20px;line-height:28px;margin:0;font-weight:600;flex-basis:100%}
+.sw{display:flex;align-items:center;gap:8px}.sw i{width:28px;height:28px;border-radius:var(--radius-sm);border:1px solid rgba(0,0,0,.15);display:inline-block}.sw small{display:block;color:#4b5563;font-size:12px;line-height:14px}
+.cap{margin:24px 0 8px;font-size:15px;font-weight:600}
+.frame{display:grid;grid-template-columns:232px minmax(0,1fr);height:540px;overflow:hidden;border-radius:var(--radius-lg);background:var(--bg);color:var(--text);border-top:3px solid var(--bank-accent);box-shadow:0 12px 32px rgba(15,23,42,.16)}
+.sidebar{background:var(--chrome-bg);color:var(--chrome-text);display:flex;flex-direction:column;border-right:1px solid var(--chrome-border);min-height:0}
+.brand{display:flex;align-items:center;gap:12px;padding:16px 16px 12px}
+.logo{width:36px;height:36px;border-radius:var(--radius-md);background:var(--bank-primary);color:var(--bank-on);display:grid;place-items:center;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+.logo svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.brand b{display:block;color:#fff;font-size:15px;font-weight:600}.brand span{display:block;color:var(--chrome-text-muted);font-size:12px;line-height:16px}
+nav{flex:1;overflow:hidden;padding:8px}
+.group-label{display:flex;align-items:center;justify-content:space-between;width:100%;height:32px;padding:0 12px;margin-top:8px;background:none;border:0;color:var(--chrome-text-muted);font-size:12px;font-weight:600}.group-label .i{width:14px;height:14px}
+.nav-link{position:relative;display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:8px;color:var(--chrome-text);text-decoration:none;font-weight:500}
+.nav-link.active{background:var(--chrome-active);color:#fff}
+.nav-link.active::before{content:"";position:absolute;left:-8px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--bank-accent)}
+.nav-link.active .i{color:var(--bank-accent)}
+.side-foot{padding:12px 16px;border-top:1px solid var(--chrome-border);font-size:12px;color:var(--chrome-text-muted)}
+.topbar{height:60px;display:flex;align-items:center;gap:8px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+.icon-btn{position:relative;width:40px;height:40px;display:grid;place-items:center;border:0;background:none;border-radius:var(--radius-md);color:var(--text)}.icon-btn:hover{background:var(--surface-2)}
+.search{flex:1;max-width:520px;height:40px;display:flex;align-items:center;gap:8px;padding:0 12px;margin:0 8px;border:1px solid var(--border);background:var(--surface-2);border-radius:var(--radius-md);color:var(--text-muted)}
+.search span{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+kbd{font:500 12px var(--font-sans);padding:1px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface)}
+.right{margin-left:auto;display:flex;gap:4px;align-items:center}
+.badge{position:absolute;top:3px;right:2px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--danger);color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;border:2px solid var(--surface);box-sizing:content-box;transform:scale(.9);transform-origin:top right}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--bank-primary);color:var(--bank-on);display:grid;place-items:center;font-size:13px;font-weight:600}
+.main{min-width:0}.page{padding:32px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px}
+h2.t{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.01em}.sub{margin:4px 0 0;color:var(--text-muted);font-size:15px}
+.btn{height:44px;padding:0 24px;border:0;border-radius:var(--radius-md);background:var(--bank-primary);color:var(--bank-on);font-weight:600;font-size:15px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg)}
+.kpi{padding:16px 24px;border-left:1px solid var(--border)}.kpi:first-child{border-left:0}.kpi small{display:block;color:var(--text-muted);font-size:13px}
+.kpi strong{display:block;font-size:32px;line-height:36px;font-weight:800}
+.row{display:flex;align-items:center;gap:12px;margin-top:24px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg)}
+.row .grow{flex:1;color:var(--text-muted)}.row a{color:var(--text);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:99px;font-size:13px;font-weight:500;background:var(--tone-ok-bg);color:var(--tone-ok-text)}.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.brandbar{display:none;align-items:center;gap:12px;padding:12px 16px;background:var(--chrome-bg);color:#fff;font-weight:600}.brandbar .logo{width:32px;height:32px}
+@media (max-width:780px){
+.wrap{padding:16px 16px 32px}.frame{grid-template-columns:minmax(0,1fr);height:auto}.sidebar{display:none}.brandbar{display:flex}
+.topbar{padding:0 12px;height:64px;gap:4px}.icon-btn{width:44px;height:44px}.search{flex:none;width:44px;padding:0;justify-content:center;border-color:transparent;background:none;margin:0}.search span,.search kbd{display:none}
+.page{padding:24px 16px}.page-head{flex-direction:column;align-items:stretch}.btn{width:100%}
+.kpis{grid-template-columns:1fr 1fr}.kpi{padding:12px 16px}.kpi:nth-child(odd){border-left:0}.kpi:nth-child(n+3){border-top:1px solid var(--border)}.kpi strong{font-size:28px}.row{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="dash" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></symbol><symbol id="act" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></symbol><symbol id="tgt" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol><symbol id="usr" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+<symbol id="bld" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18"/><path d="M9 8h2M13 8h2M9 12h2M13 12h2M10 21v-4h4v4"/></symbol><symbol id="dol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M15 9.5c0-1-1.3-1.7-3-1.7s-3 .8-3 2 1.3 1.6 3 2 3 .8 3 2-1.3 2-3 2-3-.8-3-1.8"/></symbol><symbol id="srch" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></symbol><symbol id="bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0112 0c0 6 3 8 3 8H3s3-2 3-8M10 21h4"/></symbol>
+<symbol id="moon" viewBox="0 0 24 24"><path d="M21 13A9 9 0 1111 3a7 7 0 0010 10z"/></symbol><symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></symbol><symbol id="chv" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol><symbol id="mark" viewBox="0 0 24 24"><path d="M3 15c3 0 3-3 6-3s3 3 6 3 3-3 6-3M3 20c3 0 3-3 6-3s3 3 6 3 3-3 6-3M12 3v6M9 6l3-3 3 3"/></symbol>
+</svg>
+<div class="wrap">
+  <div class="spec">
+    <h1>Northquay Savings: a bank profile applied to the shell</h1>
+    <div class="sw"><i style="background:#0f6b5c"></i><div>Primary<small>#0f6b5c, set by the bank</small></div></div>
+    <div class="sw"><i style="background:#fff"></i><div>Text on primary<small>#ffffff, 6.4:1</small></div></div>
+    <div class="sw"><i style="background:#9fc4be"></i><div>Accent on dark sidebar<small>derived: primary 40% + white</small></div></div>
+    <div class="sw"><i style="background:#17332f"></i><div>Selected item fill<small>derived: primary 38% in sidebar</small></div></div>
+  </div>
+  <p class="cap">Light theme</p>
+  <div class="frame" data-theme="light">
+    <aside class="sidebar" aria-label="Main navigation">
+      <div class="brand"><div class="logo" aria-hidden="true"><svg><use href="#mark"/></svg></div><div><b>Northquay Savings</b><span>on Harbor CRM</span></div></div>
+      <nav>
+        <button class="group-label" aria-expanded="true">Main <svg class="i"><use href="#chv"/></svg></button>
+        <a class="nav-link active" href="#" aria-current="page"><svg class="i"><use href="#dash"/></svg>Dashboard</a>
+        <a class="nav-link" href="#"><svg class="i"><use href="#act"/></svg>Activity</a>
+        <button class="group-label" aria-expanded="true">Sales <svg class="i"><use href="#chv"/></svg></button>
+        <a class="nav-link" href="#"><svg class="i"><use href="#tgt"/></svg>Leads</a>
+        <a class="nav-link" href="#"><svg class="i"><use href="#usr"/></svg>Contacts</a>
+        <a class="nav-link" href="#"><svg class="i"><use href="#bld"/></svg>Accounts</a>
+        <a class="nav-link" href="#"><svg class="i"><use href="#dol"/></svg>Deals</a>
+      </nav>
+      <div class="side-foot">Staging environment</div>
+    </aside>
+    <div class="main">
+      <div class="brandbar"><div class="logo"><svg><use href="#mark"/></svg></div>Northquay Savings</div>
+      <header class="topbar">
+        <button class="search" aria-label="Search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button>
+        <div class="right"><button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg><span class="badge">3</span></button><button class="icon-btn" aria-label="User menu"><span class="avatar">MT</span></button></div>
+      </header>
+      <main class="page">
+        <div class="page-head"><div><h2 class="t">Dashboard</h2><p class="sub">Where your pipeline stands today.</p></div><button class="btn">New lead</button></div>
+        <section class="kpis" aria-label="Summary"><div class="kpi"><small>Open leads</small><strong>128</strong></div><div class="kpi"><small>Quotes awaiting reply</small><strong>14</strong></div><div class="kpi"><small>Deals closing this month</small><strong>9</strong></div><div class="kpi"><small>Tasks due today</small><strong>6</strong></div></section>
+        <div class="row"><span class="pill">Won</span><b>Linden &amp; Co. savings bundle</b><span class="grow">closed by Mei Tanaka</span><a href="#">Open deal</a></div>
+      </main>
+    </div>
+  </div>
+  <p class="cap">Dark theme, same bank</p>
+  <div class="frame" data-theme="dark">
+    <aside class="sidebar" aria-label="Main navigation">
+      <div class="brand"><div class="logo" aria-hidden="true"><svg><use href="#mark"/></svg></div><div><b>Northquay Savings</b><span>on Harbor CRM</span></div></div>
+      <nav>
+        <button class="group-label" aria-expanded="true">Main <svg class="i"><use href="#chv"/></svg></button>
+        <a class="nav-link active" href="#" aria-current="page"><svg class="i"><use href="#dash"/></svg>Dashboard</a>
+        <a class="nav-link" href="#"><svg class="i"><use href="#act"/></svg>Activity</a>
+        <button class="group-label" aria-expanded="true">Sales <svg class="i"><use href="#chv"/></svg></button>
+        <a class="nav-link" href="#"><svg class="i"><use href="#tgt"/></svg>Leads</a>
+        <a class="nav-link" href="#"><svg class="i"><use href="#usr"/></svg>Contacts</a>
+      </nav>
+      <div class="side-foot">Staging environment</div>
+    </aside>
+    <div class="main">
+      <div class="brandbar"><div class="logo"><svg><use href="#mark"/></svg></div>Northquay Savings</div>
+      <header class="topbar">
+        <button class="search" aria-label="Search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button>
+        <div class="right"><button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#sun"/></svg></button><button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg><span class="badge">3</span></button><button class="icon-btn" aria-label="User menu"><span class="avatar">MT</span></button></div>
+      </header>
+      <main class="page">
+        <div class="page-head"><div><h2 class="t">Dashboard</h2><p class="sub">Where your pipeline stands today.</p></div><button class="btn">New lead</button></div>
+        <section class="kpis" aria-label="Summary"><div class="kpi"><small>Open leads</small><strong>128</strong></div><div class="kpi"><small>Quotes awaiting reply</small><strong>14</strong></div><div class="kpi"><small>Deals closing this month</small><strong>9</strong></div><div class="kpi"><small>Tasks due today</small><strong>6</strong></div></section>
+        <div class="row"><span class="pill">Won</span><b>Linden &amp; Co. savings bundle</b><span class="grow">closed by Mei Tanaka</span><a href="#">Open deal</a></div>
+      </main>
+    </div>
+  </div>
+</div>
+</body>
+</html>
