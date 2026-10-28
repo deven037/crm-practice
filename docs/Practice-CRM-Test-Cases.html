@@ -36,7 +36,7 @@
   <p style="margin-top:30px"><strong>127 test cases · 910 steps · 13 modules</strong></p>
 </div>
 <h1 class="sec">1. Scope &amp; Conventions</h1>
-<p>Application at deterministic seed state (open with /?reset=true). Password for all users: Pass@123. Default login: admin@crm.com unless stated. Seed: 50 leads, 40 contacts, 20 accounts, 12 products, 25 deals, 30 tasks, 15 tickets, 5 users. All data operations have simulated latency (300–1200 ms) — wait for spinners/skeletons to resolve before asserting.</p>
+<p>Application at deterministic seed state (open with /?reset=true). Password for all users: Pass@123. Default login: admin@crm.com unless stated. Seed: 75 leads, 40 contacts, 20 accounts, 12 products, 25 deals, 30 tasks, 15 tickets, 5 users. All data operations have simulated latency (300–1200 ms) — wait for spinners/skeletons to resolve before asserting.</p>
 <ul class="conv">
 <li><strong>Tags:</strong> <span class="pri tg-smoke">Smoke</span> critical path, every build · <span class="pri tg-sanity">Sanity</span> post-deploy health (includes Smoke) · <span class="pri tg-reg">Regression</span> full coverage (includes everything) · <span class="pri tg-feat">Feature</span> one feature exercised exhaustively (happy path, negatives, edges, persistence) · <span class="pri tg-e2e">E2E</span> start-to-finish journeys, nightly.</li>
 <li>Every test case is independent; run <code>/?reset=true</code> before a case (or suite) that needs pristine data.</li>

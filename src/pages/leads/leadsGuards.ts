@@ -14,6 +14,11 @@ export const pageWindow = (currentPage: number, totalPages: number, size = 7): n
   return Array.from({ length: count }, (_, i) => start + i);
 };
 
+export type EmptyStateKind = 'no-leads' | 'no-matches';
+
+// An empty collection is "no leads"; leads that exist but are all hidden by filters or search are "no matches".
+export const emptyStateKind = (totalLeads: number): EmptyStateKind => (totalLeads === 0 ? 'no-leads' : 'no-matches');
+
 export type AriaSortValue = 'ascending' | 'descending' | 'none';
 
 export const getAriaSort = (

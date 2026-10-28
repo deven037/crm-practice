@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { beginOnce, clearSelection, getAriaSort, pageWindow, shouldOpenRowOnKeyDown } from './leadsGuards';
+import { beginOnce, clearSelection, emptyStateKind, getAriaSort, pageWindow, shouldOpenRowOnKeyDown } from './leadsGuards';
 
 describe('clearSelection', () => {
   it('returns an empty selection', () => {
@@ -45,6 +45,16 @@ describe('pageWindow', () => {
 
   it('returns no pages when there are none', () => {
     expect(pageWindow(1, 0)).toEqual([]);
+  });
+});
+
+describe('emptyStateKind', () => {
+  it('reports no leads when the collection is empty', () => {
+    expect(emptyStateKind(0)).toBe('no-leads');
+  });
+
+  it('reports no matches when leads exist but filters hide them all', () => {
+    expect(emptyStateKind(75)).toBe('no-matches');
   });
 });
 

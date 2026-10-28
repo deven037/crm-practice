@@ -398,6 +398,7 @@ export function Leads() {
         <>
           <LeadsTable
             rows={pageRows}
+            totalLeads={leads.length}
             selected={selected}
             allPageSelected={allPageSelected}
             sortKey={sortKey}
