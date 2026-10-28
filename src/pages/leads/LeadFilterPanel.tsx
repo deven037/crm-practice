@@ -1,8 +1,9 @@
-import { LEAD_SOURCES, LEAD_STATUSES } from '../../types';
+import { LEAD_SOURCES } from '../../types';
 import { MultiSelect, Select } from '../../components/Select';
 
 interface Props {
   statusFilter: string[];
+  statusOptions: string[];
   sourceFilter: string;
   ownerFilter: string;
   ownerOptions: { value: string; label: string }[];
@@ -14,6 +15,7 @@ interface Props {
 
 export function LeadFilterPanel({
   statusFilter,
+  statusOptions,
   sourceFilter,
   ownerFilter,
   ownerOptions,
@@ -28,7 +30,7 @@ export function LeadFilterPanel({
         <span className="field-label">Status</span>
         <MultiSelect
           values={statusFilter}
-          options={LEAD_STATUSES.map((s) => ({ value: s, label: s }))}
+          options={statusOptions.map((s) => ({ value: s, label: s }))}
           onChange={onStatusChange}
           placeholder="Any status"
         />
