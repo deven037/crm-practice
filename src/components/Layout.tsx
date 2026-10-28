@@ -166,9 +166,9 @@ const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: Luc
   },
 ];
 
-export function Layout({ children }: { children: ReactNode }) {
+export function Layout({ children, initialSidebarCollapsed = false }: { children: ReactNode; initialSidebarCollapsed?: boolean }) {
   const { user } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(initialSidebarCollapsed);
   const [closedGroups, setClosedGroups] = useState<string[]>([]);
   const [theme, setTheme] = useState<string>(() => getValue('theme', 'light'));
   const [commandOpen, setCommandOpen] = useState(false);
