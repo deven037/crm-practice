@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { beginOnce, clearSelection, getAriaSort, shouldOpenRowOnKeyDown } from './leadsGuards';
+import { beginOnce, canExportLeads, clearSelection, getAriaSort, shouldOpenRowOnKeyDown } from './leadsGuards';
+
+describe('canExportLeads', () => {
+  it('allows admin and rep', () => {
+    expect(canExportLeads('admin')).toBe(true);
+    expect(canExportLeads('rep')).toBe(true);
+  });
+
+  it('denies viewer and a missing role', () => {
+    expect(canExportLeads('viewer')).toBe(false);
+    expect(canExportLeads(undefined)).toBe(false);
+  });
+});
 
 describe('clearSelection', () => {
   it('returns an empty selection', () => {
