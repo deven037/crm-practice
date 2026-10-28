@@ -1,33 +1,24 @@
-# CRM pipeline (AIO-127; adapted from the office reference crm-practice-pipeline.yml).
+# CRM pipeline (AIO-127; owner decision 2026-10-28: checks on PRs only).
 #
-#   PR into dev      -> checks
-#   push to release  -> checks -> deploy STAGING    -> verify
-#   push to main     -> checks -> deploy PRODUCTION -> verify   (after Deven's production card)
-#   manual           -> redeploy one environment from its own branch
+#   PR into dev, release or main -> checks (typecheck, unit tests, build)
+#   manual                       -> the same checks on any branch
 #
-# Environments "staging" and "production" hold the variables VITE_API_BASE_URL, WEB_URL and the
-# secrets RENDER_WEB_DEPLOY_HOOK, RENDER_DEPLOY_HOOK. Secrets are only read from the secrets context.
+# Nothing deploys from here: Render auto-deploys release (staging) and main (production) when a PR
+# merges, and the office merges a PR only after these checks pass. main only moves after Deven's
+# production card, so production still deploys only after his approval.
 name: CRM pipeline
 
 on:
   pull_request:
-    branches: [dev]
-  push:
-    branches: [release, main]
+    branches: [dev, release, main]
   workflow_dispatch:
-    inputs:
-      environment:
-        description: Environment to redeploy (run it from that environment's branch)
-        type: choice
-        options: [staging, production]
 
 permissions:
   contents: read
-  deployments: read
 
 concurrency:
   group: crm-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   checks:
@@ -53,74 +44,3 @@ jobs:
         run: |
           npm ci
           npm run build
-
-  deploy:
-    name: Deploy ${{ github.ref_name == 'main' && 'production' || 'staging' }}
-    needs: checks
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    environment:
-      name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
-      url: ${{ vars.WEB_URL }}
-    steps:
-      - name: Only from the environment's own branch
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          WANT_ENV: ${{ inputs.environment }}
-        run: |
-          want=release; [ "$WANT_ENV" = "production" ] && want=main
-          if [ "$GITHUB_REF_NAME" != "$want" ]; then echo "::error::Run $WANT_ENV from branch $want, not $GITHUB_REF_NAME"; exit 1; fi
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-      - name: Build the front end for this environment
-        env:
-          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
-        run: |
-          npm ci
-          npm run build
-          grep -rqF "$VITE_API_BASE_URL" dist/assets || { echo "::error::The build doesn't contain $VITE_API_BASE_URL"; exit 1; }
-
-      # The front end is a Render Static Site; Render builds it with the same VITE_API_BASE_URL.
-      - name: Deploy the front end on Render
-        env:
-          RENDER_WEB_DEPLOY_HOOK: ${{ secrets.RENDER_WEB_DEPLOY_HOOK }}
-        run: curl -fsS -X POST "$RENDER_WEB_DEPLOY_HOOK" -o /dev/null
-
-      - name: Deploy the API on Render
-        env:
-          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
-        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK" -o /dev/null
-
-      # Render reports its deploys to GitHub as deployments of the commit. Only a success for
-      # GITHUB_SHA proves this commit is live; no report in 15 minutes fails the run.
-      - name: Wait for the API deploy of this commit
-        env:
-          GH_TOKEN: ${{ github.token }}
-          API: ${{ vars.VITE_API_BASE_URL }}
-        run: |
-          state=""
-          for i in $(seq 1 90); do
-            url=$(gh api "repos/$GITHUB_REPOSITORY/deployments?sha=$GITHUB_SHA&per_page=10" --jq '.[0].statuses_url // empty' || true)
-            state=""
-            [ -n "$url" ] && state=$(gh api "$url" --jq '.[0].state // empty' || true)
-            echo "attempt $i: deployment of ${GITHUB_SHA::7} ${state:-not reported yet}"
-            [ "$state" = "success" ] && break
-            if [ "$state" = "failure" ] || [ "$state" = "error" ]; then echo "::error::Render reported the API deploy as $state"; exit 1; fi
-            sleep 10
-          done
-          [ "$state" = "success" ] || { echo "::error::Render never reported a successful deploy of $GITHUB_SHA"; exit 1; }
-          curl -fsS --retry 12 --retry-delay 10 --retry-all-errors "$API/api/health"
-
-      - name: Verify the front end
-        env:
-          WEB: ${{ vars.WEB_URL }}
-          API: ${{ vars.VITE_API_BASE_URL }}
-        run: |
-          curl -fsS -o /dev/null "$WEB/"
-          bundle=$(curl -fsS "$WEB/" | grep -o 'assets/index-[^"]*\.js' | head -1)
-          curl -fsS "$WEB/$bundle" | grep -qF "$API" || { echo "::error::$WEB doesn't serve a build that calls $API"; exit 1; }
-          echo "Live: $WEB, API $API, commit ${GITHUB_SHA::7}"
