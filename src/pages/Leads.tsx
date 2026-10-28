@@ -370,6 +370,7 @@ export function Leads() {
       {showFilters && (
         <LeadFilterPanel
           statusFilter={statusFilter}
+          statusOptions={getStatusOptions('leads', 'status', LEAD_STATUSES)}
           sourceFilter={sourceFilter}
           ownerFilter={ownerFilter}
           ownerOptions={ownerOptions}
