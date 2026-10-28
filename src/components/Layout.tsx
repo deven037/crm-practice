@@ -66,13 +66,16 @@ function NotificationsBell() {
               Mark all read
             </button>
           </div>
-          {items.length === 0 && <div className="search-hint">No notifications</div>}
-          {items.map((n) => (
-            <div key={n.id} className={`notif-item${n.read ? '' : ' unread'}`}>
-              <span>{n.text}</span>
-              <span className="notif-time">{timeAgo(n.when)}</span>
-            </div>
-          ))}
+          {unread === 0 ? (
+            <div className="search-hint">No notifications</div>
+          ) : (
+            items.map((n) => (
+              <div key={n.id} className={`notif-item${n.read ? '' : ' unread'}`}>
+                <span>{n.text}</span>
+                <span className="notif-time">{timeAgo(n.when)}</span>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>
