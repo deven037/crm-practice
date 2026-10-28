@@ -19,7 +19,7 @@ import { LeadConvertWizard, WizardState } from './leads/LeadConvertWizard';
 import { LeadFilterPanel } from './leads/LeadFilterPanel';
 import { LeadsPagination } from './leads/LeadsPagination';
 import { LeadsTable, SortKey } from './leads/LeadsTable';
-import { beginOnce, clearSelection } from './leads/leadsGuards';
+import { beginOnce, canExportLeads, clearSelection } from './leads/leadsGuards';
 
 type SortDir = 'asc' | 'desc';
 
@@ -32,6 +32,7 @@ export function Leads() {
   const createdMatch = /^(\d{1,3})d$/.exec(params.get('created') ?? '');
   const createdDays = createdMatch && Number(createdMatch[1]) > 0 ? Number(createdMatch[1]) : null;
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [mode, setMode] = useState<'table' | 'triage'>('table');
@@ -61,9 +62,12 @@ export function Leads() {
 
   const load = async () => {
     setLoading(true);
-    const [l, u] = await Promise.all([getAll<Lead>('leads'), getAll<User>('users')]);
-    setLeads(l);
-    setUsers(u);
+    setLoadError(false);
+    // Users are only needed for owner names; a role that can't list them (403) still sees its leads.
+    const [l, u] = await Promise.allSettled([getAll<Lead>('leads'), getAll<User>('users')]);
+    if (l.status === 'fulfilled') setLeads(l.value);
+    else setLoadError(true);
+    if (u.status === 'fulfilled') setUsers(u.value);
     setLoading(false);
   };
 
@@ -273,9 +277,11 @@ export function Leads() {
               Created in the last {createdDays} days · Show all
             </button>
           )}
-          <button className="btn" onClick={exportCsv} data-testid="export-csv-btn">
-            <Download size={14} /> Export CSV
-          </button>
+          {canExportLeads(user?.role) && (
+            <button className="btn" onClick={exportCsv} data-testid="export-csv-btn">
+              <Download size={14} /> Export CSV
+            </button>
+          )}
           <div className="view-toggle" role="group" aria-label="View mode">
             <button
               className={classNames('btn', mode === 'table' && 'btn-active')}
@@ -394,6 +400,13 @@ export function Leads() {
 
       {loading ? (
         <SkeletonRows rows={8} />
+      ) : loadError ? (
+        <div role="alert" data-testid="leads-load-error">
+          <p>Leads could not be loaded.</p>
+          <button type="button" className="btn btn-primary" onClick={load}>
+            Retry
+          </button>
+        </div>
       ) : (
         <>
           <LeadsTable

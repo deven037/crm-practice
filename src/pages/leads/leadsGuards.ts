@@ -1,5 +1,8 @@
 export const clearSelection = (): string[] => [];
 
+// Export CSV is offered to admin and rep; the read-only viewer role cannot export.
+export const canExportLeads = (role: string | undefined): boolean => role === 'admin' || role === 'rep';
+
 // Returns true for the first caller and false for any call made before the flag is released.
 export const beginOnce = (flag: { current: boolean }): boolean => {
   if (flag.current) return false;
