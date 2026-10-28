@@ -12,6 +12,9 @@
   /* Pair each bank fill with its accessible foreground. Set data-bank-tone="amber" on :root for the AIO-93 amber identity. */
   --bank-primary: #1d3a6e;
   --bank-on: #ffffff;
+  /* derived from the two bank inputs, so a bank profile re-themes the shell (design/AIO-140) */
+  --bank-accent: color-mix(in srgb, var(--bank-primary) 40%, #fff);
+  --chrome-active: color-mix(in srgb, var(--bank-primary) 38%, var(--chrome-bg));
 
   /* Keep bank foreground and fill together so controls, marks and brand panels stay legible. */
   --bank-tone-amber: #f2b705;
@@ -128,15 +131,20 @@ code { background: var(--surface-2); border: 1px solid var(--border); border-rad
 .sidebar-collapsed .sidebar { width: 64px; }
 
 .brand { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); margin-bottom: var(--space-3); font-weight: 700; font-size: 16px; color: var(--chrome-text-active); }
-.brand-logo { color: var(--accent); font-size: 20px; }
+.brand-logo { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--bank-primary); color: var(--bank-on); font-size: 18px; overflow: hidden; }
+.brand-logo img { width: 100%; height: 100%; object-fit: contain; }
+.brand-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.brand-name { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.brand-sub { font-size: 12px; font-weight: 400; color: var(--chrome-text-muted); }
 
 .nav-group { margin-bottom: var(--space-2); }
 .nav-group-label {
   display: flex; justify-content: space-between; width: 100%;
   background: none; border: none; color: var(--chrome-text-muted);
-  font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+  font-size: 12px; font-weight: 600;
   padding: var(--space-2); cursor: pointer;
 }
+.nav-group-label:focus-visible, .nav-link:focus-visible { outline: 2px solid var(--chrome-text-active); outline-offset: 2px; }
 .nav-link {
   display: flex; align-items: center; gap: 10px;
   padding: 8px 10px; border-radius: var(--radius-sm);
@@ -144,17 +152,19 @@ code { background: var(--surface-2); border: 1px solid var(--border); border-rad
   transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .nav-link:hover { background: var(--chrome-bg-hover); color: var(--chrome-text-active); }
-.nav-link.active { background: var(--chrome-bg-hover); color: var(--on-accent); box-shadow: inset 3px 0 0 var(--bank-primary); }
+.nav-link.active { background: var(--chrome-active); color: var(--chrome-text-active); box-shadow: inset 3px 0 0 var(--bank-accent); }
+.nav-link.active .nav-icon { color: var(--bank-accent); }
 .nav-icon { width: 20px; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
 
 .main-column { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
 .topbar {
   display: flex; align-items: center; gap: 14px;
-  background: var(--chrome-bg); border-bottom: 1px solid var(--chrome-border);
-  padding: 10px 18px; position: sticky; top: 0; z-index: 50;
-  color: var(--chrome-text);
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  min-height: 60px; padding: 0 var(--space-5); position: sticky; top: 0; z-index: 50;
+  color: var(--text);
 }
+.main-column { border-top: 3px solid var(--bank-accent); }
 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 
 .page { padding: var(--space-5) var(--space-5); max-width: 1320px; width: 100%; }
@@ -850,10 +860,10 @@ div.empty-cell { border: 1px dashed var(--border); border-radius: var(--radius-l
 .global-search { position: relative; flex: 1; max-width: 380px; }
 .global-search-trigger {
   display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 12px;
-  background: var(--chrome-bg-hover); border: 1px solid var(--chrome-border); border-radius: var(--radius-md);
-  color: var(--chrome-text-muted); cursor: pointer; font-size: 13px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md);
+  color: var(--text-muted); cursor: pointer; font-size: 13px; min-height: 40px;
 }
-.global-search-trigger kbd { margin-left: auto; font-size: 11px; background: var(--chrome-bg); border: 1px solid var(--chrome-border); border-radius: 4px; padding: 1px 5px; flex-shrink: 0; }
+.global-search-trigger kbd { margin-left: auto; font-size: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; flex-shrink: 0; }
 .global-search-trigger span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 780px) { .global-search-trigger span { display: none; } .global-search { max-width: none; flex: 1; } }
 .search-dropdown {
@@ -894,7 +904,7 @@ div.empty-cell { border: 1px dashed var(--border); border-radius: var(--radius-l
 .avatar-btn { background: none; border: none; cursor: pointer; padding: 0; }
 .avatar-circle {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-weight: 700; font-size: 13px;
+  width: 34px; height: 34px; border-radius: 50%; background: var(--bank-primary); color: var(--bank-on); font-weight: 700; font-size: 13px;
 }
 .avatar-menu {
   position: absolute; right: 0; top: calc(100% + 6px); width: 230px; z-index: 600;

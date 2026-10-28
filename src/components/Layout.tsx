@@ -13,6 +13,11 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { CommandBar } from './CommandBar';
 import './feedback-widget';
 
+// Product name and bank identity are replaceable; the bank settings are shared with Login and Dashboard.
+const PRODUCT_NAME = import.meta.env.VITE_PRODUCT_NAME?.trim() || 'Harbor CRM';
+const BANK_NAME = import.meta.env.VITE_BANK_NAME?.trim() || '';
+const BANK_LOGO_URL = import.meta.env.VITE_BANK_LOGO_URL?.trim();
+
 function useOutside(onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -207,8 +212,15 @@ export function Layout({ children }: { children: ReactNode }) {
       <CommandBar open={commandOpen} onClose={() => setCommandOpen(false)} />
       <aside className="sidebar" data-testid="sidebar">
         <div className="brand">
-          <span className="brand-logo">◆</span>
-          {!contentCollapsed && <span className="brand-name">Practice CRM</span>}
+          <span className="brand-logo" aria-hidden="true">
+            {BANK_LOGO_URL ? <img src={BANK_LOGO_URL} alt="" /> : '◆'}
+          </span>
+          {!contentCollapsed && (
+            <span className="brand-text">
+              <span className="brand-name">{BANK_NAME || PRODUCT_NAME}</span>
+              {BANK_NAME && <span className="brand-sub">on {PRODUCT_NAME}</span>}
+            </span>
+          )}
         </div>
         <nav>
           {groups.map((group) => {
