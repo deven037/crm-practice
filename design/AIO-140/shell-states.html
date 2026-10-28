@@ -58,7 +58,7 @@ h2.t{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.0
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
 <symbol id="dash" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></symbol><symbol id="act" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></symbol><symbol id="tgt" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol><symbol id="usr" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
 <symbol id="cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol><symbol id="srch" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></symbol><symbol id="bell" viewBox="0 0 24 24"><path d="M6 9a6 6 0 0112 0c0 6 3 8 3 8H3s3-2 3-8M10 21h4"/></symbol><symbol id="moon" viewBox="0 0 24 24"><path d="M21 13A9 9 0 1111 3a7 7 0 0010 10z"/></symbol>
-<symbol id="chv" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol><symbol id="alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></symbol><symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></symbol><symbol id="retry" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0115-6.7L21 8M21 3v5h-5M21 12a9 9 0 01-15 6.7L3 16M3 21v-5h5"/></symbol>
+<symbol id="menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol><symbol id="chv"viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol><symbol id="alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></symbol><symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></symbol><symbol id="retry" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0115-6.7L21 8M21 3v5h-5M21 12a9 9 0 01-15 6.7L3 16M3 21v-5h5"/></symbol>
 </svg>
 <div class="wrap">
   <h1>App shell states</h1>
@@ -74,7 +74,7 @@ h2.t{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.0
     <div class="main">
       <div class="brandbar"><div class="sk" style="width:120px;height:14px"></div></div>
       <header class="topbar">
-        <button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#dash"/></svg></button>
+        <button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#menu"/></svg></button>
         <button class="search" disabled><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button>
         <div class="right"><button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button><span class="avatar" style="background:var(--surface-3)"></span></div>
       </header>
@@ -96,7 +96,7 @@ h2.t{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.0
     </aside>
     <div class="main">
       <div class="brandbar"><b>Harbor CRM</b></div>
-      <header class="topbar"><button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#dash"/></svg></button><button class="search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button><div class="right"><button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button><button class="icon-btn" aria-label="User menu"><span class="avatar">AD</span></button></div></header>
+      <header class="topbar"><button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#menu"/></svg></button><button class="search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button><div class="right"><button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button><button class="icon-btn" aria-label="User menu"><span class="avatar">AD</span></button></div></header>
       <main class="page"><h2 class="t">Dashboard</h2><p class="sub">Where your pipeline stands today.</p>
         <div class="banner" role="alert"><svg class="i" style="margin-top:1px"><use href="#alert"/></svg><div><b>Your bank's name and colours didn't load</b><p>You're seeing the standard Harbor look. Your data is not affected.</p><button class="btn"><svg class="i"><use href="#retry"/></svg>Retry</button></div></div>
       </main>
@@ -113,7 +113,7 @@ h2.t{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.0
     </aside>
     <div class="main">
       <div class="brandbar"><b>Redfern Credit Union</b></div>
-      <header class="topbar"><button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#dash"/></svg></button><button class="search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button><div class="right"><button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button><button class="icon-btn" aria-label="User menu"><span class="avatar">RS</span></button></div></header>
+      <header class="topbar"><button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#menu"/></svg></button><button class="search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button><div class="right"><button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button><button class="icon-btn" aria-label="User menu"><span class="avatar">RS</span></button></div></header>
       <main class="page"><h2 class="t">Leads</h2>
         <div class="empty"><div class="ic"><svg class="i"><use href="#tgt"/></svg></div><h3>No leads yet</h3><p>Add your first lead to start tracking your pipeline.</p><button class="btn">New lead</button></div>
       </main>
@@ -124,13 +124,13 @@ h2.t{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.0
   <p class="capsub">The viewer's avatar menu has no Setup. Typing the Setup address shows Forbidden inside the shell, so navigation stays available. The message says what is blocked and who can change it.</p>
   <div class="frame">
     <aside class="sidebar" aria-label="Main navigation">
-      <div class="brand"><div class="logo" aria-hidden="true">H</div><div><b>Harbor CRM</b><span>Your bank name appears here</span></div></div>
+      <div class="brand"><div class="logo" aria-hidden="true">H</div><div><b>Harbor CRM</b><span>Your bank name</span></div></div>
       <nav><button class="group-label" aria-expanded="true">Main <svg class="i"><use href="#chv"/></svg></button><a class="nav-link" href="#"><svg class="i"><use href="#dash"/></svg>Dashboard</a><a class="nav-link" href="#"><svg class="i"><use href="#act"/></svg>Activity</a><button class="group-label" aria-expanded="true">System <svg class="i"><use href="#chv"/></svg></button><a class="nav-link" href="#"><svg class="i"><use href="#cog"/></svg>Settings</a></nav>
       <div class="side-foot">Staging environment</div>
     </aside>
     <div class="main">
       <div class="brandbar"><b>Harbor CRM</b></div>
-      <header class="topbar"><button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#dash"/></svg></button><button class="search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button><div class="right"><button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button><button class="icon-btn" aria-label="User menu"><span class="avatar">VW</span></button></div></header>
+      <header class="topbar"><button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#menu"/></svg></button><button class="search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span><kbd>⌘K</kbd></button><div class="right"><button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button><button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg></button><button class="icon-btn" aria-label="User menu"><span class="avatar">VW</span></button></div></header>
       <main class="page"><div class="empty" role="alert"><div class="ic"><svg class="i"><use href="#lock"/></svg></div><h3>You don't have access to Setup</h3><p>Setup is for admins and sales reps. Ask an admin if you need a change made.</p><button class="btn">Back to Dashboard</button></div></main>
     </div>
   </div>
