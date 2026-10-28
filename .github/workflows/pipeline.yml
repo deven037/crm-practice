@@ -1,6 +1,6 @@
 # CRM pipeline (AIO-127; adapted from the office reference crm-practice-pipeline.yml).
 #
-#   PR into dev or release -> checks (no deploy)
+#   PR into dev      -> checks
 #   push to release  -> checks -> deploy STAGING    -> verify
 #   push to main     -> checks -> deploy PRODUCTION -> verify   (after Deven's production card)
 #   manual           -> redeploy one environment from its own branch
@@ -11,7 +11,7 @@ name: CRM pipeline
 
 on:
   pull_request:
-    branches: [dev, release]
+    branches: [dev]
   push:
     branches: [release, main]
   workflow_dispatch:
