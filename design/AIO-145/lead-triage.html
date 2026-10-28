@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triage mode: default, decision, empty queue, viewer, first and last lead</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--border-strong:#8b93a3;--text:#1f2937;--text-muted:#5b6472;--bank-primary:#1d3a6e;--bank-on:#fff;--danger:#dc2626;--tone-ok-bg:#d1fae5;--tone-ok-text:#065f46;--tone-info-bg:#dbeafe;--tone-info-text:#1e40af;--tone-neutral-bg:#f3f4f6;--tone-neutral-text:#4b5563;--tone-bad-bg:#fee2e2;--tone-bad-text:#991b1b;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-xl:18px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;--ease:cubic-bezier(.4,0,.2,1)}
+*{box-sizing:border-box}
+body{margin:0;font:14px/20px var(--font-sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button,input{font:inherit;color:inherit}button{cursor:pointer}
+a{color:var(--text);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+h1{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.01em}h2{margin:0;font-size:18px;line-height:24px;font-weight:600}h3{margin:0;font-size:16px;line-height:24px;font-weight:600}
+.board{max-width:1200px;margin:0 auto;padding:32px 32px 64px;display:grid;gap:48px}
+.state>header{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:12px}.state>header p{margin:0;color:var(--text-muted)}
+.frame{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px 24px}
+.tri{max-width:640px;margin:0 auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:44px;padding:0 18px;border:1px solid transparent;border-radius:var(--radius-md);background:var(--bank-primary);color:var(--bank-on);font-weight:600;text-decoration:none;transition:filter 120ms var(--ease),background 120ms var(--ease),transform 120ms var(--ease)}
+.btn:hover{filter:brightness(1.12)}.btn:active{filter:brightness(.92);transform:translateY(1px)}.btn[disabled]{opacity:.4;cursor:not-allowed;filter:none;transform:none}
+.btn-2{background:var(--surface);color:var(--text);border-color:var(--border-strong)}.btn-2:hover{background:var(--surface-2);filter:none}
+.btn-ghost{background:none;color:var(--text);border-color:transparent}.btn-ghost:hover{background:var(--surface-3);filter:none}
+.key{min-width:22px;height:22px;padding:0 6px;display:inline-grid;place-items:center;border-radius:6px;font:600 12px var(--font-sans);border:1px solid currentColor;opacity:.85;border-bottom-width:2px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.top h1{font-size:18px;line-height:24px;font-weight:600}
+.rail{display:flex;gap:3px;margin-bottom:20px}.rail i{flex:1;height:4px;border-radius:4px;background:var(--surface-3)}.rail i.done{background:var(--bank-primary)}.rail i.cur{background:var(--text)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:32px;box-shadow:0 8px 24px rgba(11,15,25,.08)}
+.card h2{font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.01em}.card h2 a{text-decoration:none}.card h2 a:hover{text-decoration:underline}
+.co{margin:2px 0 0;font-size:15px;color:var(--text-muted)}
+.pill{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:99px;font-size:13px;font-weight:500}.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.s-new{background:var(--tone-neutral-bg);color:var(--tone-neutral-text)}.s-con{background:var(--tone-info-bg);color:var(--tone-info-text)}.s-qua{background:var(--tone-ok-bg);color:var(--tone-ok-text)}.s-unq{background:var(--tone-bad-bg);color:var(--tone-bad-text)}
+.val{margin:20px 0 4px;font-size:32px;line-height:36px;font-weight:800;font-variant-numeric:tabular-nums}.vl{color:var(--text-muted);font-size:13px}
+dl{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;margin:24px 0 0;padding-top:20px;border-top:1px solid var(--border)}dt{font-size:13px;color:var(--text-muted)}dd{margin:0;overflow-wrap:anywhere}
+.decide{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}.decide .btn{height:52px;font-size:15px}
+.btn-q{background:var(--bank-primary)}.btn-d{background:var(--surface);color:var(--tone-bad-text);border-color:var(--danger)}.btn-d:hover{background:var(--tone-bad-bg);filter:none}
+.nav{display:flex;justify-content:space-between;gap:8px;margin-top:12px}
+.toast{display:flex;gap:12px;align-items:center;width:fit-content;max-width:100%;padding:12px 16px;border-radius:var(--radius-md);background:var(--text);color:var(--surface);margin:0 auto 16px}
+.empty{display:grid;justify-items:center;text-align:center;gap:8px;padding:56px 24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl)}.empty p{margin:0;color:var(--text-muted);max-width:40ch}.empty .btn{margin-top:12px}
+.vnote{margin-top:20px;padding:12px;border-radius:var(--radius-md);background:var(--surface-2);color:var(--text-muted)}
+.hintbar{margin:16px 0 0;text-align:center;color:var(--text-muted);font-size:13px}
+.note{margin:12px 0 0;font-size:13px;color:var(--text-muted)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:1100px){.cols{grid-template-columns:1fr}}
+@media (max-width:780px){.board{padding:24px 16px 48px;gap:32px}.frame{padding:16px 12px}.card{padding:20px}dl{grid-template-columns:1fr}.decide{grid-template-columns:1fr}.decide .btn{height:56px}.key,.hintbar{display:none}.nav .btn{flex:1}.top .btn{height:44px}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol><symbol id="l" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol><symbol id="r" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol><symbol id="ok" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></symbol><symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol><symbol id="inbox" viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3zM3 13h5l1 3h6l1-3h5"/></symbol>
+</svg>
+<main class="board">
+
+  <section class="state" aria-labelledby="t1">
+    <header><h2 id="t1">Default (admin or rep)</h2><p>One lead at a time. Qualify is the one filled button; Disqualify is outlined in red text and border. Q and D are shown on the buttons; they do not fire while typing (AC30 to AC34).</p></header>
+    <div class="frame" data-testid="lead-triage-mode"><div class="tri">
+      <div class="top"><h1>Triage: 3 of 18</h1><button class="btn btn-ghost" aria-label="Exit triage mode"><svg class="i"><use href="#x"/></svg>Exit</button></div>
+      <div class="rail" role="img" aria-label="3 of 18 leads reviewed"><i class="done"></i><i class="done"></i><i class="cur"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <article class="card" aria-labelledby="tn">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><h2 id="tn"><a href="#">Tomás Alvarez</a></h2><p class="co">Brightside Dental</p></div><span class="pill s-con">Contacted</span></div>
+        <p class="val">$12,500</p><span class="vl">Estimated value</span>
+        <dl><div><dt>Email</dt><dd>tomas@brightside.example</dd></div><div><dt>Phone</dt><dd>+1 212 555 0170</dd></div><div><dt>Source</dt><dd>Web</dd></div><div><dt>Owner</dt><dd>Mei Tanaka</dd></div><div><dt>Created</dt><dd>Oct 24, 2026</dd></div></dl>
+        <div class="decide"><button class="btn btn-q" data-testid="triage-qualify"><svg class="i"><use href="#ok"/></svg>Qualify <span class="key" aria-hidden="true">Q</span></button><button class="btn btn-d" data-testid="triage-disqualify"><svg class="i"><use href="#x"/></svg>Disqualify <span class="key" aria-hidden="true">D</span></button></div>
+      </article>
+      <div class="nav"><button class="btn btn-2"><svg class="i"><use href="#l"/></svg>Back</button><button class="btn btn-ghost" data-testid="triage-skip">Skip</button><button class="btn btn-2">Next<svg class="i"><use href="#r"/></svg></button></div>
+      <p class="hintbar">Left and right arrow keys move between leads, Esc exits. The queue follows your list search and filters.</p>
+    </div></div>
+  </section>
+
+  <section class="state" aria-labelledby="t2">
+    <header><h2 id="t2">After a decision, first lead, last lead</h2><p>The toast confirms and the next lead appears. Back is disabled on the first lead, Next on the last (AC32). On a phone the shortcuts are hidden and the buttons are 56 px tall.</p></header>
+    <div class="cols">
+      <div class="frame"><div class="tri"><div class="toast" role="status"><svg class="i"><use href="#ok"/></svg>Tomás Alvarez marked Qualified.</div>
+        <div class="top"><h1>Triage: 1 of 18</h1></div>
+        <article class="card"><h2>Priya Raman</h2><p class="co">Northwind Logistics</p><div class="nav" style="margin-top:20px"><button class="btn btn-2" disabled>Back</button><button class="btn btn-2">Next</button></div></article></div></div>
+      <div class="frame"><div class="tri"><div class="top"><h1>Triage: 18 of 18</h1></div>
+        <article class="card"><h2>Sam Whitaker</h2><p class="co">Orchard Foods</p><div class="nav" style="margin-top:20px"><button class="btn btn-2">Back</button><button class="btn btn-2" disabled>Next</button></div></article></div></div>
+    </div>
+  </section>
+
+  <section class="state" aria-labelledby="t3">
+    <header><h2 id="t3">Empty queue</h2><p>AC33: the message from the ticket, one way out.</p></header>
+    <div class="frame"><div class="tri"><div class="empty"><svg class="i" style="width:32px;height:32px"><use href="#inbox"/></svg><h3>No leads left in this queue.</h3><p>Every lead matching your filters has been reviewed. Change the filters in the table to triage others.</p><button class="btn">Back to table</button></div></div></div>
+  </section>
+
+  <section class="state" aria-labelledby="t4">
+    <header><h2 id="t4">Viewer</h2><p>Read-only queue: decisions are replaced by an explanation; moving through leads still works (AC35).</p></header>
+    <div class="frame"><div class="tri"><div class="top"><h1>Triage: 3 of 18</h1></div>
+      <article class="card"><div style="display:flex;justify-content:space-between;gap:12px"><div><h2>Tomás Alvarez</h2><p class="co">Brightside Dental</p></div><span class="pill s-con">Contacted</span></div>
+        <p class="vnote"><svg class="i" style="width:14px;height:14px;vertical-align:-2px"><use href="#lock"/></svg> You have view-only access, so you cannot qualify or disqualify leads.</p></article>
+      <div class="nav"><button class="btn btn-2">Back</button><button class="btn btn-2">Next</button></div></div></div>
+  </section>
+</main>
+</body>
+</html>
