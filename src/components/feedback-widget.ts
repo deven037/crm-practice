@@ -3,6 +3,7 @@
  * Practices shadow-DOM piercing (e.g. Playwright pierces automatically,
  * Selenium needs getShadowRoot()). Deliberately no data-testid inside.
  */
+if (typeof HTMLElement !== 'undefined' && typeof customElements !== 'undefined' && !customElements.get('feedback-widget')) {
 class FeedbackWidget extends HTMLElement {
   connectedCallback() {
     const root = this.attachShadow({ mode: 'open' });
@@ -82,8 +83,7 @@ class FeedbackWidget extends HTMLElement {
   }
 }
 
-if (!customElements.get('feedback-widget')) {
-  customElements.define('feedback-widget', FeedbackWidget);
+customElements.define('feedback-widget', FeedbackWidget);
 }
 
 declare global {
