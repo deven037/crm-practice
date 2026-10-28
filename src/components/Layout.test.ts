@@ -13,7 +13,8 @@ vi.mock('../data/store', () => ({
   setValue: vi.fn(),
 }));
 
-import { Layout, NotificationsPanel } from './Layout';
+import { NotificationsPanel } from './NotificationsPanel';
+import { Layout } from './Layout';
 
 function render(initialSidebarCollapsed = false): string {
   return renderToStaticMarkup(
@@ -61,6 +62,6 @@ describe('NotificationsPanel', () => {
     );
 
     expect(html).toContain('No notifications');
-    expect(html).toMatch(/<button[^>]*disabled="">Mark all read<\\/button>/);
+    expect(html).toMatch(/<button[^>]*disabled="">Mark all read<\/button>/);
   });
 });
