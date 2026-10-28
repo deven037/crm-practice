@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Activity as ActivityIcon, Bell, Building2, CheckSquare, ChevronDown, ChevronRight, Database, DollarSign, FlaskConical, LayoutDashboard,
   LogOut, Megaphone, Menu, Moon, Package, Receipt, Search, Settings, Shield, Sun, Target, Ticket, User,
@@ -11,6 +11,7 @@ import { AppNotification } from '../types';
 import { initials, timeAgo } from '../utils';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { CommandBar } from './CommandBar';
+import { SidebarLink } from './SidebarLink';
 import './feedback-widget';
 
 // Product name and bank identity are replaceable; the bank settings are shared with Login and Dashboard.
@@ -40,37 +41,6 @@ function GlobalSearchTrigger({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-export function NotificationsPanel({
-  items,
-  onMarkAllRead,
-}: {
-  items: AppNotification[];
-  onMarkAllRead: () => void;
-}) {
-  const unread = items.filter((n) => !n.read).length;
-
-  return (
-    <div className="notif-panel">
-      <div className="notif-head">
-        <strong>Notifications</strong>
-        <button className="link-btn" onClick={onMarkAllRead} disabled={unread === 0}>
-          Mark all read
-        </button>
-      </div>
-      {unread === 0 ? (
-        <div className="search-hint">No notifications</div>
-      ) : (
-        items.map((n) => (
-          <div key={n.id} className={`notif-item${n.read ? '' : ' unread'}`}>
-            <span>{n.text}</span>
-            <span className="notif-time">{timeAgo(n.when)}</span>
-          </div>
-        ))
-      )}
-    </div>
-  );
-}
-
 function NotificationsBell() {
   const [items, setItems] = useState<AppNotification[]>(() => getAllSync<AppNotification>('notifications'));
   const [open, setOpen] = useState(false);
@@ -89,7 +59,26 @@ function NotificationsBell() {
         <Bell size={18} />
         {unread > 0 && <span className="bell-badge">{unread}</span>}
       </button>
-      {open && <NotificationsPanel items={items} onMarkAllRead={markAllRead} />}
+      {open && (
+        <div className="notif-panel">
+          <div className="notif-head">
+            <strong>Notifications</strong>
+            <button className="link-btn" onClick={markAllRead} disabled={unread === 0}>
+              Mark all read
+            </button>
+          </div>
+          {items.length === 0 ? (
+            <div className="search-hint">No notifications</div>
+          ) : (
+            items.map((n) => (
+              <div key={n.id} className={`notif-item${n.read ? '' : ' unread'}`}>
+                <span>{n.text}</span>
+                <span className="notif-time">{timeAgo(n.when)}</span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -179,9 +168,9 @@ const NAV_GROUPS: { label: string; items: { to: string; label: string; icon: Luc
   },
 ];
 
-export function Layout({ children }: { children: ReactNode }) {
+export function Layout({ children, initialSidebarCollapsed = false }: { children: ReactNode; initialSidebarCollapsed?: boolean }) {
   const { user } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(initialSidebarCollapsed);
   const [closedGroups, setClosedGroups] = useState<string[]>([]);
   const [theme, setTheme] = useState<string>(() => getValue('theme', 'light'));
   const [commandOpen, setCommandOpen] = useState(false);
@@ -256,18 +245,15 @@ export function Layout({ children }: { children: ReactNode }) {
                 )}
                 {(contentCollapsed || !closed) &&
                   group.items.map((item) => (
-                    <NavLink
+                    <SidebarLink
                       key={item.to}
                       to={item.to}
+                      label={item.label}
+                      icon={<item.icon size={17} />}
+                      collapsed={contentCollapsed}
                       end={item.to === '/'}
-                      className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
                       onClick={() => isMobile && setMobileOpen(false)}
-                    >
-                      <span className="nav-icon">
-                        <item.icon size={17} />
-                      </span>
-                      {!contentCollapsed && <span>{item.label}</span>}
-                    </NavLink>
+                    />
                   ))}
               </div>
             );
