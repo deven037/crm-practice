@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leads list: states (loading, empty, no match, error, viewer, bank theme, dark)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--border-strong:#8b93a3;--text:#1f2937;--text-muted:#5b6472;--bank-primary:#1d3a6e;--bank-on:#fff;--bank-accent:color-mix(in srgb,var(--bank-primary) 40%,#fff);--danger:#dc2626;--danger-bg:#fef2f2;--danger-border:#fecaca;--tone-ok-bg:#d1fae5;--tone-ok-text:#065f46;--tone-info-bg:#dbeafe;--tone-info-text:#1e40af;--tone-warn-bg:#fef3c7;--tone-warn-text:#92400e;--tone-neutral-bg:#f3f4f6;--tone-neutral-text:#4b5563;--tone-bad-bg:#fee2e2;--tone-bad-text:#991b1b;--tone-done-bg:#ede9fe;--tone-done-text:#5b21b6;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;--ease:cubic-bezier(.4,0,.2,1)}
+.dark{--bg:#10151f;--surface:#1a2130;--surface-2:#202839;--surface-3:#2a3347;--border:#313b52;--border-strong:#7d88a3;--text:#e7eaf0;--text-muted:#a3abbf;--danger-bg:#3b1a1a;--danger-border:#7f2a2a;--tone-ok-bg:#12372a;--tone-ok-text:#86efac;--tone-info-bg:#1b2f57;--tone-info-text:#bfdbfe;--tone-warn-bg:#4a3512;--tone-warn-text:#fcd34d;--tone-neutral-bg:#2a3347;--tone-neutral-text:#cbd2e1;--tone-bad-bg:#4a1d1d;--tone-bad-text:#fecaca;--tone-done-bg:#2e2354;--tone-done-text:#c4b5fd}
+*{box-sizing:border-box}
+body{margin:0;font:14px/20px var(--font-sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+h1{margin:0;font-size:24px;line-height:32px;font-weight:700}h2{margin:0;font-size:18px;line-height:24px;font-weight:600}h3{margin:0;font-size:16px;line-height:24px;font-weight:600}
+.board{max-width:1200px;margin:0 auto;padding:32px 32px 64px;display:grid;gap:48px}
+.intro p{margin:4px 0 0;color:var(--text-muted);font-size:15px;max-width:68ch}
+.state>header{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:12px}.state>header p{margin:0;color:var(--text-muted)}
+.frame{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+.frame.dark{border-color:#313b52}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 16px;border:1px solid transparent;border-radius:var(--radius-md);background:var(--bank-primary);color:var(--bank-on);font-weight:600;text-decoration:none;transition:filter 120ms var(--ease),background 120ms var(--ease)}
+.btn:hover{filter:brightness(1.12)}.btn:active{filter:brightness(.92)}.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn-2{background:var(--surface);color:var(--text);border-color:var(--border-strong)}.btn-2:hover{background:var(--surface-2);filter:none}
+.tb{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}.tb .in{flex:1;min-width:200px;max-width:420px}
+.in{height:44px;padding:0 12px;border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--surface)}
+.tw{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th{text-align:left;font-size:13px;font-weight:600;color:var(--text-muted);padding:0 12px;height:44px;background:var(--surface-2)}
+td{padding:0 12px;height:56px;border-top:1px solid var(--border);white-space:nowrap}
+.sk{display:block;height:12px;border-radius:6px;background:linear-gradient(90deg,var(--surface-3) 25%,var(--surface-2) 50%,var(--surface-3) 75%);background-size:200% 100%;animation:sh 1.4s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:99px;font-size:13px;font-weight:500}.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.s-new{background:var(--tone-neutral-bg);color:var(--tone-neutral-text)}.s-con{background:var(--tone-info-bg);color:var(--tone-info-text)}.s-qua{background:var(--tone-ok-bg);color:var(--tone-ok-text)}.s-unq{background:var(--tone-bad-bg);color:var(--tone-bad-text)}.s-cvt{background:var(--tone-done-bg);color:var(--tone-done-text)}
+.empty{display:grid;justify-items:center;text-align:center;gap:8px;padding:56px 24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg)}
+.empty p{margin:0;color:var(--text-muted);max-width:44ch}.empty .btn{margin-top:12px}
+.art{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;background:color-mix(in srgb,var(--bank-primary) 12%,var(--surface));color:var(--text);margin-bottom:8px}
+.art .i{width:28px;height:28px}
+.banner{display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:var(--radius-md);background:var(--danger-bg);border:1px solid var(--danger-border);color:var(--tone-bad-text)}
+.banner p{margin:2px 0 0}.banner .btn{margin-left:auto;background:var(--surface);color:var(--text);border-color:var(--border-strong);flex:none}
+.toast{display:flex;gap:12px;align-items:center;width:fit-content;max-width:100%;padding:12px 16px;border-radius:var(--radius-md);background:var(--text);color:var(--surface);box-shadow:0 12px 32px rgba(11,15,25,.2)}
+.fkb{outline:2px solid var(--text);outline-offset:2px}
+.board{grid-template-columns:minmax(0,1fr)}.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}.cols table{min-width:0}.cols .tw{overflow:hidden}
+.note{margin:8px 0 0;font-size:13px;color:var(--text-muted)}
+.cbl{display:inline-block;width:20px;height:20px;border:1.5px solid var(--border-strong);border-radius:5px;vertical-align:middle}
+@media (max-width:780px){.board{padding:24px 16px 48px;gap:32px}.cols{grid-template-columns:minmax(0,1fr)}.frame{padding:12px}.banner{flex-wrap:wrap}.banner .btn{margin-left:0;width:100%}.btn{width:100%}.tb .in{max-width:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="tgt" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol><symbol id="srch" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></symbol><symbol id="warn" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 18v.5"/></symbol><symbol id="ok" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></symbol><symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></symbol>
+</svg>
+<main class="board">
+  <div class="intro"><h1>Leads list: states</h1><p>Each state sits inside the Leads page from <a href="leads-list.html">leads-list.html</a>; the shell is unchanged. Everything reads from Harbor tokens, so a bank profile only supplies the primary colour and its readable text colour.</p></div>
+
+  <section class="state" aria-labelledby="s1">
+    <header><h2 id="s1">Loading</h2><p>Eight skeleton rows match the table; the count says "Loading leads…" and no stale rows show (AC13).</p></header>
+    <div class="frame" aria-busy="true">
+      <div class="tb"><input class="in" placeholder="Search name, company, email…" aria-label="Search leads" disabled><button class="btn btn-2" disabled>Filters</button></div>
+      <div class="tw"><table aria-label="Loading leads"><thead><tr><th style="width:48px"></th><th>Name</th><th>Company</th><th>Email</th><th>Status</th><th>Owner</th><th>Value</th></tr></thead><tbody>
+        <tr><td><span class="sk" style="width:20px;height:20px"></span></td><td><span class="sk" style="width:110px"></span></td><td><span class="sk" style="width:140px"></span></td><td><span class="sk" style="width:170px"></span></td><td><span class="sk" style="width:76px;height:22px;border-radius:99px"></span></td><td><span class="sk" style="width:80px"></span></td><td><span class="sk" style="width:60px"></span></td></tr>
+        <tr><td><span class="sk" style="width:20px;height:20px"></span></td><td><span class="sk" style="width:90px"></span></td><td><span class="sk" style="width:120px"></span></td><td><span class="sk" style="width:150px"></span></td><td><span class="sk" style="width:76px;height:22px;border-radius:99px"></span></td><td><span class="sk" style="width:70px"></span></td><td><span class="sk" style="width:60px"></span></td></tr>
+        <tr><td><span class="sk" style="width:20px;height:20px"></span></td><td><span class="sk" style="width:120px"></span></td><td><span class="sk" style="width:100px"></span></td><td><span class="sk" style="width:180px"></span></td><td><span class="sk" style="width:76px;height:22px;border-radius:99px"></span></td><td><span class="sk" style="width:80px"></span></td><td><span class="sk" style="width:60px"></span></td></tr>
+      </tbody></table></div>
+      <p class="note">Shown: 3 of 8 skeleton rows. On a phone the skeleton rows are the same height as a lead card (about 92 px).</p>
+    </div>
+  </section>
+
+  <section class="state" aria-labelledby="s2">
+    <header><h2 id="s2">Empty: no leads yet (admin and rep)</h2><p>One next step, the same button as the page header (AC14).</p></header>
+    <div class="frame"><div class="empty"><div class="art"><svg class="i"><use href="#tgt"/></svg></div><h3>No leads yet</h3><p>Add your first lead, or import a list from Data Studio. New leads show up here newest first.</p><button class="btn">+ New Lead</button></div></div>
+  </section>
+
+  <section class="state" aria-labelledby="s3">
+    <header><h2 id="s3">Empty: no leads yet (viewer)</h2><p>No action, and it says who can add leads.</p></header>
+    <div class="frame"><div class="empty"><div class="art"><svg class="i"><use href="#tgt"/></svg></div><h3>No leads yet</h3><p>Leads appear here once an admin or sales rep adds them.</p></div></div>
+  </section>
+
+  <section class="state" aria-labelledby="s4">
+    <header><h2 id="s4">Empty: no match</h2><p>Keeps the user's search and filters, and gives a one-click way out.</p></header>
+    <div class="frame">
+      <div class="tb"><input class="in" value="zzz" aria-label="Search leads"><button class="btn btn-2">Filters</button></div>
+      <div class="empty"><div class="art"><svg class="i"><use href="#srch"/></svg></div><h3>No leads match the current filters.</h3><p>Check the spelling, or clear the search and filters to see all 128 leads.</p><button class="btn btn-2">Clear filters</button></div>
+    </div>
+  </section>
+
+  <section class="state" aria-labelledby="s5">
+    <header><h2 id="s5">Error: leads could not load</h2><p>Plain words, Retry, and the toolbar stays usable. No empty table (AC15).</p></header>
+    <div class="frame">
+      <div class="tb"><input class="in" placeholder="Search name, company, email…" aria-label="Search leads"><button class="btn btn-2">Filters</button></div>
+      <div class="banner" role="alert"><svg class="i"><use href="#warn"/></svg><div><b>Leads did not load</b><p>The server did not answer. Your search and filters are kept. Try again in a moment.</p></div><button class="btn">Retry</button></div>
+    </div>
+  </section>
+
+  <section class="state" aria-labelledby="s6">
+    <header><h2 id="s6">Viewer role</h2><p>Read-only: no "+ New Lead", no Triage toggle, no checkboxes, no row menu. Export CSV stays (Assumption in AC, viewer may export). A small line explains why.</p></header>
+    <div class="frame">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px"><div><h1>Leads</h1><p style="margin:4px 0 0;color:var(--text-muted);font-size:15px">128 leads, newest first.</p></div><button class="btn btn-2">Export CSV</button></div>
+      <div class="tw"><table aria-label="Leads"><thead><tr><th>Name</th><th>Company</th><th>Status</th><th>Owner</th><th>Value</th></tr></thead><tbody>
+        <tr><td><b>Priya Raman</b></td><td>Northwind Logistics</td><td><span class="pill s-qua">Qualified</span></td><td>Dev Patel</td><td>$48,000</td></tr>
+        <tr><td><b>Sam Whitaker</b></td><td>Orchard Foods</td><td><span class="pill s-new">New</span></td><td>Mei Tanaka</td><td>$7,200</td></tr>
+      </tbody></table></div>
+      <p class="note"><svg class="i" style="width:14px;height:14px;vertical-align:-2px"><use href="#lock"/></svg> You have view-only access. Ask an admin to change your role.</p>
+    </div>
+  </section>
+
+  <section class="state" aria-labelledby="s7">
+    <header><h2 id="s7">Feedback toast and keyboard focus</h2><p>Toasts are announced politely (role="status"). The focus ring is the text colour, 2 px, so it holds on any bank colour.</p></header>
+    <div class="frame">
+      <div class="toast" role="status"><svg class="i"><use href="#ok"/></svg>2 leads assigned to Dev Patel.</div>
+      <div class="tb" style="margin-top:16px"><input class="in fkb" placeholder="Search name, company, email…" aria-label="Search leads"><button class="btn">+ New Lead</button></div>
+      <p class="note">Search field shown with its focus ring. Rows, sort headers, checkboxes and pager buttons use the same ring.</p>
+    </div>
+  </section>
+
+  <section class="state" aria-labelledby="s8">
+    <header><h2 id="s8">Sample bank: Northquay Savings, light and dark</h2><p>Only <code>--bank-primary:#0f6b5c</code> and <code>--bank-on:#fff</code> change (6.4:1). Status colours keep their meaning. Dark is a designed palette, not an inversion.</p></header>
+    <div class="cols">
+      <div class="frame" style="--bank-primary:#0f6b5c;--bank-on:#fff">
+        <div class="tb"><button class="btn">+ New Lead</button><button class="btn btn-2">Export CSV</button></div>
+        <div class="tw"><table aria-label="Leads, Northquay light"><thead><tr><th>Name</th><th>Status</th><th>Value</th></tr></thead><tbody>
+          <tr style="background:color-mix(in srgb,var(--bank-primary) 7%,var(--surface))"><td><span class="cbl" style="background:var(--bank-primary);border-color:var(--bank-primary)"></span> <b>Priya Raman</b></td><td><span class="pill s-qua">Qualified</span></td><td>$48,000</td></tr>
+          <tr><td><span class="cbl"></span> <b>Grace Okafor</b></td><td><span class="pill s-unq">Unqualified</span></td><td>$86,000</td></tr>
+        </tbody></table></div>
+      </div>
+      <div class="frame dark" style="--bank-primary:#0f6b5c;--bank-on:#fff">
+        <div class="tb"><button class="btn">+ New Lead</button><button class="btn btn-2">Export CSV</button></div>
+        <div class="tw"><table aria-label="Leads, Northquay dark"><thead><tr><th>Name</th><th>Status</th><th>Value</th></tr></thead><tbody>
+          <tr style="background:color-mix(in srgb,var(--bank-primary) 14%,var(--surface))"><td><span class="cbl" style="background:var(--bank-primary);border-color:var(--bank-primary)"></span> <b>Priya Raman</b></td><td><span class="pill s-qua">Qualified</span></td><td>$48,000</td></tr>
+          <tr><td><span class="cbl"></span> <b>Grace Okafor</b></td><td><span class="pill s-unq">Unqualified</span></td><td>$86,000</td></tr>
+        </tbody></table></div>
+      </div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

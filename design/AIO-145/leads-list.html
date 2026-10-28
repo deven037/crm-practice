@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leads list: default (admin, filters open, 2 selected, row menu open)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Harbor tokens (design/design-tokens.json). A bank profile sets only --bank-primary and --bank-on. */
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--border-strong:#8b93a3;--text:#1f2937;--text-muted:#5b6472;--bank-primary:#1d3a6e;--bank-on:#fff;--bank-accent:color-mix(in srgb,var(--bank-primary) 40%,#fff);--chrome-bg:#0b0f19;--chrome-bg-hover:#171e2e;--chrome-border:#1e2635;--chrome-text:#c4cad9;--chrome-text-muted:#7c8499;--chrome-active:color-mix(in srgb,var(--bank-primary) 38%,var(--chrome-bg));--danger:#dc2626;--danger-bg:#fef2f2;--danger-border:#fecaca;--tone-ok-bg:#d1fae5;--tone-ok-text:#065f46;--tone-info-bg:#dbeafe;--tone-info-text:#1e40af;--tone-warn-bg:#fef3c7;--tone-warn-text:#92400e;--tone-neutral-bg:#f3f4f6;--tone-neutral-text:#4b5563;--tone-bad-bg:#fee2e2;--tone-bad-text:#991b1b;--tone-done-bg:#ede9fe;--tone-done-text:#5b21b6;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;--ease:cubic-bezier(.4,0,.2,1);--shadow-pop:0 12px 32px rgba(11,15,25,.18),0 0 0 1px var(--border)}
+*{box-sizing:border-box}
+body{margin:0;font:14px/20px var(--font-sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer}
+a{color:var(--text);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.sidebar :focus-visible{outline-color:#fff}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+h1{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.01em}.sub{margin:4px 0 0;color:var(--text-muted);font-size:15px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border:1px solid transparent;border-radius:var(--radius-md);background:var(--bank-primary);color:var(--bank-on);font-weight:600;text-decoration:none;transition:filter 120ms var(--ease),background 120ms var(--ease)}
+.btn:hover{filter:brightness(1.12)}.btn:active{filter:brightness(.92)}.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none}
+.btn-2{background:var(--surface);color:var(--text);border-color:var(--border-strong)}.btn-2:hover{background:var(--surface-2);filter:none}.btn-2:active{background:var(--surface-3);filter:none}
+.btn-ghost{background:none;color:var(--text);border-color:transparent}.btn-ghost:hover{background:var(--surface-2);filter:none}
+.btn-danger{background:var(--danger);color:#fff}
+/* shell (abbreviated; full shell in AIO-140) */
+.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;border-top:3px solid var(--bank-accent)}
+.sidebar{background:var(--chrome-bg);color:var(--chrome-text);position:sticky;top:0;height:calc(100vh - 3px);display:flex;flex-direction:column;border-right:1px solid var(--chrome-border)}
+.brand{display:flex;align-items:center;gap:12px;padding:16px 16px 12px}
+.logo{width:36px;height:36px;border-radius:var(--radius-md);background:var(--bank-primary);color:var(--bank-on);display:grid;place-items:center;font-weight:700;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.brand b{display:block;color:#fff;font-size:15px;font-weight:600}.brand span{display:block;color:var(--chrome-text-muted);font-size:12px;line-height:16px}
+nav{flex:1;padding:8px}.group-label{margin:12px 12px 4px;font-size:12px;font-weight:600;color:var(--chrome-text-muted)}
+.nav-link{position:relative;display:flex;align-items:center;height:40px;padding:0 12px;border-radius:8px;color:var(--chrome-text);text-decoration:none;font-weight:500;transition:background 120ms var(--ease)}
+.nav-link:hover{background:var(--chrome-bg-hover);color:#fff}.nav-link.active{background:var(--chrome-active);color:#fff}
+.nav-link.active::before{content:"";position:absolute;left:-8px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--bank-accent)}
+.side-foot{padding:12px 16px;border-top:1px solid var(--chrome-border);font-size:12px;color:var(--chrome-text-muted)}
+.topbar{position:sticky;top:0;z-index:5;height:60px;display:flex;align-items:center;gap:8px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+.icon-btn{width:40px;height:40px;display:grid;place-items:center;border:0;background:none;border-radius:var(--radius-md)}.icon-btn:hover{background:var(--surface-2)}
+.gsearch{flex:1;max-width:520px;height:40px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--border);background:var(--surface-2);border-radius:var(--radius-md);color:var(--text-muted)}
+.avatar{margin-left:auto;width:36px;height:36px;border-radius:50%;background:var(--bank-primary);color:var(--bank-on);display:grid;place-items:center;font-size:13px;font-weight:600}
+.page{max-width:1200px;margin:0 auto;padding:32px 32px 64px}
+.menu-btn{display:none}
+/* page */
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;padding:3px;background:var(--surface-3);border-radius:var(--radius-md)}
+.seg button{height:34px;padding:0 14px;border:0;border-radius:8px;background:none;font-weight:500;color:var(--text-muted)}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(11,15,25,.14)}
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.find{position:relative;flex:1;min-width:240px;max-width:420px}.find .i{position:absolute;left:12px;top:13px;color:var(--text-muted)}
+.in{height:44px;width:100%;padding:0 12px;border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--surface);transition:border-color 120ms var(--ease)}
+.find .in{padding-left:38px}
+.fbtn{position:relative;height:44px}.fdot{width:8px;height:8px;border-radius:50%;background:var(--bank-primary);box-shadow:0 0 0 2px var(--surface)}
+.panel{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:16px 24px;align-items:end;padding:16px 20px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg)}
+.lbl{display:block;margin-bottom:6px;font-size:13px;font-weight:600}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--border-strong);border-radius:99px;background:var(--surface);font-weight:500}
+.chip:has(input:checked){background:var(--bank-primary);border-color:var(--bank-primary);color:var(--bank-on)}
+.chip input{accent-color:var(--text);width:16px;height:16px;margin:0}.chip:has(input:focus-visible){outline:2px solid var(--text);outline-offset:2px}
+.bulk{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 8px 8px 16px;margin-bottom:12px;background:var(--text);color:var(--surface);border-radius:var(--radius-md)}
+.bulk b{margin-right:auto;font-weight:600}
+.bulk .btn{background:transparent;color:inherit;border-color:rgba(255,255,255,.4);height:36px}.bulk .btn:hover{background:rgba(255,255,255,.12);filter:none}
+.bulk :focus-visible{outline-color:#fff}
+.wrap{position:relative}
+.tw{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th{text-align:left;font-size:13px;font-weight:600;color:var(--text-muted);padding:0 12px;height:44px;background:var(--surface-2);white-space:nowrap}
+th button{display:inline-flex;align-items:center;gap:4px;height:44px;padding:0;border:0;background:none;font-weight:600;color:inherit}
+th[aria-sort] button{color:var(--text)}
+td{padding:0 12px;height:56px;border-top:1px solid var(--border);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr{cursor:pointer;transition:background 120ms var(--ease)}tbody tr:hover{background:var(--surface-2)}tbody tr[aria-selected=true]{background:color-mix(in srgb,var(--bank-primary) 7%,var(--surface))}
+tbody tr:focus-visible{outline-offset:-2px}
+td.sel,th.sel{width:48px;padding:0 0 0 8px}
+.cb{width:20px;height:20px;margin:0;accent-color:var(--bank-primary)}
+.cbl{display:grid;place-items:center;width:40px;height:40px;cursor:pointer}
+.nm{font-weight:600}.co{color:var(--text-muted)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:99px;font-size:13px;font-weight:500}.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.s-new{background:var(--tone-neutral-bg);color:var(--tone-neutral-text)}.s-con{background:var(--tone-info-bg);color:var(--tone-info-text)}.s-qua{background:var(--tone-ok-bg);color:var(--tone-ok-text)}.s-unq{background:var(--tone-bad-bg);color:var(--tone-bad-text)}.s-cvt{background:var(--tone-done-bg);color:var(--tone-done-text)}
+.ctx{position:absolute;left:420px;top:196px;z-index:4;min-width:200px;padding:6px;background:var(--surface);border-radius:var(--radius-md);box-shadow:var(--shadow-pop)}
+.ctx button{display:flex;width:100%;height:40px;align-items:center;gap:10px;padding:0 10px;border:0;background:none;border-radius:var(--radius-sm);text-align:left}.ctx button:hover,.ctx button:focus-visible{background:var(--surface-2)}
+.foot{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:16px;color:var(--text-muted)}
+.pager{display:flex;gap:4px;align-items:center}
+.pg{min-width:40px;height:40px;padding:0 8px;border:1px solid transparent;background:none;border-radius:var(--radius-md);font-variant-numeric:tabular-nums}.pg:hover{background:var(--surface-2)}.pg[disabled]{opacity:.4;cursor:not-allowed}.pg[aria-current=page]{background:var(--bank-primary);color:var(--bank-on);font-weight:600}
+.size{height:40px;padding:0 8px;border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--surface)}
+.cards{display:none;list-style:none;margin:0;padding:0}
+.card{display:grid;grid-template-columns:44px 1fr auto;gap:0 4px;align-items:center;padding:8px 8px 12px 4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:8px}
+.card .cbl{grid-row:1/3}.card .meta{grid-column:2/4;display:flex;justify-content:space-between;gap:8px;color:var(--text-muted);font-size:13px;padding-right:8px}
+.card .top{display:block;min-width:0;text-decoration:none;padding:6px 0}
+.card .more{width:44px;height:44px;border:0;background:none;border-radius:var(--radius-md);display:grid;place-items:center;margin-left:auto;grid-column:3;grid-row:1}
+@media (max-width:1279px){.h-lg{display:none}}
+@media (max-width:1100px){.panel{grid-template-columns:1fr 1fr}.panel>:first-child{grid-column:1/-1}}
+@media (max-width:780px){
+.app{grid-template-columns:minmax(0,1fr)}.sidebar{display:none}.topbar{height:64px;padding:0 12px}.menu-btn{display:grid;width:44px;height:44px}.gsearch span{display:none}.gsearch{flex:none;width:44px;padding:0;justify-content:center;border-color:transparent;background:none}
+.page{padding:24px 16px 48px}.head{align-items:stretch}.head>div:first-child{width:100%}.actions{width:100%}.actions .btn,.actions .seg{flex:1}.actions .seg button{flex:1}.btn,.seg button{height:44px}
+.actions .btn-new{order:-1;flex-basis:100%}
+.find{max-width:none;flex-basis:100%}.fbtn{flex:1}.panel{grid-template-columns:1fr;padding:16px}
+.tw{display:none}.cards{display:block}.ctx{display:none}.bulk .btn{height:44px}.bulk b{flex-basis:100%}
+.foot{flex-direction:column;align-items:stretch}.pager{justify-content:space-between}.pg.n{display:none}.size{height:44px}.pg{height:44px;min-width:44px}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="srch" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></symbol><symbol id="menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol><symbol id="dl" viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></symbol><symbol id="flt" viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></symbol><symbol id="up" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol><symbol id="dn" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol><symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="swap" viewBox="0 0 24 24"><path d="M4 8h14l-3-3M20 16H6l3 3"/></symbol><symbol id="dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol><symbol id="cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
+</svg>
+<div class="app">
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="brand"><div class="logo" aria-hidden="true">H</div><div><b>Harbor CRM</b><span>Your bank name</span></div></div>
+    <nav><div class="group-label">Main</div><a class="nav-link" href="#">Dashboard</a><a class="nav-link" href="#">Activity</a><div class="group-label">Sales</div><a class="nav-link active" href="#" aria-current="page">Leads</a><a class="nav-link" href="#">Contacts</a><a class="nav-link" href="#">Accounts</a><a class="nav-link" href="#">Deals</a><div class="group-label">System</div><a class="nav-link" href="#">Settings</a></nav>
+    <div class="side-foot">Staging environment</div>
+  </aside>
+  <div>
+    <header class="topbar"><button class="icon-btn menu-btn" aria-label="Open menu"><svg class="i"><use href="#menu"/></svg></button><button class="gsearch" aria-label="Search"><svg class="i"><use href="#srch"/></svg><span>Search leads, contacts, accounts…</span></button><span class="avatar" aria-hidden="true">AD</span></header>
+    <main class="page" data-testid="leads-page">
+      <div class="head">
+        <div><h1>Leads</h1><p class="sub">128 leads, newest first.</p></div>
+        <div class="actions">
+          <a class="btn btn-ghost" href="#"><svg class="i"><use href="#cog"/></svg>Lead setup</a>
+          <button class="btn btn-2" data-testid="export-csv-btn"><svg class="i"><use href="#dl"/></svg>Export CSV</button>
+          <div class="seg" role="group" aria-label="View"><button data-testid="view-table" aria-pressed="true">Table</button><button data-testid="view-triage" aria-pressed="false">Triage</button></div>
+          <button class="btn btn-new">+ New Lead</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="find"><svg class="i"><use href="#srch"/></svg><input class="in" type="search" placeholder="Search name, company, email…" aria-label="Search leads"></div>
+        <button class="btn btn-2 fbtn" data-testid="filters-toggle" aria-expanded="true" aria-controls="fp"><svg class="i"><use href="#flt"/></svg>Filters <span class="fdot" role="img" aria-label="2 filters active"></span></button>
+      </div>
+
+      <section class="panel" id="fp" data-testid="filter-panel" aria-label="Filters">
+        <div><span class="lbl" id="st">Status</span><div class="chips" role="group" aria-labelledby="st">
+          <label class="chip"><input type="checkbox">New</label><label class="chip"><input type="checkbox">Contacted</label><label class="chip"><input type="checkbox" checked>Qualified</label><label class="chip"><input type="checkbox">Unqualified</label><label class="chip"><input type="checkbox">Converted</label></div></div>
+        <div><label class="lbl" for="src">Source</label><select class="in" id="src"><option>All sources</option><option selected>Referral</option></select></div>
+        <div><label class="lbl" for="own">Owner</label><select class="in" id="own"><option>All owners</option></select></div>
+        <button class="btn btn-ghost">Clear filters</button>
+      </section>
+
+      <div class="bulk" data-testid="bulk-bar" role="region" aria-label="Bulk actions"><b>2 selected</b><button class="btn">Assign owner</button><button class="btn" data-testid="mass-update-btn">Mass update</button><button class="btn">Delete</button></div>
+
+      <div class="wrap">
+        <div class="tw">
+          <table aria-label="Leads">
+            <thead><tr>
+              <th class="sel"><label class="cbl"><input class="cb" type="checkbox" aria-label="Select all 10 leads on this page"></label></th>
+              <th aria-sort="none"><button>Name</button></th><th aria-sort="none"><button>Company</button></th><th>Email</th><th class="h-lg">Phone</th>
+              <th aria-sort="none"><button>Status</button></th><th aria-sort="none"><button>Source</button></th><th>Owner</th>
+              <th class="num" aria-sort="none"><button>Value</button></th>
+              <th class="h-lg" aria-sort="descending"><button>Created <svg class="i" style="width:14px;height:14px"><use href="#dn"/></svg></button></th>
+            </tr></thead>
+            <tbody>
+              <tr tabindex="0" aria-selected="true"><td class="sel"><label class="cbl"><input class="cb" type="checkbox" checked aria-label="Select Priya Raman"></label></td><td class="nm">Priya Raman</td><td class="co">Northwind Logistics</td><td>priya@northwind.example</td><td class="h-lg">+1 415 555 0142</td><td><span class="pill s-qua">Qualified</span></td><td>Referral</td><td>Dev Patel</td><td class="num">$48,000</td><td class="h-lg">Oct 27</td></tr>
+              <tr tabindex="0" aria-selected="true"><td class="sel"><label class="cbl"><input class="cb" type="checkbox" checked aria-label="Select Lena Fischer"></label></td><td class="nm">Lena Fischer</td><td class="co">Altmann GmbH</td><td>lena@altmann.example</td><td class="h-lg">+49 30 5550 188</td><td><span class="pill s-qua">Qualified</span></td><td>Referral</td><td>Mei Tanaka</td><td class="num">$31,000</td><td class="h-lg">Oct 26</td></tr>
+              <tr tabindex="0"><td class="sel"><label class="cbl"><input class="cb" type="checkbox" aria-label="Select Tomás Alvarez"></label></td><td class="nm">Tomás Alvarez</td><td class="co">Brightside Dental</td><td>tomas@brightside.example</td><td class="h-lg">+1 212 555 0170</td><td><span class="pill s-qua">Qualified</span></td><td>Referral</td><td>Mei Tanaka</td><td class="num">$12,500</td><td class="h-lg">Oct 24</td></tr>
+              <tr tabindex="0"><td class="sel"><label class="cbl"><input class="cb" type="checkbox" aria-label="Select Grace Okafor"></label></td><td class="nm">Grace Okafor</td><td class="co">Linden &amp; Co.</td><td>grace@linden.example</td><td class="h-lg">+44 20 5550 1121</td><td><span class="pill s-qua">Qualified</span></td><td>Referral</td><td>Dev Patel</td><td class="num">$86,000</td><td class="h-lg">Oct 22</td></tr>
+              <tr tabindex="0"><td class="sel"><label class="cbl"><input class="cb" type="checkbox" aria-label="Select Sam Whitaker"></label></td><td class="nm">Sam Whitaker</td><td class="co">Orchard Foods</td><td>sam@orchard.example</td><td class="h-lg">+1 503 555 0109</td><td><span class="pill s-qua">Qualified</span></td><td>Referral</td><td>Mei Tanaka</td><td class="num">$7,200</td><td class="h-lg">Oct 19</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="ctx" role="menu" aria-label="Actions for Tomás Alvarez"><button role="menuitem"><svg class="i"><use href="#eye"/></svg>View details</button><button role="menuitem"><svg class="i"><use href="#swap"/></svg>Convert lead…</button></div>
+
+        <ul class="cards" aria-label="Leads">
+          <li class="card" aria-selected="true"><label class="cbl"><input class="cb" type="checkbox" checked aria-label="Select Priya Raman"></label><a class="top" href="#"><b>Priya Raman</b><br><span class="co">Northwind Logistics</span></a><button class="more" aria-label="Actions for Priya Raman"><svg class="i"><use href="#dots"/></svg></button><div class="meta"><span class="pill s-qua">Qualified</span><span>Dev Patel</span><b style="color:var(--text)">$48,000</b></div></li>
+          <li class="card"><label class="cbl"><input class="cb" type="checkbox" aria-label="Select Lena Fischer"></label><a class="top" href="#"><b>Lena Fischer</b><br><span class="co">Altmann GmbH</span></a><button class="more" aria-label="Actions for Lena Fischer"><svg class="i"><use href="#dots"/></svg></button><div class="meta"><span class="pill s-qua">Qualified</span><span>Mei Tanaka</span><b style="color:var(--text)">$31,000</b></div></li>
+          <li class="card"><label class="cbl"><input class="cb" type="checkbox" aria-label="Select Tomás Alvarez"></label><a class="top" href="#"><b>Tomás Alvarez</b><br><span class="co">Brightside Dental</span></a><button class="more" aria-label="Actions for Tomás Alvarez"><svg class="i"><use href="#dots"/></svg></button><div class="meta"><span class="pill s-qua">Qualified</span><span>Mei Tanaka</span><b style="color:var(--text)">$12,500</b></div></li>
+        </ul>
+      </div>
+
+      <nav class="foot" data-testid="pagination" aria-label="Pagination">
+        <span>37 leads, page 1 of 4</span>
+        <div class="pager"><button class="pg" disabled aria-label="Previous page">Prev</button><button class="pg n" aria-current="page">1</button><button class="pg n">2</button><button class="pg n">3</button><button class="pg n">4</button><button class="pg" aria-label="Next page">Next</button></div>
+        <label>Rows <select class="size"><option>10</option><option>25</option><option>50</option></select></label>
+      </nav>
+    </main>
+  </div>
+</div>
+</body>
+</html>
