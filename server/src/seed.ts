@@ -131,7 +131,7 @@ function seedProducts(): Product[] {
 
 function seedLeads(products: Product[]): Lead[] {
   const leads: Lead[] = [];
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 75; i++) {
     const name = fullName(i);
     leads.push({
       id: `lead-${i + 1}`,

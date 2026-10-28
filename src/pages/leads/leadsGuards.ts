@@ -7,6 +7,13 @@ export const beginOnce = (flag: { current: boolean }): boolean => {
   return true;
 };
 
+// Up to `size` consecutive page numbers that always include the current page.
+export const pageWindow = (currentPage: number, totalPages: number, size = 7): number[] => {
+  const count = Math.min(size, totalPages);
+  const start = Math.max(1, Math.min(currentPage - Math.floor(size / 2), totalPages - count + 1));
+  return Array.from({ length: count }, (_, i) => start + i);
+};
+
 export type AriaSortValue = 'ascending' | 'descending' | 'none';
 
 export const getAriaSort = (

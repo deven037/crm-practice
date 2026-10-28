@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { beginOnce, clearSelection, getAriaSort, shouldOpenRowOnKeyDown } from './leadsGuards';
+import { beginOnce, clearSelection, getAriaSort, pageWindow, shouldOpenRowOnKeyDown } from './leadsGuards';
 
 describe('clearSelection', () => {
   it('returns an empty selection', () => {
@@ -23,6 +23,28 @@ describe('beginOnce', () => {
     beginOnce(flag);
     flag.current = false;
     expect(beginOnce(flag)).toBe(true);
+  });
+});
+
+describe('pageWindow', () => {
+  it('lists every page when there are 7 or fewer', () => {
+    expect(pageWindow(1, 5)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('starts at page 1 near the start', () => {
+    expect(pageWindow(2, 12)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it('centres on the current page in the middle', () => {
+    expect(pageWindow(6, 12)).toEqual([3, 4, 5, 6, 7, 8, 9]);
+  });
+
+  it('ends at the last page near the end', () => {
+    expect(pageWindow(12, 12)).toEqual([6, 7, 8, 9, 10, 11, 12]);
+  });
+
+  it('returns no pages when there are none', () => {
+    expect(pageWindow(1, 0)).toEqual([]);
   });
 });
 

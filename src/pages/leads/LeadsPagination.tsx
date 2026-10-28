@@ -1,5 +1,6 @@
 import { Select } from '../../components/Select';
 import { classNames } from '../../utils';
+import { pageWindow } from './leadsGuards';
 
 const PAGE_SIZES = [
   { value: '10', label: '10 / page' },
@@ -27,13 +28,13 @@ export function LeadsPagination({ total, currentPage, totalPages, pageSize, onPa
         <button className="btn" disabled={currentPage <= 1} onClick={() => onPageChange(currentPage - 1)} aria-label="Previous page">
           ‹ Prev
         </button>
-        {Array.from({ length: totalPages }).slice(0, 7).map((_, i) => (
+        {pageWindow(currentPage, totalPages).map((p) => (
           <button
-            key={i}
-            className={classNames('btn btn-page', currentPage === i + 1 && 'btn-active')}
-            onClick={() => onPageChange(i + 1)}
+            key={p}
+            className={classNames('btn btn-page', currentPage === p && 'btn-active')}
+            onClick={() => onPageChange(p)}
           >
-            {i + 1}
+            {p}
           </button>
         ))}
         <button className="btn" disabled={currentPage >= totalPages} onClick={() => onPageChange(currentPage + 1)} aria-label="Next page">
