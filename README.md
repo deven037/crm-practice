@@ -40,7 +40,7 @@ Forgot-password flow: the reset code is always `123456`.
 
 ## Resetting test data
 
-The seed data is **deterministic** — every reset produces identical records (~50 leads, 40
+The seed data is **deterministic** — every reset produces identical records (~75 leads, 40
 contacts, 20 accounts, 12 products, 25 deals, 30 tasks, 15 tickets, 5 users, 8 campaigns, 15
 quotes).
 

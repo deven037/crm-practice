@@ -1,12 +1,13 @@
 import { Lead } from '../../types';
 import { formatCurrency, formatDate } from '../../utils';
-import { getAriaSort, shouldOpenRowOnKeyDown } from './leadsGuards';
+import { emptyStateKind, getAriaSort, shouldOpenRowOnKeyDown } from './leadsGuards';
 
 export type SortKey = 'name' | 'company' | 'status' | 'source' | 'value' | 'createdAt';
 export type SortDir = 'asc' | 'desc';
 
 interface Props {
   rows: Lead[];
+  totalLeads: number;
   selected: string[];
   allPageSelected: boolean;
   sortKey: SortKey;
@@ -23,6 +24,7 @@ interface Props {
 
 export function LeadsTable({
   rows,
+  totalLeads,
   selected,
   allPageSelected,
   sortKey,
@@ -127,7 +129,7 @@ export function LeadsTable({
           {rows.length === 0 && (
             <tr>
               <td colSpan={11} className="empty-cell">
-                No leads match the current filters.
+                {emptyStateKind(totalLeads) === 'no-leads' ? 'No leads yet.' : 'No leads match the current filters.'}
               </td>
             </tr>
           )}
