@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Activity as ActivityIcon, Bell, Building2, CheckSquare, ChevronDown, ChevronRight, Database, DollarSign, FlaskConical, LayoutDashboard,
   LogOut, Megaphone, Menu, Moon, Package, Receipt, Search, Settings, Shield, Sun, Target, Ticket, User,
@@ -11,6 +11,7 @@ import { AppNotification } from '../types';
 import { initials, timeAgo } from '../utils';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { CommandBar } from './CommandBar';
+import { SidebarLink } from './SidebarLink';
 import './feedback-widget';
 
 // Product name and bank identity are replaceable; the bank settings are shared with Login and Dashboard.
@@ -242,19 +243,15 @@ export function Layout({ children }: { children: ReactNode }) {
                 )}
                 {(contentCollapsed || !closed) &&
                   group.items.map((item) => (
-                    <NavLink
+                    <SidebarLink
                       key={item.to}
                       to={item.to}
+                      label={item.label}
+                      icon={<item.icon size={17} />}
+                      collapsed={contentCollapsed}
                       end={item.to === '/'}
-                      className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-                      aria-label={item.label}
                       onClick={() => isMobile && setMobileOpen(false)}
-                    >
-                      <span className="nav-icon">
-                        <item.icon size={17} />
-                      </span>
-                      {!contentCollapsed && <span>{item.label}</span>}
-                    </NavLink>
+                    />
                   ))}
               </div>
             );
