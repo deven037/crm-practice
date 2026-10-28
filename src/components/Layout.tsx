@@ -41,37 +41,6 @@ function GlobalSearchTrigger({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-export function NotificationsPanel({
-  items,
-  onMarkAllRead,
-}: {
-  items: AppNotification[];
-  onMarkAllRead: () => void;
-}) {
-  const unread = items.filter((n) => !n.read).length;
-
-  return (
-    <div className="notif-panel">
-      <div className="notif-head">
-        <strong>Notifications</strong>
-        <button className="link-btn" onClick={onMarkAllRead} disabled={unread === 0}>
-          Mark all read
-        </button>
-      </div>
-      {unread === 0 ? (
-        <div className="search-hint">No notifications</div>
-      ) : (
-        items.map((n) => (
-          <div key={n.id} className={`notif-item${n.read ? '' : ' unread'}`}>
-            <span>{n.text}</span>
-            <span className="notif-time">{timeAgo(n.when)}</span>
-          </div>
-        ))
-      )}
-    </div>
-  );
-}
-
 function NotificationsBell() {
   const [items, setItems] = useState<AppNotification[]>(() => getAllSync<AppNotification>('notifications'));
   const [open, setOpen] = useState(false);
@@ -90,7 +59,26 @@ function NotificationsBell() {
         <Bell size={18} />
         {unread > 0 && <span className="bell-badge">{unread}</span>}
       </button>
-      {open && <NotificationsPanel items={items} onMarkAllRead={markAllRead} />}
+      {open && (
+        <div className="notif-panel">
+          <div className="notif-head">
+            <strong>Notifications</strong>
+            <button className="link-btn" onClick={markAllRead} disabled={unread === 0}>
+              Mark all read
+            </button>
+          </div>
+          {items.length === 0 ? (
+            <div className="search-hint">No notifications</div>
+          ) : (
+            items.map((n) => (
+              <div key={n.id} className={`notif-item${n.read ? '' : ' unread'}`}>
+                <span>{n.text}</span>
+                <span className="notif-time">{timeAgo(n.when)}</span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
