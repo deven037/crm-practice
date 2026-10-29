@@ -22,6 +22,10 @@ async function boot() {
   // AuthContext confirms a valid session — see initStore() in AuthContext.tsx.)
   document.documentElement.dataset.theme = getValue('theme', 'light');
 
+  // Bank colour profile from the build (e.g. VITE_BANK_TONE=amber). Unset keeps the Harbor default.
+  const bankTone = import.meta.env.VITE_BANK_TONE?.trim();
+  if (bankTone) document.documentElement.dataset.bankTone = bankTone;
+
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <App />
