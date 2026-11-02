@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Global search, loading, no results, error, short term</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+.th-light{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--text:#1f2937;--text-muted:#5b6472;--danger:#dc2626;--err-bg:#fef2f2;--err-text:#991b1b;--err-line:#fecaca;--shadow:0 12px 32px rgba(15,23,42,.18)}
+.th-dark{--bg:#10151f;--surface:#1a2130;--surface-2:#232b3d;--surface-3:#2c3549;--border:#313b52;--text:#e7eaf0;--text-muted:#a3abbd;--danger:#f87171;--err-bg:#450a0a;--err-text:#fca5a5;--err-line:#7f1d1d;--shadow:0 12px 32px rgba(0,0,0,.55)}
+:root{--bank-primary:#1d3a6e;--bank-on:#fff;--bank-accent:color-mix(in srgb,var(--bank-primary) 40%,#fff);--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;--ease:cubic-bezier(.4,0,.2,1)}
+*{box-sizing:border-box}
+body{margin:0;font:14px/20px var(--font-sans);background:#e5e8ec;color:#1f2937;-webkit-font-smoothing:antialiased}
+.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.doc{max-width:1360px;margin:0 auto;padding:32px 24px 64px}
+.doc h1{margin:0;font-size:24px;line-height:32px;font-weight:700}.doc>p{margin:4px 0 24px;color:#4b5563;font-size:15px;max-width:70ch}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;align-items:start}
+.cell{border:1px solid #cdd2d9;border-radius:var(--radius-lg);overflow:hidden;background:var(--bg);color:var(--text)}
+.cell>h2{margin:0;padding:8px 16px;font-size:13px;font-weight:600;background:var(--surface-3);color:var(--text-muted);border-bottom:1px solid var(--border)}
+.stage{padding:16px;min-height:340px;position:relative}
+.field{height:40px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--bank-primary);background:var(--surface);box-shadow:0 0 0 3px color-mix(in srgb,var(--bank-primary) 28%,transparent);border-radius:var(--radius-md);color:var(--text)}
+.th-dark .field{border-color:var(--bank-accent)}
+.field input{flex:1;min-width:0;border:0;background:none;outline:0;height:38px}
+.field kbd{font:500 12px var(--font-sans);padding:1px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text-muted)}
+.dd{margin-top:8px;max-width:640px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+.grp-h{display:flex;justify-content:space-between;padding:12px 16px 4px;font-size:13px;font-weight:600;color:var(--text-muted)}
+.row{display:flex;align-items:center;gap:12px;height:52px;padding:0 16px;margin:0 4px}
+.sk{display:block;border-radius:6px;background:linear-gradient(90deg,var(--surface-3) 0,var(--surface-2) 50%,var(--surface-3) 100%);background-size:200% 100%;animation:sh 1.3s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.sk.tile{width:32px;height:32px;border-radius:var(--radius-md)}
+.lines{flex:1;display:grid;gap:6px}.lines .sk{height:10px}
+.status{display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid var(--border);background:var(--surface-2);font-size:12px;color:var(--text-muted)}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--surface-3);border-top-color:var(--bank-primary);animation:sp .7s linear infinite}
+.th-dark .spin{border-top-color:var(--bank-accent)}
+@keyframes sp{to{transform:rotate(360deg)}}
+.msg{padding:28px 24px 24px;text-align:left}
+.msg h3{margin:0 0 4px;font-size:15px;line-height:22px;font-weight:600}.msg p{margin:0;color:var(--text-muted);max-width:52ch}
+.msg .acts{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap}
+.btn{height:44px;padding:0 20px;border:0;border-radius:var(--radius-md);background:var(--bank-primary);color:var(--bank-on);font-weight:600;cursor:pointer;transition:filter 120ms var(--ease)}
+.btn:hover{filter:brightness(1.12)}.btn:active{filter:brightness(.92)}
+.th-dark .btn{background:var(--bank-accent);color:#0b0f19}
+.btn.ghost{background:none;color:var(--text);border:1px solid var(--border)}
+.th-dark .btn.ghost{background:none;color:var(--text)}
+.btn.ghost:hover{background:var(--surface-2);filter:none}
+.banner{display:flex;gap:12px;align-items:flex-start;margin:12px;padding:12px 16px;border:1px solid var(--err-line);border-radius:var(--radius-md);background:var(--err-bg);color:var(--err-text)}
+.banner b{display:block;font-weight:600}
+.hint{display:flex;gap:12px;align-items:center;height:52px;padding:0 16px;color:var(--text-muted)}
+.dis{opacity:.55}
+.notes{margin-top:24px;background:#fff;border:1px solid #cdd2d9;border-radius:var(--radius-lg);padding:20px 24px;color:#1f2937}
+.notes h2{margin:0 0 8px;font-size:18px;line-height:24px}.notes ul{margin:0;padding-left:18px}.notes li{margin:6px 0;max-width:80ch}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}.doc{padding:16px 12px 48px}.stage{padding:12px}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="srch" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></symbol>
+<symbol id="warn" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 18v.5"/></symbol>
+<symbol id="type" viewBox="0 0 24 24"><path d="M4 7V5h16v2M12 5v14M9 19h6"/></symbol>
+</svg>
+<div class="doc">
+  <h1>Global search: loading, empty, error</h1>
+  <p>Every state keeps the field and the panel in place so nothing jumps. Each message is a live region, so a screen reader hears the same change a sighted user sees. Epic AIO-199, rules R3, R8, R9.</p>
+
+  <div class="grid">
+    <section class="cell th-light" aria-label="Loading">
+      <h2>Loading, light: skeleton rows with the same height as results</h2>
+      <div class="stage">
+        <div class="field"><svg class="i"><use href="#srch"/></svg><input aria-label="Search leads, contacts, accounts and deals" role="combobox" aria-expanded="true" aria-busy="true" value="northw"><kbd>Esc</kbd></div>
+        <div class="dd">
+          <div class="grp-h"><span class="sk" style="width:64px;height:12px"></span><span class="sk" style="width:56px;height:12px"></span></div>
+          <div class="row"><span class="sk tile"></span><span class="lines"><span class="sk" style="width:46%"></span><span class="sk" style="width:70%"></span></span></div>
+          <div class="row"><span class="sk tile"></span><span class="lines"><span class="sk" style="width:38%"></span><span class="sk" style="width:62%"></span></span></div>
+          <div class="grp-h"><span class="sk" style="width:80px;height:12px"></span><span class="sk" style="width:56px;height:12px"></span></div>
+          <div class="row"><span class="sk tile"></span><span class="lines"><span class="sk" style="width:52%"></span><span class="sk" style="width:58%"></span></span></div>
+          <div class="status" role="status"><span class="spin" aria-hidden="true"></span>Searching for "northw"</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cell th-dark" aria-label="No results">
+      <h2>No results, dark</h2>
+      <div class="stage">
+        <div class="field"><svg class="i"><use href="#srch"/></svg><input aria-label="Search leads, contacts, accounts and deals" role="combobox" aria-expanded="true" value="zzqx"><kbd>Esc</kbd></div>
+        <div class="dd">
+          <div class="msg" role="status">
+            <h3>No matches for "zzqx"</h3>
+            <p>Check the spelling, or search by company name, email address or phone number instead.</p>
+            <div class="acts"><button class="btn ghost">Clear search</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cell th-light" aria-label="Error">
+      <h2>Error with retry, light</h2>
+      <div class="stage">
+        <div class="field"><svg class="i"><use href="#srch"/></svg><input aria-label="Search leads, contacts, accounts and deals" role="combobox" aria-expanded="true" aria-invalid="true" value="northwind"><kbd>Esc</kbd></div>
+        <div class="dd">
+          <div class="banner" role="alert"><svg class="i" style="margin-top:1px"><use href="#warn"/></svg><div><b>Search did not finish</b>The server did not answer in time. Your term is kept, so you can try again.</div></div>
+          <div class="msg" style="padding-top:4px"><div class="acts" style="margin-top:0"><button class="btn" autofocus>Try again</button><button class="btn ghost">Close</button></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cell th-dark" aria-label="Error dark">
+      <h2>Error with retry, dark</h2>
+      <div class="stage">
+        <div class="field"><svg class="i"><use href="#srch"/></svg><input aria-label="Search leads, contacts, accounts and deals" role="combobox" aria-expanded="true" aria-invalid="true" value="northwind"><kbd>Esc</kbd></div>
+        <div class="dd">
+          <div class="banner" role="alert"><svg class="i" style="margin-top:1px"><use href="#warn"/></svg><div><b>Search did not finish</b>The server did not answer in time. Your term is kept, so you can try again.</div></div>
+          <div class="msg" style="padding-top:4px"><div class="acts" style="margin-top:0"><button class="btn">Try again</button><button class="btn ghost">Close</button></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cell th-light" aria-label="Short term">
+      <h2>Fewer than 2 characters, light: no request is sent</h2>
+      <div class="stage" style="min-height:200px">
+        <div class="field"><svg class="i"><use href="#srch"/></svg><input aria-label="Search leads, contacts, accounts and deals" role="combobox" aria-expanded="true" value="n"><kbd>Esc</kbd></div>
+        <div class="dd"><div class="hint" role="status"><svg class="i"><use href="#type"/></svg>Type 2 or more characters to search leads, contacts, accounts and deals.</div></div>
+      </div>
+    </section>
+
+    <section class="cell th-light" aria-label="Button states">
+      <h2>Retry button states, light</h2>
+      <div class="stage" style="min-height:200px">
+        <div class="acts" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+          <button class="btn">Default</button>
+          <button class="btn" style="filter:brightness(1.12)">Hover</button>
+          <button class="btn" style="outline:2px solid var(--text);outline-offset:2px">Focus</button>
+          <button class="btn" disabled style="opacity:.55;cursor:not-allowed"><span class="spin" style="display:inline-block;vertical-align:-2px;margin-right:8px;border-color:rgba(255,255,255,.35);border-top-color:#fff"></span>Trying again</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="notes">
+    <h2>Behaviour of each state</h2>
+    <ul>
+      <li><b>Short term:</b> under 2 characters the panel shows the hint and sends no request (R3). The hint is a polite live region.</li>
+      <li><b>Loading:</b> shown after the 250 ms pause, only if the answer takes longer than 150 ms, so quick searches never flash a skeleton. Rows match the real row height (52 px) so the panel does not jump. The previous results are replaced, never mixed with the new ones; an answer for an older term is dropped (R8). The field keeps <code>aria-busy="true"</code>. The shimmer stops with reduced motion and shows flat blocks.</li>
+      <li><b>No results:</b> says what was searched and what to try; the one action clears the field and returns focus to it.</li>
+      <li><b>Error:</b> one calm banner with <code>role="alert"</code>, plain cause, and "Try again" as the single primary action; focus moves to it. The typed term is never cleared. If the role cannot see a type at all, that type is absent and is not an error.</li>
+      <li><b>Dark:</b> error colours reuse the CRM's banner-error dark values (#450a0a, #fca5a5, #7f1d1d). The primary button uses the lighter bank accent with dark text so it reads at 4.5:1 or better.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
