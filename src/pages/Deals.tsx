@@ -20,6 +20,8 @@ export function Deals() {
   const [params, setParams] = useSearchParams();
   // Dashboard tile link: /deals?stage=open hides the Closed columns.
   const openOnly = params.get('stage') === 'open';
+  // Header search "See all": /deals?q=term shows only deals whose name matches.
+  const searchTerm = (params.get('q') ?? '').trim().toLowerCase();
   const [loading, setLoading] = useState(true);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -85,6 +87,11 @@ export function Deals() {
               Showing open deals · Show all
             </button>
           )}
+          {searchTerm && (
+            <button className="btn" onClick={() => setParams({})}>
+              Filtered by "{searchTerm}" · Clear
+            </button>
+          )}
           <button className="btn btn-create" onClick={() => navigate('/deals/new')}>
             + New Deal
           </button>
@@ -108,7 +115,7 @@ export function Deals() {
           testId="kanban-board"
           emptyLabel="Drop deals here"
           columns={DEAL_STAGES.filter((stage) => !openOnly || !stage.startsWith('Closed')).map((stage) => {
-            const stageDeals = deals.filter((d) => d.stage === stage);
+            const stageDeals = deals.filter((d) => d.stage === stage && d.name.toLowerCase().includes(searchTerm));
             const total = stageDeals.reduce((sum, d) => sum + d.amount, 0);
             return { key: stage, label: stage, items: stageDeals, headerMeta: `${stageDeals.length} · ${formatCurrency(total)}` };
           })}
