@@ -17,9 +17,9 @@ const searchQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(MAX_LIMIT).default(DEFAULT_LIMIT),
 });
 
-// Every role may open all four modules today (Viewer is read-only, not restricted).
-// Email and Phone follow this one switch so a role can be denied them in a single place.
-const CONTACT_DETAIL_ROLES: Role[] = ['admin', 'rep', 'viewer'];
+// Owner decision (AIO-202, question #112): Viewer has no Email/Phone permission, so those
+// values are neither returned nor matched for that role.
+const CONTACT_DETAIL_ROLES: Role[] = ['admin', 'rep'];
 export const canViewContactDetails = (role: Role) => CONTACT_DETAIL_ROLES.includes(role);
 
 export interface SearchHit {

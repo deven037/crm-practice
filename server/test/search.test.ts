@@ -100,11 +100,17 @@ describe('GET /api/search', () => {
         assert.equal(body.leads.total, 1);
       });
 
-      it('finds a phone typed with spaces, dashes and brackets', async () => {
+      it(role === 'viewer' ? 'neither returns nor matches email and phone' : 'finds a phone typed with spaces, dashes and brackets', async () => {
         for (const term of ['5550104242', '555 010-4242', '(555)010 4242']) {
           const { body } = await search(`?q=${encodeURIComponent(term)}`, role);
-          assert.ok(body.leads.items.some((l: { id: string }) => l.id === 'lead-zq-1'), term);
+          const found = body.leads.items.some((l: { id: string }) => l.id === 'lead-zq-1');
+          assert.equal(found, role !== 'viewer', term);
         }
+        const byEmail = await search('?q=lead-zq-1@zq.test', role);
+        assert.equal(byEmail.body.leads.total, role === 'viewer' ? 0 : 1);
+        const byName = await search('?q=zqalpha', role);
+        assert.equal('email' in byName.body.leads.items[0], role !== 'viewer');
+        assert.equal('phone' in byName.body.leads.items[0], role !== 'viewer');
       });
 
       it('matches deals by name only', async () => {
