@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Global search, keyboard map and screen reader announcements</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--text:#1f2937;--text-muted:#5b6472;--bank-primary:#1d3a6e;--bank-on:#fff;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;font:14px/20px var(--font-sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.doc{max-width:1100px;margin:0 auto;padding:32px 24px 64px}
+h1{margin:0;font-size:24px;line-height:32px;font-weight:700}.lead{margin:4px 0 24px;color:var(--text-muted);font-size:15px;max-width:70ch}
+h2{margin:32px 0 12px;font-size:18px;line-height:24px;font-weight:600}
+kbd{display:inline-block;font:600 12px/18px var(--font-sans);padding:1px 8px;border:1px solid var(--border);border-bottom-width:2px;border-radius:var(--radius-sm);background:var(--surface);white-space:nowrap}
+.tbl{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.tbl th{text-align:left;font-size:13px;font-weight:600;color:var(--text-muted);padding:10px 16px;background:var(--surface-2)}
+.tbl td{padding:12px 16px;border-top:1px solid var(--border);vertical-align:top}
+.tbl td:first-child{white-space:nowrap;width:1%}
+.say{font-style:normal;font-weight:500}
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0;padding:0;list-style:none}
+.flow li{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px}
+.flow b{display:block;margin-bottom:2px}
+.flow span{color:var(--text-muted)}
+.arch{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 24px}
+.arch li{margin:6px 0;max-width:80ch}
+@media (max-width:760px){.doc{padding:16px 12px 48px}.flow{grid-template-columns:1fr}.tbl,.tbl tbody,.tbl tr,.tbl td,.tbl th{display:block;width:100%}.tbl thead{display:none}.tbl td:first-child{width:100%;padding-bottom:0;border-top:1px solid var(--border)}.tbl td{border-top:0}}
+</style>
+</head>
+<body>
+<main class="doc">
+  <h1>Global search: keyboard map and screen reader announcements</h1>
+  <p class="lead">The search follows the ARIA combobox pattern with a listbox popup. Focus stays in the input the whole time; the highlighted result is exposed with <code>aria-activedescendant</code>. Epic AIO-199, rule R7 (and AIO-124).</p>
+
+  <h2>Keyboard map</h2>
+  <table class="tbl">
+    <thead><tr><th>Keys</th><th>When</th><th>What happens</th></tr></thead>
+    <tbody>
+      <tr><td><kbd>Ctrl</kbd> + <kbd>K</kbd> or <kbd>⌘</kbd> + <kbd>K</kbd></td><td>Anywhere in the app, even inside another field</td><td>Focus moves to the search field and its text is selected. The opener (the element that had focus) is remembered. Pressed again with the panel open, it closes the panel and returns focus to the opener. The browser's own shortcut is suppressed.</td></tr>
+      <tr><td><kbd>↓</kbd></td><td>Field focused, results shown</td><td>Highlights the first row; further presses go down through every row and "See all" row, then wrap to the first. With the panel closed but a term typed, it reopens the panel.</td></tr>
+      <tr><td><kbd>↑</kbd></td><td>Results shown</td><td>Moves up one row; from the first row it wraps to the last. Focus stays in the field.</td></tr>
+      <tr><td><kbd>Enter</kbd></td><td>A row is highlighted</td><td>Opens that record (R5), or the module list filtered by the term for a "See all" row. The panel closes.</td></tr>
+      <tr><td><kbd>Enter</kbd></td><td>No row highlighted, term has 2+ characters</td><td>Opens the Leads list filtered by the term if Leads is the first type with results, otherwise the first type that has results.</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Panel open</td><td>Closes the panel and keeps the typed term. A second <kbd>Esc</kbd> clears the term and returns focus to the opener.</td></tr>
+      <tr><td><kbd>Home</kbd> <kbd>End</kbd></td><td>Field focused</td><td>Move the caret in the text, as in any input. They do not change the highlighted row.</td></tr>
+      <tr><td><kbd>Tab</kbd></td><td>Panel open</td><td>Closes the panel and moves to the next control (the clear button, then the theme toggle). Rows are not tab stops. In the error state, <kbd>Tab</kbd> reaches "Try again" and "Close".</td></tr>
+      <tr><td><kbd>Enter</kbd> or <kbd>Space</kbd></td><td>"Try again" focused</td><td>Runs the search again with the same term; focus stays on the button while it works.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Focus return</h2>
+  <ol class="flow">
+    <li><b>Open</b><span>Ctrl or ⌘ + K stores the previously focused element as the opener.</span></li>
+    <li><b>Use</b><span>Focus stays in the input. Mouse clicks on rows do not take focus away from it.</span></li>
+    <li><b>Close</b><span>Esc (twice), a picked result or a second Ctrl or ⌘ + K puts focus back on the opener. If the opener is gone after navigation, focus goes to the page's main heading.</span></li>
+  </ol>
+
+  <h2>Screen reader announcements</h2>
+  <table class="tbl">
+    <thead><tr><th>Moment</th><th>Mechanism</th><th>What is said</th></tr></thead>
+    <tbody>
+      <tr><td>Field focused</td><td>Accessible name and role</td><td><em class="say">"Search leads, contacts, accounts and deals, combobox, collapsed, edit text"</em></td></tr>
+      <tr><td>Results arrive</td><td>One polite live region (<code>role="status"</code>), updated after the answer, never per keystroke</td><td><em class="say">"20 results in 4 types. Leads 12, Contacts 5, Accounts 2, Deals 1. Use the arrow keys to browse."</em></td></tr>
+      <tr><td>Moving down the list</td><td><code>aria-activedescendant</code> on the field; each row has <code>role="option"</code> inside a labelled <code>role="group"</code></td><td><em class="say">"Priya Raman, Northwind Logistics, Qualified, Leads group, 1 of 4"</em></td></tr>
+      <tr><td>"See all" row</td><td>Option with a full name</td><td><em class="say">"See all 12 leads"</em></td></tr>
+      <tr><td>No results</td><td>Polite live region</td><td><em class="say">"No matches for zzqx. Check the spelling, or search by company name, email address or phone number."</em></td></tr>
+      <tr><td>Loading</td><td><code>aria-busy="true"</code> on the field; the status text is announced only if loading lasts more than 1 s</td><td><em class="say">"Searching for northwind"</em></td></tr>
+      <tr><td>Error</td><td><code>role="alert"</code> (assertive), focus moves to "Try again"</td><td><em class="say">"Search did not finish. The server did not answer in time. Your term is kept, so you can try again."</em></td></tr>
+      <tr><td>Panel closed</td><td>State on the field</td><td><em class="say">"collapsed"</em> through <code>aria-expanded="false"</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Markup rules for Alex</h2>
+  <ul class="arch">
+    <li>The input has <code>role="combobox"</code>, <code>aria-expanded</code>, <code>aria-controls</code> (the listbox id), <code>aria-autocomplete="list"</code> and <code>aria-activedescendant</code>. Keep <code>data-testid="global-search"</code> on the field.</li>
+    <li>The highlighted row shows the selected style (tint, 3 px accent bar, solid tile) from the mockup, and has <code>aria-selected="true"</code>; nothing relies on colour alone, because the bar and tile change shape and fill.</li>
+    <li>Rows that hide Email or Phone for the user's role must not contain that text in the DOM either, so a screen reader cannot read it (R6).</li>
+    <li>The focus ring is the 2 px outline on the field plus the bank-tinted halo, kept on in both themes. Targets are 52 px rows on desktop and 56 px on phone.</li>
+  </ul>
+</main>
+</body>
+</html>
