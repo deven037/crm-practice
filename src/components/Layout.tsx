@@ -45,8 +45,7 @@ function NotificationsBell() {
   const [items, setItems] = useState<AppNotification[]>(() => getAllSync<AppNotification>('notifications'));
   const [open, setOpen] = useState(false);
   const ref = useOutside(() => setOpen(false));
-  const unreadItems = items.filter((n) => !n.read);
-  const unread = unreadItems.length;
+  const unread = items.filter((n) => !n.read).length;
 
   const markAllRead = () => {
     const next = items.map((n) => ({ ...n, read: true }));
@@ -71,8 +70,8 @@ function NotificationsBell() {
           {unread === 0 ? (
             <div className="search-hint">No notifications</div>
           ) : (
-            unreadItems.map((n) => (
-              <div key={n.id} className="notif-item unread">
+            items.map((n) => (
+              <div key={n.id} className={`notif-item${n.read ? '' : ' unread'}`}>
                 <span>{n.text}</span>
                 <span className="notif-time">{timeAgo(n.when)}</span>
               </div>
