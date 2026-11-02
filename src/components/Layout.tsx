@@ -67,7 +67,7 @@ function NotificationsBell() {
               Mark all read
             </button>
           </div>
-          {items.length === 0 ? (
+          {unread === 0 ? (
             <div className="search-hint">No notifications</div>
           ) : (
             items.map((n) => (
