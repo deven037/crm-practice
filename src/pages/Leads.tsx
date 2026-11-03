@@ -38,8 +38,9 @@ export function Leads() {
   const [mode, setMode] = useState<'table' | 'triage'>('table');
 
   // table state
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  // Header search "See all": /leads?q=term opens the list already filtered.
+  const [query, setQuery] = useState(params.get('q') ?? '');
+  const [debouncedQuery, setDebouncedQuery] = useState(params.get('q') ?? '');
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState('');
   const [ownerFilter, setOwnerFilter] = useState('');

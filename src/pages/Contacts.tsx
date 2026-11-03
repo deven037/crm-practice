@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { LayoutGrid, List } from 'lucide-react';
 import { getAll, getAllSync, removeMany } from '../data/store';
 import { Account, Contact } from '../types';
@@ -16,7 +16,9 @@ export function Contacts() {
   const [loading, setLoading] = useState(true);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [view, setView] = useState<'grid' | 'list'>('grid');
-  const [query, setQuery] = useState('');
+  const [params] = useSearchParams();
+  // Header search "See all": /contacts?q=term opens the list already filtered.
+  const [query, setQuery] = useState(params.get('q') ?? '');
   const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
 

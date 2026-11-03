@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getAll } from '../data/store';
 import { Account, User } from '../types';
 import { SkeletonRows } from '../components/Spinner';
@@ -44,7 +44,9 @@ export function Accounts() {
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [query, setQuery] = useState('');
+  const [params] = useSearchParams();
+  // Header search "See all": /accounts?q=term opens the list already filtered.
+  const [query, setQuery] = useState(params.get('q') ?? '');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
 
