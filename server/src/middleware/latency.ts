@@ -6,7 +6,7 @@ const delay = (min: number, max: number) =>
 
 /** Mirrors the client's original simulated-latency contract (300-1200ms) so timing-based exercises keep working. */
 export function simulatedLatency(req: Request, _res: Response, next: NextFunction) {
-  if (env.disableLatency) {
+  if (env.disableLatency || (req.method === 'GET' && /^\/api\/search\/?$/i.test(req.path))) {
     next();
     return;
   }
