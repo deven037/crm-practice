@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Clock, Target, User, Building2, DollarSign, ArrowRight, AlertTriangle, type LucideIcon } from 'lucide-react';
+import { Search, Plus, Clock, Target, User, Building2, DollarSign, ArrowRight, AlertTriangle, X, type LucideIcon } from 'lucide-react';
 import { apiFetch } from '../data/apiFetch';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 
@@ -64,6 +64,18 @@ const QUICK_ACTIONS: { label: string; to: string }[] = [
 
 const plural = (count: number, one: string) => `${count} ${one}${count === 1 ? '' : 's'}`;
 
+function Highlight({ text, term }: { text: string; term: string }) {
+  const at = text.toLowerCase().indexOf(term.toLowerCase());
+  if (at < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, at)}
+      <mark>{text.slice(at, at + term.length)}</mark>
+      {text.slice(at + term.length)}
+    </>
+  );
+}
+
 function buildOptions(data: SearchResponse | null): ResultOption[] {
   if (!data) return [];
   return TYPES.flatMap(({ key, singular }) => {
@@ -77,7 +89,7 @@ function buildOptions(data: SearchResponse | null): ResultOption[] {
       to: `/${key}/${hit.id}`,
     }));
     const seeAll: ResultOption[] =
-      group.total > RESULTS_PER_TYPE
+      group.total > group.items.length
         ? [{ id: `${key}-all`, type: key, kind: 'all', label: `See all ${group.total} ${singular}s`, to: `/${key}?q=${encodeURIComponent(data.term)}` }]
         : [];
     return [...records, ...seeAll];
@@ -246,6 +258,19 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
           />
+          {query && (
+            <button
+              type="button"
+              className="command-clear"
+              aria-label="Clear search"
+              onClick={() => {
+                setQuery('');
+                inputRef.current?.focus();
+              }}
+            >
+              <X size={14} />
+            </button>
+          )}
           <kbd style={{ fontSize: 11, color: 'var(--text-muted)' }}>Esc</kbd>
         </div>
         <div className="command-list" id="command-listbox" role="listbox" aria-label="Search results">
@@ -375,8 +400,8 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
                             <>
                               <span className="command-glyph"><Icon size={16} /></span>
                               <span className="command-result-main">
-                                <strong>{option.label}</strong>
-                                {option.detail && <small>{option.detail}</small>}
+                                <strong><Highlight text={option.label} term={term} /></strong>
+                                {option.detail && <small><Highlight text={option.detail} term={term} /></small>}
                               </span>
                             </>
                           )}
@@ -387,6 +412,12 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
               );
             })}
         </div>
+        {searching && status === 'ready' && data !== null && hasMatches && (
+          <div className="command-foot" data-testid="search-total">
+            {plural(TYPES.reduce((sum, { key }) => sum + data[key].total, 0), 'result')} in{' '}
+            {plural(TYPES.filter(({ key }) => data[key].total > 0).length, 'type')}
+          </div>
+        )}
       </div>
     </div>
   );

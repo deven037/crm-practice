@@ -911,6 +911,11 @@ div.empty-cell { border: 1px dashed var(--border); border-radius: var(--radius-l
 .command-empty { padding: 20px 16px; }
 .command-empty p { margin: 4px 0 12px; color: var(--text-muted); font-size: 13.5px; max-width: 52ch; }
 .command-empty .btn { min-height: 44px; }
+.command-result mark { background: none; color: inherit; font-weight: 700; box-shadow: inset 0 -2px 0 var(--bank-accent); }
+.command-clear { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-muted); cursor: pointer; }
+.command-clear:hover { background: var(--surface-3); }
+.command-foot { padding: 10px 16px; border-top: 1px solid var(--border); background: var(--surface-2); font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+@media (max-width: 780px) { .command-clear { width: 44px; height: 44px; margin-right: -12px; } }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @media (max-width: 780px) { .command-overlay { padding: 8px; } .command-result { min-height: 56px; } }
 @media (prefers-reduced-motion: reduce) { .command-skeleton { animation: none; } .command-result { transition: none; } }
