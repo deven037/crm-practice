@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Download, ListChecks, SlidersHorizontal, Table2 } from 'lucide-react';
 import { getAll, getAllSync, newId, removeMany, saveAll, upsert } from '../data/store';
 import { Account, Contact, Deal, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, User } from '../types';
@@ -27,6 +27,7 @@ export function Leads() {
   const toast = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [params, setParams] = useSearchParams();
   // Dashboard tile link: /leads?created=30d shows leads created in the last 30 days.
   const createdMatch = /^(\d{1,3})d$/.exec(params.get('created') ?? '');
@@ -81,7 +82,7 @@ export function Leads() {
     setQuery(urlQuery);
     setDebouncedQuery(urlQuery);
     setPage(1);
-  }, [urlQuery]);
+  }, [urlQuery, location.state]);
 
   useEffect(() => {
     const t = setTimeout(() => {

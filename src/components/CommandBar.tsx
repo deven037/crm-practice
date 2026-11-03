@@ -199,7 +199,8 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
 
   const openOption = (option: ResultOption) => {
     onClose();
-    navigate(option.to);
+    // A fresh state per See all lets the list reset its box even when the URL is unchanged.
+    navigate(option.to, option.kind === 'all' ? { state: { seeAllAt: Date.now() } } : undefined);
   };
 
   const selectItem = (item: CommandItem) => {
