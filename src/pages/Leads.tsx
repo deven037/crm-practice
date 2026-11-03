@@ -76,6 +76,13 @@ export function Leads() {
     load();
   }, []);
 
+  const urlQuery = params.get('q') ?? '';
+  useEffect(() => {
+    setQuery(urlQuery);
+    setDebouncedQuery(urlQuery);
+    setPage(1);
+  }, [urlQuery]);
+
   useEffect(() => {
     const t = setTimeout(() => {
       setDebouncedQuery(query);
