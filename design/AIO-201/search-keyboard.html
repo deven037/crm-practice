@@ -44,7 +44,7 @@ kbd{display:inline-block;font:600 12px/18px var(--font-sans);padding:1px 8px;bor
       <tr><td><kbd>Enter</kbd></td><td>No row highlighted, term has 2+ characters</td><td>Opens the Leads list filtered by the term if Leads is the first type with results, otherwise the first type that has results.</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>Panel open</td><td>Closes the panel and keeps the typed term. A second <kbd>Esc</kbd> clears the term and returns focus to the opener.</td></tr>
       <tr><td><kbd>Home</kbd> <kbd>End</kbd></td><td>Field focused</td><td>Move the caret in the text, as in any input. They do not change the highlighted row.</td></tr>
-      <tr><td><kbd>Tab</kbd></td><td>Panel open</td><td>Closes the panel and moves to the next control (the clear button, then the theme toggle). Rows are not tab stops. In the error state, <kbd>Tab</kbd> reaches "Try again" and "Close".</td></tr>
+      <tr><td><kbd>Tab</kbd></td><td>Panel open</td><td>Closes the panel and moves to the next control (the clear button, then the theme toggle). Rows are not tab stops. The error panel is the exception: it stays open while <kbd>Tab</kbd> moves through "Try again" and "Close", and closes on "Close", <kbd>Esc</kbd> or <kbd>Tab</kbd> past "Close".</td></tr>
       <tr><td><kbd>Enter</kbd> or <kbd>Space</kbd></td><td>"Try again" focused</td><td>Runs the search again with the same term; focus stays on the button while it works.</td></tr>
     </tbody>
   </table>
@@ -64,7 +64,7 @@ kbd{display:inline-block;font:600 12px/18px var(--font-sans);padding:1px 8px;bor
       <tr><td>Results arrive</td><td>One polite live region (<code>role="status"</code>), updated after the answer, never per keystroke</td><td><em class="say">"20 results in 4 types. Leads 12, Contacts 5, Accounts 2, Deals 1. Use the arrow keys to browse."</em></td></tr>
       <tr><td>Moving down the list</td><td><code>aria-activedescendant</code> on the field; each row has <code>role="option"</code> inside a labelled <code>role="group"</code></td><td><em class="say">"Priya Raman, Northwind Logistics, Qualified, Leads group, 1 of 4"</em></td></tr>
       <tr><td>"See all" row</td><td>Option with a full name</td><td><em class="say">"See all 12 leads"</em></td></tr>
-      <tr><td>No results</td><td>Polite live region</td><td><em class="say">"No matches for zzqx. Check the spelling, or search by company name, email address or phone number."</em></td></tr>
+      <tr><td>No results</td><td>Polite live region</td><td><em class="say">"No matches for zzqx. Check the spelling, or try a company name, email address or phone number."</em> For a role without Email/Phone: <em class="say">"Check the spelling, or try a company name."</em></td></tr>
       <tr><td>Loading</td><td><code>aria-busy="true"</code> on the field; the status text is announced only if loading lasts more than 1 s</td><td><em class="say">"Searching for northwind"</em></td></tr>
       <tr><td>Error</td><td><code>role="alert"</code> (assertive), focus moves to "Try again"</td><td><em class="say">"Search did not finish. The server did not answer in time. Your term is kept, so you can try again."</em></td></tr>
       <tr><td>Panel closed</td><td>State on the field</td><td><em class="say">"collapsed"</em> through <code>aria-expanded="false"</code></td></tr>
