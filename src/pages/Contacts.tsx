@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { LayoutGrid, List } from 'lucide-react';
+import { useAuth } from '../auth/AuthContext';
 import { getAll, getAllSync, removeMany } from '../data/store';
-import { Account, Contact } from '../types';
+import { Account, Contact, Role } from '../types';
 import { SkeletonRows } from '../components/Spinner';
 import { BulkActionsBar } from '../components/BulkActionsBar';
 import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
@@ -10,7 +11,18 @@ import { ToolBoxPanel } from '../components/ToolBoxPanel';
 import { useToast } from '../components/Toast';
 import { classNames, initials } from '../utils';
 
+export function filterContacts(contacts: Contact[], query: string, role: Role | undefined, accounts: Account[]) {
+  const q = query.trim().toLowerCase();
+  if (!q) return contacts;
+  const showDetails = role === 'admin' || role === 'rep';
+  const digits = /^[\d\s\-()+.]+$/.test(q) ? q.replace(/\D/g, '') : '';
+  return contacts.filter((c) => c.name.toLowerCase().includes(q) ||
+    (accounts.find((a) => a.id === c.accountId)?.name ?? '').toLowerCase().includes(q) ||
+    (showDetails && (c.email.toLowerCase().includes(q) || (digits.length >= 2 && c.phone.replace(/\D/g, '').includes(digits)))));
+}
+
 export function Contacts() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
@@ -49,11 +61,7 @@ export function Contacts() {
   const accounts = getAllSync<Account>('accounts');
   const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name ?? '—';
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return contacts;
-    return contacts.filter((c) => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
-  }, [contacts, query]);
+  const filtered = useMemo(() => filterContacts(contacts, query, user?.role, accounts), [contacts, query, user?.role, accounts]);
 
   return (
     <div data-testid="contacts-page">

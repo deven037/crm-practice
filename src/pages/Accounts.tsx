@@ -1,7 +1,8 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 import { getAll } from '../data/store';
-import { Account, User } from '../types';
+import { Account, Role, User } from '../types';
 import { SkeletonRows } from '../components/Spinner';
 import { ExpandPanelRow, ExpandToggle } from '../components/ExpandableTableRow';
 import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
@@ -39,7 +40,17 @@ function AccountExpandPanel({ account }: { account: Account }) {
   );
 }
 
+export function filterAccounts(accounts: Account[], query: string, role: Role | undefined) {
+  const q = query.trim().toLowerCase();
+  if (!q) return accounts;
+  const showDetails = role === 'admin' || role === 'rep';
+  const digits = /^[\d\s\-()+.]+$/.test(q) ? q.replace(/\D/g, '') : '';
+  return accounts.filter((a) => a.name.toLowerCase().includes(q) ||
+    (showDetails && digits.length >= 2 && a.phone.replace(/\D/g, '').includes(digits)));
+}
+
 export function Accounts() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
@@ -65,11 +76,7 @@ export function Accounts() {
     })();
   }, []);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return accounts;
-    return accounts.filter((a) => a.name.toLowerCase().includes(q) || a.industry.toLowerCase().includes(q));
-  }, [accounts, query]);
+  const filtered = useMemo(() => filterAccounts(accounts, query, user?.role), [accounts, query, user?.role]);
 
   return (
     <div data-testid="accounts-page">
