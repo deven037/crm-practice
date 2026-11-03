@@ -117,6 +117,7 @@ mark{background:none;color:inherit;font-weight:700;box-shadow:inset 0 -2px 0 var
               <div role="group" aria-labelledby="g2"><div class="grp-h" id="g2"><b>Contacts</b><span>5 matches</span></div>
                 <div class="opt" role="option" id="o5" aria-selected="false"><span class="glyph"><svg class="i"><use href="#usr"/></svg></span><span class="main"><b><mark>Pri</mark>ya Raman</b><small>Head of Operations, Northwind Logistics</small></span></div>
                 <div class="opt" role="option" id="o6" aria-selected="false"><span class="glyph"><svg class="i"><use href="#usr"/></svg></span><span class="main"><b>Dr. Anita <mark>Pri</mark>sm</b><small>Practice owner, Brightside Dental</small></span></div>
+                <div class="opt" role="option" id="o6b" aria-selected="false"><span class="glyph"><svg class="i"><use href="#usr"/></svg></span><span class="main"><b>Rafael <mark>Pri</mark>eto</b><small>Controller, Calloway Marine</small></span></div>
                 <button class="all" role="option" id="o7" aria-selected="false">See all 5 contacts<svg class="i"><use href="#arr"/></svg></button>
               </div>
               <div role="group" aria-labelledby="g3"><div class="grp-h" id="g3"><b>Accounts</b><span>2 matches</span></div>
@@ -124,7 +125,7 @@ mark{background:none;color:inherit;font-weight:700;box-shadow:inset 0 -2px 0 var
                 <div class="opt" role="option" id="o9" aria-selected="false"><span class="glyph"><svg class="i"><use href="#bld"/></svg></span><span class="main"><b><mark>Pri</mark>nt &amp; Pixel Studio</b><small>Media, 3 contacts</small></span></div>
               </div>
               <div role="group" aria-labelledby="g4"><div class="grp-h" id="g4"><b>Deals</b><span>1 match</span></div>
-                <div class="opt" role="option" id="o10" aria-selected="false"><span class="glyph"><svg class="i"><use href="#dol"/></svg></span><span class="main"><b><mark>Pri</mark>mrose renewal 2027</b><small><mark>Pri</mark>mrose Hospitality, $48,000</small></span><span class="meta">Negotiation</span></div>
+                <div class="opt" role="option" id="o10" aria-selected="false"><span class="glyph"><svg class="i"><use href="#dol"/></svg></span><span class="main"><b><mark>Pri</mark>mrose renewal 2027</b><small>Primrose Hospitality, $48,000</small></span><span class="meta">Negotiation</span></div>
               </div>
             </div>
             <div class="foot"><span><kbd>↑</kbd><kbd>↓</kbd>move</span><span><kbd>Enter</kbd>open</span><span><kbd>Esc</kbd>close</span><span class="tot">20 results in 4 types</span></div>
@@ -141,7 +142,7 @@ mark{background:none;color:inherit;font-weight:700;box-shadow:inset 0 -2px 0 var
     </section>
 
     <section class="frame th-dark" aria-label="Dark theme">
-      <h2>Dark theme, same layout. An Accounts row highlighted by keyboard.</h2>
+      <h2>Dark theme, same layout. Deals are matched by name only, so "northwind" finds no Deals and the group is hidden.</h2>
       <header class="topbar">
         <button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#menu"/></svg></button>
         <div class="sbox">
@@ -166,18 +167,55 @@ mark{background:none;color:inherit;font-weight:700;box-shadow:inset 0 -2px 0 var
               <div role="group" aria-labelledby="h3"><div class="grp-h" id="h3"><b>Accounts</b><span>1 match</span></div>
                 <div class="opt" role="option" id="d5" aria-selected="true"><span class="glyph"><svg class="i"><use href="#bld"/></svg></span><span class="main"><b><mark>Northwind</mark> Logistics</b><small>Logistics, 9 contacts</small></span></div>
               </div>
-              <div role="group" aria-labelledby="h4"><div class="grp-h" id="h4"><b>Deals</b><span>2 matches</span></div>
-                <div class="opt" role="option" id="d6" aria-selected="false"><span class="glyph"><svg class="i"><use href="#dol"/></svg></span><span class="main"><b>Fleet financing</b><small><mark>Northwind</mark> Logistics, $120,000</small></span><span class="meta">Proposal</span></div>
-                <div class="opt" role="option" id="d7" aria-selected="false"><span class="glyph"><svg class="i"><use href="#dol"/></svg></span><span class="main"><b>Depot credit line</b><small><mark>Northwind</mark> Logistics, $75,000</small></span><span class="meta">Qualified</span></div>
-              </div>
             </div>
-            <div class="foot"><span><kbd>↑</kbd><kbd>↓</kbd>move</span><span><kbd>Enter</kbd>open</span><span><kbd>Esc</kbd>close</span><span class="tot">9 results in 4 types</span></div>
+            <div class="foot"><span><kbd>↑</kbd><kbd>↓</kbd>move</span><span><kbd>Enter</kbd>open</span><span><kbd>Esc</kbd>close</span><span class="tot">7 results in 3 types</span></div>
           </div>
         </div>
         <div class="right">
           <button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button>
           <button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg><span class="badge">3</span></button>
           <button class="icon-btn" aria-label="User menu"><span class="avatar">AD</span></button>
+        </div>
+      </header>
+      <div class="scrim"></div>
+      <div class="page-ghost" aria-hidden="true"><i style="width:30%"></i><i style="width:90%"></i><i style="width:80%"></i></div>
+    </section>
+
+    <section class="frame th-light" aria-label="Light theme, Viewer">
+      <h2>Light theme, Viewer: same search as the dark frame, with Email and Phone hidden.</h2>
+      <header class="topbar">
+        <button class="icon-btn" aria-label="Toggle sidebar"><svg class="i"><use href="#menu"/></svg></button>
+        <div class="sbox">
+          <div class="field open">
+            <svg class="i"><use href="#srch"/></svg>
+            <input type="text" role="combobox" aria-expanded="true" aria-controls="lb4" aria-activedescendant="v1" aria-autocomplete="list" aria-label="Search leads, contacts, accounts and deals" value="northwind">
+            <button class="clear" aria-label="Clear search"><svg class="i" style="width:14px;height:14px"><use href="#x"/></svg></button>
+            <kbd>Esc</kbd>
+          </div>
+          <div class="dd">
+            <div class="scroll" role="listbox" id="lb4" aria-label="Search results">
+              <div role="group" aria-labelledby="v-g1"><div class="grp-h" id="v-g1"><b>Leads</b><span>2 matches</span></div>
+                <div class="opt" role="option" id="v1" aria-selected="true"><span class="glyph"><svg class="i"><use href="#tgt"/></svg></span><span class="main"><b>Priya Raman</b><small><mark>Northwind</mark> Logistics</small></span><span class="meta">Qualified</span></div>
+                <div class="opt" role="option" id="v2" aria-selected="false"><span class="glyph"><svg class="i"><use href="#tgt"/></svg></span><span class="main"><b>Jonas Keller</b><small><mark>Northwind</mark> Logistics</small></span><span class="meta">New</span></div>
+              </div>
+              <div role="group" aria-labelledby="v-g2"><div class="grp-h" id="v-g2"><b>Contacts</b><span>4 matches</span></div>
+                <div class="opt" role="option" id="v3" aria-selected="false"><span class="glyph"><svg class="i"><use href="#usr"/></svg></span><span class="main"><b>Priya Raman</b><small>Head of Operations, <mark>Northwind</mark> Logistics</small></span></div>
+                <div class="opt" role="option" id="v4" aria-selected="false"><span class="glyph"><svg class="i"><use href="#usr"/></svg></span><span class="main"><b>Hana Oyelaran</b><small>Finance lead, <mark>Northwind</mark> Logistics</small></span></div>
+                <div class="opt" role="option" id="v5" aria-selected="false"><span class="glyph"><svg class="i"><use href="#usr"/></svg></span><span class="main"><b>Tom Becker</b><small>Dispatcher, <mark>Northwind</mark> Logistics</small></span></div>
+                <button class="all" role="option" id="v6" aria-selected="false">See all 4 contacts<svg class="i"><use href="#arr"/></svg></button>
+              </div>
+              <div role="group" aria-labelledby="v-g3"><div class="grp-h" id="v-g3"><b>Accounts</b><span>1 match</span></div>
+                <div class="opt" role="option" id="v7" aria-selected="false"><span class="glyph"><svg class="i"><use href="#bld"/></svg></span><span class="main"><b><mark>Northwind</mark> Logistics</b><small>Logistics, 9 contacts</small></span></div>
+              </div>
+            </div>
+            <div class="foot"><span><kbd>↑</kbd><kbd>↓</kbd>move</span><span><kbd>Enter</kbd>open</span><span><kbd>Esc</kbd>close</span><span class="tot">7 results in 3 types</span></div>
+            <div class="foot" style="border-top:0;padding-top:0;background:var(--surface-2)"><span>Email and phone are hidden and not searched for your role. Search by name or company.</span></div>
+          </div>
+        </div>
+        <div class="right">
+          <button class="icon-btn" aria-label="Toggle theme"><svg class="i"><use href="#moon"/></svg></button>
+          <button class="icon-btn" aria-label="Notifications"><svg class="i"><use href="#bell"/></svg><span class="badge">3</span></button>
+          <button class="icon-btn" aria-label="User menu"><span class="avatar">VW</span></button>
         </div>
       </header>
       <div class="scrim"></div>
@@ -193,7 +231,8 @@ mark{background:none;color:inherit;font-weight:700;box-shadow:inset 0 -2px 0 var
         <li><b>Layout:</b> a 640 px panel anchored under the field, 52 px rows, a 32 px type tile, and the total for each type in its heading ("12 matches"). "See all 12 leads" appears only when a type has more than 3 matches, and it is a real option in the arrow-key order.</li>
         <li><b>Current row:</b> bank-tinted fill, a 3 px accent bar and a solid type tile. Keyboard highlight and mouse hover use one rule for the fill; only the keyboard-highlighted row gets the bar and tile, so colour is never the only signal.</li>
         <li><b>No clash with other header controls:</b> the panel hangs under the 60 px bar, left-aligned to the field, and never overlaps the theme, notification or user buttons. The Esc hint and clear button live inside the field. Opening the panel does not move any other control.</li>
-        <li><b>Role rules (R6):</b> where a role has no Email/Phone permission, rows show without that text and the term is not matched against it. Types the role cannot open are absent, and the footer total counts only what that user may see.</li>
+        <li><b>Deals match by name only (owner decision, AIO-200):</b> the highlight appears only in the Deal name. A Deal row's second line (company, amount) is plain text, never highlighted, because it is not searched. A term that matches only a Deal's company finds no Deal, and the Deals group is hidden (dark frame).</li>
+        <li><b>Row variant, Email and Phone hidden (Viewer, third frame):</b> the second line of a Lead row keeps only the company. The lines and rows are otherwise identical, with no placeholder, dots or "hidden" label in the row, and the text is not in the DOM. One quiet line under the footer says why a typed email finds nothing. Counts include only visible records; matching is by name and company.</li>
         <li><b>Tokens:</b> every colour comes from the Harbor variables; dark uses the <code>[data-theme='dark']</code> values from <code>src/styles.css</code>. Muted text in dark is lifted to #a3abbd so it keeps 4.5:1 on the panel. The bank primary fills the highlighted tile and the "See all" text; its lighter accent is used where it sits on dark.</li>
         <li><b>Motion:</b> the panel opens with a 120 ms fade and 4 px rise; with reduced motion it just appears.</li>
         <li><b>Phone:</b> the panel spans the full width under the bar, rows are 56 px, the clear button is 44 px, and "Cancel" replaces the header icons while searching.</li>
