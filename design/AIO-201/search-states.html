@@ -87,7 +87,21 @@ button,input{font:inherit;color:inherit}
         <div class="dd">
           <div class="msg" role="status">
             <h3>No matches for "zzqx"</h3>
-            <p>Check the spelling, or try a company name, email address or phone number. (Roles without Email/Phone: "Check the spelling, or try a company name.")</p>
+            <p>Check the spelling, or try a company name, email address or phone number.</p>
+            <div class="acts"><button class="btn ghost">Clear search</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cell th-light" aria-label="No results, role without Email and Phone">
+      <h2>No results, light, Viewer (Email and Phone hidden)</h2>
+      <div class="stage">
+        <div class="field"><svg class="i"><use href="#srch"/></svg><input aria-label="Search leads, contacts, accounts and deals" role="combobox" aria-expanded="true" value="zzqx"><kbd>Esc</kbd></div>
+        <div class="dd">
+          <div class="msg" role="status">
+            <h3>No matches for "zzqx"</h3>
+            <p>Check the spelling, or try a company name.</p>
             <div class="acts"><button class="btn ghost">Clear search</button></div>
           </div>
         </div>
@@ -142,7 +156,7 @@ button,input{font:inherit;color:inherit}
     <ul>
       <li><b>Short term:</b> under 2 characters the panel shows the hint and sends no request (R3). The hint is a polite live region.</li>
       <li><b>Loading:</b> shown after the 250 ms pause, only if the answer takes longer than 150 ms, so quick searches never flash a skeleton. Rows match the real row height (52 px) so the panel does not jump. The previous results are replaced, never mixed with the new ones; an answer for an older term is dropped (R8). The field keeps <code>aria-busy="true"</code>. The shimmer stops with reduced motion and shows flat blocks.</li>
-      <li><b>No results:</b> says what was searched and what to try; the one action clears the field and returns focus to it.</li>
+      <li><b>No results:</b> says what was searched and what to try; the one action clears the field and returns focus to it. The hint depends on the role: with Email and Phone visible it ends "try a company name, email address or phone number" (dark frame); for a role that cannot see them it is "Check the spelling, or try a company name." (Viewer frame), so it never suggests a search that cannot match.</li>
       <li><b>Error:</b> one calm banner with <code>role="alert"</code>, plain cause, and "Try again" as the single primary action; focus moves to it. The typed term is never cleared. If the role cannot see a type at all, that type is absent and is not an error.</li>
       <li><b>Dark:</b> error colours reuse the CRM's banner-error dark values (#450a0a, #fca5a5, #7f1d1d). The primary button uses the lighter bank accent with dark text so it reads at 4.5:1 or better.</li>
     </ul>
