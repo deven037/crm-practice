@@ -48,3 +48,52 @@ jobs:
       - name: API contract tests (search, AIO-202)
         working-directory: server
         run: npx tsx --test test/search.contract.ts
+
+  release-contract:
+    name: Search contract tests (merged release)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release
+      - name: Record tested release revision
+        run: |
+          printf 'Tested merged release commit: ' >> "$GITHUB_STEP_SUMMARY"
+          git rev-parse HEAD >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - name: API dependencies and build
+        working-directory: server
+        run: |
+          npm ci
+          npm run build
+      - name: Search contract tests with per-test report
+        working-directory: server
+        shell: bash
+        run: |
+          set -o pipefail
+          npx tsx --test --test-reporter=tap test/search.contract.ts 2>&1 | tee search-contract.tap
+      - name: Publish per-test output
+        if: always()
+        working-directory: server
+        shell: bash
+        run: |
+          if [ -f search-contract.tap ]; then
+            printf '\n### Search contract results\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
+            cat search-contract.tap >> "$GITHUB_STEP_SUMMARY"
+            printf '\n```\n' >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '\nContract tests did not produce a report; inspect preceding steps.\n' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: merged-release-search-contract
+          path: server/search-contract.tap
+          if-no-files-found: warn
