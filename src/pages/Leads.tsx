@@ -41,6 +41,13 @@ export function Leads() {
   // Header search "See all": /leads?q=term opens the list already filtered.
   const [query, setQuery] = useState(params.get('q') ?? '');
   const [debouncedQuery, setDebouncedQuery] = useState(params.get('q') ?? '');
+  const urlQuery = params.get('q') ?? '';
+  // The route element stays mounted when "See all" changes ?q= on /leads, so follow the URL.
+  useEffect(() => {
+    setQuery(urlQuery);
+    setDebouncedQuery(urlQuery);
+    setPage(1);
+  }, [urlQuery]);
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState('');
   const [ownerFilter, setOwnerFilter] = useState('');

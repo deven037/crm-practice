@@ -76,7 +76,7 @@ function Highlight({ text, term }: { text: string; term: string }) {
   );
 }
 
-function buildOptions(data: SearchResponse | null): ResultOption[] {
+export function buildOptions(data: SearchResponse | null): ResultOption[] {
   if (!data) return [];
   return TYPES.flatMap(({ key, singular }) => {
     const group = data[key];
@@ -113,6 +113,8 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
   const retryRef = useRef<HTMLButtonElement>(null);
   const openerRef = useRef<Element | null>(null);
   const requestRef = useRef(0);
+  // True from a keystroke until its response arrives: `data` still holds the previous term's results.
+  const pendingRef = useRef(false);
   const { items: recent } = useRecentlyViewed();
 
   const term = query.trim();
@@ -126,10 +128,12 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
     try {
       const res = await apiFetch<SearchResponse>(`/search?q=${encodeURIComponent(value)}&limit=${RESULTS_PER_TYPE}`);
       if (requestId !== requestRef.current) return;
+      pendingRef.current = false;
       setData(res);
       setStatus('ready');
     } catch {
       if (requestId !== requestRef.current) return;
+      pendingRef.current = false;
       setStatus('error');
     } finally {
       clearTimeout(slowTimer);
@@ -155,11 +159,13 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
     if (!open) return;
     if (!searching) {
       requestRef.current++;
+      pendingRef.current = false;
       setData(null);
       setStatus('idle');
       setActiveIndex(0);
       return;
     }
+    pendingRef.current = true;
     setActiveIndex(-1);
     const timer = setTimeout(() => runSearch(term), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
@@ -203,6 +209,10 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (searching && pendingRef.current && e.key !== 'Escape') {
+      if (e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowUp') e.preventDefault();
+      return;
+    }
     if (e.key === 'ArrowDown' && optionCount > 0) {
       e.preventDefault();
       setActiveIndex((i) => (i + 1) % optionCount);

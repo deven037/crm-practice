@@ -19,6 +19,9 @@ export function Contacts() {
   const [params] = useSearchParams();
   // Header search "See all": /contacts?q=term opens the list already filtered.
   const [query, setQuery] = useState(params.get('q') ?? '');
+  const urlQuery = params.get('q') ?? '';
+  // The route element stays mounted when "See all" changes ?q= on /contacts, so follow the URL.
+  useEffect(() => setQuery(urlQuery), [urlQuery]);
   const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
 

@@ -47,6 +47,9 @@ export function Accounts() {
   const [params] = useSearchParams();
   // Header search "See all": /accounts?q=term opens the list already filtered.
   const [query, setQuery] = useState(params.get('q') ?? '');
+  const urlQuery = params.get('q') ?? '';
+  // The route element stays mounted when "See all" changes ?q= on /accounts, so follow the URL.
+  useEffect(() => setQuery(urlQuery), [urlQuery]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
 
