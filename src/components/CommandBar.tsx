@@ -108,6 +108,7 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
   const [data, setData] = useState<SearchResponse | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [slow, setSlow] = useState(false);
+  const [resultTerm, setResultTerm] = useState('');
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const retryRef = useRef<HTMLButtonElement>(null);
@@ -127,6 +128,7 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
       const res = await apiFetch<SearchResponse>(`/search?q=${encodeURIComponent(value)}&limit=${RESULTS_PER_TYPE}`);
       if (requestId !== requestRef.current) return;
       setData(res);
+      setResultTerm(value);
       setStatus('ready');
     } catch {
       if (requestId !== requestRef.current) return;
@@ -211,6 +213,8 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
       setActiveIndex((i) => (i <= 0 ? optionCount - 1 : i - 1));
     } else if (e.key === 'Enter') {
       if (searching) {
+        // Results still loading or for an older term: wait, so a stale first option is never used.
+        if (status !== 'ready' || resultTerm !== term) return;
         if (activeIndex >= 0 && options[activeIndex]) openOption(options[activeIndex]);
         else if (options[0]) openOption({ ...options[0], to: `/${options[0].type}?q=${encodeURIComponent(term)}` });
       } else if (items[activeIndex]) {

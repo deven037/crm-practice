@@ -50,6 +50,11 @@ export function Accounts() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
 
+  const urlQuery = params.get('q') ?? '';
+  useEffect(() => {
+    setQuery(urlQuery);
+  }, [urlQuery]);
+
   useEffect(() => {
     (async () => {
       const [a, u] = await Promise.all([getAll<Account>('accounts'), getAll<User>('users')]);

@@ -32,6 +32,11 @@ export function Contacts() {
     load();
   }, []);
 
+  const urlQuery = params.get('q') ?? '';
+  useEffect(() => {
+    setQuery(urlQuery);
+  }, [urlQuery]);
+
   const bulkDelete = async () => {
     if (!window.confirm(`Delete ${selected.length} selected contact(s)? This cannot be undone.`)) return;
     await removeMany('contacts', selected);
