@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { getAll } from '../data/store';
 import { Account, User } from '../types';
 import { SkeletonRows } from '../components/Spinner';
@@ -41,6 +41,7 @@ function AccountExpandPanel({ account }: { account: Account }) {
 
 export function Accounts() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -53,7 +54,7 @@ export function Accounts() {
   const urlQuery = params.get('q') ?? '';
   useEffect(() => {
     setQuery(urlQuery);
-  }, [urlQuery]);
+  }, [urlQuery, location.state]);
 
   useEffect(() => {
     (async () => {

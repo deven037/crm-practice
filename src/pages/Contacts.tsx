@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { LayoutGrid, List } from 'lucide-react';
 import { getAll, getAllSync, removeMany } from '../data/store';
 import { Account, Contact } from '../types';
@@ -12,6 +12,7 @@ import { classNames, initials } from '../utils';
 
 export function Contacts() {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -35,7 +36,7 @@ export function Contacts() {
   const urlQuery = params.get('q') ?? '';
   useEffect(() => {
     setQuery(urlQuery);
-  }, [urlQuery]);
+  }, [urlQuery, location.state]);
 
   const bulkDelete = async () => {
     if (!window.confirm(`Delete ${selected.length} selected contact(s)? This cannot be undone.`)) return;
