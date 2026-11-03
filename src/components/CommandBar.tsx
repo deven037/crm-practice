@@ -62,6 +62,9 @@ const QUICK_ACTIONS: { label: string; to: string }[] = [
   { label: '+ New Deal', to: '/deals/new' },
 ];
 
+/** Esc is handled on the panel, not the input, so it also works when focus is on "Try again", Close or a result. */
+export const isCloseKey = (key: string) => key === 'Escape';
+
 const plural = (count: number, one: string) => `${count} ${one}${count === 1 ? '' : 's'}`;
 
 function Highlight({ text, term }: { text: string; term: string }) {
@@ -220,9 +223,11 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
       } else if (items[activeIndex]) {
         selectItem(items[activeIndex]);
       }
-    } else if (e.key === 'Escape') {
-      onClose();
     }
+  };
+
+  const onPanelKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (isCloseKey(e.key)) onClose();
   };
 
   const announcement = (() => {
@@ -243,7 +248,7 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
 
   return (
     <div className="command-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="command-panel" data-testid="command-bar">
+      <div className="command-panel" data-testid="command-bar" onKeyDown={onPanelKeyDown}>
         <div className="command-input-row">
           <Search size={16} color="var(--text-muted)" />
           <input
