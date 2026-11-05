@@ -29,7 +29,12 @@ export function Deals() {
   const [editing, setEditing] = useState<Deal | null>(null);
 
   const load = async () => {
-    const [d, a, u] = await Promise.all([getAll<Deal>('deals'), getAll<Account>('accounts'), getAll<User>('users')]);
+    // A Viewer gets 403 on /users; fall back to an empty list so the board still renders.
+    const [d, a, u] = await Promise.all([
+      getAll<Deal>('deals'),
+      getAll<Account>('accounts'),
+      getAll<User>('users').catch((): User[] => []),
+    ]);
     setDeals(d);
     setAccounts(a);
     setUsers(u);
