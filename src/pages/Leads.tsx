@@ -28,7 +28,7 @@ export function filterLeads(leads: Lead[], query: string, role: Role | undefined
   if (!q) return leads;
   const showDetails = role === 'admin' || role === 'rep';
   const digits = /^[\d\s\-()+.]+$/.test(q) ? q.replace(/\D/g, '') : '';
-  return leads.filter((l) => l.status !== 'Converted' && (
+  return leads.filter((l) => (
     l.name.toLowerCase().includes(q) || l.company.toLowerCase().includes(q) ||
     (showDetails && (l.email.toLowerCase().includes(q) || (digits.length >= 2 && l.phone.replace(/\D/g, '').includes(digits))))
   ));

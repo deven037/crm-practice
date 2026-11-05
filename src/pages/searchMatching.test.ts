@@ -56,9 +56,9 @@ describe('See all destination matching', () => {
     }
   });
 
-  it('excludes converted Leads for an active search and preserves the unfiltered list', () => {
+  it('keeps converted Leads in the list search and preserves the unfiltered list', () => {
     const converted: Lead = { ...lead, status: 'Converted' };
-    expect(filterLeads([lead, converted], 'aurora', 'rep')).toEqual([lead]);
+    expect(filterLeads([lead, converted], 'aurora', 'rep')).toEqual([lead, converted]);
     expect(filterLeads([lead, converted], '', 'rep')).toEqual([lead, converted]);
   });
 });
