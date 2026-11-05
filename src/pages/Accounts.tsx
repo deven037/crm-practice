@@ -49,6 +49,12 @@ export function filterAccounts(accounts: Account[], query: string, role: Role | 
     (showDetails && digits.length >= 2 && a.phone.replace(/\D/g, '').includes(digits)));
 }
 
+// Owner names are optional: roles without Users access (Viewer) still get the accounts.
+export async function loadAccountsWithOwners(load: <T>(module: string) => Promise<T[]>) {
+  const [accounts, users] = await Promise.all([load<Account>('accounts'), load<User>('users').catch((): User[] => [])]);
+  return { accounts, users };
+}
+
 export function Accounts() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -69,7 +75,7 @@ export function Accounts() {
 
   useEffect(() => {
     (async () => {
-      const [a, u] = await Promise.all([getAll<Account>('accounts'), getAll<User>('users')]);
+      const { accounts: a, users: u } = await loadAccountsWithOwners(getAll);
       setAccounts(a);
       setUsers(u);
       setLoading(false);
