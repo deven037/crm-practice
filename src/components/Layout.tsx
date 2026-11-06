@@ -6,7 +6,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { getAllSync, getValue, setValue } from '../data/store';
+import { BankProfile, fetchBankProfile, getAllSync, getValue, setValue } from '../data/store';
 import { AppNotification } from '../types';
 import { initials, timeAgo } from '../utils';
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -176,6 +176,24 @@ export function Layout({ children, initialSidebarCollapsed = false }: { children
   const [commandOpen, setCommandOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 780px)');
+  const [profile, setProfile] = useState<BankProfile | null>(null);
+  const [profileStatus, setProfileStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
+
+  const loadProfile = () => {
+    setProfileStatus('loading');
+    fetchBankProfile().then(
+      (p) => {
+        setProfile(p);
+        setProfileStatus(p || BANK_NAME ? 'ready' : 'failed');
+      },
+      () => setProfileStatus('failed')
+    );
+  };
+
+  useEffect(loadProfile, []);
+
+  const bankName = profile?.name || BANK_NAME;
+  const bankLogo = profile?.logoUrl || BANK_LOGO_URL;
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -216,12 +234,12 @@ export function Layout({ children, initialSidebarCollapsed = false }: { children
       <aside className="sidebar" data-testid="sidebar">
         <div className="brand">
           <span className="brand-logo" aria-hidden="true">
-            {BANK_LOGO_URL ? <img src={BANK_LOGO_URL} alt="" /> : '◆'}
+            {bankLogo ? <img src={bankLogo} alt="" /> : '◆'}
           </span>
           {!contentCollapsed && (
             <span className="brand-text">
-              <span className="brand-name">{BANK_NAME || PRODUCT_NAME}</span>
-              {BANK_NAME && <span className="brand-sub">on {PRODUCT_NAME}</span>}
+              <span className="brand-name">{bankName || PRODUCT_NAME}</span>
+              {bankName && <span className="brand-sub">on {PRODUCT_NAME}</span>}
             </span>
           )}
         </div>
@@ -284,6 +302,17 @@ export function Layout({ children, initialSidebarCollapsed = false }: { children
             <AvatarMenu />
           </div>
         </header>
+        {profileStatus === 'failed' && (
+          <div className="banner banner-error profile-banner" role="alert" data-testid="bank-profile-error">
+            <div>
+              <strong>Your bank's name and colours didn't load</strong>
+              <p>You're seeing the standard {PRODUCT_NAME} look. Your data is not affected.</p>
+            </div>
+            <button className="btn" data-testid="bank-profile-retry" onClick={loadProfile}>
+              Retry
+            </button>
+          </div>
+        )}
         <main className="page">{children}</main>
       </div>
       <feedback-widget />

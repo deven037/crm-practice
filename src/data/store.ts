@@ -2,11 +2,25 @@ import { apiFetch, ListEnvelope } from './apiFetch';
 
 const cache: Record<string, any[]> = {};
 
+export interface BankProfile {
+  name: string;
+  logoUrl: string | null;
+  color: string | null;
+}
+
+type BootstrapPayload = Record<string, any[]> & { bankProfile?: BankProfile | null };
+
 /** Pre-warms the cache for every collection at boot, since many components read a
  * collection synchronously that their own page never explicitly fetches. */
 export async function initStore(): Promise<void> {
-  const bootstrap = await apiFetch<Record<string, any[]>>('/bootstrap');
-  Object.assign(cache, bootstrap);
+  const { bankProfile: _bankProfile, ...collections } = await apiFetch<BootstrapPayload>('/bootstrap');
+  Object.assign(cache, collections);
+}
+
+/** Loads the bank profile for the app shell; null when the server has none. Throws when the request fails. */
+export async function fetchBankProfile(): Promise<BankProfile | null> {
+  const payload = await apiFetch<BootstrapPayload>('/bootstrap');
+  return payload.bankProfile ?? null;
 }
 
 // ---- async repository (real network calls) ----

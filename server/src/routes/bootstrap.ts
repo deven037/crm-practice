@@ -9,10 +9,23 @@ function publicUser(u: any) {
   return rest;
 }
 
+// Bank identity for the app shell; null when the environment has no bank name, so the
+// client can show the Harbor default with a plain-language message and Retry.
+function bankProfile() {
+  const name = process.env.BANK_NAME?.trim();
+  if (!name) return null;
+  return {
+    name,
+    logoUrl: process.env.BANK_LOGO_URL?.trim() || null,
+    color: process.env.BANK_COLOR?.trim() || null,
+  };
+}
+
 // One combined payload shaped like buildSeedData()'s return value, for the client's
 // initStore() to pre-warm its cache with every collection at boot.
 bootstrapRouter.get('/', requireAuth, (_req, res) => {
   res.json({
+    bankProfile: bankProfile(),
     users: store.users.all().map(publicUser),
     accounts: store.accounts.all(),
     products: store.products.all(),
