@@ -826,7 +826,7 @@ div.empty-cell { border: 1px dashed var(--border); border-radius: var(--radius-l
   border: 1px solid var(--bank-primary); background: var(--bank-primary); color: var(--bank-on); cursor: pointer;
   transition: background-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
-.lg-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--bank-primary) 88%, #000); }
+.lg-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--bank-primary) 88%, var(--text)); }
 .lg-btn:active:not(:disabled) { transform: translateY(1px); }
 .lg-shell .lg-btn:focus-visible { outline-offset: 3px; }
 .lg-btn:disabled { opacity: 0.6; cursor: not-allowed; }

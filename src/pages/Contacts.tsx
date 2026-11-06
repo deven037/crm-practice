@@ -227,7 +227,9 @@ export function Contacts() {
                       <span className="table-avatar">
                         {contact.avatar ? <img src={contact.avatar} alt="" /> : initials(contact.name)}
                       </span>
-                      {contact.name}
+                      <Link to={`/contacts/${contact.id}`} onClick={(e) => e.stopPropagation()}>
+                        {contact.name}
+                      </Link>
                     </td>
                     <td>{contact.title}</td>
                     <td>{accountName(contact.accountId)}</td>
