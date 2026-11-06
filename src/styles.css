@@ -10,7 +10,9 @@
   --text-muted: #5b6472; /* 6:1 on white; matches design/AIO-93 and AIO-101 (was #6b7280) */
 
   /* Pair each bank fill with its accessible foreground. Set data-bank-tone="amber" on :root for the AIO-93 amber identity. */
-  --bank-primary: #1d3a6e;
+  --harbor-primary: #1d3a6e;
+  --harbor-on: #ffffff;
+  --bank-primary: var(--harbor-primary);
   --bank-on: #ffffff;
   /* derived from the two bank inputs, so a bank profile re-themes the shell (design/AIO-140) */
   --bank-accent: color-mix(in srgb, var(--bank-primary) 40%, #fff);
@@ -119,6 +121,12 @@ code { background: var(--surface-2); border: 1px solid var(--border); border-rad
 
 /* ---------- shell ---------- */
 .app-shell { display: flex; min-height: 100vh; }
+.app-shell[data-bank-profile='default'] {
+  --bank-primary: var(--harbor-primary);
+  --bank-on: var(--harbor-on);
+  --bank-accent: color-mix(in srgb, var(--bank-primary) 40%, var(--harbor-on));
+  --chrome-active: color-mix(in srgb, var(--bank-primary) 38%, var(--chrome-bg));
+}
 
 .sidebar {
   width: 220px;

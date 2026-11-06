@@ -14,10 +14,7 @@ import { CommandBar } from './CommandBar';
 import { SidebarLink } from './SidebarLink';
 import './feedback-widget';
 
-// Product name and bank identity are replaceable; the bank settings are shared with Login and Dashboard.
 const PRODUCT_NAME = import.meta.env.VITE_PRODUCT_NAME?.trim() || 'Harbor CRM';
-const BANK_NAME = import.meta.env.VITE_BANK_NAME?.trim() || '';
-const BANK_LOGO_URL = import.meta.env.VITE_BANK_LOGO_URL?.trim();
 
 function useOutside(onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
@@ -184,7 +181,7 @@ export function Layout({ children, initialSidebarCollapsed = false }: { children
     fetchBankProfile().then(
       (p) => {
         setProfile(p);
-        setProfileStatus(p || BANK_NAME ? 'ready' : 'failed');
+        setProfileStatus(p?.name.trim() ? 'ready' : 'failed');
       },
       () => setProfileStatus('failed')
     );
@@ -192,8 +189,8 @@ export function Layout({ children, initialSidebarCollapsed = false }: { children
 
   useEffect(loadProfile, []);
 
-  const bankName = profile?.name || BANK_NAME;
-  const bankLogo = profile?.logoUrl || BANK_LOGO_URL;
+  const bankName = profileStatus === 'ready' ? profile?.name.trim() : '';
+  const bankLogo = bankName ? profile?.logoUrl?.trim() : null;
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -228,15 +225,17 @@ export function Layout({ children, initialSidebarCollapsed = false }: { children
   );
 
   return (
-    <div className={`app-shell${collapsed ? ' sidebar-collapsed' : ''}${mobileOpen ? ' sidebar-mobile-open' : ''}`}>
+    <div data-bank-profile={profileStatus === 'ready' && profile?.color ? 'bank' : 'default'} className={`app-shell${collapsed ? ' sidebar-collapsed' : ''}${mobileOpen ? ' sidebar-mobile-open' : ''}`}>
       {isMobile && mobileOpen && <div className="sidebar-backdrop" onClick={() => setMobileOpen(false)} />}
       <CommandBar open={commandOpen} onClose={() => setCommandOpen(false)} />
       <aside className="sidebar" data-testid="sidebar">
         <div className="brand">
-          <span className="brand-logo" aria-hidden="true">
-            {bankLogo ? <img src={bankLogo} alt="" /> : '◆'}
-          </span>
-          {!contentCollapsed && (
+          {(!bankName || bankLogo) && (
+            <span className="brand-logo" aria-hidden="true">
+              {bankLogo ? <img src={bankLogo} alt="" /> : '◆'}
+            </span>
+          )}
+          {(!contentCollapsed || (bankName && !bankLogo)) && (
             <span className="brand-text">
               <span className="brand-name">{bankName || PRODUCT_NAME}</span>
               {bankName && <span className="brand-sub">on {PRODUCT_NAME}</span>}
