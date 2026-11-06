@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Pencil, Trash2 } from 'lucide-react';
 import { getAllSync, getById, removeMany, upsert } from '../data/store';
@@ -13,6 +13,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { formatCurrency, formatDate } from '../utils';
 import { applyAssignmentRule, getStatusOptions } from '../utils/rules';
+import { beginOnce, canChangeLeads, LeadEditErrors, validateLeadEdit } from './leads/leadsGuards';
 
 export function LeadDetail() {
   const { id } = useParams();
@@ -22,9 +23,14 @@ export function LeadDetail() {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Lead | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [errors, setErrors] = useState<LeadEditErrors>({});
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { recordView } = useRecentlyViewed();
+  const canChange = canChangeLeads(user?.role);
 
   useEffect(() => {
     (async () => {
@@ -41,8 +47,12 @@ export function LeadDetail() {
 
   if (notFound) {
     return (
-      <div className="empty-cell">
-        Lead not found. <Link to="/leads">Back to leads</Link>
+      <div className="empty-cell" role="status">
+        <h2>Lead not found</h2>
+        <p>It may have been deleted or the link is wrong.</p>
+        <Link className="btn btn-primary" to="/leads">
+          Back to Leads
+        </Link>
       </div>
     );
   }
@@ -55,127 +65,169 @@ export function LeadDetail() {
   const product = products.find((p) => p.id === lead.productId);
   const campaign = campaigns.find((c) => c.id === lead.campaignId);
 
+  const closeEditor = () => {
+    setEditing(false);
+    setErrors({});
+    setSaveError('');
+  };
+
   const save = async () => {
     if (!draft) return;
-    if (!draft.name.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(draft.email.trim())) {
-      toast.push('error', 'Name and a valid email are required.');
+    const fieldErrors = validateLeadEdit(draft.name, draft.email);
+    setErrors(fieldErrors);
+    if (Object.keys(fieldErrors).length > 0) {
+      setSaveError('Name and a valid email are required.');
       return;
     }
     const cErrs = validateCustomFields('leads', 'detail', draft.customFields ?? {});
     if (Object.keys(cErrs).length > 0) {
-      toast.push('error', Object.values(cErrs)[0]);
+      setSaveError(Object.values(cErrs)[0]);
       return;
     }
-    // Setup → Assignment Rules: re-check on every save, not just at creation, so a rule whose
-    // condition only becomes true on edit (e.g. "Status equals Converted") still reassigns.
-    const assignedTo = applyAssignmentRule('leads', draft);
-    const toSave = assignedTo ? { ...draft, ownerId: assignedTo } : draft;
-    await upsert('leads', toSave);
-    setLead(toSave);
-    setEditing(false);
-    toast.push('success', assignedTo && assignedTo !== lead.ownerId ? 'Lead updated and auto-assigned.' : 'Lead updated.');
+    if (!beginOnce(savingRef)) return;
+    setSaving(true);
+    setSaveError('');
+    try {
+      // Setup → Assignment Rules: re-check on every save, not just at creation, so a rule whose
+      // condition only becomes true on edit (e.g. "Status equals Converted") still reassigns.
+      const assignedTo = applyAssignmentRule('leads', draft);
+      const toSave = assignedTo ? { ...draft, ownerId: assignedTo } : draft;
+      await upsert('leads', toSave);
+      setLead(toSave);
+      closeEditor();
+      toast.push('success', assignedTo && assignedTo !== lead.ownerId ? 'Lead updated and auto-assigned.' : 'Lead updated.');
+    } catch {
+      setSaveError('Your changes were not saved. The server did not answer. What you typed is still here; press Save to try again.');
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   };
 
   const detailsTab = !editing ? (
     <dl className="detail-list">
       <dt>Company</dt>
-      <dd>{lead.company || '—'}</dd>
+      <dd data-testid="lead-company">{lead.company || '—'}</dd>
       <dt>Email</dt>
-      <dd>{lead.email}</dd>
+      <dd data-testid="lead-email">{lead.email}</dd>
       <dt>Phone</dt>
-      <dd>{lead.phone || '—'}</dd>
+      <dd data-testid="lead-phone">{lead.phone || '—'}</dd>
       <dt>Source</dt>
       <dd>{lead.source}</dd>
       <dt>Owner</dt>
       <dd>{ownerName}</dd>
       <dt>Estimated value</dt>
-      <dd>{formatCurrency(lead.value)}</dd>
+      <dd data-testid="lead-value">{formatCurrency(lead.value)}</dd>
       <dt>Interested product</dt>
-      <dd>{product ? <Link to={`/products/${product.id}`}>{product.name}</Link> : '—'}</dd>
+      <dd data-testid="lead-product">{product ? <Link to={`/products/${product.id}`}>{product.name}</Link> : '—'}</dd>
       <dt>Campaign</dt>
-      <dd>{campaign ? <Link to={`/campaigns/${campaign.id}`}>{campaign.name}</Link> : '—'}</dd>
+      <dd data-testid="lead-campaign">{campaign ? <Link to={`/campaigns/${campaign.id}`}>{campaign.name}</Link> : '—'}</dd>
       <dt>Created</dt>
       <dd>{formatDate(lead.createdAt)}</dd>
       <CustomFieldsSection module="leads" target="detail" mode="view" values={lead.customFields ?? {}} />
     </dl>
   ) : (
     draft && (
-      <div className="form-grid">
-        <div className="field">
-          <span className="field-label">Full name *</span>
-          <input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-        </div>
-        <div className="field">
-          <span className="field-label">Company</span>
-          <input className="input" value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} />
-        </div>
-        <div className="field">
-          <span className="field-label">Email *</span>
-          <input className="input" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
-        </div>
-        <div className="field">
-          <span className="field-label">Phone</span>
-          <input className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
-        </div>
-        <div className="field">
-          <span className="field-label">Status</span>
-          <Select
-            value={draft.status}
-            options={getStatusOptions('leads', 'status', LEAD_STATUSES).map((s) => ({ value: s, label: s }))}
-            onChange={(v) => setDraft({ ...draft, status: v as LeadStatus })}
+      <>
+        {saveError && (
+          <div className="banner banner-error" role="alert" data-testid="lead-save-error">
+            {saveError}
+          </div>
+        )}
+        <div className="form-grid">
+          <div className="field">
+            <label className="field-label" htmlFor="lead-edit-name">Full name *</label>
+            <input
+              id="lead-edit-name"
+              className="input"
+              value={draft.name}
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby={errors.name ? 'lead-edit-name-error' : undefined}
+              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+            />
+            {errors.name && <div id="lead-edit-name-error" className="field-error">{errors.name}</div>}
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="lead-edit-company">Company</label>
+            <input id="lead-edit-company" className="input" value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="lead-edit-email">Email *</label>
+            <input
+              id="lead-edit-email"
+              className="input"
+              value={draft.email}
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? 'lead-edit-email-error' : undefined}
+              onChange={(e) => setDraft({ ...draft, email: e.target.value })}
+            />
+            {errors.email && <div id="lead-edit-email-error" className="field-error">{errors.email}</div>}
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="lead-edit-phone">Phone</label>
+            <input id="lead-edit-phone" className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
+          </div>
+          <div className="field">
+            <span className="field-label">Status</span>
+            <Select
+              value={draft.status}
+              options={getStatusOptions('leads', 'status', LEAD_STATUSES).map((s) => ({ value: s, label: s }))}
+              onChange={(v) => setDraft({ ...draft, status: v as LeadStatus })}
+            />
+          </div>
+          <div className="field">
+            <span className="field-label">Source</span>
+            <Select
+              value={draft.source}
+              options={LEAD_SOURCES.map((s) => ({ value: s, label: s }))}
+              onChange={(v) => setDraft({ ...draft, source: v })}
+            />
+          </div>
+          <div className="field">
+            <span className="field-label">Interested product</span>
+            <SearchableSelect
+              value={draft.productId ?? ''}
+              options={[{ value: '', label: 'No product' }, ...products.map((p) => ({ value: p.id, label: p.name }))]}
+              onChange={(v) => setDraft({ ...draft, productId: v || null })}
+              placeholder="Search products…"
+            />
+          </div>
+          <div className="field">
+            <span className="field-label">Campaign</span>
+            <SearchableSelect
+              value={draft.campaignId ?? ''}
+              options={[{ value: '', label: 'No campaign' }, ...campaigns.map((c) => ({ value: c.id, label: c.name }))]}
+              onChange={(v) => setDraft({ ...draft, campaignId: v || null })}
+              placeholder="Search campaigns…"
+            />
+          </div>
+          <div className="field">
+            <span className="field-label">Owner</span>
+            <Select
+              value={draft.ownerId}
+              options={users.map((u) => ({ value: u.id, label: u.name }))}
+              onChange={(v) => setDraft({ ...draft, ownerId: v })}
+            />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="lead-edit-value">Estimated value ($)</label>
+            <input
+              id="lead-edit-value"
+              className="input"
+              type="number"
+              value={draft.value}
+              onChange={(e) => setDraft({ ...draft, value: Number(e.target.value) })}
+            />
+          </div>
+          <CustomFieldsSection
+            module="leads"
+            target="detail"
+            mode="edit"
+            values={draft.customFields ?? {}}
+            onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
           />
         </div>
-        <div className="field">
-          <span className="field-label">Source</span>
-          <Select
-            value={draft.source}
-            options={LEAD_SOURCES.map((s) => ({ value: s, label: s }))}
-            onChange={(v) => setDraft({ ...draft, source: v })}
-          />
-        </div>
-        <div className="field">
-          <span className="field-label">Interested product</span>
-          <SearchableSelect
-            value={draft.productId ?? ''}
-            options={[{ value: '', label: 'No product' }, ...products.map((p) => ({ value: p.id, label: p.name }))]}
-            onChange={(v) => setDraft({ ...draft, productId: v || null })}
-            placeholder="Search products…"
-          />
-        </div>
-        <div className="field">
-          <span className="field-label">Campaign</span>
-          <SearchableSelect
-            value={draft.campaignId ?? ''}
-            options={[{ value: '', label: 'No campaign' }, ...campaigns.map((c) => ({ value: c.id, label: c.name }))]}
-            onChange={(v) => setDraft({ ...draft, campaignId: v || null })}
-            placeholder="Search campaigns…"
-          />
-        </div>
-        <div className="field">
-          <span className="field-label">Owner</span>
-          <Select
-            value={draft.ownerId}
-            options={users.map((u) => ({ value: u.id, label: u.name }))}
-            onChange={(v) => setDraft({ ...draft, ownerId: v })}
-          />
-        </div>
-        <div className="field">
-          <span className="field-label">Estimated value ($)</span>
-          <input
-            className="input"
-            type="number"
-            value={draft.value}
-            onChange={(e) => setDraft({ ...draft, value: Number(e.target.value) })}
-          />
-        </div>
-        <CustomFieldsSection
-          module="leads"
-          target="detail"
-          mode="edit"
-          values={draft.customFields ?? {}}
-          onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
-        />
-      </div>
+      </>
     )
   );
 
@@ -195,7 +247,9 @@ export function LeadDetail() {
         ]}
         tabs={[{ id: 'details', label: 'Details', content: <div className="card">{detailsTab}</div> }]}
         actions={
-          !editing ? (
+          !canChange ? (
+            <span className="muted">You have view-only access.</span>
+          ) : !editing ? (
             <>
               <button
                 className="btn"
@@ -213,11 +267,11 @@ export function LeadDetail() {
             </>
           ) : (
             <>
-              <button className="btn" onClick={() => setEditing(false)}>
+              <button className="btn" onClick={closeEditor}>
                 Cancel
               </button>
-              <button className="btn btn-primary" data-testid="save-lead-btn" onClick={save}>
-                Save
+              <button className="btn btn-primary" data-testid="save-lead-btn" disabled={saving} aria-busy={saving} onClick={save}>
+                {saving ? 'Saving…' : 'Save'}
               </button>
             </>
           )
@@ -226,7 +280,7 @@ export function LeadDetail() {
 
       {deleting && (
         <Modal
-          title={`Delete lead — ${lead.name}`}
+          title={`Delete ${lead.name}?`}
           onClose={() => setDeleting(false)}
           footer={
             <>
@@ -247,11 +301,10 @@ export function LeadDetail() {
             </>
           }
         >
-          <p>Delete “{lead.name}”? This cannot be undone.</p>
+          <p>This removes the lead and cannot be undone.</p>
           {lead.status === 'Converted' && (
             <div className="banner banner-info" data-testid="converted-warning">
-              This lead was already <strong>converted</strong> — the contact, account, and deal created from it will{' '}
-              <strong>not</strong> be deleted.
+              This lead is <strong>converted</strong>. The contact, account and deal made from it are <strong>not</strong> deleted.
             </div>
           )}
         </Modal>

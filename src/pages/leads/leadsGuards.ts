@@ -3,6 +3,22 @@ export const clearSelection = (): string[] => [];
 // Export CSV is offered to admin and rep; the read-only viewer role cannot export.
 export const canExportLeads = (role: string | undefined): boolean => role === 'admin' || role === 'rep';
 
+// Edit and Delete on a lead record are for admin and rep, matching the server routes; viewers read only.
+export const canChangeLeads = (role: string | undefined): boolean => role === 'admin' || role === 'rep';
+
+export interface LeadEditErrors {
+  name?: string;
+  email?: string;
+}
+
+// Same wording as the new-lead form (AC22), shown under each field on the record page.
+export const validateLeadEdit = (name: string, email: string): LeadEditErrors => {
+  const errors: LeadEditErrors = {};
+  if (!name.trim()) errors.name = 'Name is required.';
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())) errors.email = 'Enter a valid email.';
+  return errors;
+};
+
 // Returns true for the first caller and false for any call made before the flag is released.
 export const beginOnce = (flag: { current: boolean }): boolean => {
   if (flag.current) return false;

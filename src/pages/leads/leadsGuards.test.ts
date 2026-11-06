@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { beginOnce, canExportLeads, clearSelection, emptyStateKind, getAriaSort, pageWindow, shouldOpenRowOnKeyDown } from './leadsGuards';
+import { beginOnce, canChangeLeads, canExportLeads, clearSelection, emptyStateKind, getAriaSort, pageWindow, shouldOpenRowOnKeyDown, validateLeadEdit } from './leadsGuards';
 
 describe('canExportLeads', () => {
   it('allows admin and rep', () => {
@@ -10,6 +10,36 @@ describe('canExportLeads', () => {
   it('denies viewer and a missing role', () => {
     expect(canExportLeads('viewer')).toBe(false);
     expect(canExportLeads(undefined)).toBe(false);
+  });
+});
+
+describe('canChangeLeads', () => {
+  it('allows admin and rep', () => {
+    expect(canChangeLeads('admin')).toBe(true);
+    expect(canChangeLeads('rep')).toBe(true);
+  });
+
+  it('denies viewer and a missing role', () => {
+    expect(canChangeLeads('viewer')).toBe(false);
+    expect(canChangeLeads(undefined)).toBe(false);
+  });
+});
+
+describe('validateLeadEdit', () => {
+  it('accepts a name and a valid email', () => {
+    expect(validateLeadEdit('Priya Raman', 'priya@northwind.example')).toEqual({});
+  });
+
+  it('asks for a name when it is blank', () => {
+    expect(validateLeadEdit('   ', 'priya@northwind.example')).toEqual({ name: 'Name is required.' });
+  });
+
+  it('asks for a valid email when it is malformed', () => {
+    expect(validateLeadEdit('Priya Raman', 'priya@northwind')).toEqual({ email: 'Enter a valid email.' });
+  });
+
+  it('reports both fields together', () => {
+    expect(validateLeadEdit('', '')).toEqual({ name: 'Name is required.', email: 'Enter a valid email.' });
   });
 });
 
