@@ -1,4 +1,4 @@
-import { createElement } from 'react';
+import { createElement, type ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,6 +10,7 @@ const harness = vi.hoisted(() => {
   cursor: 0,
   effects: Array<() => void>(),
   fetchProfile: vi.fn(),
+  retryClicks: Array<() => void>(),
   };
 });
 
@@ -26,6 +27,36 @@ vi.mock('react', async (importOriginal) => ({
   },
   useEffect: (effect: () => void) => { harness.effects.push(effect); },
 }));
+vi.mock('react/jsx-runtime', async (importOriginal) => {
+  type RenderElement = (type: unknown, props: Record<string, unknown>, key?: string) => ReactElement;
+  const original = await importOriginal<{ jsx: RenderElement; jsxs: RenderElement }>();
+  const captureRetry = (renderElement: RenderElement): RenderElement => (type, props, key) => {
+    if (type === 'button' && props['data-testid'] === 'bank-profile-retry') {
+      const onClick = props.onClick;
+      if (typeof onClick === 'function') harness.retryClicks.push(() => onClick());
+    }
+    return renderElement(type, props, key);
+  };
+  return { ...original, jsx: captureRetry(original.jsx), jsxs: captureRetry(original.jsxs) };
+});
+vi.mock('react/jsx-dev-runtime', async (importOriginal) => {
+  type RenderElement = (
+    type: unknown, props: Record<string, unknown>, key: string | undefined,
+    isStaticChildren: boolean, source: unknown, self: unknown
+  ) => ReactElement;
+  const original = await importOriginal<{ jsxDEV: RenderElement }>();
+  return {
+    ...original,
+    jsxDEV: (...args: Parameters<RenderElement>) => {
+      const [type, props] = args;
+      if (type === 'button' && props['data-testid'] === 'bank-profile-retry') {
+        const onClick = props.onClick;
+        if (typeof onClick === 'function') harness.retryClicks.push(() => onClick());
+      }
+      return original.jsxDEV(...args);
+    },
+  };
+});
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
 vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
 vi.mock('../hooks/useMediaQuery', () => ({ useMediaQuery: () => false }));
@@ -44,6 +75,7 @@ import { Layout } from './Layout';
 function render(collapsed = false): string {
   harness.cursor = 0;
   harness.effects = [];
+  harness.retryClicks = [];
   return renderToStaticMarkup(createElement(Layout, { children: null, initialSidebarCollapsed: collapsed }));
 }
 
@@ -73,14 +105,22 @@ describe('bank profile fallback and recovery', () => {
     expect(html).not.toContain('/environment-logo.svg');
   });
 
-  it('recovers from a request failure using the same loader bound to Retry', async () => {
-    harness.fetchProfile.mockRejectedValueOnce(new Error('Network unavailable'));
+  it.each(['rejected', 'null'])('recovers through the rendered Retry control after a %s response', async (response) => {
+    if (response === 'rejected') {
+      harness.fetchProfile.mockRejectedValueOnce(new Error('Network unavailable'));
+    } else {
+      harness.fetchProfile.mockResolvedValueOnce(null);
+    }
     render();
     await load();
     expect(render()).toContain('data-testid="bank-profile-error"');
 
     harness.fetchProfile.mockResolvedValueOnce({ name: 'Redfern Credit Union', logoUrl: null, color: null });
-    await load();
+    const retry = harness.retryClicks[0];
+    if (!retry) throw new Error('Rendered Retry button has no click handler');
+    retry();
+    expect(harness.fetchProfile).toHaveBeenCalledTimes(2);
+    await Promise.resolve();
     const html = render();
     expect(harness.fetchProfile).toHaveBeenCalledTimes(2);
     expect(html).not.toContain('data-testid="bank-profile-error"');
