@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Pencil, Trash2 } from 'lucide-react';
 import { getAllSync, getById, removeMany, upsert } from '../data/store';
-import { Campaign, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Product, User } from '../types';
+import { Account, Campaign, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Product, User } from '../types';
+import { apiFetch } from '../data/apiFetch';
+import { LeadConvertWizard, WizardState } from './leads/LeadConvertWizard';
 import { Modal } from '../components/Modal';
 import { SearchableSelect, Select } from '../components/Select';
 import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
@@ -27,6 +29,10 @@ export function LeadDetail() {
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const [wizard, setWizard] = useState<WizardState | null>(null);
+  const [converting, setConverting] = useState(false);
+  const [conversionError, setConversionError] = useState('');
+  const convertingRef = useRef(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { recordView } = useRecentlyViewed();
@@ -101,6 +107,43 @@ export function LeadDetail() {
     } finally {
       savingRef.current = false;
       setSaving(false);
+    }
+  };
+
+  const openConversion = () => {
+    setConversionError('');
+    setWizard({
+      lead, step: 1, contactName: lead.name, contactEmail: lead.email,
+      contactPhone: lead.phone, accountMode: 'new', accountName: lead.company,
+      existingAccountId: '', createDeal: false, dealName: `${lead.company} New Business`,
+      dealAmount: lead.value, dealStage: 'Qualification',
+    });
+  };
+
+  const finishConversion = async () => {
+    if (!wizard || !beginOnce(convertingRef)) return;
+    setConverting(true);
+    setConversionError('');
+    try {
+      const { lead: converted } = await apiFetch<{ lead: Lead }>(`/leads/${lead.id}/convert`, {
+        method: 'POST',
+        body: JSON.stringify({
+          accountMode: wizard.accountMode, existingAccountId: wizard.existingAccountId,
+          accountName: wizard.accountName, contactName: wizard.contactName,
+          contactEmail: wizard.contactEmail, contactPhone: wizard.contactPhone,
+          createDeal: wizard.createDeal, dealName: wizard.dealName,
+          dealAmount: wizard.dealAmount, dealStage: wizard.dealStage,
+        }),
+      });
+      setLead(converted);
+      setWizard(null);
+      toast.push('success', `Lead "${lead.name}" converted successfully.`);
+      navigate('/leads');
+    } catch (error) {
+      setConversionError(error instanceof Error ? error.message : 'Lead was not converted. Try Finish conversion again.');
+    } finally {
+      convertingRef.current = false;
+      setConverting(false);
     }
   };
 
@@ -251,6 +294,9 @@ export function LeadDetail() {
             <span className="muted">You have view-only access.</span>
           ) : !editing ? (
             <>
+              {lead.status !== 'Converted' && (
+                <button className="btn btn-primary" onClick={openConversion}>Convert lead…</button>
+              )}
               <button
                 className="btn"
                 data-testid="edit-lead-btn"
@@ -277,6 +323,17 @@ export function LeadDetail() {
           )
         }
       />
+
+      {wizard && (
+        <LeadConvertWizard
+          wizard={wizard}
+          setWizard={(next) => { if (!convertingRef.current) setWizard(next); }}
+          accounts={getAllSync<Account>('accounts')}
+          onFinish={finishConversion}
+          isFinishing={converting}
+          error={conversionError}
+        />
+      )}
 
       {deleting && (
         <Modal
