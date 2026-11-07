@@ -26,9 +26,10 @@ interface Props {
   accounts: Account[];
   onFinish: () => void;
   isFinishing: boolean;
+  error?: string;
 }
 
-export function LeadConvertWizard({ wizard, setWizard, accounts, onFinish, isFinishing }: Props) {
+export function LeadConvertWizard({ wizard, setWizard, accounts, onFinish, isFinishing, error }: Props) {
   const [stepOneErrors, setStepOneErrors] = useState<StepOneErrors>({});
   const continueFromStepOne = () => {
     const errors = validateStepOne(wizard.contactName, wizard.contactEmail);
@@ -38,6 +39,7 @@ export function LeadConvertWizard({ wizard, setWizard, accounts, onFinish, isFin
 
   return (
     <Modal title={`Convert lead — Step ${wizard.step} of 3`} onClose={() => setWizard(null)} wide>
+      {error && <div className="banner banner-error" role="alert">{error}</div>}
       <div className="wizard-steps">
         {['Contact', 'Account', 'Deal'].map((label, i) => (
           <span key={label} className={classNames('wizard-step', wizard.step === i + 1 && 'active', wizard.step > i + 1 && 'done')}>
