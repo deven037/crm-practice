@@ -1090,7 +1090,8 @@ div.empty-cell { border: 1px dashed var(--border); border-radius: var(--radius-l
 
 /* custom tooltip via data-tooltip attribute */
 .has-tooltip { position: relative; }
-.has-tooltip:hover::after {
+.has-tooltip:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.has-tooltip:hover::after, .has-tooltip:focus-visible::after {
   content: attr(data-tooltip);
   position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
   background: var(--tooltip-bg); color: var(--on-accent); font-size: 12px; padding: 5px 9px; border-radius: var(--radius-sm);
