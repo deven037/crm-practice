@@ -33,6 +33,39 @@ describe('runRecoverable', () => {
     expect(calls).toEqual(['busy:true', 'error:false', 'error:true', 'busy:false']);
   });
 
+  it('delete: a rejected delete shows the error, re-enables the buttons and does not report success', async () => {
+    const { calls, hooks: h } = hooks();
+    let removed = false;
+    const runDelete = async () => {
+      throw new Error('409 open_deals');
+    };
+
+    const ok = await runRecoverable(async () => {
+      await runDelete();
+      removed = true;
+    }, h);
+
+    expect(ok).toBe(false);
+    expect(removed).toBe(false);
+    expect(calls).toEqual(['busy:true', 'error:false', 'error:true', 'busy:false']);
+  });
+
+  it('delete: a retry after a rejected delete clears the error and completes', async () => {
+    const { calls, hooks: h } = hooks();
+    const removedIds: string[] = [];
+    let attempt = 0;
+    const runDelete = async () => {
+      attempt += 1;
+      if (attempt === 1) throw new Error('500');
+      removedIds.push('acc-1');
+    };
+
+    expect(await runRecoverable(runDelete, h)).toBe(false);
+    expect(await runRecoverable(runDelete, h)).toBe(true);
+    expect(removedIds).toEqual(['acc-1']);
+    expect(calls.slice(-2)).toEqual(['busy:true', 'error:false']);
+  });
+
   it('clears an earlier error on retry and succeeds', async () => {
     const { calls, hooks: h } = hooks();
     let attempt = 0;
