@@ -29,6 +29,15 @@ export function contactsEmptyKind(total: number, query: string): 'none-yet' | 'n
   return total === 0 && !query.trim() ? 'none-yet' : 'no-match';
 }
 
+// Focusable so keyboard users get the same full-email tooltip as hover (AIO-144 AC3).
+export function EmailTooltip({ email, as: Tag, className }: { email: string; as: 'div' | 'td'; className?: string }) {
+  return (
+    <Tag className={classNames(className, 'truncate has-tooltip')} data-tooltip={email} tabIndex={0}>
+      {email}
+    </Tag>
+  );
+}
+
 export function Contacts() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -159,9 +168,7 @@ export function Contacts() {
               <div className="contact-title muted">{contact.title}</div>
               <div className="contact-company">{accountName(contact.accountId)}</div>
               {/* Custom tooltip on truncated email — hover to reveal */}
-              <div className="contact-email truncate has-tooltip" data-tooltip={contact.email}>
-                {contact.email}
-              </div>
+              <EmailTooltip as="div" className="contact-email" email={contact.email} />
               {contact.tags.length > 0 && (
                 <div className="chip-row">
                   {contact.tags.map((tag) => (
@@ -233,9 +240,7 @@ export function Contacts() {
                     </td>
                     <td>{contact.title}</td>
                     <td>{accountName(contact.accountId)}</td>
-                    <td className="truncate has-tooltip" data-tooltip={contact.email}>
-                      {contact.email}
-                    </td>
+                    <EmailTooltip as="td" email={contact.email} />
                     <td>{contact.phone}</td>
                     <td>
                       {contact.tags.map((tag) => (

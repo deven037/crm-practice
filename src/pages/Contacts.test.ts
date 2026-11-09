@@ -26,7 +26,7 @@ import { createElement, isValidElement, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, vi } from 'vitest';
-import { Contacts } from './Contacts';
+import { Contacts, EmailTooltip } from './Contacts';
 import { Contact, Role } from '../types';
 
 const harness = vi.hoisted(() => {
@@ -164,6 +164,17 @@ describe('Contacts rendered behavior', () => {
         expect(render().html).toContain('Delete');
         expect(harness.navigate).not.toHaveBeenCalled();
       }
+    }
+  });
+});
+
+describe('EmailTooltip', () => {
+  it('is keyboard focusable and carries the full email in Grid and List cells', () => {
+    for (const as of ['div', 'td'] as const) {
+      const html = renderToStaticMarkup(createElement(as === 'td' ? 'tr' : 'div', null, createElement(EmailTooltip, { as, email: 'meera.mehta@example.com' })));
+      expect(html).toContain('tabindex="0"');
+      expect(html).toContain('data-tooltip="meera.mehta@example.com"');
+      expect(html).toContain('has-tooltip');
     }
   });
 });
