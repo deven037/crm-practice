@@ -35,6 +35,7 @@ attributes, others must be located by role, text, CSS, or XPath — like a real-
 | Chrome | `sidebar`, `topbar`, `sidebar-toggle`, `global-search`, `theme-toggle`, `avatar-menu`, `logout-btn` |
 | Toasts / modals | `toast-container`, `toast`, `modal` |
 | Leads | `filters-toggle`, `filter-panel`, `bulk-bar`, `pagination`, `export-csv-btn`, `lead-name`, `lead-company`, `lead-email`, `lead-phone`, `lead-status`, `lead-product`, `lead-value`, `edit-lead-btn`, `save-lead-btn`, `lead-detail-status`, `delete-lead-btn`, `wizard-finish` |
+| Accounts | `accounts-load-error`, `accounts-empty` |
 | Products | `product-name`, `product-sku`, `product-category`, `product-price`, `product-description`, `product-status`, `edit-product-btn`, `save-product-btn`, `new-lead-for-product-btn` |
 | Dashboard | `dashboard-range`, `stat-leads`, `stat-pipeline`, `stat-tasks`, `stat-tickets`, `activity-feed` |
 | Deals | `kanban-board`, `deal-name`, `deal-account`, `deal-amount`, `deal-stage`, `deal-close-date`, `deal-save-btn`, `edit-deal-btn`, `deal-detail-stage` |

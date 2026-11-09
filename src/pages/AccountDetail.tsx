@@ -12,6 +12,8 @@ import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
+import { canWriteAccounts } from './Accounts';
+import { runRecoverable } from './accountRecovery';
 import { formatCurrency, formatDate } from '../utils';
 
 export function AccountDetail() {
@@ -26,8 +28,11 @@ export function AccountDetail() {
   const [draft, setDraft] = useState<Account | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [cascade, setCascade] = useState<'unlink' | 'cascade'>('unlink');
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const canWrite = canWriteAccounts(user?.role);
   const { recordView } = useRecentlyViewed();
 
   useEffect(() => {
@@ -73,7 +78,9 @@ export function AccountDetail() {
 
   const openDeals = deals.filter((d) => !d.stage.startsWith('Closed'));
 
-  const doDelete = async () => {
+  const doDelete = () => runRecoverable(runDelete, { setBusy: setDeleteBusy, setError: setDeleteError });
+
+  const runDelete = async () => {
     if (cascade === 'cascade') {
       // Delete related contacts and (closed) deals along with the account.
       await removeMany('contacts', contacts.map((c) => c.id));
@@ -90,7 +97,7 @@ export function AccountDetail() {
       await saveAll('deals', allDeals);
     }
     await removeMany('accounts', [account.id]);
-    toast.push('success', `Account "${account.name}" deleted.`);
+    toast.push('success', 'Account deleted.');
     navigate('/accounts');
   };
 
@@ -217,7 +224,7 @@ export function AccountDetail() {
           { id: 'related', label: 'Related', content: relatedTab },
         ]}
         actions={
-          !editing ? (
+          !canWrite ? undefined : !editing ? (
             <>
               <button
                 className="btn"
@@ -246,9 +253,9 @@ export function AccountDetail() {
         }
       />
 
-      {deleting && openDeals.length > 0 && (
+      {canWrite && deleting && openDeals.length > 0 && (
         <Modal
-          title="Cannot delete account"
+          title={`Can’t delete ${account.name}`}
           onClose={() => setDeleting(false)}
           footer={
             <button className="btn" onClick={() => setDeleting(false)}>
@@ -257,7 +264,7 @@ export function AccountDetail() {
           }
         >
           <div className="banner banner-error" role="alert" data-testid="delete-blocked-banner">
-            This account has {openDeals.length} open deal(s). Close or delete them first.
+            Close or reassign these {openDeals.length} open deal(s) first. The account stays as it is.
           </div>
           <ul className="related-list">
             {openDeals.map((d) => (
@@ -272,24 +279,29 @@ export function AccountDetail() {
         </Modal>
       )}
 
-      {deleting && openDeals.length === 0 && (
+      {canWrite && deleting && openDeals.length === 0 && (
         <Modal
-          title={`Delete account — ${account.name}`}
+          title={`Delete ${account.name}?`}
           onClose={() => setDeleting(false)}
           footer={
             <>
-              <button className="btn" onClick={() => setDeleting(false)}>
+              <button className="btn" disabled={deleteBusy} onClick={() => setDeleting(false)}>
                 Cancel
               </button>
-              <button className="btn btn-danger" data-testid="confirm-delete-btn" onClick={doDelete}>
-                Delete account
+              <button className="btn btn-danger" data-testid="confirm-delete-btn" disabled={deleteBusy} onClick={doDelete}>
+                {deleteBusy ? 'Deleting…' : 'Delete account'}
               </button>
             </>
           }
         >
+          {deleteError && (
+            <div className="banner banner-error" role="alert">
+              Account couldn’t be deleted. Some related records may have changed. Reload the page and check before you try again.
+            </div>
+          )}
           <p>
-            This account has <strong>{contacts.length} contact(s)</strong> and <strong>{deals.length} closed deal(s)</strong>.
-            What should happen to them?
+            This can’t be undone. Choose what happens to its <strong>{contacts.length} contact(s)</strong> and{' '}
+            <strong>{deals.length} closed deal(s)</strong>.
           </p>
           <div className="field">
             <label className="checkbox-label">
