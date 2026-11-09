@@ -4,6 +4,8 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import express from 'express';
 import { store } from '../src/db.js';
+import { env } from '../src/env.js';
+import { simulatedLatency } from '../src/middleware/latency.js';
 import { signToken } from '../src/middleware/auth.js';
 import { errorHandler } from '../src/middleware/errorHandler.js';
 import { apiRouter } from '../src/routes/index.js';
@@ -39,6 +41,7 @@ const lead = (id: string, over: Record<string, unknown>) => ({
 before(async () => {
   const app = express();
   app.use(express.json());
+  app.use(simulatedLatency);
   app.use('/api', apiRouter);
   app.use(errorHandler);
   server = await new Promise<Server>((resolve) => {
@@ -67,6 +70,26 @@ after(() => {
 });
 
 describe('GET /api/search', () => {
+  it('does not incur simulated GET latency with latency simulation enabled', async (t) => {
+    const disabled = env.disableLatency;
+    env.disableLatency = false;
+    const random = t.mock.method(Math, 'random', () => 1);
+    try {
+      for (const path of ['/api/search?q=zq', '/api/search/?q=zq']) {
+        const started = performance.now();
+        const res = await fetch(`${base}${path}`, {
+          headers: { Authorization: `Bearer ${tokenFor('rep')}` },
+        });
+        await res.json();
+        assert.equal(res.status, 200);
+        assert.ok(performance.now() - started < 1000, 'Search must bypass the 1200 ms simulated delay');
+      }
+    } finally {
+      random.mock.restore();
+      env.disableLatency = disabled;
+    }
+  });
+
   it('rejects a missing token', async () => {
     assert.equal((await search('?q=zq', null)).status, 401);
   });
