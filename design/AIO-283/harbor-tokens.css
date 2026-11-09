@@ -1,6 +1,6 @@
 :root{
   --bg:#f4f6f8;--surface:#ffffff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;
-  --text:#1f2937;--text-muted:#6b7280;--chrome-bg:#0b0f19;--chrome-text:#c4cad9;--chrome-text-muted:#7c8499;
+  --text:#1f2937;--text-muted:#5b6472;--chrome-bg:#0b0f19;--chrome-text:#c4cad9;--chrome-text-muted:#7c8499;
   --accent:#2563eb;--success:#16a34a;--warning:#d97706;--danger:#dc2626;
   --tone-success-bg:#d1fae5;--tone-success-text:#065f46;--tone-warning-bg:#fef3c7;--tone-warning-text:#92400e;
   --tone-danger-bg:#fee2e2;--tone-danger-text:#991b1b;--tone-info-bg:#dbeafe;--tone-info-text:#1e40af;--neutral-text:#374151;
