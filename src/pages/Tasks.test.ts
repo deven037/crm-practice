@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { TaskItem } from '../types';
-import { canManageTasks, TaskEmptyState, TaskRows } from './Tasks';
+import { canManageTasks, TaskEmptyState, TaskFilters, TaskRows } from './Tasks';
 
 const tasks: TaskItem[] = [
   { id: 'task-1', title: 'Call Calder Logistics', dueDate: '2099-11-09T00:00:00.000Z', priority: 'High', completed: false, order: 0 },
@@ -38,11 +38,24 @@ describe('Tasks role and filter controls', () => {
     const checkbox = html.indexOf('aria-label="Complete Call Calder Logistics"');
     const moveUp = html.indexOf('aria-label="Move Call Calder Logistics up"');
     const moveDown = html.indexOf('aria-label="Move Call Calder Logistics down"');
-    const delete = html.indexOf('aria-label="Delete Call Calder Logistics"');
+    const remove = html.indexOf('aria-label="Delete Call Calder Logistics"');
     expect(checkbox).toBeGreaterThan(-1);
     expect(checkbox).toBeLessThan(moveUp);
     expect(moveUp).toBeLessThan(moveDown);
-    expect(moveDown).toBeLessThan(delete);
+    expect(moveDown).toBeLessThan(remove);
+  });
+
+  it('disables every filter chip while a reorder save is pending and enables them after', () => {
+    const render = (reordering: boolean) => renderToStaticMarkup(createElement(TaskFilters, {
+      filter: 'all',
+      reordering,
+      buttonRefs: { current: {} },
+      onSelect: vi.fn(),
+    }));
+    const pending = render(true);
+    expect(pending.match(/<button/g)).toHaveLength(5);
+    expect(pending.match(/disabled=""/g)).toHaveLength(5);
+    expect(render(false)).not.toContain('disabled');
   });
 
   it('omits reorder controls from filtered editors', () => {

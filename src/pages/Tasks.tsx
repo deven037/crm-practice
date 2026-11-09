@@ -1,4 +1,4 @@
-import { DragEvent, useEffect, useRef, useState } from 'react';
+import { DragEvent, MutableRefObject, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
 import { getAll, newId, removeMany, saveAll, upsert } from '../data/store';
@@ -171,6 +171,33 @@ export function TaskEmptyState({ filter, canManage, onAction }: TaskEmptyStatePr
   );
 }
 
+interface TaskFiltersProps {
+  filter: Filter;
+  reordering: boolean;
+  buttonRefs: MutableRefObject<Partial<Record<Filter, HTMLButtonElement | null>>>;
+  onSelect: (filter: Filter) => void;
+}
+
+export function TaskFilters({ filter, reordering, buttonRefs, onSelect }: TaskFiltersProps) {
+  return (
+    <div className="chip-filters">
+      {FILTERS.map((item) => (
+        <button
+          key={item.id}
+          ref={(element) => { buttonRefs.current[item.id] = element; }}
+          type="button"
+          className={classNames('chip-filter', filter === item.id && 'active')}
+          aria-pressed={filter === item.id}
+          disabled={reordering}
+          onClick={() => onSelect(item.id)}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function Tasks() {
   const toast = useToast();
   const { user } = useAuth();
@@ -322,21 +349,12 @@ export function Tasks() {
         <p className="task-view-only">View only. Your role can read tasks but cannot change them.</p>
       )}
 
-      <div className="chip-filters">
-        {FILTERS.map((item) => (
-          <button
-            key={item.id}
-            ref={(element) => { filterRefs.current[item.id] = element; }}
-            type="button"
-            className={classNames('chip-filter', filter === item.id && 'active')}
-            aria-pressed={filter === item.id}
-            disabled={reordering}
-            onClick={() => selectFilter(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      <TaskFilters
+        filter={filter}
+        reordering={reordering}
+        buttonRefs={filterRefs}
+        onSelect={selectFilter}
+      />
 
       {loading ? (
         <SkeletonRows rows={6} />
