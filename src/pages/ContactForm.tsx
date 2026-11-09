@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getAllSync, newId, upsert } from '../data/store';
 import { Account, Contact, PageLayout } from '../types';
@@ -49,6 +49,12 @@ export function ContactForm() {
   const [customErrors, setCustomErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [duplicate, setDuplicate] = useState<Contact | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (Object.keys(errors).length === 0 && Object.keys(customErrors).length === 0) return;
+    formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [errors, customErrors]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -82,7 +88,7 @@ export function ContactForm() {
       </div>
       {layout && <p className="muted" style={{ marginTop: -8 }}>Layout: {layout.name}</p>}
 
-      <div className="card form-card">
+      <div className="card form-card" ref={formRef}>
         {duplicate && (
           <div className="banner banner-info" role="alert" data-testid="duplicate-warning">
             A contact with matching details already exists —{' '}
@@ -106,28 +112,44 @@ export function ContactForm() {
         <div className="form-grid">
           {isVisible('name') && (
             <div className="field">
-              <span className="field-label">Full name *</span>
-              <input className="input" data-testid="contact-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-              {errors.name && <span className="field-error">{errors.name}</span>}
+              <label className="field-label" htmlFor="contact-name">Full name *</label>
+              <input
+                id="contact-name"
+                className="input"
+                data-testid="contact-name"
+                value={draft.name}
+                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                aria-invalid={errors.name ? true : undefined}
+                aria-describedby={errors.name ? 'contact-name-error' : undefined}
+              />
+              {errors.name && <span className="field-error" id="contact-name-error">{errors.name}</span>}
             </div>
           )}
           {isVisible('email') && (
             <div className="field">
-              <span className="field-label">Email *</span>
-              <input className="input" data-testid="contact-email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
-              {errors.email && <span className="field-error">{errors.email}</span>}
+              <label className="field-label" htmlFor="contact-email">Email *</label>
+              <input
+                id="contact-email"
+                className="input"
+                data-testid="contact-email"
+                value={draft.email}
+                onChange={(e) => setDraft({ ...draft, email: e.target.value })}
+                aria-invalid={errors.email ? true : undefined}
+                aria-describedby={errors.email ? 'contact-email-error' : undefined}
+              />
+              {errors.email && <span className="field-error" id="contact-email-error">{errors.email}</span>}
             </div>
           )}
           {isVisible('phone') && (
             <div className="field">
-              <span className="field-label">Phone</span>
-              <input className="input" data-testid="contact-phone" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
+              <label className="field-label" htmlFor="contact-phone">Phone</label>
+              <input id="contact-phone" className="input" data-testid="contact-phone" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
             </div>
           )}
           {isVisible('title') && (
             <div className="field">
-              <span className="field-label">Job title</span>
-              <input className="input" data-testid="contact-title" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+              <label className="field-label" htmlFor="contact-title">Job title</label>
+              <input id="contact-title" className="input" data-testid="contact-title" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
             </div>
           )}
           {isVisible('accountId') && (
