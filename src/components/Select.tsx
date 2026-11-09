@@ -101,10 +101,13 @@ interface SelectProps {
   placeholder?: string;
   testId?: string;
   disabled?: boolean;
+  id?: string;
+  ariaInvalid?: boolean;
+  ariaDescribedby?: string;
 }
 
 /** Custom (non-native) single select — practices listbox-style locators. */
-export function Select({ value, options, onChange, placeholder = 'Select…', testId, disabled }: SelectProps) {
+export function Select({ value, options, onChange, placeholder = 'Select…', testId, disabled, id, ariaInvalid, ariaDescribedby }: SelectProps) {
   const [open, setOpen] = useState(false);
   const ref = useOutsideClose(() => setOpen(false));
   const selected = options.find((o) => o.value === value);
@@ -112,12 +115,15 @@ export function Select({ value, options, onChange, placeholder = 'Select…', te
   return (
     <div className="select" ref={ref}>
       <button
+        id={id}
         type="button"
         className="select-trigger"
         data-testid={testId}
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-invalid={ariaInvalid ? true : undefined}
+        aria-describedby={ariaDescribedby}
         onClick={() => setOpen((o) => !o)}
       >
         <span className={selected ? '' : 'select-placeholder'}>{selected ? selected.label : placeholder}</span>

@@ -91,41 +91,60 @@ export function CustomFieldsSection({
     <>
       {fields.map((f) => {
         const raw = values[f.key];
+        const controlId = `custom-field-${f.id}`;
+        const errorId = `${controlId}-error`;
+        const error = errors?.[f.key];
         return (
           <div className="field" key={f.id}>
-            <span className="field-label">
+            <label className="field-label" htmlFor={controlId}>
               {f.label}
               {f.required ? ' *' : ''}
-            </span>
+            </label>
             {f.type === 'text' && (
               <input
+                id={controlId}
                 className="input"
                 value={typeof raw === 'string' ? raw : ''}
                 onChange={(e) => onChange?.(f.key, e.target.value)}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? errorId : undefined}
               />
             )}
             {f.type === 'number' && (
               <input
+                id={controlId}
                 className="input"
                 type="number"
                 value={typeof raw === 'number' ? raw : ''}
                 onChange={(e) => onChange?.(f.key, e.target.value === '' ? null : Number(e.target.value))}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? errorId : undefined}
               />
             )}
             {f.type === 'date' && (
-              <DatePicker value={typeof raw === 'string' ? raw : null} onChange={(iso) => onChange?.(f.key, iso)} />
+              <DatePicker
+                id={controlId}
+                value={typeof raw === 'string' ? raw : null}
+                onChange={(iso) => onChange?.(f.key, iso)}
+                ariaInvalid={Boolean(error)}
+                ariaDescribedby={error ? errorId : undefined}
+              />
             )}
             {f.type === 'dropdown' && (
               <Select
+                id={controlId}
                 value={typeof raw === 'string' ? raw : ''}
                 options={(f.options ?? []).map((o) => ({ value: o, label: o }))}
                 onChange={(v) => onChange?.(f.key, v)}
+                ariaInvalid={Boolean(error)}
+                ariaDescribedby={error ? errorId : undefined}
               />
             )}
             {f.type === 'checkbox' && (
               <label className="switch-row">
                 <label className="switch">
                   <input
+                    id={controlId}
                     type="checkbox"
                     checked={Boolean(raw)}
                     onChange={(e) => onChange?.(f.key, e.target.checked)}
@@ -134,7 +153,7 @@ export function CustomFieldsSection({
                 </label>
               </label>
             )}
-            {errors?.[f.key] && <span className="field-error">{errors[f.key]}</span>}
+            {error && <span className="field-error" id={errorId}>{error}</span>}
           </div>
         );
       })}
