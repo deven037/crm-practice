@@ -42,6 +42,7 @@ export function AccountForm() {
   const [errors, setErrors] = useState<{ name?: string; website?: string }>({});
   const [customErrors, setCustomErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   const submit = async () => {
     const errs: typeof errors = {};
@@ -52,7 +53,14 @@ export function AccountForm() {
     setCustomErrors(cErrs);
     if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) return;
     setBusy(true);
-    await upsert('accounts', draft);
+    setSaveError(false);
+    try {
+      await upsert('accounts', draft);
+    } catch {
+      setSaveError(true);
+      setBusy(false);
+      return;
+    }
     toast.push('success', `Account "${draft.name}" created.`);
     navigate(`/accounts/${draft.id}`);
   };
@@ -85,9 +93,17 @@ export function AccountForm() {
         <div className="form-grid">
           {isVisible('name') && (
             <div className="field">
-              <span className="field-label">Account name *</span>
-              <input className="input" data-testid="account-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-              {errors.name && <span className="field-error">{errors.name}</span>}
+              <label className="field-label" htmlFor="account-name-input">Account name *</label>
+              <input
+                id="account-name-input"
+                className="input"
+                data-testid="account-name"
+                aria-invalid={errors.name ? true : undefined}
+                aria-describedby={errors.name ? 'account-name-error' : undefined}
+                value={draft.name}
+                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              />
+              {errors.name && <span className="field-error" id="account-name-error">{errors.name}</span>}
             </div>
           )}
           {isVisible('industry') && (
@@ -127,15 +143,18 @@ export function AccountForm() {
           )}
           {isVisible('website') && (
             <div className="field">
-              <span className="field-label">Website</span>
+              <label className="field-label" htmlFor="account-website-input">Website</label>
               <input
+                id="account-website-input"
                 className="input"
                 data-testid="account-website"
                 placeholder="https://…"
+                aria-invalid={errors.website ? true : undefined}
+                aria-describedby={errors.website ? 'account-website-error' : undefined}
                 value={draft.website}
                 onChange={(e) => setDraft({ ...draft, website: e.target.value })}
               />
-              {errors.website && <span className="field-error">{errors.website}</span>}
+              {errors.website && <span className="field-error" id="account-website-error">{errors.website}</span>}
             </div>
           )}
           {isVisible('phone') && (
@@ -165,6 +184,11 @@ export function AccountForm() {
           />
         </div>
 
+        {saveError && (
+          <div className="banner banner-error" role="alert">
+            Account couldn’t be saved. Your entries are kept. Try again.
+          </div>
+        )}
         <div className="form-actions">
           <button className="btn" onClick={() => navigate('/accounts')}>
             Cancel

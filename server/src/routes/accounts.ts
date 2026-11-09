@@ -3,7 +3,7 @@ import { store, newId } from '../db.js';
 import { crudRouter } from './crud.js';
 import { accountSchema } from '../schemas/account.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
-import { notFound } from '../errors.js';
+import { conflict, notFound } from '../errors.js';
 import { Account } from '../types.js';
 
 function buildAccount(body: any): Account {
@@ -43,6 +43,11 @@ accountsRouter.delete('/:id', requireAuth, requireRole('admin', 'rep'), (req, re
 
   const contacts = store.contacts.all().filter((c) => c.accountId === account.id);
   const deals = store.deals.all().filter((d) => d.accountId === account.id);
+
+  const openDeals = deals.filter((d) => !d.stage.startsWith('Closed'));
+  if (openDeals.length > 0) {
+    throw conflict('open_deals', `Account has ${openDeals.length} open deal(s). Close or reassign them first.`);
+  }
 
   if (cascade) {
     store.contacts.removeMany(contacts.map((c) => c.id));

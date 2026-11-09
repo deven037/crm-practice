@@ -1064,6 +1064,8 @@ div.empty-cell { border: 1px dashed var(--border); border-radius: var(--radius-l
 .contacts-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--bank-primary) 88%, #000); }
 .contacts-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .contacts-error p { margin: 0; }
+div.empty-cell > strong { display: block; font-size: 18px; line-height: 24px; color: var(--text); }
+div.empty-cell > p { margin: 4px 0 16px; }
 .contact-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 1000px) { .contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 780px) { .contact-grid { grid-template-columns: 1fr; } }

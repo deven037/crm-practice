@@ -49,6 +49,14 @@ export function filterAccounts(accounts: Account[], query: string, role: Role | 
     (showDetails && digits.length >= 2 && a.phone.replace(/\D/g, '').includes(digits)));
 }
 
+export function canWriteAccounts(role: Role | undefined) {
+  return role === 'admin' || role === 'rep';
+}
+
+export function accountsEmptyKind(total: number, query: string): 'none-yet' | 'no-match' {
+  return total === 0 && !query.trim() ? 'none-yet' : 'no-match';
+}
+
 // Owner names are optional: roles without Users access (Viewer) still get the accounts.
 export async function loadAccountsWithOwners(load: <T>(module: string) => Promise<T[]>) {
   const [accounts, users] = await Promise.all([load<Account>('accounts'), load<User>('users').catch((): User[] => [])]);
@@ -73,13 +81,24 @@ export function Accounts() {
     setQuery(urlQuery);
   }, [urlQuery, location.state]);
 
-  useEffect(() => {
-    (async () => {
+  const [loadError, setLoadError] = useState(false);
+  const canWrite = canWriteAccounts(user?.role);
+
+  const load = async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
       const { accounts: a, users: u } = await loadAccountsWithOwners(getAll);
       setAccounts(a);
       setUsers(u);
-      setLoading(false);
-    })();
+    } catch {
+      setLoadError(true);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
   }, []);
 
   const filtered = useMemo(() => filterAccounts(accounts, query, user?.role), [accounts, query, user?.role]);
@@ -87,11 +106,16 @@ export function Accounts() {
   return (
     <div data-testid="accounts-page">
       <div className="page-header">
-        <h1>Accounts</h1>
+        <div>
+          <h1>Accounts</h1>
+          <p className="page-subtitle">Customer organisations and the people and deals tied to them.</p>
+        </div>
         <div className="page-actions">
-          <button className="btn btn-create" onClick={() => setLayoutPickerOpen(true)}>
-            + New Account
-          </button>
+          {canWrite && (
+            <button className="btn contacts-primary" onClick={() => setLayoutPickerOpen(true)}>
+              + New Account
+            </button>
+          )}
         </div>
       </div>
 
@@ -108,13 +132,26 @@ export function Accounts() {
         <input
           type="search"
           className="input search-input"
-          placeholder="Search accounts…"
+          aria-label="Search accounts"
+          placeholder="Search by name or industry…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        {!loading && !loadError && (
+          <span className="muted" role="status">
+            {filtered.length} {filtered.length === 1 ? 'account' : 'accounts'}
+          </span>
+        )}
       </div>
       {loading ? (
         <SkeletonRows rows={8} />
+      ) : loadError ? (
+        <div className="banner banner-error contacts-error" role="alert" data-testid="accounts-load-error">
+          <p>Accounts couldn’t load. Check your connection and try again.</p>
+          <button type="button" className="btn" onClick={load}>
+            Retry
+          </button>
+        </div>
       ) : (
         <div className="table-wrap">
           <table className="table">
@@ -139,7 +176,11 @@ export function Accounts() {
                         onClick={() => setExpandedId((id) => (id === account.id ? null : account.id))}
                       />
                     </td>
-                    <td>{account.name}</td>
+                    <td>
+                      <Link to={`/accounts/${account.id}`} onClick={(e) => e.stopPropagation()}>
+                        {account.name}
+                      </Link>
+                    </td>
                     <td>{account.industry}</td>
                     <td className="num">{account.employees.toLocaleString()}</td>
                     <td className="num">{formatCurrency(account.revenue)}</td>
@@ -160,17 +201,31 @@ export function Accounts() {
                   </ExpandPanelRow>
                 </Fragment>
               ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="empty-cell">
-                    No accounts match “{query}”.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
       )}
+
+      {!loading && !loadError && filtered.length === 0 &&
+        (accountsEmptyKind(accounts.length, query) === 'none-yet' ? (
+          <div className="empty-cell" data-testid="accounts-empty">
+            <strong>No accounts yet</strong>
+            <p>Add the first customer organisation to start linking contacts and deals.</p>
+            {canWrite && (
+              <button className="btn contacts-primary" onClick={() => setLayoutPickerOpen(true)}>
+                + New Account
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="empty-cell">
+            <strong>No accounts match “{query}”</strong>
+            <p>Check the spelling, or clear the search to see all {accounts.length} accounts.</p>
+            <button type="button" className="btn" onClick={() => setQuery('')}>
+              Clear search
+            </button>
+          </div>
+        ))}
 
       {layoutPickerOpen && (
         <LayoutPickerPanel module="accounts" basePath="/accounts" onClose={() => setLayoutPickerOpen(false)} />
