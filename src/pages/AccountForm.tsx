@@ -8,6 +8,7 @@ import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { getCustomFieldsAsModuleFields } from '../utils/moduleFields';
 import { classNames } from '../utils';
+import { runRecoverable } from './accountRecovery';
 
 const INDUSTRIES = ['Technology', 'Finance', 'Healthcare', 'Retail', 'Manufacturing', 'Energy', 'Logistics', 'Media'];
 
@@ -52,15 +53,8 @@ export function AccountForm() {
     const cErrs = validateCustomFields('accounts', 'form', draft.customFields ?? {});
     setCustomErrors(cErrs);
     if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) return;
-    setBusy(true);
-    setSaveError(false);
-    try {
-      await upsert('accounts', draft);
-    } catch {
-      setSaveError(true);
-      setBusy(false);
-      return;
-    }
+    const saved = await runRecoverable(() => upsert('accounts', draft), { setBusy, setError: setSaveError });
+    if (!saved) return;
     toast.push('success', `Account "${draft.name}" created.`);
     navigate(`/accounts/${draft.id}`);
   };

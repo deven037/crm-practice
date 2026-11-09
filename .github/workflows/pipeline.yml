@@ -39,8 +39,9 @@ jobs:
           npm ci
           npm test
           npm run build
-      - name: API (tsc build)
+      - name: API (tsc build, accounts contract test)
         working-directory: server
         run: |
           npm ci
           npm run build
+          npx tsx --test test/accounts.contract.ts

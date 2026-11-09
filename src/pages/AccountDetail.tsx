@@ -13,6 +13,7 @@ import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { canWriteAccounts } from './Accounts';
+import { runRecoverable } from './accountRecovery';
 import { formatCurrency, formatDate } from '../utils';
 
 export function AccountDetail() {
@@ -77,16 +78,7 @@ export function AccountDetail() {
 
   const openDeals = deals.filter((d) => !d.stage.startsWith('Closed'));
 
-  const doDelete = async () => {
-    setDeleteBusy(true);
-    setDeleteError(false);
-    try {
-      await runDelete();
-    } catch {
-      setDeleteError(true);
-      setDeleteBusy(false);
-    }
-  };
+  const doDelete = () => runRecoverable(runDelete, { setBusy: setDeleteBusy, setError: setDeleteError });
 
   const runDelete = async () => {
     if (cascade === 'cascade') {
