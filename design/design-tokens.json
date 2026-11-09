@@ -1,17 +1,23 @@
 {
-  "_note": "Mirrors :root in src/styles.css (Verified). Only bank.* and range-chip tokens are new (AIO-93). Shell tokens added in AIO-140.",
+  "_note": "Mirrors :root in src/styles.css (Verified). CSS color aliases are shared in design/AIO-283/harbor-tokens.css for the standalone mockups.",
   "color": {
-    "bg": "#f4f6f8", "surface": "#ffffff", "surface-2": "#f1f3f5", "border": "#e1e4e8",
-    "text": "#1f2937", "text-muted": "#6b7280", "chrome-bg": "#0b0f19",
+    "bg": "#f4f6f8", "surface": "#ffffff", "surface-2": "#f1f3f5", "surface-3": "#e9ecef", "border": "#e1e4e8",
+    "text": "#1f2937", "text-muted": "#6b7280", "chrome-bg": "#0b0f19", "chrome-text": "#c4cad9", "chrome-text-muted": "#7c8499",
     "accent": "#2563eb", "success": "#16a34a", "warning": "#d97706", "danger": "#dc2626",
+    "tone-success-bg": "#d1fae5", "tone-success-text": "#065f46", "tone-warning-bg": "#fef3c7", "tone-warning-text": "#92400e",
+    "tone-danger-bg": "#fee2e2", "tone-danger-text": "#991b1b", "tone-info-bg": "#dbeafe", "tone-info-text": "#1e40af", "neutral-text": "#374151",
     "dark": { "bg": "#10151f", "surface": "#1a2130", "border": "#313b52", "text": "#e7eaf0", "text-muted": "#8b93a7" }
+  },
+  "shadow": {
+    "panel": "inset 0 1px 0 #ffffff, 0 1px 2px #1f29370d, 0 12px 28px -16px #1f293733",
+    "drag": "0 8px 24px -8px #1f293755", "overlay": "0 12px 32px rgba(0,0,0,.5)", "dialog": "0 24px 48px -16px #0005"
   },
   "bank": {
     "--bank-primary": "per bank, from config; falls back to --accent",
     "--bank-on": "text on a bank-primary fill: #ffffff or #14110a, whichever gives >= 4.5:1",
     "rule": "Bank colour is for fills, bars and icons only. Never use it as text colour on --surface.",
     "derived": {
-      "--bank-accent": "color-mix(in srgb, var(--bank-primary) 40%, #fff)",
+      "--bank-accent": "color-mix(in srgb, var(--bank-primary) 40%, var(--surface))",
       "--chrome-active": "color-mix(in srgb, var(--bank-primary) 38%, var(--chrome-bg))",
       "note": "Declare derived tokens on the same element as --bank-primary so they follow it."
     },
@@ -22,6 +28,6 @@
   "space": [4, 8, 12, 16, 24, 32, 48],
   "radius": { "sm": 6, "md": 10, "lg": 14, "xl": 18, "pill": 999 },
   "layout": { "sidebar": 248, "rail": 72, "overlay": 288, "header": 60, "header-phone": 64, "page-max": 1200, "phone-breakpoint": 780 },
-  "focus": "2px solid var(--text), offset 2px (never relies on bank colour); on the dark sidebar 2px solid #ffffff",
+  "focus": "2px solid var(--text), offset 2px (never relies on bank colour); on the dark sidebar 2px solid var(--surface)",
   "motion": { "fast": "120ms", "base": "200ms", "reduced": "no transitions under prefers-reduced-motion" }
 }

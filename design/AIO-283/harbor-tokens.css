@@ -1,0 +1,13 @@
+:root{
+  --bg:#f4f6f8;--surface:#ffffff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;
+  --text:#1f2937;--text-muted:#6b7280;--chrome-bg:#0b0f19;--chrome-text:#c4cad9;--chrome-text-muted:#7c8499;
+  --accent:#2563eb;--success:#16a34a;--warning:#d97706;--danger:#dc2626;
+  --tone-success-bg:#d1fae5;--tone-success-text:#065f46;--tone-warning-bg:#fef3c7;--tone-warning-text:#92400e;
+  --tone-danger-bg:#fee2e2;--tone-danger-text:#991b1b;--tone-info-bg:#dbeafe;--tone-info-text:#1e40af;--neutral-text:#374151;
+  --bank-primary:var(--accent);--bank-on:var(--surface);--bank-accent:color-mix(in srgb,var(--bank-primary) 40%,var(--surface));
+  --chrome-active:color-mix(in srgb,var(--bank-primary) 38%,var(--chrome-bg));
+  --bank-northquay:#0f6b5c;--bank-northquay-on:#ffffff;
+  --shadow-panel:inset 0 1px 0 #ffffff,0 1px 2px #1f29370d,0 12px 28px -16px #1f293733;
+  --shadow-drag:0 8px 24px -8px #1f293755;--shadow-overlay:0 12px 32px rgba(0,0,0,.5);--shadow-dialog:0 24px 48px -16px #0005;
+  --overlay-scrim:rgba(11,15,25,.55);--toast-bg:#111827;--toast-shadow:0 12px 28px -8px #0006;
+}
