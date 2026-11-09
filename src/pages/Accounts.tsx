@@ -220,7 +220,11 @@ export function Accounts() {
         ) : (
           <div className="empty-cell">
             <strong>No accounts match “{query}”</strong>
-            <p>Check the spelling, or clear the search to see all {accounts.length} accounts.</p>
+            <p>
+              {accounts.length > 0
+                ? `Check the spelling, or clear the search to see all ${accounts.length} accounts.`
+                : 'Check the spelling and try again.'}
+            </p>
             <button type="button" className="btn" onClick={() => setQuery('')}>
               Clear search
             </button>

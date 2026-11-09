@@ -304,7 +304,7 @@ export function AccountDetail() {
         >
           {deleteError && (
             <div className="banner banner-error" role="alert">
-              Account couldn’t be deleted. Nothing was changed. Try again.
+              Account couldn’t be deleted. Some related records may have changed. Reload the page and check before you try again.
             </div>
           )}
           <p>
