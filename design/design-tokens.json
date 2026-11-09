@@ -1,16 +1,17 @@
 {
-  "_note": "Mirrors :root in src/styles.css (Verified). CSS color aliases are shared in design/AIO-283/harbor-tokens.css for the standalone mockups.",
+  "_note": "Mirrors the canonical Harbor values. CSS aliases for the standalone mockups are in design/AIO-283/harbor-tokens.css.",
   "color": {
     "bg": "#f4f6f8", "surface": "#ffffff", "surface-2": "#f1f3f5", "surface-3": "#e9ecef", "border": "#e1e4e8",
     "text": "#1f2937", "text-muted": "#6b7280", "chrome-bg": "#0b0f19", "chrome-text": "#c4cad9", "chrome-text-muted": "#7c8499",
     "accent": "#2563eb", "success": "#16a34a", "warning": "#d97706", "danger": "#dc2626",
     "tone-success-bg": "#d1fae5", "tone-success-text": "#065f46", "tone-warning-bg": "#fef3c7", "tone-warning-text": "#92400e",
     "tone-danger-bg": "#fee2e2", "tone-danger-text": "#991b1b", "tone-info-bg": "#dbeafe", "tone-info-text": "#1e40af", "neutral-text": "#374151",
+    "overlay-scrim": "rgba(11,15,25,.55)", "toast-bg": "#111827",
     "dark": { "bg": "#10151f", "surface": "#1a2130", "border": "#313b52", "text": "#e7eaf0", "text-muted": "#8b93a7" }
   },
   "shadow": {
     "panel": "inset 0 1px 0 #ffffff, 0 1px 2px #1f29370d, 0 12px 28px -16px #1f293733",
-    "drag": "0 8px 24px -8px #1f293755", "overlay": "0 12px 32px rgba(0,0,0,.5)", "dialog": "0 24px 48px -16px #0005"
+    "drag": "0 8px 24px -8px #1f293755", "overlay": "0 12px 32px rgba(0,0,0,.5)", "dialog": "0 24px 48px -16px #0005", "toast": "0 12px 28px -8px #0006"
   },
   "bank": {
     "--bank-primary": "per bank, from config; falls back to --accent",
