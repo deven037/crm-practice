@@ -8,10 +8,13 @@ interface DatePickerProps {
   value: string | null;
   onChange: (iso: string) => void;
   testId?: string;
+  id?: string;
+  ariaInvalid?: boolean;
+  ariaDescribedby?: string;
 }
 
 /** Fully custom calendar popup — no native date input, so tests must drive the widget. */
-export function DatePicker({ value, onChange, testId }: DatePickerProps) {
+export function DatePicker({ value, onChange, testId, id, ariaInvalid, ariaDescribedby }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const initial = value ? new Date(value) : new Date();
   const [viewYear, setViewYear] = useState(initial.getFullYear());
@@ -50,12 +53,15 @@ export function DatePicker({ value, onChange, testId }: DatePickerProps) {
   return (
     <div className="datepicker" ref={ref}>
       <input
+        id={id}
         type="text"
         readOnly
         className="input datepicker-input"
         data-testid={testId}
         placeholder="Pick a date"
         value={value ? formatDate(value) : ''}
+        aria-invalid={ariaInvalid ? true : undefined}
+        aria-describedby={ariaDescribedby}
         onClick={() => setOpen((o) => !o)}
       />
       {open && (
