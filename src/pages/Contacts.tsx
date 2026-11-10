@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { LayoutGrid, List } from 'lucide-react';
+import { useAuth } from '../auth/AuthContext';
 import { getAll, getAllSync, removeMany } from '../data/store';
-import { Account, Contact } from '../types';
+import { Account, Contact, Role } from '../types';
 import { SkeletonRows } from '../components/Spinner';
 import { BulkActionsBar } from '../components/BulkActionsBar';
 import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
@@ -10,8 +11,37 @@ import { ToolBoxPanel } from '../components/ToolBoxPanel';
 import { useToast } from '../components/Toast';
 import { classNames, initials } from '../utils';
 
+export function filterContacts(contacts: Contact[], query: string, role: Role | undefined, accounts: Account[]) {
+  const q = query.trim().toLowerCase();
+  if (!q) return contacts;
+  const showDetails = role === 'admin' || role === 'rep';
+  const digits = /^[\d\s\-()+.]+$/.test(q) ? q.replace(/\D/g, '') : '';
+  return contacts.filter((c) => c.name.toLowerCase().includes(q) ||
+    (accounts.find((a) => a.id === c.accountId)?.name ?? '').toLowerCase().includes(q) ||
+    (showDetails && (c.email.toLowerCase().includes(q) || (digits.length >= 2 && c.phone.replace(/\D/g, '').includes(digits)))));
+}
+
+export function canWriteContacts(role: Role | undefined) {
+  return role === 'admin' || role === 'rep';
+}
+
+export function contactsEmptyKind(total: number, query: string): 'none-yet' | 'no-match' {
+  return total === 0 && !query.trim() ? 'none-yet' : 'no-match';
+}
+
+// Focusable so keyboard users get the same full-email tooltip as hover (AIO-144 AC3).
+export function EmailTooltip({ email, as: Tag, className }: { email: string; as: 'div' | 'td'; className?: string }) {
+  return (
+    <Tag className={classNames(className, 'truncate has-tooltip')} data-tooltip={email} tabIndex={0}>
+      {email}
+    </Tag>
+  );
+}
+
 export function Contacts() {
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -22,9 +52,17 @@ export function Contacts() {
   const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
 
+  const [loadError, setLoadError] = useState(false);
+  const canWrite = canWriteContacts(user?.role);
+
   const load = async () => {
     setLoading(true);
-    setContacts(await getAll<Contact>('contacts'));
+    setLoadError(false);
+    try {
+      setContacts(await getAll<Contact>('contacts'));
+    } catch {
+      setLoadError(true);
+    }
     setLoading(false);
   };
 
@@ -35,7 +73,7 @@ export function Contacts() {
   const urlQuery = params.get('q') ?? '';
   useEffect(() => {
     setQuery(urlQuery);
-  }, [urlQuery]);
+  }, [urlQuery, location.state]);
 
   const bulkDelete = async () => {
     if (!window.confirm(`Delete ${selected.length} selected contact(s)? This cannot be undone.`)) return;
@@ -48,20 +86,21 @@ export function Contacts() {
   const accounts = getAllSync<Account>('accounts');
   const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name ?? '—';
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return contacts;
-    return contacts.filter((c) => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q));
-  }, [contacts, query]);
+  const filtered = useMemo(() => filterContacts(contacts, query, user?.role, accounts), [contacts, query, user?.role, accounts]);
 
   return (
     <div data-testid="contacts-page">
       <div className="page-header">
-        <h1>Contacts</h1>
+        <div>
+          <h1>Contacts</h1>
+          <p className="page-subtitle">People connected to your accounts.</p>
+        </div>
         <div className="page-actions">
-          <button className="btn btn-create" onClick={() => setLayoutPickerOpen(true)}>
-            + New Contact
-          </button>
+          {canWrite && (
+            <button className="btn contacts-primary" onClick={() => setLayoutPickerOpen(true)}>
+              + New Contact
+            </button>
+          )}
           <div className="view-toggle" role="group" aria-label="View mode">
             <button
               className={classNames('btn', view === 'grid' && 'btn-active')}
@@ -100,6 +139,7 @@ export function Contacts() {
         <input
           type="search"
           className="input search-input"
+          aria-label="Search contacts"
           placeholder="Search contacts…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -108,6 +148,13 @@ export function Contacts() {
 
       {loading ? (
         <SkeletonRows rows={6} />
+      ) : loadError ? (
+        <div className="banner banner-error contacts-error" role="alert" data-testid="contacts-load-error">
+          <p>Contacts couldn’t load. Check your connection and try again.</p>
+          <button type="button" className="btn" onClick={load}>
+            Retry
+          </button>
+        </div>
       ) : view === 'grid' ? (
         <div className="contact-grid">
           {filtered.map((contact) => (
@@ -115,13 +162,13 @@ export function Contacts() {
               <div className="contact-avatar">
                 {contact.avatar ? <img src={contact.avatar} alt={contact.name} /> : initials(contact.name)}
               </div>
-              <div className="contact-name">{contact.name}</div>
+              <Link to={`/contacts/${contact.id}`} onClick={(e) => e.stopPropagation()} className="contact-name">
+                {contact.name}
+              </Link>
               <div className="contact-title muted">{contact.title}</div>
               <div className="contact-company">{accountName(contact.accountId)}</div>
               {/* Custom tooltip on truncated email — hover to reveal */}
-              <div className="contact-email truncate has-tooltip" data-tooltip={contact.email}>
-                {contact.email}
-              </div>
+              <EmailTooltip as="div" className="contact-email" email={contact.email} />
               {contact.tags.length > 0 && (
                 <div className="chip-row">
                   {contact.tags.map((tag) => (
@@ -139,7 +186,6 @@ export function Contacts() {
               </div>
             </div>
           ))}
-          {filtered.length === 0 && <div className="empty-cell">No contacts match “{query}”.</div>}
         </div>
       ) : (
         <>
@@ -147,7 +193,7 @@ export function Contacts() {
             <table className="table">
               <thead>
                 <tr>
-                  <th className="checkbox-cell">
+                  {canWrite && <th className="checkbox-cell">
                     <input
                       type="checkbox"
                       aria-label="Select all"
@@ -158,7 +204,7 @@ export function Contacts() {
                         )
                       }
                     />
-                  </th>
+                  </th>}
                   <th>Name</th>
                   <th>Title</th>
                   <th>Account</th>
@@ -174,7 +220,7 @@ export function Contacts() {
                     className={classNames('row-clickable', selected.includes(contact.id) && 'row-selected')}
                     onClick={() => navigate(`/contacts/${contact.id}`)}
                   >
-                    <td className="checkbox-cell" onClick={(e) => e.stopPropagation()}>
+                    {canWrite && <td className="checkbox-cell" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         aria-label={`Select ${contact.name}`}
@@ -183,18 +229,18 @@ export function Contacts() {
                           setSelected((sel) => (sel.includes(contact.id) ? sel.filter((id) => id !== contact.id) : [...sel, contact.id]))
                         }
                       />
-                    </td>
+                    </td>}
                     <td>
                       <span className="table-avatar">
                         {contact.avatar ? <img src={contact.avatar} alt="" /> : initials(contact.name)}
                       </span>
-                      {contact.name}
+                      <Link to={`/contacts/${contact.id}`} onClick={(e) => e.stopPropagation()}>
+                        {contact.name}
+                      </Link>
                     </td>
                     <td>{contact.title}</td>
                     <td>{accountName(contact.accountId)}</td>
-                    <td className="truncate has-tooltip" data-tooltip={contact.email}>
-                      {contact.email}
-                    </td>
+                    <EmailTooltip as="td" email={contact.email} />
                     <td>{contact.phone}</td>
                     <td>
                       {contact.tags.map((tag) => (
@@ -208,13 +254,30 @@ export function Contacts() {
               </tbody>
             </table>
           </div>
-          <BulkActionsBar count={selected.length} onClear={() => setSelected([])}>
-            <button className="btn btn-danger" onClick={bulkDelete}>
-              Delete
-            </button>
-          </BulkActionsBar>
+          {canWrite && (
+            <BulkActionsBar count={selected.length} onClear={() => setSelected([])}>
+              <button className="btn btn-danger" onClick={bulkDelete}>
+                Delete
+              </button>
+            </BulkActionsBar>
+          )}
         </>
       )}
+
+      {!loading && !loadError && filtered.length === 0 &&
+        (contactsEmptyKind(contacts.length, query) === 'none-yet' ? (
+          <div className="empty-cell" data-testid="contacts-empty">
+            <strong>No contacts yet</strong>
+            <p>When you add a contact, they’ll appear here.</p>
+            {canWrite && (
+              <button className="btn contacts-primary" onClick={() => setLayoutPickerOpen(true)}>
+                + New Contact
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="empty-cell">No contacts match “{query}”.</div>
+        ))}
 
       {layoutPickerOpen && (
         <LayoutPickerPanel module="contacts" basePath="/contacts" onClose={() => setLayoutPickerOpen(false)} />

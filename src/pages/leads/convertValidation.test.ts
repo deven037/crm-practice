@@ -7,13 +7,13 @@ describe('validateStepOne', () => {
   });
 
   it.each(['', '   '])('rejects a blank contact name %j', (name) => {
-    expect(validateStepOne(name, 'priya@example.com')).toEqual({ contactName: 'Enter a contact name.' });
+    expect(validateStepOne(name, 'priya@example.com')).toEqual({ contactName: 'Contact name is required.' });
   });
 
-  it.each(['', 'priya', 'priya@', '@example.com', 'priya@example', 'pri ya@example.com'])(
+  it.each(['', 'x', 'priya', 'priya@', '@example.com', 'priya@example', 'pri ya@example.com'])(
     'rejects the email %j',
     (email) => {
-      expect(validateStepOne('Priya Shah', email)).toEqual({ contactEmail: 'Enter a valid email address.' });
+      expect(validateStepOne('Priya Shah', email)).toEqual({ contactEmail: 'Enter a valid contact email.' });
     }
   );
 

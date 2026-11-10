@@ -199,7 +199,8 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
 
   const openOption = (option: ResultOption) => {
     onClose();
-    navigate(option.to);
+    // A fresh state per See all lets the list reset its box even when the URL is unchanged.
+    navigate(option.to, option.kind === 'all' ? { state: { seeAllAt: Date.now() } } : undefined);
   };
 
   const selectItem = (item: CommandItem) => {
@@ -410,7 +411,7 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
                               <span className="command-glyph"><Icon size={16} /></span>
                               <span className="command-result-main">
                                 <strong><Highlight text={option.label} term={term} /></strong>
-                                {option.detail && <small><Highlight text={option.detail} term={term} /></small>}
+                                {option.detail && <small>{key === 'deals' ? option.detail : <Highlight text={option.detail} term={term} />}</small>}
                               </span>
                             </>
                           )}

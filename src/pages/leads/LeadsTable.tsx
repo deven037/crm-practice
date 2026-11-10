@@ -1,3 +1,4 @@
+import { useAuth } from '../../auth/AuthContext';
 import { Lead } from '../../types';
 import { formatCurrency, formatDate } from '../../utils';
 import { emptyStateKind, getAriaSort, shouldOpenRowOnKeyDown } from './leadsGuards';
@@ -38,6 +39,9 @@ export function LeadsTable({
   onContextMenu,
   onConvert,
 }: Props) {
+  const { user } = useAuth();
+  const showContactDetails = user?.role === 'admin' || user?.role === 'rep';
+
   const handleSortKeyDown = (e: React.KeyboardEvent, key: SortKey) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -75,8 +79,8 @@ export function LeadsTable({
             >
               Company{sortIndicator('company')}
             </th>
-            <th scope="col">Email</th>
-            <th scope="col">Phone</th>
+            {showContactDetails && <th scope="col">Email</th>}
+            {showContactDetails && <th scope="col">Phone</th>}
             <th
               scope="col"
               role="columnheader"
@@ -128,7 +132,7 @@ export function LeadsTable({
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={11} className="empty-cell">
+              <td colSpan={showContactDetails ? 11 : 9} className="empty-cell">
                 {emptyStateKind(totalLeads) === 'no-leads' ? 'No leads yet.' : 'No leads match the current filters.'}
               </td>
             </tr>
@@ -157,8 +161,8 @@ export function LeadsTable({
               </td>
               <td>{lead.name}</td>
               <td>{lead.company}</td>
-              <td>{lead.email}</td>
-              <td>{lead.phone}</td>
+              {showContactDetails && <td>{lead.email}</td>}
+              {showContactDetails && <td>{lead.phone}</td>}
               <td>
                 <span className={`pill status-${lead.status.toLowerCase()}`}>{lead.status}</span>
               </td>

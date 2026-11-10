@@ -1,7 +1,8 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 import { getAll } from '../data/store';
-import { Account, User } from '../types';
+import { Account, Role, User } from '../types';
 import { SkeletonRows } from '../components/Spinner';
 import { ExpandPanelRow, ExpandToggle } from '../components/ExpandableTableRow';
 import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
@@ -39,8 +40,34 @@ function AccountExpandPanel({ account }: { account: Account }) {
   );
 }
 
+export function filterAccounts(accounts: Account[], query: string, role: Role | undefined) {
+  const q = query.trim().toLowerCase();
+  if (!q) return accounts;
+  const showDetails = role === 'admin' || role === 'rep';
+  const digits = /^[\d\s\-()+.]+$/.test(q) ? q.replace(/\D/g, '') : '';
+  return accounts.filter((a) => a.name.toLowerCase().includes(q) ||
+    a.industry.toLowerCase().includes(q) ||
+    (showDetails && digits.length >= 2 && a.phone.replace(/\D/g, '').includes(digits)));
+}
+
+export function canWriteAccounts(role: Role | undefined) {
+  return role === 'admin' || role === 'rep';
+}
+
+export function accountsEmptyKind(total: number, query: string): 'none-yet' | 'no-match' {
+  return total === 0 && !query.trim() ? 'none-yet' : 'no-match';
+}
+
+// Owner names are optional: roles without Users access (Viewer) still get the accounts.
+export async function loadAccountsWithOwners(load: <T>(module: string) => Promise<T[]>) {
+  const [accounts, users] = await Promise.all([load<Account>('accounts'), load<User>('users').catch((): User[] => [])]);
+  return { accounts, users };
+}
+
 export function Accounts() {
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -53,31 +80,43 @@ export function Accounts() {
   const urlQuery = params.get('q') ?? '';
   useEffect(() => {
     setQuery(urlQuery);
-  }, [urlQuery]);
+  }, [urlQuery, location.state]);
 
-  useEffect(() => {
-    (async () => {
-      const [a, u] = await Promise.all([getAll<Account>('accounts'), getAll<User>('users')]);
+  const [loadError, setLoadError] = useState(false);
+  const canWrite = canWriteAccounts(user?.role);
+
+  const load = async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const { accounts: a, users: u } = await loadAccountsWithOwners(getAll);
       setAccounts(a);
       setUsers(u);
-      setLoading(false);
-    })();
+    } catch {
+      setLoadError(true);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
   }, []);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return accounts;
-    return accounts.filter((a) => a.name.toLowerCase().includes(q) || a.industry.toLowerCase().includes(q));
-  }, [accounts, query]);
+  const filtered = useMemo(() => filterAccounts(accounts, query, user?.role), [accounts, query, user?.role]);
 
   return (
     <div data-testid="accounts-page">
       <div className="page-header">
-        <h1>Accounts</h1>
+        <div>
+          <h1>Accounts</h1>
+          <p className="page-subtitle">Customer organisations and the people and deals tied to them.</p>
+        </div>
         <div className="page-actions">
-          <button className="btn btn-create" onClick={() => setLayoutPickerOpen(true)}>
-            + New Account
-          </button>
+          {canWrite && (
+            <button className="btn contacts-primary" onClick={() => setLayoutPickerOpen(true)}>
+              + New Account
+            </button>
+          )}
         </div>
       </div>
 
@@ -94,13 +133,26 @@ export function Accounts() {
         <input
           type="search"
           className="input search-input"
-          placeholder="Search accounts…"
+          aria-label="Search accounts"
+          placeholder="Search by name or industry…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        {!loading && !loadError && (
+          <span className="muted" role="status">
+            {filtered.length} {filtered.length === 1 ? 'account' : 'accounts'}
+          </span>
+        )}
       </div>
       {loading ? (
         <SkeletonRows rows={8} />
+      ) : loadError ? (
+        <div className="banner banner-error contacts-error" role="alert" data-testid="accounts-load-error">
+          <p>Accounts couldn’t load. Check your connection and try again.</p>
+          <button type="button" className="btn" onClick={load}>
+            Retry
+          </button>
+        </div>
       ) : (
         <div className="table-wrap">
           <table className="table">
@@ -125,7 +177,11 @@ export function Accounts() {
                         onClick={() => setExpandedId((id) => (id === account.id ? null : account.id))}
                       />
                     </td>
-                    <td>{account.name}</td>
+                    <td>
+                      <Link to={`/accounts/${account.id}`} onClick={(e) => e.stopPropagation()}>
+                        {account.name}
+                      </Link>
+                    </td>
                     <td>{account.industry}</td>
                     <td className="num">{account.employees.toLocaleString()}</td>
                     <td className="num">{formatCurrency(account.revenue)}</td>
@@ -146,17 +202,35 @@ export function Accounts() {
                   </ExpandPanelRow>
                 </Fragment>
               ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="empty-cell">
-                    No accounts match “{query}”.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
       )}
+
+      {!loading && !loadError && filtered.length === 0 &&
+        (accountsEmptyKind(accounts.length, query) === 'none-yet' ? (
+          <div className="empty-cell" data-testid="accounts-empty">
+            <strong>No accounts yet</strong>
+            <p>Add the first customer organisation to start linking contacts and deals.</p>
+            {canWrite && (
+              <button className="btn contacts-primary" onClick={() => setLayoutPickerOpen(true)}>
+                + New Account
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="empty-cell">
+            <strong>No accounts match “{query}”</strong>
+            <p>
+              {accounts.length > 0
+                ? `Check the spelling, or clear the search to see all ${accounts.length} accounts.`
+                : 'Check the spelling and try again.'}
+            </p>
+            <button type="button" className="btn" onClick={() => setQuery('')}>
+              Clear search
+            </button>
+          </div>
+        ))}
 
       {layoutPickerOpen && (
         <LayoutPickerPanel module="accounts" basePath="/accounts" onClose={() => setLayoutPickerOpen(false)} />

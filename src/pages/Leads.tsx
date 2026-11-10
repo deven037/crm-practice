@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Download, ListChecks, SlidersHorizontal, Table2 } from 'lucide-react';
 import { getAll, getAllSync, newId, removeMany, saveAll, upsert } from '../data/store';
-import { Account, Contact, Deal, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, User } from '../types';
+import { Account, Contact, Deal, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Role, User } from '../types';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
 import { ContextMenu } from '../components/ContextMenu';
@@ -23,10 +23,22 @@ import { beginOnce, canExportLeads, clearSelection } from './leads/leadsGuards';
 
 type SortDir = 'asc' | 'desc';
 
+export function filterLeads(leads: Lead[], query: string, role: Role | undefined) {
+  const q = query.trim().toLowerCase();
+  if (!q) return leads;
+  const showDetails = role === 'admin' || role === 'rep';
+  const digits = /^[\d\s\-()+.]+$/.test(q) ? q.replace(/\D/g, '') : '';
+  return leads.filter((l) => (
+    l.name.toLowerCase().includes(q) || l.company.toLowerCase().includes(q) ||
+    (showDetails && (l.email.toLowerCase().includes(q) || (digits.length >= 2 && l.phone.replace(/\D/g, '').includes(digits))))
+  ));
+}
+
 export function Leads() {
   const toast = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [params, setParams] = useSearchParams();
   // Dashboard tile link: /leads?created=30d shows leads created in the last 30 days.
   const createdMatch = /^(\d{1,3})d$/.exec(params.get('created') ?? '');
@@ -81,7 +93,7 @@ export function Leads() {
     setQuery(urlQuery);
     setDebouncedQuery(urlQuery);
     setPage(1);
-  }, [urlQuery]);
+  }, [urlQuery, location.state]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -94,16 +106,7 @@ export function Leads() {
   const ownerName = (id: string) => users.find((u) => u.id === id)?.name ?? '—';
 
   const filtered = useMemo(() => {
-    let rows = [...leads];
-    const q = debouncedQuery.trim().toLowerCase();
-    if (q) {
-      rows = rows.filter(
-        (l) =>
-          l.name.toLowerCase().includes(q) ||
-          l.company.toLowerCase().includes(q) ||
-          l.email.toLowerCase().includes(q)
-      );
-    }
+    let rows = [...filterLeads(leads, debouncedQuery, user?.role)];
     if (createdDays) {
       const since = Date.now() - createdDays * 24 * 60 * 60 * 1000;
       rows = rows.filter((l) => new Date(l.createdAt).getTime() >= since);
@@ -118,7 +121,7 @@ export function Leads() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return rows;
-  }, [leads, debouncedQuery, statusFilter, sourceFilter, ownerFilter, createdDays, sortKey, sortDir]);
+  }, [leads, debouncedQuery, user?.role, statusFilter, sourceFilter, ownerFilter, createdDays, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, totalPages);
