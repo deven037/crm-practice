@@ -1104,9 +1104,9 @@ div.empty-cell > p { margin: 4px 0 16px; }
 .breadcrumbs { margin-bottom: 12px; font-size: 13px; color: var(--text-muted); display: flex; gap: 8px; }
 .detail-header { display: flex; gap: 20px; align-items: center; margin-bottom: 18px; }
 .detail-avatar-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.detail-list { display: grid; grid-template-columns: 150px 1fr; gap: 10px 14px; margin: 0 0 14px; }
+.detail-list { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px 14px; margin: 0 0 14px; }
 .detail-list dt { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; padding-top: 2px; }
-.detail-list dd { margin: 0; font-weight: 500; }
+.detail-list dd { margin: 0; font-weight: 500; overflow-wrap: anywhere; }
 .detail-section + .detail-section { margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border); }
 .related-list { margin: 0; padding-left: 18px; }
 .related-list li { margin-bottom: 6px; }
