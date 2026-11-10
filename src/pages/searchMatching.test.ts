@@ -19,9 +19,15 @@ const lead: Lead = {
 };
 
 describe('See all destination matching', () => {
-  it('keeps company-only contact matches and excludes industry-only account matches', () => {
+  it('matches account industry case-insensitively (AIO-148 AC2)', () => {
+    for (const term of ['consulting', 'CONSULTING', ' Consult ']) {
+      expect(filterAccounts([account], term, 'viewer')).toEqual([account]);
+    }
+    expect(filterAccounts([account], 'finance', 'rep')).toEqual([]);
+  });
+
+  it('keeps company-only contact matches and matches account names', () => {
     expect(filterContacts([contact], ' ro ', 'rep', [account])).toEqual([contact]);
-    expect(filterAccounts([account], 'in', 'rep')).toEqual([]);
     expect(filterAccounts([account], 'AURORA', 'rep')).toEqual([account]);
     expect(filterContacts([contact], 'meera', 'rep', [])).toEqual([contact]);
     expect(filterContacts([{ ...contact, accountId: null }], 'aurora', 'rep', [account])).toEqual([]);

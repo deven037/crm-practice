@@ -46,6 +46,7 @@ export function filterAccounts(accounts: Account[], query: string, role: Role | 
   const showDetails = role === 'admin' || role === 'rep';
   const digits = /^[\d\s\-()+.]+$/.test(q) ? q.replace(/\D/g, '') : '';
   return accounts.filter((a) => a.name.toLowerCase().includes(q) ||
+    a.industry.toLowerCase().includes(q) ||
     (showDetails && digits.length >= 2 && a.phone.replace(/\D/g, '').includes(digits)));
 }
 
