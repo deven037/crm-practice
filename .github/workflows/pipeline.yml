@@ -1,6 +1,6 @@
 # CRM pipeline (AIO-127; owner decision 2026-10-28: checks on PRs only).
 #
-#   PR into dev, release or main -> checks (typecheck, unit tests, build)
+#   PR into dev, release or main -> checks (typecheck, unit tests, API contract tests, build)
 #   manual                       -> the same checks on any branch
 #
 # Nothing deploys from here: Render auto-deploys release (staging) and main (production) when a PR
@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   checks:
-    name: Checks (typecheck, unit tests, build)
+    name: Checks (typecheck, unit tests, API contract tests, build)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -45,3 +45,7 @@ jobs:
           npm ci
           npm run build
           npx tsx --test test/accounts.contract.ts
+      # AIO-228: the file is named *.contract.ts, so the `test/*.test.ts` glob never ran it.
+      - name: API contract tests (search, AIO-202)
+        working-directory: server
+        run: npx tsx --test test/search.contract.ts
