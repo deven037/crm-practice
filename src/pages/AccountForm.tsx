@@ -40,7 +40,7 @@ export function AccountForm() {
     layoutName: layout?.name ?? null,
     createdAt: new Date().toISOString(),
   });
-  const [errors, setErrors] = useState<{ name?: string; website?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; website?: string; employees?: string; revenue?: string }>({});
   const [customErrors, setCustomErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState(false);
@@ -49,6 +49,8 @@ export function AccountForm() {
     const errs: typeof errors = {};
     if (allLayoutKeys.has('name') && !draft.name.trim()) errs.name = 'Account name is required.';
     if (draft.website && !/^https?:\/\/.+\..+/.test(draft.website.trim())) errs.website = 'Enter a valid URL (starting with http:// or https://).';
+    if (draft.employees < 0) errs.employees = 'Employees can’t be negative.';
+    if (draft.revenue < 0) errs.revenue = 'Annual revenue can’t be negative.';
     setErrors(errs);
     const cErrs = validateCustomFields('accounts', 'form', draft.customFields ?? {});
     setCustomErrors(cErrs);
@@ -102,8 +104,9 @@ export function AccountForm() {
           )}
           {isVisible('industry') && (
             <div className="field">
-              <span className="field-label">Industry</span>
+              <label className="field-label" htmlFor="account-industry-input">Industry</label>
               <Select
+                id="account-industry-input"
                 value={draft.industry}
                 options={INDUSTRIES.map((i) => ({ value: i, label: i }))}
                 onChange={(v) => setDraft({ ...draft, industry: v })}
@@ -113,26 +116,34 @@ export function AccountForm() {
           )}
           {isVisible('employees') && (
             <div className="field">
-              <span className="field-label">Employees</span>
+              <label className="field-label" htmlFor="account-employees-input">Employees</label>
               <input
+                id="account-employees-input"
                 className="input"
                 type="number"
                 data-testid="account-employees"
+                aria-invalid={errors.employees ? true : undefined}
+                aria-describedby={errors.employees ? 'account-employees-error' : undefined}
                 value={draft.employees}
                 onChange={(e) => setDraft({ ...draft, employees: Number(e.target.value) })}
               />
+              {errors.employees && <span className="field-error" id="account-employees-error">{errors.employees}</span>}
             </div>
           )}
           {isVisible('revenue') && (
             <div className="field">
-              <span className="field-label">Annual revenue ($)</span>
+              <label className="field-label" htmlFor="account-revenue-input">Annual revenue ($)</label>
               <input
+                id="account-revenue-input"
                 className="input"
                 type="number"
                 data-testid="account-revenue"
+                aria-invalid={errors.revenue ? true : undefined}
+                aria-describedby={errors.revenue ? 'account-revenue-error' : undefined}
                 value={draft.revenue}
                 onChange={(e) => setDraft({ ...draft, revenue: Number(e.target.value) })}
               />
+              {errors.revenue && <span className="field-error" id="account-revenue-error">{errors.revenue}</span>}
             </div>
           )}
           {isVisible('website') && (
@@ -153,14 +164,15 @@ export function AccountForm() {
           )}
           {isVisible('phone') && (
             <div className="field">
-              <span className="field-label">Phone</span>
-              <input className="input" data-testid="account-phone" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
+              <label className="field-label" htmlFor="account-phone-input">Phone</label>
+              <input id="account-phone-input" className="input" data-testid="account-phone" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
             </div>
           )}
           {isVisible('ownerId') && (
             <div className="field">
-              <span className="field-label">Owner</span>
+              <label className="field-label" htmlFor="account-owner-input">Owner</label>
               <Select
+                id="account-owner-input"
                 value={draft.ownerId}
                 options={users.map((u) => ({ value: u.id, label: u.name }))}
                 onChange={(v) => setDraft({ ...draft, ownerId: v })}
