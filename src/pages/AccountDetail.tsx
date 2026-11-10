@@ -30,6 +30,8 @@ export function AccountDetail() {
   const [cascade, setCascade] = useState<'unlink' | 'cascade'>('unlink');
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
+  const [saveBusy, setSaveBusy] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   const canWrite = canWriteAccounts(user?.role);
@@ -70,7 +72,9 @@ export function AccountDetail() {
 
   const save = async () => {
     if (!draft) return;
-    await upsert('accounts', draft);
+    const saved = await runRecoverable(() => upsert('accounts', draft), { setBusy: setSaveBusy, setError: setSaveError });
+    if (!saved) return;
+    setSaveBusy(false);
     setAccount(draft);
     setEditing(false);
     toast.push('success', 'Account updated.');
@@ -126,6 +130,11 @@ export function AccountDetail() {
   ) : (
     draft && (
       <div className="form-grid">
+        {saveError && (
+          <div className="banner banner-error" role="alert" data-testid="save-account-error">
+            Account couldn’t be saved. Your entries are kept. Try again.
+          </div>
+        )}
         <div className="field">
           <span className="field-label">Industry</span>
           <input className="input" value={draft.industry} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} />
@@ -242,11 +251,18 @@ export function AccountDetail() {
             </>
           ) : (
             <>
-              <button className="btn" onClick={() => setEditing(false)}>
+              <button
+                className="btn"
+                disabled={saveBusy}
+                onClick={() => {
+                  setSaveError(false);
+                  setEditing(false);
+                }}
+              >
                 Cancel
               </button>
-              <button className="btn btn-primary" data-testid="save-account-btn" onClick={save}>
-                Save
+              <button className="btn btn-primary" data-testid="save-account-btn" disabled={saveBusy} onClick={save}>
+                {saveBusy ? 'Saving…' : 'Save'}
               </button>
             </>
           )
