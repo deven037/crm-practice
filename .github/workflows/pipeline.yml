@@ -39,6 +39,53 @@ jobs:
           npm ci
           npm test
           npm run build
+      - name: Bundle size report (warning only)
+        continue-on-error: true
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { gzipSync } = require('node:zlib');
+          // AIO-386 baseline: run 42984074032, 2026-11-11.
+          // Sum of rounded Vite output sizes = 1,192,370 bytes, plus 10%.
+          const budget = 1311607;
+          const rows = [];
+          function measure(directory) {
+            for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+              const file = path.join(directory, entry.name);
+              if (entry.isDirectory()) {
+                measure(file);
+              } else if (entry.isFile()) {
+                const content = fs.readFileSync(file);
+                rows.push({ file, bytes: content.length, gzip: gzipSync(content).length });
+              }
+            }
+          }
+          measure('dist');
+          rows.sort((left, right) => left.file.localeCompare(right.file));
+          const total = rows.reduce((sum, row) => sum + row.bytes, 0);
+          const gzipTotal = rows.reduce((sum, row) => sum + row.gzip, 0);
+          const result = total > budget ? 'Above budget (warning only)' : 'Within budget';
+          const report = [
+            '## Bundle sizes',
+            '',
+            `Commit ${process.env.GITHUB_SHA}`,
+            '',
+            '| Built file | Bytes | Gzip bytes |',
+            '| --- | ---: | ---: |',
+            ...rows.map(row => `| ${row.file} | ${row.bytes} | ${row.gzip} |`),
+            `| Total | ${total} | ${gzipTotal} |`,
+            '',
+            `Uncompressed budget across all dist files: ${budget} bytes. ${result}.`,
+            'Baseline uses the rounded Vite sizes from run 42984074032 plus 10%.',
+            ''
+          ].join('\n');
+          console.log(report);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, report);
+          if (total > budget) {
+            console.log(`::warning::Bundle size ${total} bytes exceeds budget ${budget} bytes.`);
+          }
+          NODE
       - name: API (tsc build, accounts contract test)
         working-directory: server
         run: |
