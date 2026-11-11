@@ -39,6 +39,115 @@ jobs:
           npm ci
           npm test
           npm run build
+      - name: Prepare bundle size reporter
+        run: |
+          cat > "$RUNNER_TEMP/bundle-size.cjs" <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { gzipSync } = require('node:zlib');
+          // AIO-386 baseline: run 42984074032, 2026-11-11.
+          // Sum of rounded Vite output sizes = 1,192,370 bytes, plus 10%.
+          const budget = 1311607;
+          const rows = [];
+          function measure(directory) {
+            for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+              const file = path.join(directory, entry.name);
+              if (entry.isDirectory()) {
+                measure(file);
+              } else if (entry.isFile()) {
+                const content = fs.readFileSync(file);
+                rows.push({ file, bytes: content.length, gzip: gzipSync(content).length });
+              }
+            }
+          }
+          measure('dist');
+          rows.sort((left, right) => left.file.localeCompare(right.file));
+          const total = rows.reduce((sum, row) => sum + row.bytes, 0);
+          const gzipTotal = rows.reduce((sum, row) => sum + row.gzip, 0);
+          const result = total > budget ? 'Above budget (warning only)' : 'Within budget';
+          const report = [
+            '## Bundle sizes',
+            '',
+            `Commit ${process.env.GITHUB_SHA}`,
+            '',
+            '| Built file | Bytes | Gzip bytes |',
+            '| --- | ---: | ---: |',
+            ...rows.map(row => `| ${row.file} | ${row.bytes} | ${row.gzip} |`),
+            `| Total | ${total} | ${gzipTotal} |`,
+            '',
+            `Uncompressed budget across all dist files: ${budget} bytes. ${result}.`,
+            'Baseline uses the rounded Vite sizes from run 42984074032 plus 10%.',
+            ''
+          ].join('\n');
+          console.log(report);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, report);
+          if (total > budget) {
+            console.log(`::warning::Bundle size ${total} bytes exceeds budget ${budget} bytes.`);
+          }
+          NODE
+      - name: Validate bundle reporter fixtures
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const os = require('node:os');
+          const path = require('node:path');
+          const { spawnSync } = require('node:child_process');
+          const { gzipSync } = require('node:zlib');
+          const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'bundle-fixtures-'));
+          const reporter = path.join(process.env.RUNNER_TEMP, 'bundle-size.cjs');
+          const budget = 1311607;
+          try {
+            fs.mkdirSync(path.join(directory, 'dist', 'assets'), { recursive: true });
+            for (const total of [7, budget, budget + 1]) {
+              const index = Buffer.from('abc');
+              const asset = Buffer.alloc(total - index.length, 120);
+              fs.writeFileSync(path.join(directory, 'dist', 'index.html'), index);
+              fs.writeFileSync(path.join(directory, 'dist', 'assets', 'app.js'), asset);
+              const summary = path.join(directory, 'summary.md');
+              fs.writeFileSync(summary, '');
+              const result = spawnSync(process.execPath, [reporter], {
+                cwd: directory,
+                env: { ...process.env, GITHUB_STEP_SUMMARY: summary, GITHUB_SHA: 'fixture-sha' },
+                encoding: 'utf8'
+              });
+              assert.ifError(result.error);
+              assert.equal(result.status, 0, result.stderr);
+              assert.equal(result.stderr, '');
+              const above = total > budget;
+              const expected = [
+                '## Bundle sizes', '', 'Commit fixture-sha', '',
+                '| Built file | Bytes | Gzip bytes |',
+                '| --- | ---: | ---: |',
+                `| dist/assets/app.js | ${asset.length} | ${gzipSync(asset).length} |`,
+                `| dist/index.html | 3 | ${gzipSync(index).length} |`,
+                `| Total | ${total} | ${gzipSync(asset).length + gzipSync(index).length} |`,
+                '',
+                `Uncompressed budget across all dist files: ${budget} bytes. ${above ? 'Above budget (warning only)' : 'Within budget'}.`,
+                'Baseline uses the rounded Vite sizes from run 42984074032 plus 10%.',
+                ''
+              ].join('\n');
+              assert.equal(fs.readFileSync(summary, 'utf8'), expected);
+              const warning = above
+                ? `::warning::Bundle size ${total} bytes exceeds budget ${budget} bytes.\n`
+                : '';
+              assert.equal(result.stdout, expected + '\n' + warning);
+              console.log(`PASS total=${total} raw/gzip rows and totals, exact summary/stdout, warning=${above}, exit=0`);
+            }
+          } finally {
+            fs.rmSync(directory, { recursive: true, force: true });
+          }
+          NODE
+      - name: Bundle size report (warning only)
+        id: bundle_report
+        continue-on-error: true
+        run: node "$RUNNER_TEMP/bundle-size.cjs"
+      - name: Record bundle reporter outcome
+        if: always()
+        env:
+          REPORT_OUTCOME: ${{ steps.bundle_report.outcome }}
+        run: |
+          echo "Bundle reporter step outcome=$REPORT_OUTCOME"
       - name: API (tsc build, accounts contract test)
         working-directory: server
         run: |
