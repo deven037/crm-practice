@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { getAllSync, newId, upsert } from '../data/store';
+import { apiFetch } from '../data/apiFetch';
+import { getAllSync } from '../data/store';
 import { PageLayout, Product, PRODUCT_CATEGORIES } from '../types';
 import { Select } from '../components/Select';
 import { CustomFieldsSection, CustomFieldValues, validateCustomFields } from '../components/CustomFieldsSection';
 import { useToast } from '../components/Toast';
-import { useAuth } from '../auth/AuthContext';
 import { getCustomFieldsAsModuleFields } from '../utils/moduleFields';
 import { classNames } from '../utils';
 
 export function ProductForm() {
   const navigate = useNavigate();
   const toast = useToast();
-  const { user } = useAuth();
   const [params] = useSearchParams();
 
   const layouts = getAllSync<PageLayout>('pageLayouts').filter((l) => l.module === 'products');
@@ -45,8 +44,7 @@ export function ProductForm() {
     setCustomErrors(cErrs);
     if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) return;
 
-    const product: Product = {
-      id: newId('product'),
+    const product: Omit<Product, 'id' | 'createdAt'> = {
       name: name.trim(),
       sku:
         sku.trim() ||
@@ -61,13 +59,18 @@ export function ProductForm() {
       description: description.trim(),
       active,
       layoutName: layout?.name ?? null,
-      createdAt: new Date().toISOString(),
       customFields,
     };
     setBusy(true);
-    await upsert('products', product);
-    toast.push('success', `Product "${product.name}" created.`);
-    navigate(`/products/${product.id}`);
+    try {
+      const saved = await apiFetch<Product>('/products', { method: 'POST', body: JSON.stringify(product) });
+      toast.push('success', `Product "${saved.name}" created.`);
+      navigate(`/products/${saved.id}`);
+    } catch {
+      toast.push('error', 'Could not create the product. Try again.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
