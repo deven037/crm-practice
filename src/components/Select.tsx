@@ -158,7 +158,7 @@ interface SearchableSelectProps extends SelectProps {
 }
 
 /** Custom select with a filter input inside the dropdown. */
-export function SearchableSelect({ value, options, onChange, placeholder = 'Select…', testId, disabled, emptyText = 'No matches found' }: SearchableSelectProps) {
+export function SearchableSelect({ value, options, onChange, placeholder = 'Select…', testId, disabled, id, emptyText = 'No matches found' }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const ref = useOutsideClose(() => setOpen(false));
@@ -172,6 +172,7 @@ export function SearchableSelect({ value, options, onChange, placeholder = 'Sele
   return (
     <div className="select" ref={ref}>
       <button
+        id={id}
         type="button"
         className="select-trigger"
         data-testid={testId}
