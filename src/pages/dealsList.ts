@@ -1,6 +1,6 @@
 import { Deal } from '../types';
 
-export type DealSortKey = 'name' | 'account' | 'stage' | 'amount' | 'probability' | 'closeDate' | 'owner';
+export type DealSortKey = 'name' | 'account' | 'stage' | 'amount' | 'probability' | 'closeDate' | 'owner' | 'createdAt';
 export interface DealSort {
   key: DealSortKey;
   dir: 'asc' | 'desc';
@@ -63,6 +63,8 @@ export function sortDeals(
         return d.probability;
       case 'closeDate':
         return d.closeDate;
+      case 'createdAt':
+        return d.createdAt;
     }
   };
   const sign = sort.dir === 'asc' ? 1 : -1;
