@@ -959,7 +959,7 @@ div.empty-cell { border: 1px dashed var(--border); border-radius: var(--radius-l
 .avatar-menu button:hover, .avatar-menu a:hover { background: var(--surface-2); }
 
 /* ---------- kanban ---------- */
-.kanban { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; }
+.kanban { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; position: relative; }
 .kanban-col {
   flex: 1; min-width: 220px; background: var(--surface-2);
   border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-3);
