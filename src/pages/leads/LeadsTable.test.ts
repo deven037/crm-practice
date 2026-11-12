@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Lead, Role } from '../../types';
+import { Lead, LeadStatus, Role } from '../../types';
 import { LeadsTable } from './LeadsTable';
 
 const auth = vi.hoisted(() => {
@@ -63,5 +63,31 @@ describe('Leads table contact field visibility', () => {
     expect(render([])).toContain('No leads yet.');
     expect(render([], 1)).toContain(`colSpan="${span}"`);
     expect(render([], 1)).toContain('No leads match the current filters.');
+  });
+});
+
+function leadWithStatus(status: LeadStatus): Lead {
+  return { ...lead, status };
+}
+
+function convertButton(status: LeadStatus): string {
+  const match = render([leadWithStatus(status)]).match(/<button[^>]*>Convert<\/button>/);
+  if (!match) throw new Error('Convert button not rendered');
+  return match[0];
+}
+
+describe('LeadsTable Convert button', () => {
+  beforeEach(() => { auth.role = 'admin'; });
+
+  it('is disabled with an explanation for a Converted lead', () => {
+    const button = convertButton('Converted');
+    expect(button).toContain('disabled');
+    expect(button).toContain('This lead is already converted.');
+  });
+
+  it.each<LeadStatus>(['New', 'Contacted', 'Qualified', 'Unqualified'])('is enabled for a %s lead', (status) => {
+    const button = convertButton(status);
+    expect(button).not.toContain('disabled');
+    expect(button).not.toContain('already converted');
   });
 });
