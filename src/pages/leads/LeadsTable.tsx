@@ -174,6 +174,8 @@ export function LeadsTable({
                 <button
                   type="button"
                   className="btn btn-small"
+                  disabled={lead.status === 'Converted'}
+                  title={lead.status === 'Converted' ? 'This lead is already converted.' : undefined}
                   onClick={() => onConvert(lead)}
                 >
                   Convert

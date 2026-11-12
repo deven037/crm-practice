@@ -195,6 +195,7 @@ export function Leads() {
   };
 
   const openWizard = (lead: Lead) =>
+    lead.status !== 'Converted' &&
     setWizard({
       lead,
       step: 1,
