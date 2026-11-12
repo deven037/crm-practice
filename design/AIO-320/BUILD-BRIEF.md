@@ -15,5 +15,5 @@ Action item from design review #92. Build from these files; do not copy tiles be
 ## Gaps for Alex to decide, not drawn as Retry
 - Mutation failures in `ticket-states.html` for comment add, delete and SLA save keep the typed input and the dialog open; the primary button is the retry. Status and priority failures have "Try again". If you want a named Retry on the comment, delete and SLA tiles, ask Iris for a revision.
 - `/contacts/new` in the requester-empty tile is unverified.
-- Rep SLA edit stays read-only for non-admins (provisional, AIO-185 question #181 open).
+- SLA edit is admin-only: decided by owner (#181, 2026-11-10, comment on AIO-185). Read-only in the UI for reps and viewers, and the API rejects a rep PUT with 403. Implementation and tests must cover the 403 rejection.
 - Accessibility from review #92: a live region for SLA time updated at most once a minute; disabled viewer controls need visible text or `aria-describedby`.
