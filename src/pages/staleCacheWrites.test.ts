@@ -93,22 +93,12 @@ beforeEach(() => {
   harness.rule.mockReturnValue(null);
 });
 describe('AIO-401 fresh affected-record writes', () => {
-  it.each([false, true])('account unlink preserves concurrent edits (empty stale relation list: %s)', async (empty) => {
+  it.each([false, true])('account unlink delegates to guarded DELETE (empty stale relation list: %s)', async (empty) => {
     harness.states = [account, false, empty ? [] : [contact], empty ? [] : [deal], [], false, null, true];
-    const freshContact = { ...contact, phone: 'new phone', customFields: { region: 'West' } };
-    const freshDeal = { ...deal, amount: 250 };
-    const unrelated = { ...deal, id: 'd2', accountId: 'other', stage: 'Proposal' };
-    harness.cached.mockImplementation((key: string) => key === 'contacts' ? [contact] : [deal, unrelated]);
-    harness.read.mockImplementation(async (key: string) => key === 'contacts'
-      ? [freshContact, { ...contact, id: 'c2', accountId: 'other' }]
-      : [freshDeal, unrelated, { ...deal, id: 'reassigned', accountId: 'other' }]);
     await action(AccountDetail(), 'confirm-delete-btn');
-    expect(harness.read.mock.calls).toEqual([['contacts'], ['deals']]);
-    expect(harness.save.mock.calls).toEqual([
-      ['contacts', [{ ...freshContact, accountId: null }]],
-      ['deals', [{ ...freshDeal, accountId: null }]],
-    ]);
-    expect(harness.remove).toHaveBeenCalledWith('accounts', ['a1']);
+    expect(harness.read).not.toHaveBeenCalled();
+    expect(harness.save).not.toHaveBeenCalled();
+    expect(harness.remove.mock.calls).toEqual([['accounts', ['a1']]]);
   });
 
   it.each([false, true])('product unlink preserves fresh lead fields (empty stale relation list: %s)', async (empty) => {
@@ -155,12 +145,23 @@ describe('AIO-401 fresh affected-record writes', () => {
     expect(harness.save.mock.calls).toEqual([['leads', [{ ...updated, ownerId: 'rule-owner' }]]]);
   });
 
-  it('a failed fresh account read does not save cached records or delete the account', async () => {
-    harness.states = [account, false, [contact], [deal], [], false, null, true];
-    harness.read.mockRejectedValue(new Error('Connection failed'));
+  it.each([false, true])('account remains when a fresh open deal blocks DELETE (empty stale relation list: %s)', async (empty) => {
+    harness.states = [account, false, [contact], empty ? [] : [deal], [], false, null, true];
+    const serverAccounts = new Map([[account.id, account]]);
+    const freshDeal = { ...deal, stage: 'Proposal' };
+    harness.remove.mockImplementation(async (key: string, ids: string[]) => {
+      if (key === 'accounts' && freshDeal.accountId === account.id && !freshDeal.stage.startsWith('Closed')) {
+        throw new Error('Account has 1 open deal(s). Close or reassign them first.');
+      }
+      ids.forEach((id) => serverAccounts.delete(id));
+    });
     await action(AccountDetail(), 'confirm-delete-btn');
+    expect(harness.remove.mock.calls).toEqual([['accounts', ['a1']]]);
+    expect(harness.read).not.toHaveBeenCalled();
     expect(harness.save).not.toHaveBeenCalled();
-    expect(harness.remove).not.toHaveBeenCalled();
+    expect(serverAccounts.get(account.id)).toEqual(account);
+    expect(freshDeal.accountId).toBe(account.id);
     expect(harness.states[10]).toBe(true);
+    expect(harness.states[9]).toBe(false);
   });
 });
