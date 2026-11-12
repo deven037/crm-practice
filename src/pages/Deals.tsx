@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getAll, upsert, removeMany } from '../data/store';
 import { Account, Deal, DealStage, DEAL_STAGES, User } from '../types';
 import { Modal } from '../components/Modal';
@@ -12,6 +12,17 @@ import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { autoCloseDate, formatCurrency, formatDate } from '../utils';
 import { applyAssignmentRule, getStatusOptions } from '../utils/rules';
+import { DealSort, DealSortKey, filterDeals, sortDeals } from './dealsList';
+
+const LIST_COLUMNS: { key: DealSortKey; label: string; num?: boolean }[] = [
+  { key: 'name', label: 'Deal' },
+  { key: 'account', label: 'Account' },
+  { key: 'stage', label: 'Stage' },
+  { key: 'amount', label: 'Amount', num: true },
+  { key: 'probability', label: 'Probability', num: true },
+  { key: 'closeDate', label: 'Expected close' },
+  { key: 'owner', label: 'Owner' },
+];
 
 export function Deals() {
   const toast = useToast();
@@ -27,18 +38,36 @@ export function Deals() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [editing, setEditing] = useState<Deal | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [sort, setSort] = useState<DealSort>({ key: 'amount', dir: 'desc' });
+  const [stageFilter, setStageFilter] = useState(openOnly ? 'open' : '');
+  const [listQuery, setListQuery] = useState(searchTerm);
+  const isList = params.get('view') === 'list';
+  const canWrite = user?.role !== 'viewer';
 
   const load = async () => {
-    // A Viewer gets 403 on /users; fall back to an empty list so the board still renders.
-    const [d, a, u] = await Promise.all([
-      getAll<Deal>('deals'),
-      getAll<Account>('accounts'),
-      getAll<User>('users').catch((): User[] => []),
-    ]);
-    setDeals(d);
-    setAccounts(a);
-    setUsers(u);
+    setFailed(false);
+    try {
+      // A Viewer gets 403 on /users; fall back to an empty list so the board still renders.
+      const [d, a, u] = await Promise.all([
+        getAll<Deal>('deals'),
+        getAll<Account>('accounts'),
+        getAll<User>('users').catch((): User[] => []),
+      ]);
+      setDeals(d);
+      setAccounts(a);
+      setUsers(u);
+    } catch {
+      setFailed(true);
+    }
     setLoading(false);
+  };
+
+  const setView = (view: 'board' | 'list') => {
+    const next = new URLSearchParams(params);
+    if (view === 'list') next.set('view', 'list');
+    else next.delete('view');
+    setParams(next);
   };
 
   useEffect(() => {
@@ -97,9 +126,19 @@ export function Deals() {
               Filtered by "{searchTerm}" · Clear
             </button>
           )}
-          <button className="btn btn-create" onClick={() => navigate('/deals/new')}>
-            + New Deal
-          </button>
+          <div className="segmented" role="group" aria-label="View">
+            <button type="button" className={`segmented-option${isList ? '' : ' active'}`} aria-pressed={!isList} onClick={() => setView('board')}>
+              Board
+            </button>
+            <button type="button" className={`segmented-option${isList ? ' active' : ''}`} aria-pressed={isList} onClick={() => setView('list')}>
+              List
+            </button>
+          </div>
+          {canWrite && (
+            <button className="btn btn-create" onClick={() => navigate('/deals/new')}>
+              + New Deal
+            </button>
+          )}
         </div>
       </div>
 
@@ -114,18 +153,53 @@ export function Deals() {
       />
 
       {loading ? (
-        <SkeletonRows rows={6} />
+        <div role="status" aria-label="Loading deals">
+          <SkeletonRows rows={6} />
+        </div>
+      ) : failed ? (
+        <div className="banner banner-error" role="alert">
+          Deals could not be loaded. Check your connection, then try again.{' '}
+          <button className="btn" onClick={load}>
+            Retry
+          </button>
+        </div>
+      ) : deals.length === 0 ? (
+        <div className="empty-cell" data-testid="deals-empty">
+          <p>
+            <strong>No deals yet.</strong>
+          </p>
+          <p>{canWrite ? 'Create your first deal to start the pipeline.' : 'Deals will appear here once a rep or admin adds them.'}</p>
+          {canWrite && (
+            <button className="btn btn-create" onClick={() => navigate('/deals/new')}>
+              + New Deal
+            </button>
+          )}
+        </div>
+      ) : isList ? (
+        <DealsTable
+          deals={deals}
+          sort={sort}
+          onSort={(key) => setSort((s) => ({ key, dir: s.key === key && s.dir === 'desc' ? 'asc' : 'desc' }))}
+          query={listQuery}
+          onQuery={setListQuery}
+          stage={stageFilter}
+          onStage={setStageFilter}
+          accountName={accountName}
+          ownerName={(id) => users.find((u) => u.id === id)?.name ?? '—'}
+        />
       ) : (
         <Kanban
           testId="kanban-board"
-          emptyLabel="Drop deals here"
+          emptyLabel={canWrite ? 'No deals in this stage. Use “Move to…” on a deal or drag one here.' : 'No deals in this stage.'}
+          getLabel={(deal) => deal.name}
+          readOnly={!canWrite}
           columns={DEAL_STAGES.filter((stage) => !openOnly || !stage.startsWith('Closed')).map((stage) => {
             const stageDeals = deals.filter((d) => d.stage === stage && d.name.toLowerCase().includes(searchTerm));
             const total = stageDeals.reduce((sum, d) => sum + d.amount, 0);
             return { key: stage, label: stage, items: stageDeals, headerMeta: `${stageDeals.length} · ${formatCurrency(total)}` };
           })}
           getId={(deal) => deal.id}
-          onCardClick={setEditing}
+          onCardClick={(deal) => (canWrite ? setEditing(deal) : navigate(`/deals/${deal.id}`))}
           onDrop={onDrop}
           cardRenderer={(deal) => (
             <>
@@ -150,6 +224,113 @@ export function Deals() {
           onSave={saveDeal}
           onDelete={deleteDeal}
         />
+      )}
+    </div>
+  );
+}
+
+function DealsTable({
+  deals,
+  sort,
+  onSort,
+  query,
+  onQuery,
+  stage,
+  onStage,
+  accountName,
+  ownerName,
+}: {
+  deals: Deal[];
+  sort: DealSort;
+  onSort: (key: DealSortKey) => void;
+  query: string;
+  onQuery: (q: string) => void;
+  stage: string;
+  onStage: (s: string) => void;
+  accountName: (id: string | null) => string;
+  ownerName: (id: string) => string;
+}) {
+  const rows = sortDeals(filterDeals(deals, { query, stage }, accountName), sort, accountName, ownerName);
+  const total = rows.reduce((sum, d) => sum + d.amount, 0);
+  const clear = () => {
+    onQuery('');
+    onStage('');
+  };
+  return (
+    <div data-testid="deals-list">
+      <div className="toolbar deals-list-toolbar">
+        <input
+          className="input"
+          type="search"
+          aria-label="Search deals"
+          placeholder="Search by deal or account…"
+          value={query}
+          onChange={(e) => onQuery(e.target.value)}
+        />
+        <select className="input" aria-label="Filter by stage" value={stage} onChange={(e) => onStage(e.target.value)}>
+          <option value="">All stages</option>
+          <option value="open">Open deals</option>
+          {DEAL_STAGES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+        <span className="muted" role="status">
+          {rows.length} {rows.length === 1 ? 'deal' : 'deals'} · {formatCurrency(total)}
+        </span>
+      </div>
+      {rows.length === 0 ? (
+        <div className="empty-cell">
+          <p>
+            <strong>No deals match{query.trim() ? ` “${query.trim()}”` : ' these filters'}.</strong>
+          </p>
+          <p>Check the spelling or clear the filters to see all {deals.length} deals.</p>
+          <button className="btn" onClick={clear}>
+            Clear filters
+          </button>
+        </div>
+      ) : (
+        <div className="table-wrap deals-table">
+          <table className="table">
+            <thead>
+              <tr>
+                {LIST_COLUMNS.map((c) => (
+                  <th
+                    key={c.key}
+                    scope="col"
+                    className={c.num ? 'num' : undefined}
+                    aria-sort={sort.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  >
+                    <button type="button" className="th-sort" onClick={() => onSort(c.key)}>
+                      {c.label}
+                      {sort.key === c.key ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : ''}
+                    </button>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((d) => (
+                <tr key={d.id}>
+                  <td data-label="Deal">
+                    <Link to={`/deals/${d.id}`}>{d.name}</Link>
+                  </td>
+                  <td data-label="Account">{accountName(d.accountId)}</td>
+                  <td data-label="Stage">{d.stage}</td>
+                  <td className="num" data-label="Amount">
+                    {formatCurrency(d.amount)}
+                  </td>
+                  <td className="num" data-label="Probability">
+                    {d.probability}%
+                  </td>
+                  <td data-label="Expected close">{formatDate(d.closeDate)}</td>
+                  <td data-label="Owner">{ownerName(d.ownerId)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

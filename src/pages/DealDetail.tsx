@@ -98,7 +98,7 @@ export function DealDetail() {
           <span className="pill ticket-open" data-testid="deal-detail-stage">
             {deal.stage}
           </span>
-          {!editing ? (
+          {user?.role === 'viewer' ? null : !editing ? (
             <>
               <button
                 className="btn"
