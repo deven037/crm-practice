@@ -216,34 +216,51 @@ export function LeadForm() {
         <div className="form-grid">
           {isVisible('name') && (
             <div className="field">
-              <span className="field-label">Full name *</span>
-              <input className="input" data-testid="lead-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-              {errors.name && <span className="field-error">{errors.name}</span>}
+              <label className="field-label" htmlFor="lead-name-input">Full name *</label>
+              <input
+                id="lead-name-input"
+                className="input"
+                data-testid="lead-name"
+                aria-invalid={errors.name ? true : undefined}
+                aria-describedby={errors.name ? 'lead-name-error' : undefined}
+                value={draft.name}
+                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              />
+              {errors.name && <span className="field-error" id="lead-name-error">{errors.name}</span>}
             </div>
           )}
           {isVisible('company') && (
             <div className="field">
-              <span className="field-label">Company</span>
-              <input className="input" data-testid="lead-company" value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} />
+              <label className="field-label" htmlFor="lead-company-input">Company</label>
+              <input id="lead-company-input" className="input" data-testid="lead-company" value={draft.company} onChange={(e) => setDraft({ ...draft, company: e.target.value })} />
             </div>
           )}
           {isVisible('email') && (
             <div className="field">
-              <span className="field-label">Email *</span>
-              <input className="input" data-testid="lead-email" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
-              {errors.email && <span className="field-error">{errors.email}</span>}
+              <label className="field-label" htmlFor="lead-email-input">Email *</label>
+              <input
+                id="lead-email-input"
+                className="input"
+                data-testid="lead-email"
+                aria-invalid={errors.email ? true : undefined}
+                aria-describedby={errors.email ? 'lead-email-error' : undefined}
+                value={draft.email}
+                onChange={(e) => setDraft({ ...draft, email: e.target.value })}
+              />
+              {errors.email && <span className="field-error" id="lead-email-error">{errors.email}</span>}
             </div>
           )}
           {isVisible('phone') && (
             <div className="field">
-              <span className="field-label">Phone</span>
-              <input className="input" data-testid="lead-phone" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
+              <label className="field-label" htmlFor="lead-phone-input">Phone</label>
+              <input id="lead-phone-input" className="input" data-testid="lead-phone" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
             </div>
           )}
           {isVisible('status') && (
             <div className="field">
-              <span className="field-label">Status</span>
+              <label className="field-label" htmlFor="lead-status-input">Status</label>
               <Select
+                id="lead-status-input"
                 value={draft.status}
                 options={getStatusOptions('leads', 'status', LEAD_STATUSES).map((s) => ({ value: s, label: s }))}
                 onChange={(v) => setDraft({ ...draft, status: v as LeadStatus })}
@@ -253,8 +270,9 @@ export function LeadForm() {
           )}
           {isVisible('source') && (
             <div className="field">
-              <span className="field-label">Source</span>
+              <label className="field-label" htmlFor="lead-source-input">Source</label>
               <Select
+                id="lead-source-input"
                 value={draft.source}
                 options={LEAD_SOURCES.map((s) => ({ value: s, label: s }))}
                 onChange={(v) => setDraft({ ...draft, source: v })}
@@ -262,8 +280,9 @@ export function LeadForm() {
             </div>
           )}
           <div className="field">
-            <span className="field-label">Interested product</span>
+            <label className="field-label" htmlFor="lead-product-input">Interested product</label>
             <SearchableSelect
+              id="lead-product-input"
               value={draft.productId ?? ''}
               options={[{ value: '', label: 'No product' }, ...products.map((p) => ({ value: p.id, label: p.name }))]}
               onChange={(v) => setDraft({ ...draft, productId: v || null })}
@@ -272,8 +291,9 @@ export function LeadForm() {
             />
           </div>
           <div className="field">
-            <span className="field-label">Campaign</span>
+            <label className="field-label" htmlFor="lead-campaign-input">Campaign</label>
             <SearchableSelect
+              id="lead-campaign-input"
               value={draft.campaignId ?? ''}
               options={[{ value: '', label: 'No campaign' }, ...campaigns.map((c) => ({ value: c.id, label: c.name }))]}
               onChange={(v) => setDraft({ ...draft, campaignId: v || null })}
@@ -283,8 +303,9 @@ export function LeadForm() {
           </div>
           {isVisible('ownerId') && (
             <div className="field">
-              <span className="field-label">Owner</span>
+              <label className="field-label" htmlFor="lead-owner-input">Owner</label>
               <Select
+                id="lead-owner-input"
                 value={draft.ownerId}
                 options={users.map((u) => ({ value: u.id, label: u.name }))}
                 onChange={(v) => setDraft({ ...draft, ownerId: v })}
@@ -293,8 +314,9 @@ export function LeadForm() {
           )}
           {isVisible('value') && (
             <div className="field">
-              <span className="field-label">Estimated value ($)</span>
+              <label className="field-label" htmlFor="lead-value-input">Estimated value ($)</label>
               <input
+                id="lead-value-input"
                 className="input"
                 type="number"
                 data-testid="lead-value"
