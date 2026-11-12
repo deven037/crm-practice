@@ -60,7 +60,7 @@ vi.mock('react/jsx-dev-runtime', async (importOriginal) => {
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
 vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
 vi.mock('../hooks/useMediaQuery', () => ({ useMediaQuery: () => false }));
-vi.mock('./CommandBar', () => ({ CommandBar: () => null }));
+vi.mock('./CommandBar', () => ({ CommandBar: () => null, isCloseKey: (key: string) => key === 'Escape' }));
 vi.mock('./SidebarLink', () => ({ SidebarLink: () => null }));
 vi.mock('./feedback-widget', () => ({}));
 vi.mock('../data/store', () => ({
@@ -70,7 +70,7 @@ vi.mock('../data/store', () => ({
   setValue: vi.fn(),
 }));
 
-import { Layout } from './Layout';
+import { Layout, listenForDismiss } from './Layout';
 
 function render(collapsed = false): string {
   harness.cursor = 0;
@@ -136,6 +136,36 @@ describe('bank profile fallback and recovery', () => {
     const html = render(true);
     expect(html).toContain('>Redfern Credit Union</span>');
     expect(html).not.toContain('class="brand-logo"');
+  });
+
+  it('closes the avatar menu and notifications panel on Escape, not on other keys', () => {
+    const listeners = new Map<string, (e: never) => void>();
+    const doc = {
+      addEventListener: (type: string, fn: (e: never) => void) => { listeners.set(type, fn); },
+      removeEventListener: (type: string) => { listeners.delete(type); },
+    };
+    const onClose = vi.fn();
+    const stop = listenForDismiss(doc as unknown as Document, () => false, onClose);
+    listeners.get('keydown')?.({ key: 'Enter' } as never);
+    expect(onClose).not.toHaveBeenCalled();
+    listeners.get('keydown')?.({ key: 'Escape' } as never);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    stop();
+    expect(listeners.size).toBe(0);
+  });
+
+  it('still closes on a click outside but not inside', () => {
+    const listeners = new Map<string, (e: never) => void>();
+    const doc = {
+      addEventListener: (type: string, fn: (e: never) => void) => { listeners.set(type, fn); },
+      removeEventListener: () => {},
+    };
+    const onClose = vi.fn();
+    listenForDismiss(doc as unknown as Document, (target) => (target as unknown as string) === 'outside', onClose);
+    listeners.get('mousedown')?.({ target: 'inside' } as never);
+    expect(onClose).not.toHaveBeenCalled();
+    listeners.get('mousedown')?.({ target: 'outside' } as never);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('uses the profile logo when supplied', async () => {

@@ -10,21 +10,37 @@ import { BankProfile, fetchBankProfile, getAllSync, getValue, setValue } from '.
 import { AppNotification } from '../types';
 import { initials, timeAgo } from '../utils';
 import { useMediaQuery } from '../hooks/useMediaQuery';
-import { CommandBar } from './CommandBar';
+import { CommandBar, isCloseKey } from './CommandBar';
 import { SidebarLink } from './SidebarLink';
 import './feedback-widget';
 
 const PRODUCT_NAME = import.meta.env.VITE_PRODUCT_NAME?.trim() || 'Harbor CRM';
 
+export function listenForDismiss(
+  doc: Document,
+  isOutside: (target: Node) => boolean,
+  onClose: () => void,
+): () => void {
+  const onMouseDown = (e: MouseEvent) => {
+    if (isOutside(e.target as Node)) onClose();
+  };
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (isCloseKey(e.key)) onClose();
+  };
+  doc.addEventListener('mousedown', onMouseDown);
+  doc.addEventListener('keydown', onKeyDown);
+  return () => {
+    doc.removeEventListener('mousedown', onMouseDown);
+    doc.removeEventListener('keydown', onKeyDown);
+  };
+}
+
 function useOutside(onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [onClose]);
+  useEffect(
+    () => listenForDismiss(document, (target) => !!ref.current && !ref.current.contains(target), onClose),
+    [onClose],
+  );
   return ref;
 }
 
