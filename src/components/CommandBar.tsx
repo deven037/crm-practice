@@ -62,7 +62,7 @@ const QUICK_ACTIONS: { label: string; to: string }[] = [
   { label: '+ New Deal', to: '/deals/new' },
 ];
 
-/** Esc is handled on the panel, not the input, so it also works when focus is on "Try again", Close or a result. */
+/** Esc is handled on the document while the panel is open, so it also works when focus is on "Try again", Close, a result, or has dropped to the body. */
 export const isCloseKey = (key: string) => key === 'Escape';
 
 const plural = (count: number, one: string) => `${count} ${one}${count === 1 ? '' : 's'}`;
@@ -174,6 +174,15 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
     if (status === 'error') retryRef.current?.focus();
   }, [status]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onDocKeyDown = (e: KeyboardEvent) => {
+      if (isCloseKey(e.key)) onClose();
+    };
+    document.addEventListener('keydown', onDocKeyDown);
+    return () => document.removeEventListener('keydown', onDocKeyDown);
+  }, [open, onClose]);
+
   const items: CommandItem[] = useMemo(() => {
     const q = query.trim().toLowerCase();
     const actions: CommandItem[] = QUICK_ACTIONS.filter((a) => a.label.toLowerCase().includes(q)).map((a) => ({
@@ -227,10 +236,6 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
     }
   };
 
-  const onPanelKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (isCloseKey(e.key)) onClose();
-  };
-
   const announcement = (() => {
     if (!searching) return query ? `Type ${SEARCH_MIN_CHARS} or more characters to search leads, contacts, accounts and deals.` : '';
     if (status === 'ready' && data) {
@@ -249,7 +254,7 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
 
   return (
     <div className="command-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="command-panel" data-testid="command-bar" onKeyDown={onPanelKeyDown}>
+      <div className="command-panel" data-testid="command-bar">
         <div className="command-input-row">
           <Search size={16} color="var(--text-muted)" />
           <input
