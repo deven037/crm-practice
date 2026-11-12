@@ -44,6 +44,15 @@ describe('sortDeals', () => {
     expect(sortDeals(deals, { key: 'amount', dir: 'asc' }, accountName, owner).map((d) => d.id)).toEqual(['d3', 'd2', 'd1']);
     expect(deals.map((d) => d.id)).toEqual(['d1', 'd2', 'd3']);
   });
+
+  it('sorts newest first by created date', () => {
+    const dated = [
+      deal({ id: 'old', createdAt: '2026-10-01' }),
+      deal({ id: 'new', createdAt: '2026-11-10' }),
+      deal({ id: 'mid', createdAt: '2026-10-20' }),
+    ];
+    expect(sortDeals(dated, { key: 'createdAt', dir: 'desc' }, accountName, owner).map((d) => d.id)).toEqual(['new', 'mid', 'old']);
+  });
 });
 
 describe('moveDealOptimistic', () => {

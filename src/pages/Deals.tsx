@@ -39,7 +39,7 @@ export function Deals() {
   const [users, setUsers] = useState<User[]>([]);
   const [editing, setEditing] = useState<Deal | null>(null);
   const [failed, setFailed] = useState(false);
-  const [sort, setSort] = useState<DealSort>({ key: 'amount', dir: 'desc' });
+  const [sort, setSort] = useState<DealSort>({ key: 'createdAt', dir: 'desc' });
   const [stageFilter, setStageFilter] = useState(openOnly ? 'open' : '');
   const [listQuery, setListQuery] = useState(searchTerm);
   const isList = params.get('view') === 'list';
