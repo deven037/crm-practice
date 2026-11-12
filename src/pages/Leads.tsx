@@ -155,7 +155,8 @@ export function Leads() {
 
   const bulkAssign = async () => {
     if (!assignTo) return;
-    const next = leads.map((l) => (selected.includes(l.id) ? { ...l, ownerId: assignTo } : l));
+    const freshLeads = await getAll<Lead>('leads');
+    const next = freshLeads.filter((l) => selected.includes(l.id)).map((l) => ({ ...l, ownerId: assignTo }));
     await saveAll('leads', next);
     toast.push('success', `${selected.length} lead(s) assigned to ${ownerName(assignTo)}.`);
     setAssignOpen(false);
@@ -166,8 +167,8 @@ export function Leads() {
 
   // Setup → Mass Update, reusing the existing per-item upsert in a loop (same pattern as bulkAssign).
   const applyMassUpdate = async (fieldKey: string, value: string) => {
-    const next = leads.map((l) => {
-      if (!selected.includes(l.id)) return l;
+    const freshLeads = await getAll<Lead>('leads');
+    const next = freshLeads.filter((l) => selected.includes(l.id)).map((l) => {
       const updated = { ...l, [fieldKey]: fieldKey === 'value' ? Number(value) : value };
       const assignedTo = applyAssignmentRule('leads', updated);
       return assignedTo ? { ...updated, ownerId: assignedTo } : updated;

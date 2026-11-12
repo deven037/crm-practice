@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Pencil, Trash2 } from 'lucide-react';
-import { getAll, getAllSync, getById, removeMany, saveAll, upsert } from '../data/store';
+import { getAll, getById, removeMany, saveAll, upsert } from '../data/store';
 import { Account, Contact, Deal, Quote } from '../types';
 import { computeQuoteTotals, QUOTE_STATUS_PILL } from '../components/QuoteLineItems';
 import { Accordion } from '../components/Accordion';
@@ -91,12 +91,12 @@ export function AccountDetail() {
       await removeMany('deals', deals.map((d) => d.id));
     } else {
       // Unlink: related records survive without an account.
-      const allContacts = getAllSync<Contact>('contacts').map((c) =>
-        c.accountId === account.id ? { ...c, accountId: null } : c
-      );
-      const allDeals = getAllSync<Deal>('deals').map((d) =>
-        d.accountId === account.id ? { ...d, accountId: null } : d
-      );
+      const [freshContacts, freshDeals] = await Promise.all([
+        getAll<Contact>('contacts'),
+        getAll<Deal>('deals'),
+      ]);
+      const allContacts = freshContacts.filter((c) => c.accountId === account.id).map((c) => ({ ...c, accountId: null }));
+      const allDeals = freshDeals.filter((d) => d.accountId === account.id).map((d) => ({ ...d, accountId: null }));
       await saveAll('contacts', allContacts);
       await saveAll('deals', allDeals);
     }
