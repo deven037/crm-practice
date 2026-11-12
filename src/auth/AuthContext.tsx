@@ -29,8 +29,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const me = await apiFetch<User>('/auth/me');
       // Warm the data cache only once a valid session is confirmed — /api/bootstrap
       // requires auth, so this can't run before we know the stored token is good.
-      await initStore();
-      setUser(me);
+      // A failed warm-up must not end the session: the shell shows its own error and Retry.
+      // Only a 401 does (apiFetch clears the token), so the token tells the two apart.
+      await initStore().catch(() => undefined);
+      setUser(getToken() ? me : null);
     } catch {
       setUser(null);
     }
