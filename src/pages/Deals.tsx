@@ -85,8 +85,13 @@ export function Deals() {
     const updated = assignedTo ? { ...stamped, ownerId: assignedTo } : stamped;
     // Optimistic UI so the card moves instantly, then persist.
     setDeals((prev) => prev.map((d) => (d.id === dealId ? updated : d)));
-    await upsert('deals', updated);
-    toast.push('success', `"${deal.name}" moved to ${stage}.`);
+    try {
+      await upsert('deals', updated);
+      toast.push('success', `"${deal.name}" moved to ${stage}.`);
+    } catch {
+      setDeals((prev) => prev.map((d) => (d.id === dealId ? deal : d)));
+      toast.push('error', `Couldn't move "${deal.name}" to ${stage}. It is back in ${deal.stage}.`);
+    }
   };
 
   const saveDeal = async (deal: Deal) => {

@@ -1,4 +1,4 @@
-import { DragEvent, KeyboardEvent, ReactNode, useState } from 'react';
+import { DragEvent, ReactNode, useEffect, useRef, useState } from 'react';
 import { classNames } from '../utils';
 
 export interface KanbanColumn<T> {
@@ -14,7 +14,7 @@ interface KanbanProps<T> {
   cardRenderer: (item: T) => ReactNode;
   onCardClick?: (item: T) => void;
   /** Called with (itemId, targetColumnKey) — all business logic (e.g. autoCloseDate) stays in the caller. */
-  onDrop: (itemId: string, columnKey: string) => void;
+  onDrop: (itemId: string, columnKey: string) => void | Promise<void>;
   emptyLabel?: string;
   testId?: string;
   /** Accessible name of a card. When set, cards are focusable and get a "Move to…" menu (the non-drag path). */
@@ -37,6 +37,8 @@ export function Kanban<T>({
 }: KanbanProps<T>) {
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   const handleDrop = (e: DragEvent, columnKey: string) => {
     e.preventDefault();
@@ -46,22 +48,21 @@ export function Kanban<T>({
     setDragId(null);
   };
 
-  const onCardKey = (e: KeyboardEvent, item: T) => {
-    if (e.target !== e.currentTarget) return;
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onCardClick?.(item);
-    }
-  };
+  // A moved card remounts in its new column; hand focus back to its Move menu so keyboard users keep their place.
+  useEffect(() => {
+    if (!focusId) return;
+    rootRef.current?.querySelector<HTMLElement>(`[data-kanban-id="${CSS.escape(focusId)}"] .kanban-move`)?.focus();
+    setFocusId(null);
+  }, [columns, focusId]);
 
   return (
-    <div className="kanban" data-testid={testId}>
+    <div className="kanban" data-testid={testId} ref={rootRef}>
       {columns.map((col) => (
         <div
           key={col.key}
           className={classNames('kanban-col', dragOver === col.key && 'drag-over')}
           role={getLabel ? 'group' : undefined}
-          aria-label={getLabel ? `${col.label}, ${col.items.length} deals` : undefined}
+          aria-label={getLabel ? `${col.label}, ${col.items.length} ${col.items.length === 1 ? 'card' : 'cards'}` : undefined}
           onDragOver={(e) => {
             if (readOnly) return;
             e.preventDefault();
@@ -84,17 +85,28 @@ export function Kanban<T>({
                 <div
                   key={id}
                   className="kanban-card"
+                  data-kanban-id={id}
                   draggable={!readOnly}
-                  tabIndex={getLabel ? 0 : undefined}
-                  role={getLabel ? 'button' : undefined}
+                  role={getLabel ? 'group' : undefined}
                   aria-label={label}
-                  onKeyDown={getLabel ? (e) => onCardKey(e, item) : undefined}
                   onDragStart={(e) => {
                     e.dataTransfer.setData('text/kanban-id', id);
                     setDragId(id);
                   }}
                   onClick={() => onCardClick?.(item)}
                 >
+                  {label && (
+                    <button
+                      type="button"
+                      className="kanban-open sr-only"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCardClick?.(item);
+                      }}
+                    >
+                      Open {label}
+                    </button>
+                  )}
                   {cardRenderer(item)}
                   {label && !readOnly && (
                     <select
@@ -103,7 +115,9 @@ export function Kanban<T>({
                       value=""
                       onClick={(e) => e.stopPropagation()}
                       onChange={(e) => {
-                        if (e.target.value) onDrop(id, e.target.value);
+                        if (!e.target.value) return;
+                        setFocusId(id);
+                        onDrop(id, e.target.value);
                       }}
                     >
                       <option value="">Move to…</option>

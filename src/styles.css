@@ -983,6 +983,7 @@ div.empty-cell { border: 1px dashed var(--border); border-radius: var(--radius-l
 .kanban-prob { color: var(--text-muted); }
 .kanban-card-date { color: var(--text-muted); font-size: 11px; margin-top: 4px; }
 .kanban-card:focus-visible, .th-sort:focus-visible, .kanban-move:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.kanban-open.sr-only:focus-visible { position: static; width: auto; height: auto; margin: 0 0 6px; clip: auto; padding: 4px 8px; outline: 2px solid var(--accent); outline-offset: 2px; }
 .kanban-move { margin-top: 8px; width: 100%; min-height: 36px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
 .deals-table .th-sort { background: none; border: 0; padding: 0; min-height: 44px; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; }
 .deals-table .th-sort:hover { color: var(--text); }
