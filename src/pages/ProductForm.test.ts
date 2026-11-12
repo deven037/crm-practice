@@ -138,6 +138,7 @@ it('keeps the form usable after a rejected POST and opens the returned product o
     expect(request.method).toBe('POST');
     expect(JSON.parse(request.body)).toMatchObject({ name: 'Retry product', price: 2000 });
   }
-  expect(first.navigate).toHaveBeenCalledExactlyOnceWith('/products/product-retry-server');
+  expect(first.navigate).toHaveBeenCalledTimes(1);
+  expect(first.navigate).toHaveBeenCalledWith('/products/product-retry-server');
   expect(harness.push).toHaveBeenCalledWith('success', 'Product "Retry product" created.');
 });
