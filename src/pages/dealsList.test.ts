@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { Deal } from '../types';
 import { Kanban } from '../components/Kanban';
-import { filterDeals, sortDeals } from './dealsList';
+import { filterDeals, moveDealOptimistic, sortDeals } from './dealsList';
 
 const deal = (over: Partial<Deal>): Deal => ({
   id: 'd0',
@@ -46,6 +46,30 @@ describe('sortDeals', () => {
   });
 });
 
+describe('moveDealOptimistic', () => {
+  const original = deal({ id: 'd1', stage: 'Qualification' });
+  const updated = { ...original, stage: 'Negotiation' as const };
+  const run = async (save: () => Promise<unknown>) => {
+    let state = [original];
+    const saved = await moveDealOptimistic(original, updated, save, (fn) => {
+      state = fn(state);
+    });
+    return { saved, state };
+  };
+
+  it('keeps the move when saving works', async () => {
+    const { saved, state } = await run(() => Promise.resolve());
+    expect(saved).toBe(true);
+    expect(state[0].stage).toBe('Negotiation');
+  });
+
+  it('puts the deal back in its old stage when saving fails', async () => {
+    const { saved, state } = await run(() => Promise.reject(new Error('network')));
+    expect(saved).toBe(false);
+    expect(state[0].stage).toBe('Qualification');
+  });
+});
+
 describe('Kanban move menu', () => {
   const columns = [
     { key: 'A', label: 'Alpha', items: ['x'] },
@@ -68,7 +92,7 @@ describe('Kanban move menu', () => {
     expect(html).toContain('aria-label="Move Deal x to…"');
     expect(html).toContain('<option value="B">Beta</option>');
     expect(html).not.toContain('<option value="A">');
-    expect(html).toContain('tabindex="0"');
+    expect(html).toContain('role="group" aria-label="Deal x"');
   });
 
   it('has no menu and no dragging for a read-only viewer, and none by default', () => {

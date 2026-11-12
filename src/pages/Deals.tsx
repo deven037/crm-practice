@@ -12,7 +12,7 @@ import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { autoCloseDate, formatCurrency, formatDate } from '../utils';
 import { applyAssignmentRule, getStatusOptions } from '../utils/rules';
-import { DealSort, DealSortKey, filterDeals, sortDeals } from './dealsList';
+import { DealSort, DealSortKey, filterDeals, moveDealOptimistic, sortDeals } from './dealsList';
 
 const LIST_COLUMNS: { key: DealSortKey; label: string; num?: boolean }[] = [
   { key: 'name', label: 'Deal' },
@@ -84,12 +84,10 @@ export function Deals() {
     const assignedTo = applyAssignmentRule('deals', stamped);
     const updated = assignedTo ? { ...stamped, ownerId: assignedTo } : stamped;
     // Optimistic UI so the card moves instantly, then persist.
-    setDeals((prev) => prev.map((d) => (d.id === dealId ? updated : d)));
-    try {
-      await upsert('deals', updated);
+    const saved = await moveDealOptimistic(deal, updated, (d) => upsert('deals', d), setDeals);
+    if (saved) {
       toast.push('success', `"${deal.name}" moved to ${stage}.`);
-    } catch {
-      setDeals((prev) => prev.map((d) => (d.id === dealId ? deal : d)));
+    } else {
       toast.push('error', `Couldn't move "${deal.name}" to ${stage}. It is back in ${deal.stage}.`);
     }
   };

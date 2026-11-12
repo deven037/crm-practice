@@ -23,6 +23,24 @@ export function filterDeals(deals: Deal[], filter: DealListFilter, accountName: 
   });
 }
 
+/** Applies a move at once, saves it, and puts the original deal back if saving fails. Returns whether it saved. */
+export async function moveDealOptimistic(
+  original: Deal,
+  updated: Deal,
+  save: (deal: Deal) => Promise<unknown>,
+  setDeals: (update: (prev: Deal[]) => Deal[]) => void,
+): Promise<boolean> {
+  const swap = (next: Deal) => setDeals((prev) => prev.map((d) => (d.id === next.id ? next : d)));
+  swap(updated);
+  try {
+    await save(updated);
+    return true;
+  } catch {
+    swap(original);
+    return false;
+  }
+}
+
 export function sortDeals(
   deals: Deal[],
   sort: DealSort,
