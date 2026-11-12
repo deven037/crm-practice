@@ -1,5 +1,5 @@
 import { isValidElement, ReactNode } from 'react';
-import { expect, it, vi } from 'vitest';
+import { beforeEach, expect, it, vi } from 'vitest';
 
 const harness = vi.hoisted(() => ({
   states: [] as unknown[],
@@ -45,6 +45,8 @@ import { ProductForm } from './ProductForm';
 interface FormNodeProps {
   children?: ReactNode;
   'data-testid'?: string;
+  disabled?: boolean;
+  value?: string;
   onClick?: () => Promise<void>;
   onChange?: (event: { target: { value: string } }) => void;
 }
@@ -70,6 +72,11 @@ function submitProduct(name: string) {
   if (!submit) throw new Error('Create product button is missing');
   return { navigate, pending: submit() };
 }
+
+beforeEach(() => {
+  harness.apiFetch.mockReset();
+  harness.push.mockReset();
+});
 
 it('opens the product returned to each of two concurrent Default-layout submissions', async () => {
   let finishFirst: (product: { id: string; name: string }) => void = () => {
@@ -99,4 +106,38 @@ it('opens the product returned to each of two concurrent Default-layout submissi
   expect(second.navigate).toHaveBeenCalledWith('/products/product-server-2');
   expect(harness.push).toHaveBeenCalledWith('success', 'Product "First product" created.');
   expect(harness.push).toHaveBeenCalledWith('success', 'Product "Second product" created.');
+});
+
+it('keeps the form usable after a rejected POST and opens the returned product on retry', async () => {
+  harness.apiFetch
+    .mockRejectedValueOnce(new Error('Save failed'))
+    .mockResolvedValueOnce({ id: 'product-retry-server', name: 'Retry product' });
+
+  const first = submitProduct('Retry product');
+  harness.cursor = 0;
+  expect(formNodes(ProductForm()).find((node) => node.props.children === 'Creating…')?.props.disabled).toBe(true);
+  await first.pending;
+
+  expect(harness.push).toHaveBeenCalledWith('error', 'Could not create the product. Try again.');
+  expect(harness.push).not.toHaveBeenCalledWith('success', expect.any(String));
+  expect(first.navigate).not.toHaveBeenCalled();
+
+  harness.cursor = 0;
+  const fields = formNodes(ProductForm());
+  expect(fields.find((node) => node.props['data-testid'] === 'product-form-page')).toBeDefined();
+  expect(fields.find((node) => node.props['data-testid'] === 'product-name')?.props.value).toBe('Retry product');
+  expect(fields.find((node) => node.props['data-testid'] === 'product-price')?.props.value).toBe('2000');
+  const retry = fields.find((node) => node.props.children === 'Create product');
+  expect(retry?.props.disabled).toBe(false);
+  if (!retry?.props.onClick) throw new Error('Create product button is missing');
+  await retry.props.onClick();
+
+  expect(harness.apiFetch).toHaveBeenCalledTimes(2);
+  for (const [path, request] of harness.apiFetch.mock.calls) {
+    expect(path).toBe('/products');
+    expect(request.method).toBe('POST');
+    expect(JSON.parse(request.body)).toMatchObject({ name: 'Retry product', price: 2000 });
+  }
+  expect(first.navigate).toHaveBeenCalledExactlyOnceWith('/products/product-retry-server');
+  expect(harness.push).toHaveBeenCalledWith('success', 'Product "Retry product" created.');
 });
