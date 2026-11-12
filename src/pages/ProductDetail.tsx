@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Pencil, Trash2 } from 'lucide-react';
-import { getAll, getAllSync, getById, removeMany, saveAll, upsert } from '../data/store';
+import { getAll, getById, removeMany, saveAll, upsert } from '../data/store';
 import { Lead, Product, PRODUCT_CATEGORIES, Quote } from '../types';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
@@ -72,13 +72,10 @@ export function ProductDetail() {
   };
 
   const doDelete = async () => {
-    if (leads.length > 0) {
-      // Unlink the product from every lead that references it — leads survive.
-      const allLeads = getAllSync<Lead>('leads').map((l) =>
-        l.productId === product.id ? { ...l, productId: null } : l
-      );
-      await saveAll('leads', allLeads);
-    }
+    // Unlink only leads that still reference this product, preserving their latest fields.
+    const freshLeads = await getAll<Lead>('leads');
+    const relatedLeads = freshLeads.filter((l) => l.productId === product.id);
+    await saveAll('leads', relatedLeads.map((l) => ({ ...l, productId: null })));
     // Quotes are NOT mutated: each line item already snapshots productName/unitPrice,
     // so QuoteLineItemsView falls back to "{productName} (deleted product)" once the
     // product no longer resolves — no write needed to keep the quote's history readable.

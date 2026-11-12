@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Pencil, Trash2 } from 'lucide-react';
-import { getAll, getAllSync, getById, removeMany, saveAll, upsert } from '../data/store';
+import { getAll, getById, removeMany, upsert } from '../data/store';
 import { Account, Contact, Deal, Quote } from '../types';
 import { computeQuoteTotals, QUOTE_STATUS_PILL } from '../components/QuoteLineItems';
 import { Accordion } from '../components/Accordion';
@@ -89,16 +89,6 @@ export function AccountDetail() {
       // Delete related contacts and (closed) deals along with the account.
       await removeMany('contacts', contacts.map((c) => c.id));
       await removeMany('deals', deals.map((d) => d.id));
-    } else {
-      // Unlink: related records survive without an account.
-      const allContacts = getAllSync<Contact>('contacts').map((c) =>
-        c.accountId === account.id ? { ...c, accountId: null } : c
-      );
-      const allDeals = getAllSync<Deal>('deals').map((d) =>
-        d.accountId === account.id ? { ...d, accountId: null } : d
-      );
-      await saveAll('contacts', allContacts);
-      await saveAll('deals', allDeals);
     }
     await removeMany('accounts', [account.id]);
     toast.push('success', 'Account deleted.');
