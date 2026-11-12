@@ -194,8 +194,11 @@ export function Leads() {
     toast.push('info', `Exported ${filtered.length} leads to CSV.`);
   };
 
-  const openWizard = (lead: Lead) =>
-    lead.status !== 'Converted' &&
+  const openWizard = (lead: Lead) => {
+    if (lead.status === 'Converted') {
+      toast.push('info', 'This lead is already converted.');
+      return;
+    }
     setWizard({
       lead,
       step: 1,
@@ -210,6 +213,7 @@ export function Leads() {
       dealAmount: lead.value,
       dealStage: 'Qualification',
     });
+  };
 
   const finishWizard = async () => {
     if (!wizard || !beginOnce(convertingRef)) return;
