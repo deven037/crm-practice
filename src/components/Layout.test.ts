@@ -200,3 +200,9 @@ describe('bank profile fallback and recovery', () => {
     expect(render()).toContain('src="/redfern.svg"');
   });
 });
+
+it('gives the header search an explicit name while preserving its visible text', () => {
+  const html = render();
+  expect(html).toMatch(/<button[^>]*data-testid="global-search"[^>]*aria-label="Search leads, contacts, accounts"/);
+  expect(html).toContain('<span>Search leads, contacts, accounts…</span>');
+});

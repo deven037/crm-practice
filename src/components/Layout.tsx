@@ -54,7 +54,7 @@ function useOutside(onClose: () => void) {
 
 function GlobalSearchTrigger({ onOpen }: { onOpen: () => void }) {
   return (
-    <button className="global-search-trigger" data-testid="global-search" onClick={onOpen}>
+    <button className="global-search-trigger" data-testid="global-search" aria-label="Search leads, contacts, accounts" onClick={onOpen}>
       <Search size={15} />
       <span>Search leads, contacts, accounts…</span>
       <kbd>⌘K</kbd>
