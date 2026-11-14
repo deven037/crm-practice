@@ -85,8 +85,9 @@ describe('ContactDetail save states', () => {
   it('hides write actions for viewers and shows the notes empty state', () => {
     harness.role = 'viewer'; harness.states[3] = false;
     const html = renderToStaticMarkup(ContactDetail());
-    expect(html).toMatch(/hidden=""[^>]*data-testid="edit-contact-btn"/);
-    expect(html).toMatch(/hidden=""[^>]*data-testid="delete-contact-btn"/);
+    expect(html).not.toContain('data-testid="edit-contact-btn"');
+    expect(html).not.toContain('data-testid="delete-contact-btn"');
+    expect(html).not.toContain('data-testid="upload-avatar-btn"');
     expect(html).not.toContain('data-testid="note-input"');
     expect(html).toContain('No notes yet.');
   });
