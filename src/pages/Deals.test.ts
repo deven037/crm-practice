@@ -1,11 +1,12 @@
 import { createElement, isValidElement, ReactElement, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DealModal } from './Deals';
+import { Deals, DealModal } from './Deals';
 import { Deal } from '../types';
 
 const harness = vi.hoisted(() => ({
   states: [] as unknown[], cursor: 0, validation: {} as Record<string, string>,
+  effects: [] as (() => void)[], request: vi.fn(), remove: vi.fn(),
 }));
 vi.mock('react', async (original) => ({
   ...await original<typeof import('react')>(),
@@ -16,7 +17,7 @@ vi.mock('react', async (original) => ({
       harness.states[index] = typeof next === 'function' ? next(harness.states[index]) : next;
     }];
   },
-  useEffect: () => undefined,
+  useEffect: (effect: () => void) => { harness.effects.push(effect); },
   useRef: () => ({ current: null }),
 }));
 vi.mock('../components/Modal', () => ({
@@ -30,7 +31,14 @@ vi.mock('../components/CustomFieldsSection', () => ({
 }));
 vi.mock('../utils/rules', () => ({ getStatusOptions: () => [], applyAssignmentRule: () => null }));
 
+vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: { role: 'rep' } }) }));
+vi.mock('../components/Toast', () => ({ useToast: () => ({ push: vi.fn() }) }));
+vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn(), useSearchParams: () => [new URLSearchParams()], Link: () => null }));
+vi.mock('../data/store', () => ({ getAll: (key: string) => harness.request(key), upsert: vi.fn(), removeMany: (...args: unknown[]) => harness.remove(...args) }));
+
 interface Props {
+  onClick?: () => Promise<void>;
+  onCardClick?: (deal: Deal) => void;
   children?: ReactNode;
   footer?: ReactNode;
   onSubmit?: (event: { preventDefault: () => void }) => void;
@@ -52,7 +60,7 @@ function render() {
   const elements = nodes(tree);
   return { submit: () => elements.find((node) => node.type === 'form')?.props.onSubmit?.({ preventDefault: vi.fn() }), html: renderToStaticMarkup(tree), elements, saveButton: elements.find((node) => node.props['data-testid'] === 'deal-save-btn') };
 }
-beforeEach(() => { harness.states = []; harness.cursor = 0; harness.validation = {}; save.mockReset(); });
+beforeEach(() => { harness.states = []; harness.cursor = 0; harness.validation = {}; save.mockReset(); harness.effects = []; harness.request.mockReset(); harness.remove.mockReset(); });
 
 describe('board edit dialog', () => {
   it('blocks a blank name and reports required custom fields without saving', async () => {
@@ -88,5 +96,35 @@ describe('board edit dialog', () => {
     expect(render().html).toContain('Connection failed');
     expect(render().html).toContain('value="Updated custody"');
     expect(render().saveButton?.props.disabled).toBe(false);
+  });
+});
+
+describe('pipeline delete confirmation', () => {
+  function page() {
+    harness.cursor = 0;
+    harness.effects = [];
+    return nodes(Deals());
+  }
+  it('requires confirmation, locks duplicate deletes, and retains a server failure for retry', async () => {
+    harness.request.mockImplementation((key: string) => Promise.resolve(key === 'deals' ? [deal] : []));
+    page();
+    harness.effects[0]();
+    await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+    page().find((node) => node.props.onCardClick)?.props.onCardClick?.(deal);
+    page().find((node) => node.props.onDelete)?.props.onDelete?.(deal);
+    expect(harness.remove).not.toHaveBeenCalled();
+    let rejectDelete: (error: Error) => void = () => undefined;
+    harness.remove.mockImplementation(() => new Promise<void>((_resolve, reject) => { rejectDelete = reject; }));
+    const confirm = () => page().find((node) => node.props['data-testid'] === 'confirm-delete-btn');
+    expect(confirm()).toBeDefined();
+    const pending = confirm()?.props.onClick?.();
+    expect(confirm()?.props.disabled).toBe(true);
+    await confirm()?.props.onClick?.();
+    expect(harness.remove).toHaveBeenCalledTimes(1);
+    expect(harness.remove).toHaveBeenCalledWith('deals', ['d1']);
+    rejectDelete(new Error('Deletion refused'));
+    await pending;
+    expect(confirm()?.props.disabled).toBe(false);
+    expect(page().some((node) => node.props.children === 'Deletion refused')).toBe(true);
   });
 });
