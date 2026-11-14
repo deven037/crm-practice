@@ -40,7 +40,7 @@ attributes, others must be located by role, text, CSS, or XPath — like a real-
 | Dashboard | `dashboard-range`, `stat-leads`, `stat-pipeline`, `stat-tasks`, `stat-tickets`, `activity-feed` |
 | Deals | `kanban-board`, `deal-name`, `deal-account`, `deal-amount`, `deal-stage`, `deal-close-date`, `deal-save-btn`, `edit-deal-btn`, `deal-detail-stage` |
 | Tasks | `task-quick-add`, `task-title-input`, `task-due-date`, `task-add-btn` |
-| Contacts | `view-grid`, `view-list`, `contact-tabs`, `contact-name`, `contact-email`, `contact-phone`, `contact-title`, `contact-account`, `contact-tags`, `upload-avatar-btn`, `avatar-input`, `edit-contact-btn`, `save-contact-btn`, `note-input`, `add-note-btn`, `attach-file-btn`, `file-input` |
+| Contacts | `duplicate-warning`, `contact-form-layout-tabs`, `view-grid`, `view-list`, `contact-tabs`, `contact-name`, `contact-email`, `contact-phone`, `contact-title`, `contact-account`, `contact-tags`, `upload-avatar-btn`, `avatar-input`, `edit-contact-btn`, `save-contact-btn`, `note-input`, `add-note-btn`, `attach-file-btn`, `file-input` |
 | Accounts | `account-name`, `account-industry`, `account-employees`, `account-revenue`, `account-website`, `account-phone`, `edit-account-btn`, `save-account-btn` |
 | Tickets | `ticket-subject`, `ticket-requester`, `ticket-priority-select`, `ticket-description`, `ticket-status`, `ticket-priority`, `sla-countdown`, `canned-response`, `comment-input`, `add-comment-btn`, `ticket-attach-btn`, `ticket-file-input` |
 | Admin | `admin-tabs`, `add-user-btn`, `user-name`, `user-email`, `user-role`, `user-save-btn`, `audit-user-filter`, `admin-readonly-banner` |

@@ -136,6 +136,8 @@ export function Select({ value, options, onChange, placeholder = 'Selectâ€¦', te
               <li
                 key={option.value}
                 role="option"
+                tabIndex={0}
+                onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }}
                 aria-selected={option.value === value}
                 className={option.value === value ? 'selected' : ''}
                 onClick={() => {
@@ -203,6 +205,8 @@ export function SearchableSelect({ value, options, onChange, placeholder = 'Sele
                 <li
                   key={option.value}
                   role="option"
+                  tabIndex={0}
+                onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }}
                   aria-selected={option.value === value}
                   className={option.value === value ? 'selected' : ''}
                   onClick={() => {
@@ -222,6 +226,7 @@ export function SearchableSelect({ value, options, onChange, placeholder = 'Sele
 }
 
 interface MultiSelectProps {
+  id?: string;
   values: string[];
   options: Option[];
   onChange: (values: string[]) => void;
@@ -230,7 +235,7 @@ interface MultiSelectProps {
 }
 
 /** Custom multi-select with checkbox options and removable tag chips. */
-export function MultiSelect({ values, options, onChange, placeholder = 'Selectâ€¦', testId }: MultiSelectProps) {
+export function MultiSelect({ values, options, onChange, placeholder = 'Selectâ€¦', testId, id }: MultiSelectProps) {
   const [open, setOpen] = useState(false);
   const ref = useOutsideClose(() => setOpen(false));
 
@@ -243,6 +248,7 @@ export function MultiSelect({ values, options, onChange, placeholder = 'Selectâ€
       <button
         type="button"
         className="select-trigger multi"
+        id={id}
         data-testid={testId}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -279,6 +285,8 @@ export function MultiSelect({ values, options, onChange, placeholder = 'Selectâ€
               <li
                 key={option.value}
                 role="option"
+                tabIndex={0}
+                onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }}
                 aria-selected={values.includes(option.value)}
                 onClick={() => toggle(option.value)}
               >

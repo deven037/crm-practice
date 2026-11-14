@@ -74,6 +74,16 @@
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --space-5: 24px; --space-6: 32px; --space-7: 48px;
 
+  --contact-page-width: 1200px;
+  --contact-form-width: 840px;
+  --contact-detail-width: 760px;
+  --contact-fact-label-width: 160px;
+  --contact-avatar-size: 72px;
+  --contact-title-size: 24px;
+  --contact-section-size: 18px;
+  --contact-label-size: 13px;
+  --contact-control-height: 44px;
+
   --font-sans: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
   --duration-fast: 120ms;
@@ -1336,4 +1346,62 @@ div.empty-cell > p { margin: 4px 0 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .activity-screen *, .activity-screen *::before, .activity-screen *::after { scroll-behavior: auto !important; transition: none !important; }
+}
+
+/* AIO-151 contact record and form */
+.contact-screen { min-width: 0; max-width: var(--contact-page-width); margin: 0 auto; padding: var(--space-2); line-height: 20px; }
+.contact-screen .breadcrumbs { flex-wrap: wrap; margin-bottom: var(--space-5); overflow-wrap: anywhere; }
+.contact-screen h1 { font-size: var(--contact-title-size); line-height: var(--space-6); }
+.contact-heading { margin-bottom: var(--space-5); }
+.contact-form { max-width: var(--contact-form-width); }
+.contact-screen fieldset { min-width: 0; padding: 0; margin: 0; border: 0; }
+.contact-screen .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.contact-screen .field { min-width: 0; margin: 0; gap: var(--space-1); }
+.contact-screen .field-label { font-size: var(--contact-label-size); font-weight: 400; color: var(--text); }
+.contact-screen .input, .contact-screen .select-trigger { min-height: var(--contact-control-height); }
+.contact-screen .input { padding: var(--space-3); }
+.contact-screen .btn, .contact-screen .link-btn, .contact-screen .tab { min-height: var(--contact-control-height); }
+.contact-screen .btn[hidden], .contact-screen .link-btn[hidden] { display: none; }
+.contact-screen :focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.contact-screen .contacts-primary { background: var(--bank-primary); border-color: var(--bank-primary); color: var(--bank-on); }
+.contact-screen .contacts-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--bank-primary) 88%, var(--text)); }
+.contact-screen .form-actions { border-top: 1px solid var(--border); padding-top: var(--space-4); margin-top: var(--space-5); }
+.contact-layout-tabs { display: flex; gap: var(--space-5); overflow-x: auto; border-bottom: 1px solid var(--border); margin: var(--space-5) 0; }
+.contact-screen .tab { white-space: nowrap; color: var(--text); padding: var(--space-3) 0; border-radius: 0; border-bottom: 2px solid transparent; background: transparent; font-weight: 400; }
+.contact-screen .tab.active { color: var(--text); border-bottom-color: var(--bank-primary); background: transparent; font-weight: 600; }
+.contact-record .detail-header { gap: var(--space-4); margin-bottom: var(--space-5); flex-wrap: wrap; }
+.contact-record .detail-header > div { min-width: 0; }
+.contact-record .detail-header h1, .contact-record .detail-header p { overflow-wrap: anywhere; }
+.contact-record .detail-header p { margin: var(--space-1) 0 0; }
+.contact-record .detail-avatar-wrap { display: contents; }
+.contact-record .contact-avatar-lg { width: var(--contact-avatar-size); height: var(--contact-avatar-size); flex: none; margin: 0; background: var(--bank-primary); color: var(--bank-on); }
+.contact-record .detail-avatar-wrap > .btn { order: 2; margin-left: auto; }
+.contact-record .page-actions { order: 3; }
+.contact-record .contact-delete { background: var(--surface); color: var(--danger); border-color: var(--tone-danger-line); }
+.contact-record .contact-delete:hover:not(:disabled) { background: var(--tone-danger-bg); }
+.contact-record .key-info-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-4); padding: var(--space-4) 0; border: 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); border-radius: 0; box-shadow: none; background: transparent; }
+.contact-record .key-info-item { min-width: 0; padding: 0; border: 0; }
+.contact-record .key-info-label { font-size: inherit; text-transform: none; letter-spacing: normal; }
+.contact-record .key-info-value { font-weight: 600; overflow-wrap: anywhere; }
+.contact-record .tab-list { flex-wrap: nowrap; padding-bottom: 0; gap: var(--space-5); margin: var(--space-5) 0; overflow-x: auto; }
+.contact-record .tab-panel { padding: 0; }
+.contact-section { max-width: var(--contact-detail-width); position: relative; }
+.contact-section h2 { font-size: var(--contact-section-size); line-height: var(--space-5); font-weight: 600; margin: 0 0 var(--space-4); }
+.contact-record .detail-list { grid-template-columns: var(--contact-fact-label-width) minmax(0, 1fr); gap: var(--space-3); margin: 0; }
+.contact-record .detail-list dt { font-size: inherit; text-transform: none; letter-spacing: normal; padding: 0; }
+.contact-record .detail-list dd { font-weight: 400; }
+.contact-record .contact-edit { position: absolute; right: 0; top: 0; }
+.contact-record .note-item p, .contact-record .file-list li { overflow-wrap: anywhere; }
+.contact-record .file-list li { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+@media (max-width: 780px) {
+  .contact-screen { margin: 0 calc(-1 * var(--space-2)); padding: 0; }
+  .contact-screen .form-grid { grid-template-columns: minmax(0, 1fr); }
+  .contact-record .key-info-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .contact-record .detail-list { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+  .contact-record .detail-header { align-items: flex-start; }
+  .contact-record .detail-header > div:nth-child(2) { flex: 1; }
+  .contact-record .detail-avatar-wrap > .btn { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .contact-screen *, .contact-screen *::before, .contact-screen *::after { transition: none !important; }
 }

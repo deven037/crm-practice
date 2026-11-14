@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const harness = vi.hoisted(() => ({
   states: [] as unknown[],
   cursor: 0,
+  role: 'admin',
   effects: [] as (() => void)[],
   ref: { current: null as unknown },
 }));
@@ -43,7 +44,7 @@ vi.mock('../data/store', () => ({
 }));
 vi.mock('../components/Select', () => ({ Select: () => null, MultiSelect: () => null, SearchableSelect: () => null }));
 vi.mock('../components/Toast', () => ({ useToast: () => ({ push: vi.fn() }) }));
-vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
+vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: { role: harness.role } }) }));
 vi.mock('../utils/rules', () => ({ findDuplicate: () => null }));
 vi.mock('../utils/moduleFields', () => ({ getCustomFieldsAsModuleFields: () => [{ key: 'custom-name' }] }));
 vi.mock('../utils', () => ({
@@ -51,12 +52,14 @@ vi.mock('../utils', () => ({
   formatDate: (value: string) => value,
 }));
 
+import { upsert } from '../data/store';
 import { ContactForm } from './ContactForm';
 
 interface NodeProps {
   children?: ReactNode;
   id?: string;
   onClick?: () => unknown;
+  onSubmit?: (event: { preventDefault: () => void }) => unknown;
   onChange?: (event: { target: { value: string } }) => void;
 }
 function nodes(node: ReactNode): import('react').ReactElement<NodeProps>[] {
@@ -66,6 +69,8 @@ function nodes(node: ReactNode): import('react').ReactElement<NodeProps>[] {
 }
 
 beforeEach(() => {
+  harness.role = 'admin';
+  vi.clearAllMocks();
   harness.states = [];
   harness.cursor = 0;
   harness.effects = [];
@@ -83,8 +88,8 @@ describe('ContactForm accessibility', () => {
 
   it('describes validation errors and focuses the first invalid input', async () => {
     const initial = ContactForm();
-    const submit = nodes(initial).find((node) => node.type === 'button' && node.props.children === 'Create contact');
-    await submit?.props.onClick?.();
+    const submit = nodes(initial).find((node) => node.type === 'form');
+    await submit?.props.onSubmit?.({ preventDefault: vi.fn() });
 
     harness.cursor = 0;
     harness.effects = [];
@@ -113,8 +118,8 @@ describe('ContactForm accessibility', () => {
     harness.cursor = 0;
     harness.effects = [];
     const ready = ContactForm();
-    const submit = nodes(ready).find((node) => node.type === 'button' && node.props.children === 'Create contact');
-    await submit?.props.onClick?.();
+    const submit = nodes(ready).find((node) => node.type === 'form');
+    await submit?.props.onSubmit?.({ preventDefault: vi.fn() });
 
     harness.cursor = 0;
     harness.effects = [];
@@ -133,5 +138,35 @@ describe('ContactForm accessibility', () => {
     harness.effects[0]();
     expect(querySelector).toHaveBeenCalledWith('[aria-invalid="true"]');
     expect(focus).toHaveBeenCalledOnce();
+  });
+});
+
+describe('ContactForm Harbor states', () => {
+  it('keeps viewers read-only', () => {
+    harness.role = 'viewer';
+    const html = renderToStaticMarkup(ContactForm());
+    expect(html).toContain('read-only access');
+    expect(html).not.toContain('<form');
+  });
+
+  it('keeps entries and enables retry after a rejected save', async () => {
+    let tree = ContactForm();
+    nodes(tree).find((node) => node.props.id === 'contact-name')?.props.onChange?.({ target: { value: 'Morgan' } });
+    harness.cursor = 0;
+    tree = ContactForm();
+    nodes(tree).find((node) => node.props.id === 'contact-email')?.props.onChange?.({ target: { value: 'morgan@example.com' } });
+    const draft = harness.states[1];
+    if (typeof draft !== 'object' || draft === null) throw new Error('Missing contact draft');
+    harness.states[1] = { ...draft, customFields: { customName: 'Branch' } };
+    harness.cursor = 0;
+    tree = ContactForm();
+    vi.mocked(upsert).mockRejectedValueOnce(new Error('Network failure'));
+    await nodes(tree).find((node) => node.type === 'form')?.props.onSubmit?.({ preventDefault: vi.fn() });
+    harness.cursor = 0;
+    const html = renderToStaticMarkup(ContactForm());
+    expect(upsert).toHaveBeenCalledOnce();
+    expect(html).toContain('Contact couldn’t be saved. Your details are still here.');
+    expect(html).toContain('value="morgan@example.com"');
+    expect(html).not.toContain('disabled=""');
   });
 });
