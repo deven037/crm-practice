@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Download, Search, SlidersHorizontal } from 'lucide-react';
 import { getAll, getAllSync, newId, removeMany, saveAll, upsert } from '../data/store';
 import { Account, Contact, Deal, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Role, User } from '../types';
@@ -9,6 +9,7 @@ import { ContextMenu } from '../components/ContextMenu';
 import { LeadTriageMode } from '../components/LeadTriageMode';
 import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
 import { MassUpdateModal } from '../components/MassUpdateModal';
+import { ToolBoxPanel } from '../components/ToolBoxPanel';
 import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
@@ -331,12 +332,17 @@ export function Leads() {
         </div>
       </div>
 
-      {(user?.role === 'admin' || user?.role === 'rep') && (
-        <nav className="leads-setup-links" aria-label="Lead setup">
-          <Link to="/setup/assignment-rules">Assignment Rules</Link>
-          <Link to="/setup/status-codes">Status Codes</Link>
-        </nav>
-      )}
+      <ToolBoxPanel
+        module="leads"
+        links={[
+          { label: 'Assignment Rules', to: '/setup/assignment-rules' },
+          { label: 'Dedupe Rule', to: '/setup/dedupe-rules' },
+          { label: 'Status Codes', to: '/setup/status-codes' },
+          { label: 'Import Data', to: '/setup/import' },
+          { label: 'Custom Fields', to: '/admin/objects/leads' },
+          { label: 'Customise Page Layout', to: '/setup/layouts/leads' },
+        ]}
+      />
 
       {mode === 'triage' ? (
         loading ? (

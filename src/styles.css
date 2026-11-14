@@ -1423,7 +1423,7 @@ div.empty-cell > p { margin: 4px 0 16px; }
 .leads-screen .leads-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--bank-primary) 88%, #000); }
 .leads-screen .btn-active { background: var(--bank-primary); border-color: var(--bank-primary); color: var(--bank-on); }
 .leads-screen .seg { display: inline-flex; padding: 3px; background: var(--surface-3); border-radius: var(--radius-md); }
-.leads-screen .seg button { height: 34px; padding: 0 14px; border: 0; border-radius: 8px; background: none; font-weight: 500; color: var(--text-muted); cursor: pointer; }
+.leads-screen .seg button { height: var(--lead-button-height); padding: 0 14px; border: 0; border-radius: 8px; background: none; font-weight: 500; color: var(--text-muted); cursor: pointer; }
 .leads-screen .seg button[aria-pressed='true'] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgba(11, 15, 25, 0.14); }
 .leads-screen .toolbar .btn { min-height: 44px; }
 .leads-find { position: relative; flex: 1; min-width: 240px; max-width: 420px; }
@@ -1490,8 +1490,6 @@ div.empty-cell > p { margin: 4px 0 16px; }
 [data-testid='lead-detail-page'] .key-info-label, [data-testid='lead-detail-page'] .detail-list dt { font-size: var(--lead-label-size); text-transform: none; letter-spacing: normal; }
 [data-testid='lead-detail-page'] .key-info-value { font-weight: 600; overflow-wrap: anywhere; }
 [data-testid='lead-detail-page'] .detail-list { gap: var(--lead-field-gap) var(--space-5); }
-.leads-setup-links { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-4); }
-.leads-setup-links a { display: inline-flex; align-items: center; min-height: var(--lead-control-height); color: var(--text); text-underline-offset: 3px; }
 .leads-screen .bulk-bar { flex-wrap: wrap; padding: var(--space-2) var(--space-4); margin-bottom: var(--space-3); background: var(--text); color: var(--surface); }
 .leads-screen .bulk-bar > span { margin-right: auto; font-weight: 600; }
 .leads-screen .bulk-bar .btn { background: transparent; color: inherit; border-color: currentColor; }

@@ -5,6 +5,7 @@ import { Lead } from '../types';
 import { LeadsTable } from './leads/LeadsTable';
 import { LeadConvertWizard, WizardState } from './leads/LeadConvertWizard';
 import { ContextMenu, ContextMenuItem } from '../components/ContextMenu';
+import { ToolBoxPanel } from '../components/ToolBoxPanel';
 import { LeadFilterPanel } from './leads/LeadFilterPanel';
 
 const harness = vi.hoisted(() => ({
@@ -32,7 +33,11 @@ vi.mock('../data/store', () => ({
   getAll: (...args: unknown[]) => harness.getAll(...args), getAllSync: () => [],
   newId: vi.fn(), removeMany: vi.fn(), saveAll: vi.fn(), upsert: vi.fn(),
 }));
+vi.mock('../hooks/useRecentlyViewed', () => ({ useRecentlyViewed: () => ({ items: [] }) }));
 interface Props {
+  module?: string;
+  links?: { label: string; to: string }[];
+  'data-testid'?: string;
   children?: ReactNode;
   onClick?: () => void;
   onChange?: () => void;
@@ -74,13 +79,23 @@ function openMenu(record: Lead) {
 beforeEach(() => { harness.states = []; harness.role = 'admin'; harness.getAll.mockReset(); });
 
 describe('AIO-411 restored controls', () => {
-  it.each(['admin', 'rep', 'viewer'])('exposes setup shortcuts to writers: %s', async (role) => {
+  it.each(['admin', 'rep', 'viewer'])('restores the full Leads panel: %s', async (role) => {
     harness.role = role;
     await load();
-    const links = render().filter((node) => node.props.to?.startsWith('/setup/'));
-    expect(links.map((node) => node.props.to)).toEqual(role === 'viewer' ? [] : [
-      '/setup/assignment-rules', '/setup/status-codes',
+    const panel = render().find((node) => node.type === ToolBoxPanel);
+    expect(panel?.props.module).toBe('leads');
+    expect(panel?.props.links).toEqual([
+      { label: 'Assignment Rules', to: '/setup/assignment-rules' },
+      { label: 'Dedupe Rule', to: '/setup/dedupe-rules' },
+      { label: 'Status Codes', to: '/setup/status-codes' },
+      { label: 'Import Data', to: '/setup/import' },
+      { label: 'Custom Fields', to: '/admin/objects/leads' },
+      { label: 'Customise Page Layout', to: '/setup/layouts/leads' },
     ]);
+    const rendered = nodes(ToolBoxPanel({ module: panel?.props.module ?? '', links: panel?.props.links ?? [] }));
+    expect(rendered[0].props['data-testid']).toBe('toolbox-panel');
+    expect(rendered.some((node) => node.props.children === 'Recently Accessed')).toBe(true);
+    expect(rendered.filter((node) => node.props.to).map((node) => node.props.to)).toEqual(panel?.props.links?.map((link) => link.to));
   });
 
   it('opens conversion from the row menu and traverses all three wizard steps', async () => {
