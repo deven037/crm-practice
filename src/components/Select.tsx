@@ -222,6 +222,7 @@ export function SearchableSelect({ value, options, onChange, placeholder = 'Sele
 }
 
 interface MultiSelectProps {
+  id?: string;
   values: string[];
   options: Option[];
   onChange: (values: string[]) => void;
@@ -230,7 +231,7 @@ interface MultiSelectProps {
 }
 
 /** Custom multi-select with checkbox options and removable tag chips. */
-export function MultiSelect({ values, options, onChange, placeholder = 'Select…', testId }: MultiSelectProps) {
+export function MultiSelect({ values, options, onChange, placeholder = 'Select…', testId, id }: MultiSelectProps) {
   const [open, setOpen] = useState(false);
   const ref = useOutsideClose(() => setOpen(false));
 
@@ -242,6 +243,7 @@ export function MultiSelect({ values, options, onChange, placeholder = 'Select�
     <div className="select" ref={ref}>
       <button
         type="button"
+        id={id}
         className="select-trigger multi"
         data-testid={testId}
         aria-haspopup="listbox"
