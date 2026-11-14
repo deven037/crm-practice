@@ -65,6 +65,13 @@ const QUICK_ACTIONS: { label: string; to: string }[] = [
 /** Esc is handled on the document while the panel is open, so it also works when focus is on "Try again", Close, a result, or has dropped to the body. */
 export const isCloseKey = (key: string) => key === 'Escape';
 
+/** Closing returns focus to the opener mid-keydown; without this the browser's default Enter action would click it and reopen the panel. */
+export const consumeEnter = (e: { key: string; preventDefault: () => void }) => {
+  if (e.key !== 'Enter') return false;
+  e.preventDefault();
+  return true;
+};
+
 const plural = (count: number, one: string) => `${count} ${one}${count === 1 ? '' : 's'}`;
 
 function Highlight({ text, term }: { text: string; term: string }) {
@@ -224,7 +231,7 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
     } else if (e.key === 'ArrowUp' && optionCount > 0) {
       e.preventDefault();
       setActiveIndex((i) => (i <= 0 ? optionCount - 1 : i - 1));
-    } else if (e.key === 'Enter') {
+    } else if (consumeEnter(e)) {
       if (searching) {
         // Results still loading or for an older term: wait, so a stale first option is never used.
         if (status !== 'ready' || resultTerm !== term) return;
