@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { ComponentProps, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getAll, upsert, removeMany } from '../data/store';
 import { Account, Deal, DealStage, DEAL_STAGES, User } from '../types';
+import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
 import { Modal } from '../components/Modal';
 import { SearchableSelect, Select } from '../components/Select';
 import { DatePicker } from '../components/DatePicker';
@@ -38,14 +39,21 @@ export function Deals() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [editing, setEditing] = useState<Deal | null>(null);
+  const [deleting, setDeleting] = useState<Deal | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const [sort, setSort] = useState<DealSort>({ key: 'createdAt', dir: 'desc' });
   const [stageFilter, setStageFilter] = useState(openOnly ? 'open' : '');
   const [listQuery, setListQuery] = useState(searchTerm);
   const isList = params.get('view') === 'list';
-  const canWrite = user?.role !== 'viewer';
+  const canWrite = user?.role === 'admin' || user?.role === 'rep';
+  const stages = getStatusOptions('deals', 'stage', DEAL_STAGES);
+  const visibleDeals = deals.filter((d) => (!openOnly || !d.stage.startsWith('Closed')) && d.name.toLowerCase().includes(searchTerm));
+  const openValue = deals.filter((d) => !d.stage.startsWith('Closed')).reduce((sum, d) => sum + d.amount, 0);
 
   const load = async () => {
+    setLoading(true);
     setFailed(false);
     try {
       // A Viewer gets 403 on /users; fall back to an empty list so the board still renders.
@@ -107,17 +115,31 @@ export function Deals() {
       toast.push('error', 'Closed Won deals can only be deleted from their detail page.');
       return;
     }
-    if (!window.confirm(`Delete deal "${deal.name}"?`)) return;
-    await removeMany('deals', [deal.id]);
-    toast.push('success', `Deal "${deal.name}" deleted.`);
-    setEditing(null);
-    load();
+    setDeleteError(null);
+    setDeleting(deal);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting || deleteBusy) return;
+    setDeleteBusy(true);
+    setDeleteError(null);
+    try {
+      await removeMany('deals', [deleting.id]);
+      toast.push('success', `Deal "${deleting.name}" deleted.`);
+      setDeleting(null);
+      setEditing(null);
+      await load();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'The deal could not be deleted. Try again.');
+    } finally {
+      setDeleteBusy(false);
+    }
   };
 
   return (
-    <div data-testid="deals-page">
+    <div className="deals-screen" data-testid="deals-page">
       <div className="page-header">
-        <h1>Deals</h1>
+        <div><h1>Deals</h1><p className="page-subtitle">Every open and closed deal, by stage.</p></div>
         <div className="page-actions">
           {openOnly && (
             <button className="btn" onClick={() => setParams({})}>
@@ -157,7 +179,7 @@ export function Deals() {
 
       {loading ? (
         <div role="status" aria-label="Loading deals">
-          <SkeletonRows rows={6} />
+          {isList ? <SkeletonRows rows={6} /> : <div className="kanban">{stages.map((stage) => <div className="kanban-col" key={stage}><SkeletonRows rows={4} /></div>)}</div>}
         </div>
       ) : failed ? (
         <div className="banner banner-error" role="alert">
@@ -181,6 +203,8 @@ export function Deals() {
       ) : isList ? (
         <DealsTable
           deals={deals}
+          users={users}
+          stages={stages}
           sort={sort}
           onSort={(key) => setSort((s) => ({ key, dir: s.key === key && s.dir === 'desc' ? 'asc' : 'desc' }))}
           query={listQuery}
@@ -190,16 +214,21 @@ export function Deals() {
           accountName={accountName}
           ownerName={(id) => users.find((u) => u.id === id)?.name ?? '—'}
         />
+      ) : visibleDeals.length === 0 ? (
+        <div className="empty-cell"><strong>No deals match these filters.</strong><p>Clear the filters to see all deals.</p><button className="btn" onClick={() => setParams({})}>Clear filters</button></div>
       ) : (
+        <>
+        <p className="deals-summary" role="status"><b>{visibleDeals.length} deals</b> · <b>{formatCurrency(visibleDeals.reduce((sum, d) => sum + d.amount, 0))}</b> total · <b>{formatCurrency(openValue)}</b> open</p>
         <Kanban
           testId="kanban-board"
           emptyLabel={canWrite ? 'No deals in this stage. Use “Move to…” on a deal or drag one here.' : 'No deals in this stage.'}
           getLabel={(deal) => deal.name}
           readOnly={!canWrite}
-          columns={DEAL_STAGES.filter((stage) => !openOnly || !stage.startsWith('Closed')).map((stage) => {
-            const stageDeals = deals.filter((d) => d.stage === stage && d.name.toLowerCase().includes(searchTerm));
+          columns={stages.filter((stage) => !openOnly || !stage.startsWith('Closed')).map((stage) => {
+            const stageDeals = visibleDeals.filter((d) => d.stage === stage);
             const total = stageDeals.reduce((sum, d) => sum + d.amount, 0);
-            return { key: stage, label: stage, items: stageDeals, headerMeta: `${stageDeals.length} · ${formatCurrency(total)}` };
+            const share = openValue > 0 && !stage.startsWith('Closed') ? Math.round(total / openValue * 100) : 0;
+            return { key: stage, label: stage, items: stageDeals, headerMeta: <><span className="deals-stage-count">{stageDeals.length} deals</span><strong>{formatCurrency(total)}</strong>{!stage.startsWith('Closed') && <><progress max={100} value={share} aria-label={`${stage}: ${share}% of open value`} /><small>{share}% of open value</small></>}</> };
           })}
           getId={(deal) => deal.id}
           onCardClick={(deal) => (canWrite ? setEditing(deal) : navigate(`/deals/${deal.id}`))}
@@ -210,15 +239,16 @@ export function Deals() {
               <div className="kanban-card-account">{accountName(deal.accountId)}</div>
               <div className="kanban-card-foot">
                 <span className="kanban-amount">{formatCurrency(deal.amount)}</span>
-                <span className="kanban-prob">{deal.probability}%</span>
+                <span className="kanban-prob">{deal.probability}%<progress max={100} value={deal.probability} aria-label={`Win probability ${deal.probability}%`} /></span>
               </div>
               <div className="kanban-card-date">Close: {formatDate(deal.closeDate)}</div>
             </>
           )}
         />
+        </>
       )}
 
-      {editing && (
+      {editing && !deleting && (
         <DealModal
           deal={editing}
           accounts={accounts}
@@ -228,12 +258,21 @@ export function Deals() {
           onDelete={deleteDeal}
         />
       )}
+      {deleting && (
+        <DealDialog title={`Delete deal: ${deleting.name}`} onClose={() => { if (!deleteBusy) setDeleting(null); }}
+          footer={<><button className="btn" disabled={deleteBusy} onClick={() => setDeleting(null)}>Cancel</button><button className="btn btn-danger" data-testid="confirm-delete-btn" disabled={deleteBusy} onClick={confirmDelete}>{deleteBusy ? 'Deleting…' : 'Delete deal'}</button></>}>
+          {deleteError && <div className="banner banner-error" role="alert">{deleteError}</div>}
+          <p>Delete “{deleting.name}” ({formatCurrency(deleting.amount)}, {deleting.stage})? This cannot be undone.</p>
+        </DealDialog>
+      )}
     </div>
   );
 }
 
 function DealsTable({
   deals,
+  users,
+  stages,
   sort,
   onSort,
   query,
@@ -244,6 +283,8 @@ function DealsTable({
   ownerName,
 }: {
   deals: Deal[];
+  users: User[];
+  stages: string[];
   sort: DealSort;
   onSort: (key: DealSortKey) => void;
   query: string;
@@ -253,11 +294,13 @@ function DealsTable({
   accountName: (id: string | null) => string;
   ownerName: (id: string) => string;
 }) {
-  const rows = sortDeals(filterDeals(deals, { query, stage }, accountName), sort, accountName, ownerName);
+  const [owner, setOwner] = useState('');
+  const rows = sortDeals(filterDeals(deals, { query, stage, owner }, accountName), sort, accountName, ownerName);
   const total = rows.reduce((sum, d) => sum + d.amount, 0);
   const clear = () => {
     onQuery('');
     onStage('');
+    setOwner('');
   };
   return (
     <div data-testid="deals-list">
@@ -273,11 +316,15 @@ function DealsTable({
         <select className="input" aria-label="Filter by stage" value={stage} onChange={(e) => onStage(e.target.value)}>
           <option value="">All stages</option>
           <option value="open">Open deals</option>
-          {DEAL_STAGES.map((s) => (
+          {stages.map((s) => (
             <option key={s} value={s}>
               {s}
             </option>
           ))}
+        </select>
+        <select className="input" aria-label="Filter by owner" value={owner} onChange={(e) => setOwner(e.target.value)}>
+          <option value="">All owners</option>
+          {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
         </select>
         <span className="muted" role="status">
           {rows.length} {rows.length === 1 ? 'deal' : 'deals'} · {formatCurrency(total)}
@@ -320,7 +367,7 @@ function DealsTable({
                     <Link to={`/deals/${d.id}`}>{d.name}</Link>
                   </td>
                   <td data-label="Account">{accountName(d.accountId)}</td>
-                  <td data-label="Stage">{d.stage}</td>
+                  <td data-label="Stage"><span className={`deals-stage ${d.stage === 'Closed Won' ? 'won' : d.stage === 'Closed Lost' ? 'lost' : d.stage === 'Qualification' ? '' : 'mid'}`}>{d.stage}</span></td>
                   <td className="num" data-label="Amount">
                     {formatCurrency(d.amount)}
                   </td>
@@ -339,7 +386,7 @@ function DealsTable({
   );
 }
 
-function DealModal({
+export function DealModal({
   deal,
   accounts,
   users,
@@ -351,13 +398,16 @@ function DealModal({
   accounts: Account[];
   users: User[];
   onCancel: () => void;
-  onSave: (deal: Deal) => void;
+  onSave: (deal: Deal) => Promise<void>;
   onDelete: (deal: Deal) => void;
 }) {
   const [draft, setDraft] = useState<Deal>({ ...deal });
   const [amountText, setAmountText] = useState(deal.amount ? deal.amount.toLocaleString('en-US') : '');
   const [error, setError] = useState<string | null>(null);
   const isNew = !deal.name;
+  const [busy, setBusy] = useState(false);
+  const [customErrors, setCustomErrors] = useState<Record<string, string>>({});
+  const nameRef = useRef<HTMLInputElement>(null);
 
   const commitAmount = () => {
     const parsed = Number(amountText.replace(/[^0-9.]/g, ''));
@@ -366,43 +416,58 @@ function DealModal({
     setAmountText(amount ? amount.toLocaleString('en-US') : '');
   };
 
-  const submit = () => {
+  const submit = async () => {
+    if (busy) return;
+    setError(null);
+    const errors = validateCustomFields('deals', 'form', draft.customFields ?? {});
+    setCustomErrors(errors);
     if (!draft.name.trim()) {
       setError('Deal name is required.');
+      nameRef.current?.focus();
       return;
     }
-    onSave(draft);
+    if (Object.keys(errors).length) return;
+    setBusy(true);
+    try {
+      await onSave(draft);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'The deal could not be saved. Try again.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
-    <Modal
+    <DealDialog
       title={isNew ? 'New deal' : `Edit deal — ${deal.name}`}
-      onClose={onCancel}
+      onClose={() => { if (!busy) onCancel(); }}
       footer={
         <>
           {!isNew && (
-            <button className="btn btn-danger" onClick={() => onDelete(deal)}>
+            <button className="btn btn-danger" disabled={busy} onClick={() => onDelete(deal)}>
               Delete
             </button>
           )}
-          <button className="btn" onClick={onCancel}>
+          <button className="btn" disabled={busy} onClick={onCancel}>
             Cancel
           </button>
-          <button className="btn btn-primary" data-testid="deal-save-btn" onClick={submit}>
-            Save deal
+          <button className="btn btn-primary" data-testid="deal-save-btn" disabled={busy} onClick={submit}>
+            {busy ? 'Saving…' : 'Save deal'}
           </button>
         </>
       }
     >
       {error && <div className="banner banner-error" role="alert">{error}</div>}
-      <div className="form-grid">
+      <fieldset className="deals-edit-fields" disabled={busy}><div className="form-grid">
         <div className="field">
-          <span className="field-label">Deal name *</span>
-          <input className="input" data-testid="deal-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+          <label className="field-label" htmlFor="deal-edit-name">Deal name *</label>
+          <input ref={nameRef} id="deal-edit-name" aria-invalid={!draft.name.trim() && error ? true : undefined} aria-describedby={!draft.name.trim() && error ? "deal-edit-name-error" : undefined} className="input" data-testid="deal-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+          {!draft.name.trim() && error && <span id="deal-edit-name-error" className="field-error">Deal name is required.</span>}
         </div>
         <div className="field">
-          <span className="field-label">Account</span>
+          <label className="field-label" htmlFor="deal-edit-account">Account</label>
           <SearchableSelect
+            id="deal-edit-account"
             value={draft.accountId ?? ''}
             options={accounts.map((a) => ({ value: a.id, label: a.name }))}
             onChange={(v) => setDraft({ ...draft, accountId: v })}
@@ -411,9 +476,10 @@ function DealModal({
           />
         </div>
         <div className="field">
-          <span className="field-label">Amount</span>
+          <label className="field-label" htmlFor="deal-edit-amount">Amount</label>
           <input
             className="input"
+            id="deal-edit-amount"
             data-testid="deal-amount"
             placeholder="e.g. 25,000"
             value={amountText}
@@ -422,8 +488,9 @@ function DealModal({
           />
         </div>
         <div className="field">
-          <span className="field-label">Stage</span>
+          <label className="field-label" htmlFor="deal-edit-stage">Stage</label>
           <Select
+            id="deal-edit-stage"
             value={draft.stage}
             options={getStatusOptions('deals', 'stage', DEAL_STAGES).map((s) => ({ value: s, label: s }))}
             onChange={(v) => setDraft({ ...draft, stage: v as DealStage })}
@@ -431,20 +498,22 @@ function DealModal({
           />
         </div>
         <div className="field">
-          <span className="field-label">Expected close date</span>
-          <DatePicker value={draft.closeDate} onChange={(iso) => setDraft({ ...draft, closeDate: iso })} testId="deal-close-date" />
+          <label className="field-label" htmlFor="deal-edit-close">Expected close date</label>
+          <DatePicker id="deal-edit-close" value={draft.closeDate} onChange={(iso) => setDraft({ ...draft, closeDate: iso })} testId="deal-close-date" />
         </div>
         <div className="field">
-          <span className="field-label">Owner</span>
+          <label className="field-label" htmlFor="deal-edit-owner">Owner</label>
           <Select
+            id="deal-edit-owner"
             value={draft.ownerId}
             options={users.map((u) => ({ value: u.id, label: u.name }))}
             onChange={(v) => setDraft({ ...draft, ownerId: v })}
           />
         </div>
         <div className="field field-span">
-          <span className="field-label">Win probability: {draft.probability}%</span>
+          <label className="field-label" htmlFor="deal-edit-probability">Win probability: {draft.probability}%</label>
           <input
+            id="deal-edit-probability"
             type="range"
             min={0}
             max={100}
@@ -453,7 +522,38 @@ function DealModal({
             onChange={(e) => setDraft({ ...draft, probability: Number(e.target.value) })}
           />
         </div>
-      </div>
-    </Modal>
+        <CustomFieldsSection module="deals" target="form" mode="edit" values={draft.customFields ?? {}} errors={customErrors} onChange={(key, value) => setDraft({ ...draft, customFields: { ...draft.customFields, [key]: value } })} />
+      </div></fieldset>
+    </DealDialog>
   );
+}
+
+function DealDialog({ children, ...props }: ComponentProps<typeof Modal>) {
+  const bodyRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const opener = document.activeElement;
+    const dialog = bodyRef.current?.closest<HTMLElement>('[role="dialog"]');
+    if (!dialog) return;
+    const controls = () => Array.from(dialog.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]')).filter((node) => node.getClientRects().length > 0);
+    const cancel = Array.from(dialog.querySelectorAll('button')).find((button) => button.textContent === 'Cancel');
+    (cancel ?? controls()[0])?.focus();
+    const trap = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const nodes = controls();
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (!first) { event.preventDefault(); return; }
+      if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) {
+        event.preventDefault(); last?.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener('keydown', trap);
+    return () => {
+      document.removeEventListener('keydown', trap);
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
+    };
+  }, []);
+  return <Modal {...props}><div className="deals-dialog" ref={bodyRef}>{children}</div></Modal>;
 }

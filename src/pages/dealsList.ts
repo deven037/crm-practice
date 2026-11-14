@@ -11,11 +11,13 @@ export interface DealListFilter {
   query: string;
   /** '' = all stages, 'open' = every stage except Closed ones, otherwise one exact stage. */
   stage: string;
+  owner?: string;
 }
 
 export function filterDeals(deals: Deal[], filter: DealListFilter, accountName: (id: string | null) => string): Deal[] {
   const q = filter.query.trim().toLowerCase();
   return deals.filter((d) => {
+    if (filter.owner && d.ownerId !== filter.owner) return false;
     if (filter.stage === 'open' && d.stage.startsWith('Closed')) return false;
     if (filter.stage && filter.stage !== 'open' && d.stage !== filter.stage) return false;
     if (!q) return true;

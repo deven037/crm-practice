@@ -37,6 +37,15 @@ describe('filterDeals', () => {
   });
 });
 
+describe('owner filtering', () => {
+  it('combines owner, stage and search without mutating the input', () => {
+    const rows = [deal({ id: 'a', ownerId: 'u1', name: 'Custody' }), deal({ id: 'b', ownerId: 'u2', name: 'Custody' }), deal({ id: 'c', ownerId: 'u1', name: 'Custody', stage: 'Closed Won' })];
+    expect(filterDeals(rows, { query: 'custody', stage: 'open', owner: 'u1' }, accountName).map((d) => d.id)).toEqual(['a']);
+    expect(filterDeals(rows, { query: '', stage: '', owner: '' }, accountName)).toEqual(rows);
+    expect(rows).toHaveLength(3);
+  });
+});
+
 describe('sortDeals', () => {
   const owner = () => 'Mei';
   it('sorts by amount in both directions without changing the input', () => {
