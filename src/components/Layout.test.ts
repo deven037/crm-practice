@@ -70,7 +70,7 @@ vi.mock('../data/store', () => ({
   setValue: vi.fn(),
 }));
 
-import { Layout, listenForDismiss } from './Layout';
+import { Layout, closeOnEscape, listenForDismiss } from './Layout';
 
 function render(collapsed = false): string {
   harness.cursor = 0;
@@ -153,6 +153,31 @@ describe('bank profile fallback and recovery', () => {
     stop();
     expect(listeners.size).toBe(0);
   });
+
+  it.each(['Log out button in the avatar menu', 'Mark all read button in the notifications panel'])(
+    'closes on Escape pressed with focus on the %s, even if the target stops propagation',
+    (focused) => {
+      const listeners: { type: string; fn: (e: never) => void; capture: unknown }[] = [];
+      const doc = {
+        addEventListener: (type: string, fn: (e: never) => void, capture?: unknown) => { listeners.push({ type, fn, capture }); },
+        removeEventListener: (type: string, fn: (e: never) => void) => {
+          listeners.splice(0, listeners.length, ...listeners.filter((l) => !(l.type === type && l.fn === fn)));
+        },
+      };
+      const onClose = vi.fn();
+      const stop = closeOnEscape(doc as unknown as Document, onClose);
+      const press = (key: string) => {
+        const event = { key, target: focused };
+        listeners.filter((l) => l.type === 'keydown' && l.capture === true).forEach((l) => l.fn(event as never));
+      };
+      press('Tab');
+      expect(onClose).not.toHaveBeenCalled();
+      press('Escape');
+      expect(onClose).toHaveBeenCalledTimes(1);
+      stop();
+      expect(listeners).toHaveLength(0);
+    },
+  );
 
   it('still closes on a click outside but not inside', () => {
     const listeners = new Map<string, (e: never) => void>();

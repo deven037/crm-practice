@@ -35,6 +35,14 @@ export function listenForDismiss(
   };
 }
 
+export function closeOnEscape(doc: Document, onClose: () => void): () => void {
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') onClose();
+  };
+  doc.addEventListener('keydown', onKeyDown, true);
+  return () => doc.removeEventListener('keydown', onKeyDown, true);
+}
+
 function useOutside(onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(
@@ -58,6 +66,7 @@ function NotificationsBell() {
   const [items, setItems] = useState<AppNotification[]>(() => getAllSync<AppNotification>('notifications'));
   const [open, setOpen] = useState(false);
   const ref = useOutside(() => setOpen(false));
+  useEffect(() => (open ? closeOnEscape(document, () => setOpen(false)) : undefined), [open]);
   const unread = items.filter((n) => !n.read).length;
 
   const markAllRead = () => {
@@ -100,6 +109,7 @@ function AvatarMenu() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const ref = useOutside(() => setOpen(false));
+  useEffect(() => (open ? closeOnEscape(document, () => setOpen(false)) : undefined), [open]);
   if (!user) return null;
 
   return (
