@@ -27,7 +27,7 @@ export function ContactForm() {
   const [activeTabId, setActiveTabId] = useState(layout?.tabs[0]?.id ?? '');
   const activeTab = layout?.tabs.find((t) => t.id === activeTabId) ?? layout?.tabs[0];
   const isVisible = (key: string) => !layout || (activeTab?.fieldKeys.includes(key) ?? true)
-    || ((key === 'name' || key === 'email') && !layout.tabs.some((tab) => tab.fieldKeys.includes(key)));
+    || ((key === 'name' || key === 'email' || key === 'tags') && !layout.tabs.some((tab) => tab.fieldKeys.includes(key)));
   const customFieldIds = new Set(getCustomFieldsAsModuleFields('contacts').map((f) => f.key));
   const activeTabCustomIds = activeTab?.fieldKeys.filter((k) => customFieldIds.has(k)) ?? [];
 
