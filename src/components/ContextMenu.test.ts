@@ -19,4 +19,4 @@ it('exposes disabled conversion and its reason as a native menu button', () => {
   expect(html).toContain('role="menuitem"');
   expect(html).toContain('disabled="" title="This lead is already converted."');
   expect(html).toContain('aria-description="This lead is already converted."');
-}));
+});
