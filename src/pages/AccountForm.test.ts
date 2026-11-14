@@ -6,10 +6,14 @@ const harness = vi.hoisted(() => ({
   states: [] as unknown[],
   cursor: 0,
   upsert: vi.fn(),
+  effects: [] as (() => void)[],
+  layouts: [] as { module: string; isDefault: boolean; tabs: { id: string; fieldKeys: string[] }[] }[],
+  customErrors: {} as Record<string, string>,
 }));
 
 vi.mock('react', async (original) => ({
   ...await original<typeof import('react')>(),
+  useEffect: (effect: () => void) => { harness.effects.push(effect); },
   useState: (initial: unknown) => {
     const index = harness.cursor++;
     if (!(index in harness.states)) harness.states[index] = initial;
@@ -24,17 +28,18 @@ vi.mock('react-router-dom', () => ({
   useSearchParams: () => [new URLSearchParams()],
 }));
 vi.mock('../data/store', () => ({
-  getAllSync: () => [],
+  getAllSync: (key: string) => key === 'pageLayouts' ? harness.layouts : key === 'customFieldDefs'
+    ? [{ id: 'custom-id', key: 'custom-key', module: 'accounts' }] : [],
   newId: () => 'account-1',
   upsert: harness.upsert,
 }));
 vi.mock('../components/Select', () => ({
   Select: ({ id }: { id?: string }) => createElement('button', { id, type: 'button' }),
 }));
-vi.mock('../components/CustomFieldsSection', () => ({ CustomFieldsSection: () => null, validateCustomFields: () => ({}) }));
+vi.mock('../components/CustomFieldsSection', () => ({ CustomFieldsSection: () => null, validateCustomFields: () => harness.customErrors }));
 vi.mock('../components/Toast', () => ({ useToast: () => ({ push: vi.fn() }) }));
 vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
-vi.mock('../utils/moduleFields', () => ({ getCustomFieldsAsModuleFields: () => [] }));
+vi.mock('../utils/moduleFields', () => ({ getCustomFieldsAsModuleFields: () => [{ key: 'custom-id' }] }));
 vi.mock('../utils', () => ({ classNames: (...values: (string | false)[]) => values.filter(Boolean).join(' ') }));
 
 import { AccountForm } from './AccountForm';
@@ -55,6 +60,10 @@ beforeEach(() => {
   harness.states = [];
   harness.cursor = 0;
   harness.upsert.mockReset();
+  harness.effects = [];
+  harness.layouts = [];
+  harness.customErrors = {};
+  vi.unstubAllGlobals();
 });
 
 describe('AccountForm accessibility and validation', () => {
@@ -84,4 +93,56 @@ describe('AccountForm accessibility and validation', () => {
     expect(html).toContain('value="-10"');
     expect(harness.upsert).not.toHaveBeenCalled();
   });
+});
+
+it.each([
+  { field: 'name', value: '', errorId: 'account-name-error' },
+  { field: 'website', value: 'notaurl', errorId: 'account-website-error' },
+  { field: 'employees', value: '-1', errorId: 'account-employees-error' },
+  { field: 'revenue', value: '-1', errorId: 'account-revenue-error' },
+])('reveals and focuses invalid $field after rendering its associated error', async ({ field, value, errorId }) => {
+  harness.layouts = [{ module: 'accounts', isDefault: true, tabs: [
+    { id: 'other', fieldKeys: ['phone'] },
+    { id: 'invalid', fieldKeys: [field] },
+  ] }];
+  nodes(AccountForm());
+  harness.states[0] = 'invalid';
+  harness.cursor = 0;
+  nodes(AccountForm()).find((node) => node.props.id === `account-${field}-input`)?.props.onChange?.({ target: { value } });
+  harness.states[0] = 'other';
+  harness.cursor = 0;
+  await nodes(AccountForm()).find((node) => node.props.children === 'Create account')?.props.onClick?.();
+  expect(harness.states[0]).toBe('invalid');
+  harness.effects = [];
+  harness.cursor = 0;
+  const html = renderToStaticMarkup(AccountForm());
+  const focus = vi.fn(() => {
+    expect(html).toContain(`id="account-${field}-input"`);
+    expect(html).toContain(`aria-describedby="${errorId}"`);
+    expect(html).toContain('aria-invalid="true"');
+  });
+  const querySelector = vi.fn(() => ({ focus }));
+  vi.stubGlobal('document', { querySelector });
+  harness.effects.forEach((effect) => effect());
+  expect(querySelector).toHaveBeenCalledWith('[data-testid="account-form-page"] [aria-invalid="true"]');
+  expect(focus).toHaveBeenCalledOnce();
+  expect(harness.upsert).not.toHaveBeenCalled();
+});
+
+it('reveals a required custom field on an inactive tab before focusing', async () => {
+  harness.layouts = [{ module: 'accounts', isDefault: true, tabs: [
+    { id: 'details', fieldKeys: ['phone'] },
+    { id: 'custom', fieldKeys: ['custom-id'] },
+  ] }];
+  harness.customErrors = { 'custom-key': 'Custom field is required.' };
+  await nodes(AccountForm()).find((node) => node.props.children === 'Create account')?.props.onClick?.();
+  expect(harness.states[0]).toBe('custom');
+  harness.cursor = 0;
+  harness.effects = [];
+  AccountForm();
+  const focus = vi.fn();
+  vi.stubGlobal('document', { querySelector: vi.fn(() => ({ focus })) });
+  harness.effects.forEach((effect) => effect());
+  expect(focus).toHaveBeenCalledOnce();
+  expect(harness.upsert).not.toHaveBeenCalled();
 });

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getAllSync, newId, upsert } from '../data/store';
-import { Account, PageLayout, User } from '../types';
+import { Account, CustomFieldDef, PageLayout, User } from '../types';
 import { Select } from '../components/Select';
 import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
 import { useToast } from '../components/Toast';
@@ -45,6 +45,12 @@ export function AccountForm() {
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState(false);
 
+  useEffect(() => {
+    if (Object.keys(errors).length || Object.keys(customErrors).length) {
+      document.querySelector<HTMLElement>('[data-testid="account-form-page"] [aria-invalid="true"]')?.focus();
+    }
+  }, [errors, customErrors]);
+
   const submit = async () => {
     const errs: typeof errors = {};
     if (allLayoutKeys.has('name') && !draft.name.trim()) errs.name = 'Account name is required.';
@@ -54,7 +60,15 @@ export function AccountForm() {
     setErrors(errs);
     const cErrs = validateCustomFields('accounts', 'form', draft.customFields ?? {});
     setCustomErrors(cErrs);
-    if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) return;
+    if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) {
+      const firstStandard = ['name', 'employees', 'revenue', 'website'].find((key) => Object.keys(errs).includes(key));
+      const firstCustom = getAllSync<CustomFieldDef>('customFieldDefs')
+        .find((field) => field.module === 'accounts' && cErrs[field.key]);
+      const firstKey = firstStandard ?? firstCustom?.id;
+      const tab = layout?.tabs.find((item) => item.fieldKeys.includes(firstKey ?? ''));
+      if (tab) setActiveTabId(tab.id);
+      return;
+    }
     const saved = await runRecoverable(() => upsert('accounts', draft), { setBusy, setError: setSaveError });
     if (!saved) return;
     toast.push('success', `Account "${draft.name}" created.`);
