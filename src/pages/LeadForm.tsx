@@ -84,6 +84,7 @@ export function LeadForm() {
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
   const [customErrors, setCustomErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [duplicate, setDuplicate] = useState<Lead | null>(null);
 
   const step = autoflowProcess && cursor ? resolveStep(autoflowProcess, cursor, draft) : null;
@@ -119,9 +120,16 @@ export function LeadForm() {
     const toSave = assignedTo ? { ...draft, ownerId: assignedTo } : draft;
 
     setBusy(true);
-    await upsert('leads', toSave);
-    toast.push('success', assignedTo ? `Lead "${draft.name}" created and auto-assigned.` : `Lead "${draft.name}" created.`);
-    navigate(`/leads/${toSave.id}`);
+    setSaveError('');
+    try {
+      await upsert('leads', toSave);
+      toast.push('success', assignedTo ? `Lead "${draft.name}" created and auto-assigned.` : `Lead "${draft.name}" created.`);
+      navigate(`/leads/${toSave.id}`);
+    } catch {
+      setSaveError('Lead was not created. Your entries are still here; press Create lead to try again.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   // Walks the AutoFlow graph one step at a time: validates the current node's visible fields,
@@ -162,10 +170,16 @@ export function LeadForm() {
     }
     if (result.kind === 'end') {
       setBusy(true);
-      await upsert('leads', working);
-      setBusy(false);
-      toast.push('success', `Lead "${working.name}" created.`);
-      navigate(`/leads/${working.id}`);
+      setSaveError('');
+      try {
+        await upsert('leads', working);
+        toast.push('success', `Lead "${working.name}" created.`);
+        navigate(`/leads/${working.id}`);
+      } catch {
+        setSaveError('Lead was not created. Your entries are still here; press Finish to try again.');
+      } finally {
+        setBusy(false);
+      }
       return;
     }
     setCursor(edge.target);
@@ -190,6 +204,7 @@ export function LeadForm() {
       <div className="page-header">
         <h1>New lead</h1>
       </div>
+      <p className="lead-form-subtitle">Only name and email are required.</p>
       {autoflowProcess ? (
         <p className="muted" style={{ marginTop: -8 }} data-testid="autoflow-wizard-subtitle">
           AutoFlow: {autoflowProcess.name}
@@ -199,7 +214,11 @@ export function LeadForm() {
         layout && <p className="muted" style={{ marginTop: -8 }}>Layout: {layout.name}</p>
       )}
 
-      <div className="card form-card">
+      <form className="card form-card" noValidate onSubmit={(event) => {
+        event.preventDefault();
+        if (!busy) void (autoflowProcess ? advance() : submit());
+      }}>
+        {saveError && <div className="banner banner-error" role="alert">{saveError}</div>}
         {autoflowProcess && step?.kind === 'blocked' && (
           <div className="banner banner-error" role="alert" data-testid="autoflow-blocked-banner">
             {step.message}
@@ -214,14 +233,15 @@ export function LeadForm() {
         {!autoflowProcess && layout && layout.tabs.length > 1 && (
           <div className="chip-filters" data-testid="lead-form-layout-tabs" style={{ marginBottom: 16 }}>
             {layout.tabs.map((tab) => (
-              <span
+              <button
+                type="button"
                 key={tab.id}
                 className={classNames('chip-filter', tab.id === activeTabId && 'active')}
-                style={{ cursor: 'pointer' }}
+                aria-pressed={tab.id === activeTabId}
                 onClick={() => setActiveTabId(tab.id)}
               >
                 {tab.label}
-              </span>
+              </button>
             ))}
           </div>
         )}
@@ -291,28 +311,6 @@ export function LeadForm() {
               />
             </div>
           )}
-          <div className="field">
-            <label className="field-label" htmlFor="lead-product-input">Interested product</label>
-            <SearchableSelect
-              id="lead-product-input"
-              value={draft.productId ?? ''}
-              options={[{ value: '', label: 'No product' }, ...products.map((p) => ({ value: p.id, label: p.name }))]}
-              onChange={(v) => setDraft({ ...draft, productId: v || null })}
-              placeholder="Search products…"
-              testId="lead-product"
-            />
-          </div>
-          <div className="field">
-            <label className="field-label" htmlFor="lead-campaign-input">Campaign</label>
-            <SearchableSelect
-              id="lead-campaign-input"
-              value={draft.campaignId ?? ''}
-              options={[{ value: '', label: 'No campaign' }, ...campaigns.map((c) => ({ value: c.id, label: c.name }))]}
-              onChange={(v) => setDraft({ ...draft, campaignId: v || null })}
-              placeholder="Search campaigns…"
-              testId="lead-campaign"
-            />
-          </div>
           {isVisible('ownerId') && (
             <div className="field">
               <label className="field-label" htmlFor="lead-owner-input">Owner</label>
@@ -337,6 +335,29 @@ export function LeadForm() {
               />
             </div>
           )}
+          <h2 className="lead-form-section">Related records</h2>
+          <div className="field">
+            <label className="field-label" htmlFor="lead-product-input">Interested product</label>
+            <SearchableSelect
+              id="lead-product-input"
+              value={draft.productId ?? ''}
+              options={[{ value: '', label: 'No product' }, ...products.map((p) => ({ value: p.id, label: p.name }))]}
+              onChange={(v) => setDraft({ ...draft, productId: v || null })}
+              placeholder="Search products…"
+              testId="lead-product"
+            />
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="lead-campaign-input">Campaign</label>
+            <SearchableSelect
+              id="lead-campaign-input"
+              value={draft.campaignId ?? ''}
+              options={[{ value: '', label: 'No campaign' }, ...campaigns.map((c) => ({ value: c.id, label: c.name }))]}
+              onChange={(v) => setDraft({ ...draft, campaignId: v || null })}
+              placeholder="Search campaigns…"
+              testId="lead-campaign"
+            />
+          </div>
           <CustomFieldsSection
             module="leads"
             target="form"
@@ -349,20 +370,20 @@ export function LeadForm() {
         </div>
 
         <div className="form-actions">
-          <button className="btn" onClick={() => navigate('/leads')}>
+          <button type="button" className="btn" onClick={() => navigate('/leads')}>
             Cancel
           </button>
           {autoflowProcess ? (
-            <button className="btn btn-primary" disabled={busy || !currentNode} onClick={advance} data-testid="autoflow-next-btn">
+            <button className="btn btn-primary" disabled={busy || !currentNode} type="submit" aria-busy={busy} data-testid="autoflow-next-btn">
               {busy ? 'Saving…' : isLastWizardStep ? 'Finish' : 'Next'}
             </button>
           ) : (
-            <button className="btn btn-primary" disabled={busy} onClick={submit}>
+            <button className="btn btn-primary" disabled={busy} type="submit" aria-busy={busy}>
               {busy ? 'Creating…' : 'Create lead'}
             </button>
           )}
         </div>
-      </div>
+      </form>
     </div>
   );
 }

@@ -25,7 +25,7 @@ function render(rows: Lead[], totalLeads = rows.length) {
     sortKey: 'name', sortDir: 'asc', ownerName: () => 'Owner',
     sortIndicator: () => '', onToggleSort: vi.fn(),
     onToggleSelectAll: vi.fn(), onToggleSelect: vi.fn(),
-    onOpen: vi.fn(), onContextMenu: vi.fn(), onConvert: vi.fn(),
+    onOpen: vi.fn(), onContextMenu: vi.fn(), onRowMenu: vi.fn(),
   }));
 }
 

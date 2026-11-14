@@ -5,6 +5,8 @@ export interface ContextMenuItem {
   label: string;
   onClick: () => void;
   danger?: boolean;
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
 interface ContextMenuProps {
@@ -34,16 +36,21 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
   return createPortal(
     <ul className="context-menu" role="menu" style={{ top: y, left: x }}>
       {items.map((item) => (
-        <li
-          key={item.label}
-          role="menuitem"
-          className={item.danger ? 'danger' : ''}
-          onClick={() => {
-            onClose();
-            item.onClick();
-          }}
-        >
-          {item.label}
+        <li key={item.label} role="none">
+          <button
+            type="button"
+            role="menuitem"
+            className={item.danger ? 'danger' : ''}
+            disabled={item.disabled}
+            title={item.disabledReason}
+            aria-description={item.disabledReason}
+            onClick={() => {
+              onClose();
+              item.onClick();
+            }}
+          >
+            {item.label}
+          </button>
         </li>
       ))}
     </ul>,
