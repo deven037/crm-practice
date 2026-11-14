@@ -19,7 +19,10 @@ vi.mock('react-router-dom', () => ({
   Link: ({ to, children }: { to: string; children: ReactNode }) => createElement('a', { href: to }, children),
   useNavigate: () => vi.fn(), useParams: () => ({ id: 'contact-1' }),
 }));
-vi.mock('../data/store', () => ({ getAllSync: () => [], upsert: vi.fn(), removeMany: vi.fn(), newId: () => 'note-1' }));
+vi.mock('../data/store', async (original) => {
+  const actual = await original<typeof import('../data/store')>();
+  return { ...actual, upsert: vi.fn(actual.upsert), removeMany: vi.fn(), newId: () => 'note-1' };
+});
 vi.mock('../components/Toast', () => ({ useToast: () => ({ push: vi.fn() }) }));
 vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: { role: harness.role } }) }));
 vi.mock('../hooks/useRecentlyViewed', () => ({ useRecentlyViewed: () => ({ recordView: vi.fn() }) }));
@@ -28,7 +31,7 @@ vi.mock('../components/CustomFieldsSection', () => ({ CustomFieldsSection: () =>
 vi.mock('../components/Tabs', () => ({ Tabs: ({ tabs }: { tabs: { content: ReactNode }[] }) => createElement('div', {}, tabs.map((tab, index) => createElement('section', { key: index }, tab.content))) }));
 
 import { ContactDetail } from './ContactDetail';
-import { upsert } from '../data/store';
+import { getAllSync, initStore, upsert } from '../data/store';
 import { apiFetch } from '../data/apiFetch';
 import { Modal } from '../components/Modal';
 vi.mock('../data/apiFetch', () => ({ apiFetch: vi.fn() }));
@@ -103,13 +106,13 @@ describe('ContactDetail load recovery', () => {
     vi.mocked(apiFetch).mockRejectedValueOnce(new Error('Network failure')).mockResolvedValueOnce(contact);
     expect(renderToStaticMarkup(render())).toContain('Loading contact');
     harness.effects[0]();
-    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
     let tree = render();
     expect(renderToStaticMarkup(tree)).toContain('Contact couldn’t be loaded.');
     nodes(tree).find((node) => node.type === 'button' && node.props.children === 'Retry')?.props.onClick?.();
     render();
     harness.effects[0]();
-    await Promise.resolve();
+    await new Promise((resolve) => setTimeout(resolve, 0));
     tree = render();
     expect(renderToStaticMarkup(tree)).toContain('Amara');
     expect(renderToStaticMarkup(tree)).not.toContain('Contact couldn’t be loaded.');
@@ -161,5 +164,38 @@ describe('ContactDetail delete dialog keyboard behavior', () => {
     cleanupEscape?.();
     expect(active).toBe(opener);
     expect(nodes(render()).some((node) => node.type === Modal)).toBe(false);
+  });
+});
+
+describe('ContactDetail direct record writes', () => {
+  it('registers an uncached record before editing and PUTs without duplicating or changing createdAt', async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce({ contacts: [], accounts: [] });
+    await initStore();
+    expect(getAllSync('contacts')).toEqual([]);
+    const records = [{ ...contact }];
+    vi.mocked(apiFetch).mockImplementation(async (path, options = {}) => {
+      if (path === '/contacts/contact-1' && !options.method) return records[0];
+      if (options.method === 'PUT' && path === '/contacts/contact-1' && typeof options.body === 'string') {
+        const body: unknown = JSON.parse(options.body);
+        if (typeof body !== 'object' || body === null || !('email' in body) || typeof body.email !== 'string') throw new Error('Invalid contact body');
+        records[0] = { ...records[0], email: body.email };
+        return records[0];
+      }
+      if (options.method === 'POST') records.push({ ...contact, createdAt: 'new-created-date' });
+      throw new Error('Unexpected request');
+    });
+    harness.states = [];
+    render();
+    harness.effects[0]();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(getAllSync('contacts')).toEqual([contact]);
+    nodes(render()).find((node) => node.props['data-testid'] === 'edit-contact-btn')?.props.onClick?.();
+    harness.states[2] = { ...contact, email: 'updated@example.com' };
+    await nodes(render()).find((node) => node.type === 'form')?.props.onSubmit?.({ preventDefault: vi.fn() });
+    expect(apiFetch).toHaveBeenCalledWith('/contacts/contact-1', { method: 'PUT', body: JSON.stringify({ ...contact, email: 'updated@example.com' }) });
+    expect(records).toHaveLength(1);
+    expect(records[0].email).toBe('updated@example.com');
+    expect(records[0].createdAt).toBe(contact.createdAt);
+    expect(getAllSync('contacts')).toEqual(records);
   });
 });

@@ -1,8 +1,7 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Calendar, FileText, Paperclip, Pencil, StickyNote, Trash2 } from 'lucide-react';
-import { getAllSync, newId, removeMany, upsert } from '../data/store';
-import { apiFetch } from '../data/apiFetch';
+import { getAllSync, getById, newId, removeMany, upsert } from '../data/store';
 import { Modal } from '../components/Modal';
 import { useAuth } from '../auth/AuthContext';
 import { Account, Contact } from '../types';
@@ -48,8 +47,8 @@ export function ContactDetail() {
     setNotFound(false);
     setLoadError(false);
     setEditing(false);
-    apiFetch<Contact>(`/contacts/${id ?? ''}`).then(
-      (value) => { if (active) setContact(value); },
+    getById<Contact>('contacts', id ?? '', true).then(
+      (value) => { if (active) { setContact(value ?? null); setNotFound(!value); } },
       (error: unknown) => {
         if (!active) return;
         if (error instanceof Error && error.message === 'Contact not found.') setNotFound(true);
