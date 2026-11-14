@@ -28,10 +28,12 @@ function getLayoutFields(module: CustomFieldModule, target: LayoutTarget): Custo
 export function validateCustomFields(
   module: CustomFieldModule,
   target: LayoutTarget,
-  values: CustomFieldValues
+  values: CustomFieldValues,
+  includeIds?: string[],
 ): Record<string, string> {
   const errors: Record<string, string> = {};
   for (const field of getLayoutFields(module, target)) {
+    if (includeIds && !includeIds.includes(field.id)) continue;
     if (!field.required) continue;
     const v = values[field.key];
     const empty = v === null || v === undefined || v === '';
@@ -146,6 +148,8 @@ export function CustomFieldsSection({
                   <input
                     id={controlId}
                     type="checkbox"
+                    aria-invalid={error ? true : undefined}
+                    aria-describedby={error ? errorId : undefined}
                     checked={Boolean(raw)}
                     onChange={(e) => onChange?.(f.key, e.target.checked)}
                   />

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllSync } from '../data/store';
 import { AutoFlowProcess, CustomFieldModule, PageLayout } from '../types';
@@ -21,6 +22,28 @@ export function LayoutPickerPanel({
   const autoFlows = getAllSync<AutoFlowProcess>('autoFlowProcesses').filter(
     (p) => p.targetModule === module && p.status === 'published' && (!user || p.allowedRoles.includes(user.role))
   );
+
+  useEffect(() => {
+    const opener = document.activeElement;
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
+    const controls = () => Array.from(dialog?.querySelectorAll<HTMLElement>('button:not(:disabled), [href], input:not(:disabled), [tabindex="0"]') ?? []);
+    controls()[0]?.focus();
+    const trap = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const items = controls();
+      const first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dialog?.contains(document.activeElement))) {
+        event.preventDefault(); last?.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog?.contains(document.activeElement))) {
+        event.preventDefault(); first?.focus();
+      }
+    };
+    document.addEventListener('keydown', trap);
+    return () => {
+      document.removeEventListener('keydown', trap);
+      if (opener instanceof HTMLElement) opener.focus();
+    };
+  }, []);
 
   const choose = (layout: PageLayout) => {
     onClose();
