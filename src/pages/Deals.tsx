@@ -451,14 +451,14 @@ export function DealModal({
           <button className="btn" disabled={busy} onClick={onCancel}>
             Cancel
           </button>
-          <button className="btn btn-primary" data-testid="deal-save-btn" disabled={busy} onClick={submit}>
+          <button className="btn btn-primary" data-testid="deal-save-btn" type="submit" form="deal-edit-form" disabled={busy}>
             {busy ? 'Saving…' : 'Save deal'}
           </button>
         </>
       }
     >
       {error && <div className="banner banner-error" role="alert">{error}</div>}
-      <fieldset className="deals-edit-fields" disabled={busy}><div className="form-grid">
+      <form id="deal-edit-form" onSubmit={(event) => { event.preventDefault(); void submit(); }}><fieldset className="deals-edit-fields" disabled={busy}><div className="form-grid">
         <div className="field">
           <label className="field-label" htmlFor="deal-edit-name">Deal name *</label>
           <input ref={nameRef} id="deal-edit-name" aria-invalid={!draft.name.trim() && error ? true : undefined} aria-describedby={!draft.name.trim() && error ? "deal-edit-name-error" : undefined} className="input" data-testid="deal-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
@@ -523,7 +523,7 @@ export function DealModal({
           />
         </div>
         <CustomFieldsSection module="deals" target="form" mode="edit" values={draft.customFields ?? {}} errors={customErrors} onChange={(key, value) => setDraft({ ...draft, customFields: { ...draft.customFields, [key]: value } })} />
-      </div></fieldset>
+      </div></fieldset></form>
     </DealDialog>
   );
 }

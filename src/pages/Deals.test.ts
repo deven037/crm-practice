@@ -17,6 +17,7 @@ vi.mock('react', async (original) => ({
     }];
   },
   useEffect: () => undefined,
+  useRef: () => ({ current: null }),
 }));
 vi.mock('../components/Modal', () => ({
   Modal: ({ children, footer }: { children: ReactNode; footer: ReactNode }) => createElement('section', null, children, footer),
@@ -32,7 +33,7 @@ vi.mock('../utils/rules', () => ({ getStatusOptions: () => [], applyAssignmentRu
 interface Props {
   children?: ReactNode;
   footer?: ReactNode;
-  onClick?: () => Promise<void>;
+  onSubmit?: (event: { preventDefault: () => void }) => void;
   onChange?: (event: { target: { value: string } }) => void;
   onDelete?: (deal: Deal) => void;
   disabled?: boolean;
@@ -49,7 +50,7 @@ function render() {
   harness.cursor = 0;
   const tree = DealModal({ deal, accounts: [], users: [], onCancel: vi.fn(), onSave: save, onDelete: vi.fn() });
   const elements = nodes(tree);
-  return { html: renderToStaticMarkup(tree), elements, saveButton: elements.find((node) => node.props['data-testid'] === 'deal-save-btn') };
+  return { submit: () => elements.find((node) => node.type === 'form')?.props.onSubmit?.({ preventDefault: vi.fn() }), html: renderToStaticMarkup(tree), elements, saveButton: elements.find((node) => node.props['data-testid'] === 'deal-save-btn') };
 }
 beforeEach(() => { harness.states = []; harness.cursor = 0; harness.validation = {}; save.mockReset(); });
 
@@ -57,7 +58,8 @@ describe('board edit dialog', () => {
   it('blocks a blank name and reports required custom fields without saving', async () => {
     render().elements.find((node) => node.props['data-testid'] === 'deal-name')?.props.onChange?.({ target: { value: '' } });
     harness.validation = { fleet: 'Fleet size is required.' };
-    await render().saveButton?.props.onClick?.();
+    render().submit();
+    await Promise.resolve();
     const html = render().html;
     expect(html).toContain('Deal name is required.');
     expect(html).toContain('aria-invalid="true"');
@@ -66,7 +68,8 @@ describe('board edit dialog', () => {
   });
   it('blocks saving with a missing required custom field even when the name is valid', async () => {
     harness.validation = { fleet: 'Fleet size is required.' };
-    await render().saveButton?.props.onClick?.();
+    render().submit();
+    await Promise.resolve();
     expect(save).not.toHaveBeenCalled();
     expect(render().html).toContain('Fleet size is required.');
   });
@@ -74,12 +77,14 @@ describe('board edit dialog', () => {
     let rejectSave: (error: Error) => void = () => undefined;
     save.mockImplementation(() => new Promise<void>((_resolve, reject) => { rejectSave = reject; }));
     render().elements.find((node) => node.props['data-testid'] === 'deal-name')?.props.onChange?.({ target: { value: 'Updated custody' } });
-    const pending = render().saveButton?.props.onClick?.();
+    render().submit();
     expect(render().saveButton?.props.disabled).toBe(true);
-    await render().saveButton?.props.onClick?.();
+    render().submit();
+    await Promise.resolve();
     expect(save).toHaveBeenCalledTimes(1);
     rejectSave(new Error('Connection failed'));
-    await pending;
+    await Promise.resolve();
+    await Promise.resolve();
     expect(render().html).toContain('Connection failed');
     expect(render().html).toContain('value="Updated custody"');
     expect(render().saveButton?.props.disabled).toBe(false);
