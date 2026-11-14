@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, Search, Settings, SlidersHorizontal } from 'lucide-react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Download, Search, SlidersHorizontal } from 'lucide-react';
 import { getAll, getAllSync, newId, removeMany, saveAll, upsert } from '../data/store';
 import { Account, Contact, Deal, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Role, User } from '../types';
 import { Modal } from '../components/Modal';
@@ -9,6 +9,7 @@ import { ContextMenu } from '../components/ContextMenu';
 import { LeadTriageMode } from '../components/LeadTriageMode';
 import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
 import { MassUpdateModal } from '../components/MassUpdateModal';
+import { ToolBoxPanel } from '../components/ToolBoxPanel';
 import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
@@ -298,11 +299,6 @@ export function Leads() {
               Created in the last {createdDays} days · Show all
             </button>
           )}
-          {(user?.role === 'admin' || user?.role === 'rep') && (
-            <Link className="btn btn-ghost" to="/setup">
-              <Settings size={16} /> Lead setup
-            </Link>
-          )}
           {canExportLeads(user?.role) && (
             <button className="btn" onClick={exportCsv} data-testid="export-csv-btn">
               <Download size={16} /> Export CSV
@@ -335,6 +331,18 @@ export function Leads() {
           )}
         </div>
       </div>
+
+      <ToolBoxPanel
+        module="leads"
+        links={[
+          { label: 'Assignment Rules', to: '/setup/assignment-rules' },
+          { label: 'Dedupe Rule', to: '/setup/dedupe-rules' },
+          { label: 'Status Codes', to: '/setup/status-codes' },
+          { label: 'Import Data', to: '/setup/import' },
+          { label: 'Custom Fields', to: '/admin/objects/leads' },
+          { label: 'Customise Page Layout', to: '/setup/layouts/leads' },
+        ]}
+      />
 
       {mode === 'triage' ? (
         loading ? (
@@ -492,7 +500,9 @@ export function Leads() {
           onClose={() => setMenu(null)}
           items={[
             { label: 'View details', onClick: () => navigate(`/leads/${menu.lead.id}`) },
-            { label: 'Convert lead…', onClick: () => openWizard(menu.lead) },
+            { label: 'Convert lead…', onClick: () => openWizard(menu.lead),
+              disabled: menu.lead.status === 'Converted',
+              disabledReason: menu.lead.status === 'Converted' ? 'This lead is already converted.' : undefined },
           ]}
         />
       )}

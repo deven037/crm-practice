@@ -109,3 +109,11 @@ Locate these by role, text content, CSS, or position:
 - [ ] Object Configuration (Admin): create a custom field, drag it into the Form and Detail layouts, fill it in on a new record, confirm it round-trips on reload
 - [ ] Object Configuration: remove a field from a layout (data survives, hidden ≠ deleted) and re-add it; delete a field with existing data (type-to-confirm gate, data nulled everywhere)
 - [ ] Object Configuration: rep sees every module's config read-only; viewer has no `/admin/objects/*` access
+
+## Leads Harbor controls (AIO-411)
+
+- Open row actions with the button named `Actions for <lead name>`, or right-click a row. Choose `View details` or `Convert lead…` by menuitem name. Conversion is disabled for Converted leads with title `This lead is already converted.`.
+- At phone widths use the visible `ul.lead-cards`; at desktop use the visible table. Both layouts retain `lead-status`, so scope locators to the visible layout.
+- `toolbox-panel` is restored above the Leads list for all roles, with Recently Accessed and six ToolBox links: Assignment Rules (`/setup/assignment-rules`), Dedupe Rule (`/setup/dedupe-rules`), Status Codes (`/setup/status-codes`), Import Data (`/setup/import`), Custom Fields (`/admin/objects/leads`), and Customise Page Layout (`/setup/layouts/leads`). The temporary two-link navigation is removed.
+- In `filter-panel`, Status uses labelled checkboxes (New, Contacted, Qualified, Unqualified, Converted, or configured names). Source and Owner retain labelled dropdowns; `Clear filters` resets all filters.
+- Retained hooks also include `view-table`, `view-triage`, `mass-update-btn`, `lead-triage-mode`, `triage-qualify`, `triage-disqualify`, `triage-skip`, `lead-campaign`, `duplicate-warning`, `lead-form-layout-tabs`, `autoflow-next-btn`, `autoflow-wizard-subtitle`, `autoflow-blocked-banner`, `leads-load-error`, `clear-created-filter` and `lead-save-error`.
