@@ -39,7 +39,7 @@ export function ContactDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const canWrite = user?.role === 'admin' || user?.role === 'rep';
-  const { recordView } = useRecentlyViewed();
+  const { recordView, removeViews } = useRecentlyViewed();
 
   useEffect(() => {
     let active = true;
@@ -215,6 +215,7 @@ export function ContactDetail() {
                   setSaveError(false);
                   try {
                   await removeMany('contacts', [contact.id]);
+                  removeViews([contact.id]);
                   toast.push('success', `Contact "${contact.name}" deleted.`);
                   navigate('/contacts');
                   } catch { setSaveError(true); }
