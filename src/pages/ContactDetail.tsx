@@ -8,7 +8,7 @@ import { Account, Contact } from '../types';
 import { Tabs } from '../components/Tabs';
 import { MultiSelect } from '../components/Select';
 import { SearchableSelect } from '../components/Select';
-import { CustomFieldsSection } from '../components/CustomFieldsSection';
+import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
@@ -28,28 +28,72 @@ export function ContactDetail() {
   const [editing, setEditing] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const editForm = useRef<HTMLFormElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const canWrite = user?.role === 'admin' || user?.role === 'rep';
   const { recordView } = useRecentlyViewed();
 
   useEffect(() => {
-    (async () => {
-      const c = await getById<Contact>('contacts', id ?? '');
-      if (!c) setNotFound(true);
-      else setContact(c);
-    })();
-  }, [id]);
+    let active = true;
+    setContact(null);
+    setNotFound(false);
+    setLoadError(false);
+    setEditing(false);
+    getById<Contact>('contacts', id ?? '', true).then(
+      (value) => { if (active) { setContact(value ?? null); setNotFound(!value); } },
+      (error: unknown) => {
+        if (!active) return;
+        if (error instanceof Error && error.message === 'Contact not found.') setNotFound(true);
+        else setLoadError(true);
+      },
+    );
+    return () => { active = false; };
+  }, [id, loadAttempt]);
+
+  useEffect(() => {
+    if (Object.keys(errors).length) editForm.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+  }, [errors]);
+
+  useEffect(() => {
+    if (!deleting) return;
+    const opener = document.activeElement;
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
+    const controls = () => Array.from(dialog?.querySelectorAll<HTMLElement>('button:not(:disabled), [href], input:not(:disabled), [tabindex="0"]') ?? []);
+    controls()[0]?.focus();
+    const trap = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const items = controls();
+      const first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dialog?.contains(document.activeElement))) {
+        event.preventDefault(); last?.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog?.contains(document.activeElement))) {
+        event.preventDefault(); first?.focus();
+      }
+    };
+    document.addEventListener('keydown', trap);
+    return () => {
+      document.removeEventListener('keydown', trap);
+      if (opener instanceof HTMLElement) opener.focus();
+    };
+  }, [deleting]);
 
   useEffect(() => {
     if (contact) recordView({ module: 'contacts', id: contact.id, label: contact.name, link: `/contacts/${contact.id}`, meta: { Title: contact.title } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contact?.id]);
 
+  if (loadError) return <div className="banner banner-error" role="alert">Contact couldn’t be loaded. <button className="btn" onClick={() => setLoadAttempt((value) => value + 1)}>Retry</button></div>;
   if (notFound) {
     return (
-      <div className="empty-cell">
+      <div className="empty-cell" role="alert">
         Contact not found. <Link to="/contacts">Back to contacts</Link>
       </div>
     );
@@ -60,9 +104,20 @@ export function ContactDetail() {
   const accountName = accounts.find((a) => a.id === contact.accountId)?.name;
 
   const persist = async (next: Contact, message: string) => {
-    await upsert('contacts', next);
-    setContact(next);
-    toast.push('success', message);
+    if (busy || !canWrite) return false;
+    setBusy(true);
+    setSaveError(false);
+    try {
+      const saved = await upsert('contacts', next);
+      setContact(saved);
+      toast.push('success', message);
+      return true;
+    } catch {
+      setSaveError(true);
+      return false;
+    } finally {
+      setBusy(false);
+    }
   };
 
   const onAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -83,17 +138,17 @@ export function ContactDetail() {
     e.target.value = '';
   };
 
-  const addNote = () => {
+  const addNote = async () => {
     if (!noteText.trim()) return;
-    persist(
+    const saved = await persist(
       { ...contact, notes: [{ id: newId('note'), text: noteText.trim(), createdAt: new Date().toISOString() }, ...contact.notes] },
       'Note added.'
     );
-    setNoteText('');
+    if (saved) setNoteText('');
   };
 
   return (
-    <div data-testid="contact-detail-page">
+    <div className="contact-screen contact-record" data-testid="contact-detail-page">
       <nav className="breadcrumbs">
         <Link to="/contacts">Contacts</Link> <span>/</span> <span>{contact.name}</span>
       </nav>
@@ -103,7 +158,7 @@ export function ContactDetail() {
           <div className="contact-avatar contact-avatar-lg">
             {contact.avatar ? <img src={contact.avatar} alt={contact.name} /> : initials(contact.name)}
           </div>
-          <button className="btn btn-small" data-testid="upload-avatar-btn" onClick={() => avatarInput.current?.click()}>
+          <button hidden={!canWrite} disabled={busy} className="btn" data-testid="upload-avatar-btn" onClick={() => avatarInput.current?.click()}>
             Upload photo
           </button>
           <input ref={avatarInput} type="file" accept="image/*" hidden data-testid="avatar-input" onChange={onAvatarChange} />
@@ -114,9 +169,9 @@ export function ContactDetail() {
             {contact.title || 'No title'} {accountName ? `· ${accountName}` : ''}
           </p>
         </div>
-        <div className="page-actions" style={{ marginLeft: 'auto' }}>
-          <button className="btn btn-danger" data-testid="delete-contact-btn" onClick={() => setDeleting(true)}>
-            <Trash2 size={14} /> Delete
+        <div className="page-actions">
+          <button hidden={!canWrite} disabled={busy} className="btn contact-delete" data-testid="delete-contact-btn" onClick={() => { setSaveError(false); setDeleting(true); }}>
+            <Trash2 size={14} /> Delete contact
           </button>
         </div>
       </div>
@@ -140,29 +195,38 @@ export function ContactDetail() {
         </div>
       </div>
 
-      {deleting && (
+      {saveError && !deleting && <div className="banner banner-error" role="alert">Changes couldn’t be saved. Your details are still here.</div>}
+      {canWrite && deleting && (
         <Modal
           title={`Delete contact — ${contact.name}`}
-          onClose={() => setDeleting(false)}
+          onClose={() => { if (!busy) setDeleting(false); }}
           footer={
             <>
-              <button className="btn" onClick={() => setDeleting(false)}>
+              <button className="btn" disabled={busy} onClick={() => setDeleting(false)}>
                 Cancel
               </button>
               <button
                 className="btn btn-danger"
                 data-testid="confirm-delete-btn"
+                disabled={busy}
                 onClick={async () => {
+                  if (busy) return;
+                  setBusy(true);
+                  setSaveError(false);
+                  try {
                   await removeMany('contacts', [contact.id]);
                   toast.push('success', `Contact "${contact.name}" deleted.`);
                   navigate('/contacts');
+                  } catch { setSaveError(true); }
+                  finally { setBusy(false); }
                 }}
               >
-                Delete contact
+                {busy ? 'Deleting…' : 'Delete contact'}
               </button>
             </>
           }
         >
+          {saveError && <div className="banner banner-error" role="alert">Contact couldn’t be deleted. Try again.</div>}
           <p>
             Delete “{contact.name}”? Their <strong>{contact.notes.length} note(s)</strong> and{' '}
             <strong>{contact.files.length} file(s)</strong> will be deleted with them. This cannot be undone.
@@ -177,14 +241,15 @@ export function ContactDetail() {
             id: 'overview',
             label: 'Overview',
             content: (
-              <div className="card">
+              <div className="contact-section">
                 {!editing ? (
                   <>
+                    <h2>Contact details</h2>
                     <dl className="detail-list">
                       <dt>Email</dt>
                       <dd>{contact.email}</dd>
                       <dt>Phone</dt>
-                      <dd>{contact.phone}</dd>
+                      <dd>{contact.phone || '—'}</dd>
                       <dt>Title</dt>
                       <dd>{contact.title || '—'}</dd>
                       <dt>Account</dt>
@@ -202,9 +267,13 @@ export function ContactDetail() {
                       <CustomFieldsSection module="contacts" target="detail" mode="view" values={contact.customFields ?? {}} />
                     </dl>
                     <button
-                      className="btn"
+                      hidden={!canWrite}
+                      disabled={busy}
+                      className="btn contact-edit"
                       data-testid="edit-contact-btn"
                       onClick={() => {
+                        setSaveError(false);
+                        setErrors({});
                         setDraft({ ...contact });
                         setEditing(true);
                       }}
@@ -214,22 +283,33 @@ export function ContactDetail() {
                   </>
                 ) : (
                   draft && (
-                    <div className="form-grid">
+                    <form ref={editForm} noValidate onSubmit={async (event) => {
+                      event.preventDefault();
+                      if (busy || !canWrite) return;
+                      const nextErrors = validateCustomFields('contacts', 'detail', draft.customFields ?? {});
+                      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(draft.email.trim())) nextErrors.email = 'Enter a valid email.';
+                      setErrors(nextErrors);
+                      if (Object.keys(nextErrors).length) return;
+                      if (await persist(draft, 'Contact updated.')) setEditing(false);
+                    }}>
+                    <fieldset className="form-grid" disabled={busy} aria-live="polite">
                       <div className="field">
-                        <span className="field-label">Email</span>
-                        <input className="input" value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
+                        <label className="field-label" htmlFor="edit-contact-email">Email</label>
+                        <input id="edit-contact-email" className="input" aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'edit-contact-email-error' : undefined} value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
+                        {errors.email && <span className="field-error" id="edit-contact-email-error">{errors.email}</span>}
                       </div>
                       <div className="field">
-                        <span className="field-label">Phone</span>
-                        <input className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
+                        <label className="field-label" htmlFor="edit-contact-phone">Phone</label>
+                        <input id="edit-contact-phone" className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
                       </div>
                       <div className="field">
-                        <span className="field-label">Title</span>
-                        <input className="input" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+                        <label className="field-label" htmlFor="edit-contact-title">Title</label>
+                        <input id="edit-contact-title" className="input" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
                       </div>
                       <div className="field">
-                        <span className="field-label">Account</span>
+                        <label className="field-label" htmlFor="edit-contact-account">Account</label>
                         <SearchableSelect
+                          id="edit-contact-account"
                           value={draft.accountId ?? ''}
                           options={accounts.map((a) => ({ value: a.id, label: a.name }))}
                           onChange={(v) => setDraft({ ...draft, accountId: v })}
@@ -237,8 +317,9 @@ export function ContactDetail() {
                         />
                       </div>
                       <div className="field field-span">
-                        <span className="field-label">Tags</span>
+                        <label className="field-label" htmlFor="edit-contact-tags">Tags</label>
                         <MultiSelect
+                          id="edit-contact-tags"
                           values={draft.tags}
                           options={TAG_OPTIONS}
                           onChange={(tags) => setDraft({ ...draft, tags })}
@@ -249,25 +330,24 @@ export function ContactDetail() {
                         module="contacts"
                         target="detail"
                         mode="edit"
+                        errors={errors}
                         values={draft.customFields ?? {}}
                         onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
                       />
                       <div className="field-span">
                         <button
-                          className="btn btn-primary"
+                          type="submit"
+                          className="btn contacts-primary"
                           data-testid="save-contact-btn"
-                          onClick={() => {
-                            persist(draft, 'Contact updated.');
-                            setEditing(false);
-                          }}
                         >
-                          Save
+                          {busy ? 'Saving…' : 'Save'}
                         </button>{' '}
-                        <button className="btn" onClick={() => setEditing(false)}>
+                        <button type="button" className="btn" onClick={() => { setSaveError(false); setEditing(false); }}>
                           Cancel
                         </button>
                       </div>
-                    </div>
+                    </fieldset>
+                    </form>
                   )
                 )}
               </div>
@@ -277,7 +357,7 @@ export function ContactDetail() {
             id: 'activity',
             label: 'Activity',
             content: (
-              <div className="card">
+              <div className="contact-section">
                 <div className="activity-item">
                   <span className="activity-icon"><Calendar size={14} /></span>
                   <span className="activity-text">Contact created</span>
@@ -297,9 +377,12 @@ export function ContactDetail() {
             id: 'notes',
             label: `Notes (${contact.notes.length})`,
             content: (
-              <div className="card">
-                <div className="note-composer">
+              <div className="contact-section">
+                {canWrite && <div className="note-composer">
+                  <label className="field-label" htmlFor="contact-note">Note</label>
                   <textarea
+                    id="contact-note"
+                    disabled={busy}
                     className="input"
                     rows={3}
                     placeholder="Write a note…"
@@ -307,16 +390,19 @@ export function ContactDetail() {
                     value={noteText}
                     onChange={(e) => setNoteText(e.target.value)}
                   />
-                  <button className="btn btn-primary" data-testid="add-note-btn" onClick={addNote}>
+                  <button disabled={busy || !noteText.trim()} className="btn contacts-primary" data-testid="add-note-btn" onClick={addNote}>
                     Add note
                   </button>
-                </div>
+                </div>}
+                {contact.notes.length === 0 && <p className="muted">No notes yet. Add a note to keep context with this contact.</p>}
                 {contact.notes.map((note) => (
                   <div key={note.id} className="note-item">
                     <p>{note.text}</p>
                     <div className="note-foot">
                       <span className="muted">{formatDateTime(note.createdAt)}</span>
                       <button
+                        hidden={!canWrite}
+                        disabled={busy}
                         className="link-btn"
                         onClick={() =>
                           persist({ ...contact, notes: contact.notes.filter((n) => n.id !== note.id) }, 'Note deleted.')
@@ -334,8 +420,8 @@ export function ContactDetail() {
             id: 'files',
             label: `Files (${contact.files.length})`,
             content: (
-              <div className="card">
-                <button className="btn" data-testid="attach-file-btn" onClick={() => fileInput.current?.click()}>
+              <div className="contact-section">
+                <button hidden={!canWrite} disabled={busy} className="btn" data-testid="attach-file-btn" onClick={() => fileInput.current?.click()}>
                   <Paperclip size={14} /> Attach file
                 </button>
                 <input ref={fileInput} type="file" hidden data-testid="file-input" onChange={onFileAttach} />
@@ -345,6 +431,8 @@ export function ContactDetail() {
                     <li key={file.id}>
                       <FileText size={14} /> {file.name} <span className="muted">({Math.max(1, Math.round(file.size / 1024))} KB)</span>
                       <button
+                        hidden={!canWrite}
+                        disabled={busy}
                         className="link-btn"
                         onClick={() =>
                           persist({ ...contact, files: contact.files.filter((f) => f.id !== file.id) }, 'File removed.')

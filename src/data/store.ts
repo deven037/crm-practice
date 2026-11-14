@@ -36,7 +36,7 @@ export async function getAll<T>(key: string): Promise<T[]> {
   return rows;
 }
 
-export async function getById<T extends { id: string }>(key: string, id: string): Promise<T | undefined> {
+export async function getById<T extends { id: string }>(key: string, id: string, throwOnError = false): Promise<T | undefined> {
   try {
     const item = await apiFetch<T>(`/${key}/${id}`);
     const list = cache[key] ?? [];
@@ -45,7 +45,8 @@ export async function getById<T extends { id: string }>(key: string, id: string)
     else list.unshift(item);
     cache[key] = list;
     return item;
-  } catch {
+  } catch (error) {
+    if (throwOnError) throw error;
     return undefined;
   }
 }
