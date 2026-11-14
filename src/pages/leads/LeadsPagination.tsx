@@ -3,9 +3,9 @@ import { classNames } from '../../utils';
 import { pageWindow } from './leadsGuards';
 
 const PAGE_SIZES = [
-  { value: '10', label: '10 / page' },
-  { value: '25', label: '25 / page' },
-  { value: '50', label: '50 / page' },
+  { value: '10', label: '10' },
+  { value: '25', label: '25' },
+  { value: '50', label: '50' },
 ];
 
 interface Props {
@@ -21,9 +21,10 @@ export function LeadsPagination({ total, currentPage, totalPages, pageSize, onPa
   return (
     <div className="pagination" data-testid="pagination">
       <span className="muted">
-        {total} lead(s) · page {currentPage} of {totalPages}
+        {total} {total === 1 ? 'lead' : 'leads'}, page {currentPage} of {totalPages}
       </span>
       <div className="pagination-controls">
+        <span className="muted">Rows</span>
         <Select value={String(pageSize)} options={PAGE_SIZES} onChange={(v) => onPageSizeChange(Number(v))} />
         <button className="btn" disabled={currentPage <= 1} onClick={() => onPageChange(currentPage - 1)} aria-label="Previous page">
           ‹ Prev

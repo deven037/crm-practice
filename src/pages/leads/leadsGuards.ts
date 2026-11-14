@@ -6,6 +6,9 @@ export const canExportLeads = (role: string | undefined): boolean => role === 'a
 // Edit and Delete on a lead record are for admin and rep, matching the server routes; viewers read only.
 export const canChangeLeads = (role: string | undefined): boolean => role === 'admin' || role === 'rep';
 
+// New Lead is for admin and rep; viewers see no create control and the form is read-only for them.
+export const canCreateLeads = (role: string | undefined): boolean => role === 'admin' || role === 'rep';
+
 export interface LeadEditErrors {
   name?: string;
   email?: string;

@@ -1,3 +1,4 @@
+import { MoreHorizontal } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { Lead } from '../../types';
 import { formatCurrency, formatDate } from '../../utils';
@@ -20,7 +21,7 @@ interface Props {
   onToggleSelect: (id: string) => void;
   onOpen: (lead: Lead) => void;
   onContextMenu: (e: React.MouseEvent, lead: Lead) => void;
-  onConvert: (lead: Lead) => void;
+  onRowMenu: (e: React.MouseEvent<HTMLElement>, lead: Lead) => void;
 }
 
 export function LeadsTable({
@@ -37,7 +38,7 @@ export function LeadsTable({
   onToggleSelect,
   onOpen,
   onContextMenu,
-  onConvert,
+  onRowMenu,
 }: Props) {
   const { user } = useAuth();
   const showContactDetails = user?.role === 'admin' || user?.role === 'rep';
@@ -50,6 +51,7 @@ export function LeadsTable({
   };
 
   return (
+    <>
     <div className="table-wrap">
       <table className="table">
         <thead>
@@ -126,7 +128,7 @@ export function LeadsTable({
             >
               Created{sortIndicator('createdAt')}
             </th>
-            <th scope="col">Actions</th>
+            <th scope="col"><span className="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
@@ -164,7 +166,7 @@ export function LeadsTable({
               {showContactDetails && <td>{lead.email}</td>}
               {showContactDetails && <td>{lead.phone}</td>}
               <td>
-                <span className={`pill status-${lead.status.toLowerCase()}`}>{lead.status}</span>
+                <span data-testid="lead-status" className={`pill status-${lead.status.toLowerCase()}`}>{lead.status}</span>
               </td>
               <td>{lead.source}</td>
               <td>{ownerName(lead.ownerId)}</td>
@@ -173,12 +175,12 @@ export function LeadsTable({
               <td onClick={(e) => e.stopPropagation()}>
                 <button
                   type="button"
-                  className="btn btn-small"
-                  disabled={lead.status === 'Converted'}
-                  title={lead.status === 'Converted' ? 'This lead is already converted.' : undefined}
-                  onClick={() => onConvert(lead)}
+                  className="lead-more"
+                  aria-label={`Actions for ${lead.name}`}
+                  aria-haspopup="menu"
+                  onClick={(e) => onRowMenu(e, lead)}
                 >
-                  Convert
+                  <MoreHorizontal size={18} />
                 </button>
               </td>
             </tr>
@@ -186,5 +188,38 @@ export function LeadsTable({
         </tbody>
       </table>
     </div>
+    <ul className="lead-cards" aria-label="Leads">
+      {rows.map((lead) => (
+        <li key={lead.id} className={`lead-card${selected.includes(lead.id) ? ' row-selected' : ''}`}>
+          <label className="lead-card-check">
+            <input
+              type="checkbox"
+              aria-label={`Select ${lead.name}`}
+              checked={selected.includes(lead.id)}
+              onChange={() => onToggleSelect(lead.id)}
+            />
+          </label>
+          <button type="button" className="lead-card-top" onClick={() => onOpen(lead)}>
+            <b>{lead.name}</b>
+            <span className="muted">{lead.company}</span>
+          </button>
+          <button
+            type="button"
+            className="lead-more"
+            aria-label={`Actions for ${lead.name}`}
+            aria-haspopup="menu"
+            onClick={(e) => onRowMenu(e, lead)}
+          >
+            <MoreHorizontal size={18} />
+          </button>
+          <div className="lead-card-meta">
+            <span data-testid="lead-status" className={`pill status-${lead.status.toLowerCase()}`}>{lead.status}</span>
+            <span>{ownerName(lead.ownerId)}</span>
+            <b>{formatCurrency(lead.value)}</b>
+          </div>
+        </li>
+      ))}
+    </ul>
+    </>
   );
 }

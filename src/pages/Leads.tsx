@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, ListChecks, SlidersHorizontal, Table2 } from 'lucide-react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Download, Search, Settings, SlidersHorizontal } from 'lucide-react';
 import { getAll, getAllSync, newId, removeMany, saveAll, upsert } from '../data/store';
 import { Account, Contact, Deal, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Role, User } from '../types';
 import { Modal } from '../components/Modal';
@@ -9,7 +9,6 @@ import { ContextMenu } from '../components/ContextMenu';
 import { LeadTriageMode } from '../components/LeadTriageMode';
 import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
 import { MassUpdateModal } from '../components/MassUpdateModal';
-import { ToolBoxPanel } from '../components/ToolBoxPanel';
 import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
@@ -19,7 +18,7 @@ import { LeadConvertWizard, WizardState } from './leads/LeadConvertWizard';
 import { LeadFilterPanel } from './leads/LeadFilterPanel';
 import { LeadsPagination } from './leads/LeadsPagination';
 import { LeadsTable, SortKey } from './leads/LeadsTable';
-import { beginOnce, canExportLeads, clearSelection } from './leads/leadsGuards';
+import { beginOnce, canCreateLeads, canExportLeads, clearSelection } from './leads/leadsGuards';
 
 type SortDir = 'asc' | 'desc';
 
@@ -285,55 +284,57 @@ export function Leads() {
   const accounts = getAllSync<Account>('accounts');
 
   return (
-    <div data-testid="leads-page">
+    <div className="leads-screen" data-testid="leads-page">
       <div className="page-header">
-        <h1>Leads</h1>
+        <div>
+          <h1>Leads</h1>
+          {!loading && !loadError && (
+            <p className="page-subtitle">{leads.length} {leads.length === 1 ? 'lead' : 'leads'}, newest first.</p>
+          )}
+        </div>
         <div className="page-actions">
           {createdDays && (
             <button className="btn" data-testid="clear-created-filter" onClick={() => setParams({})}>
               Created in the last {createdDays} days · Show all
             </button>
           )}
+          {(user?.role === 'admin' || user?.role === 'rep') && (
+            <Link className="btn btn-ghost" to="/setup">
+              <Settings size={16} /> Lead setup
+            </Link>
+          )}
           {canExportLeads(user?.role) && (
             <button className="btn" onClick={exportCsv} data-testid="export-csv-btn">
-              <Download size={14} /> Export CSV
+              <Download size={16} /> Export CSV
             </button>
           )}
-          <div className="view-toggle" role="group" aria-label="View mode">
+          <div className="seg" role="group" aria-label="View mode">
             <button
-              className={classNames('btn', mode === 'table' && 'btn-active')}
+              type="button"
+              aria-pressed={mode === 'table'}
               aria-label="Table view"
               data-testid="view-table"
               onClick={() => setMode('table')}
             >
-              <Table2 size={14} /> Table
+              Table
             </button>
             <button
-              className={classNames('btn', mode === 'triage' && 'btn-active')}
+              type="button"
+              aria-pressed={mode === 'triage'}
               aria-label="Triage view"
               data-testid="view-triage"
               onClick={() => setMode('triage')}
             >
-              <ListChecks size={14} /> Triage
+              Triage
             </button>
           </div>
-          <button className="btn btn-create" onClick={() => setLayoutPickerOpen(true)}>
-            + New Lead
-          </button>
+          {canCreateLeads(user?.role) && (
+            <button className="btn leads-primary" onClick={() => setLayoutPickerOpen(true)}>
+              + New Lead
+            </button>
+          )}
         </div>
       </div>
-
-      <ToolBoxPanel
-        module="leads"
-        links={[
-          { label: 'Assignment Rules', to: '/setup/assignment-rules' },
-          { label: 'Dedupe Rule', to: '/setup/dedupe-rules' },
-          { label: 'Status Codes', to: '/setup/status-codes' },
-          { label: 'Import Data', to: '/setup/import' },
-          { label: 'Custom Fields', to: '/admin/objects/leads' },
-          { label: 'Customise Page Layout', to: '/setup/layouts/leads' },
-        ]}
-      />
 
       {mode === 'triage' ? (
         loading ? (
@@ -350,22 +351,27 @@ export function Leads() {
       ) : (
         <>
       <div className="toolbar">
-        <input
-          type="search"
-          className="input search-input"
-          placeholder="Search name, company, email…"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setSelected([]);
-          }}
-        />
+        <div className="leads-find">
+          <Search size={18} aria-hidden="true" />
+          <input
+            type="search"
+            className="input search-input"
+            aria-label="Search leads"
+            placeholder="Search name, company, email…"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelected([]);
+            }}
+          />
+        </div>
         <button
           className={classNames('btn', showFilters && 'btn-active')}
           data-testid="filters-toggle"
+          aria-expanded={showFilters}
           onClick={() => setShowFilters((s) => !s)}
         >
-          <SlidersHorizontal size={14} /> Filters{(statusFilter.length > 0 || sourceFilter || ownerFilter) && ' •'}
+          <SlidersHorizontal size={16} /> Filters{(statusFilter.length > 0 || sourceFilter || ownerFilter) && ' •'}
         </button>
       </div>
 
@@ -440,6 +446,11 @@ export function Leads() {
             onToggleSelectAll={toggleSelectAll}
             onToggleSelect={(id) => setSelected((sel) => (sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]))}
             onOpen={(lead) => navigate(`/leads/${lead.id}`)}
+            onRowMenu={(e, lead) => {
+              e.stopPropagation();
+              const box = e.currentTarget.getBoundingClientRect();
+              setMenu({ x: Math.max(8, box.right - 200), y: box.bottom + 4, lead });
+            }}
             onContextMenu={(e, lead) => {
               e.preventDefault();
               // Without this, right-clicking a second row while the first row's
@@ -448,7 +459,6 @@ export function Leads() {
               e.stopPropagation();
               setMenu({ x: e.clientX, y: e.clientY, lead });
             }}
-            onConvert={openWizard}
           />
 
           <LeadsPagination
