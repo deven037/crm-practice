@@ -9,6 +9,7 @@ import { useAuth } from '../auth/AuthContext';
 import { applyAssignmentRule, findDuplicate, getStatusOptions, matchesCondition } from '../utils/rules';
 import { getCustomFieldsAsModuleFields } from '../utils/moduleFields';
 import { classNames } from '../utils';
+import { canCreateLeads } from './leads/leadsGuards';
 
 /** First outgoing edge from `nodeId` whose condition matches `record`, falling back to the
  * first condition-less ("else") edge — shared by decision/gateway routing and plain single-edge
@@ -169,6 +170,17 @@ export function LeadForm() {
     }
     setCursor(edge.target);
   };
+
+  if (!canCreateLeads(user?.role)) {
+    return (
+      <div data-testid="lead-form-page">
+        <nav className="breadcrumbs">
+          <Link to="/leads">Leads</Link> <span>/</span> <span>New lead</span>
+        </nav>
+        <p className="muted">You have read-only access to leads.</p>
+      </div>
+    );
+  }
 
   return (
     <div data-testid="lead-form-page">
