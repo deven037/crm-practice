@@ -110,7 +110,7 @@ export function App() {
             <Route path="/contacts/new" element={<Protected><ContactForm /></Protected>} />
             <Route path="/contacts/:id" element={<Protected><ContactDetail /></Protected>} />
             <Route path="/accounts" element={<Protected><Accounts /></Protected>} />
-            <Route path="/accounts/new" element={<Protected><AccountForm /></Protected>} />
+            <Route path="/accounts/new" element={<Protected roles={['admin', 'rep']}><AccountForm /></Protected>} />
             <Route path="/accounts/:id" element={<Protected><AccountDetail /></Protected>} />
             <Route path="/products" element={<Protected><Products /></Protected>} />
             <Route path="/products/new" element={<Protected><ProductForm /></Protected>} />

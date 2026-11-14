@@ -34,6 +34,10 @@ function AccountExpandPanel({ account }: { account: Account }) {
         <div>{quotes.length}</div>
       </div>
       <div>
+        <span className="key-info-label">Tickets</span>
+        <div className="muted">Not linked to accounts</div>
+      </div>
+      <div>
         <Link to={`/accounts/${account.id}`}>Open full page ↗</Link>
       </div>
     </div>
