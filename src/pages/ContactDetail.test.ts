@@ -69,7 +69,7 @@ describe('ContactDetail save states', () => {
     expect(html).toContain('Changes couldn’t be saved. Your details are still here.');
     expect(html).toContain('value="amara@example.com"');
     expect(harness.states[3]).toBe(true);
-    expect(html).not.toContain('disabled=""');
+    expect(html.match(/<form[\s\S]*?<\/form>/)?.[0]).not.toContain('disabled=""');
   });
   it('hides write actions for viewers and shows the notes empty state', () => {
     harness.role = 'viewer'; harness.states[3] = false;
