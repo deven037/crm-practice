@@ -8,6 +8,7 @@ const harness = vi.hoisted(() => ({
 vi.mock('react', async (original) => ({
   ...await original<typeof import('react')>(),
   useEffect: () => {},
+  useRef: () => ({ current: null }),
   useState: (initial: unknown) => {
     const index = harness.cursor++;
     if (!(index in harness.states)) harness.states[index] = initial;
