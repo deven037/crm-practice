@@ -9,6 +9,7 @@ import { BulkActionsBar } from '../components/BulkActionsBar';
 import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
 import { ToolBoxPanel } from '../components/ToolBoxPanel';
 import { useToast } from '../components/Toast';
+import { removeRecentViews } from '../hooks/useRecentlyViewed';
 import { classNames, initials } from '../utils';
 
 export function filterContacts(contacts: Contact[], query: string, role: Role | undefined, accounts: Account[]) {
@@ -78,6 +79,7 @@ export function Contacts() {
   const bulkDelete = async () => {
     if (!window.confirm(`Delete ${selected.length} selected contact(s)? This cannot be undone.`)) return;
     await removeMany('contacts', selected);
+    removeRecentViews(selected);
     toast.push('success', `${selected.length} contact(s) deleted.`);
     setSelected([]);
     load();

@@ -18,6 +18,13 @@ function notify() {
   listeners.forEach((l) => l());
 }
 
+/** Drops deleted records so Recently Accessed never links to a record that no longer exists. */
+export function removeRecentViews(ids: string[]) {
+  const current = getValue<RecentRecord[]>(KEY, []);
+  setValue(KEY, current.filter((r) => !ids.includes(r.id)));
+  notify();
+}
+
 /** Automatic last-viewed-record tracking — distinct from any manual "favorite" concept. */
 export function useRecentlyViewed() {
   const [items, setItems] = useState<RecentRecord[]>(() => getValue<RecentRecord[]>(KEY, []));
@@ -37,5 +44,5 @@ export function useRecentlyViewed() {
     notify();
   }, []);
 
-  return { items, recordView };
+  return { items, recordView, removeViews: removeRecentViews };
 }

@@ -39,7 +39,7 @@ export function ContactDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const canWrite = user?.role === 'admin' || user?.role === 'rep';
-  const { recordView } = useRecentlyViewed();
+  const { recordView, removeViews } = useRecentlyViewed();
 
   useEffect(() => {
     let active = true;
@@ -158,9 +158,9 @@ export function ContactDetail() {
           <div className="contact-avatar contact-avatar-lg">
             {contact.avatar ? <img src={contact.avatar} alt={contact.name} /> : initials(contact.name)}
           </div>
-          <button hidden={!canWrite} disabled={busy} className="btn" data-testid="upload-avatar-btn" onClick={() => avatarInput.current?.click()}>
+          {canWrite && <button disabled={busy} className="btn" data-testid="upload-avatar-btn" onClick={() => avatarInput.current?.click()}>
             Upload photo
-          </button>
+          </button>}
           <input ref={avatarInput} type="file" accept="image/*" hidden data-testid="avatar-input" onChange={onAvatarChange} />
         </div>
         <div>
@@ -170,9 +170,9 @@ export function ContactDetail() {
           </p>
         </div>
         <div className="page-actions">
-          <button hidden={!canWrite} disabled={busy} className="btn contact-delete" data-testid="delete-contact-btn" onClick={() => { setSaveError(false); setDeleting(true); }}>
+          {canWrite && <button disabled={busy} className="btn contact-delete" data-testid="delete-contact-btn" onClick={() => { setSaveError(false); setDeleting(true); }}>
             <Trash2 size={14} /> Delete contact
-          </button>
+          </button>}
         </div>
       </div>
 
@@ -215,6 +215,7 @@ export function ContactDetail() {
                   setSaveError(false);
                   try {
                   await removeMany('contacts', [contact.id]);
+                  removeViews([contact.id]);
                   toast.push('success', `Contact "${contact.name}" deleted.`);
                   navigate('/contacts');
                   } catch { setSaveError(true); }
@@ -266,8 +267,7 @@ export function ContactDetail() {
                       </dd>
                       <CustomFieldsSection module="contacts" target="detail" mode="view" values={contact.customFields ?? {}} />
                     </dl>
-                    <button
-                      hidden={!canWrite}
+                    {canWrite && <button
                       disabled={busy}
                       className="btn contact-edit"
                       data-testid="edit-contact-btn"
@@ -279,7 +279,7 @@ export function ContactDetail() {
                       }}
                     >
                       <Pencil size={14} /> Edit
-                    </button>
+                    </button>}
                   </>
                 ) : (
                   draft && (
