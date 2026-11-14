@@ -72,7 +72,7 @@ export function ContactForm() {
     if (!draft.name.trim()) errs.name = 'Name is required.';
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(draft.email.trim())) errs.email = 'Enter a valid email.';
     setErrors(errs);
-    const cErrs = validateCustomFields('contacts', 'form', draft.customFields ?? {});
+    const cErrs = validateCustomFields('contacts', 'form', draft.customFields ?? {}, layout?.tabs.flatMap((tab) => tab.fieldKeys));
     setCustomErrors(cErrs);
     if (Object.keys(errs).length > 0 || Object.keys(cErrs).length > 0) {
       const invalidCustomIds = getAllSync<CustomFieldDef>('customFieldDefs')
@@ -185,7 +185,7 @@ export function ContactForm() {
               />
             </div>
           )}
-          <div className="field">
+          {isVisible('tags') && <div className="field">
             <label className="field-label" htmlFor="contact-tags">Tags</label>
             <MultiSelect
               id="contact-tags"
@@ -195,7 +195,7 @@ export function ContactForm() {
               placeholder="Add tags…"
               testId="contact-tags"
             />
-          </div>
+          </div>}
           <CustomFieldsSection
             module="contacts"
             target="form"

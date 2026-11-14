@@ -6,6 +6,8 @@ const harness = vi.hoisted(() => ({
   states: [] as unknown[],
   cursor: 0,
   role: 'admin',
+  splitLayout: false,
+  omitCustom: false,
   effects: [] as (() => void)[],
   ref: { current: null as unknown },
 }));
@@ -31,7 +33,11 @@ vi.mock('../data/store', () => ({
   getAllSync: (key: string) => {
     if (key === 'pageLayouts') return [{
       id: 'default', module: 'contacts', isDefault: true, name: 'Default',
-      tabs: [{ id: 'details', label: 'Contact details', fieldKeys: ['name', 'email', 'phone', 'title', 'custom-name'] }],
+      tabs: harness.splitLayout ? [
+        { id: 'phone', label: 'Phone', fieldKeys: ['phone'] },
+        { id: 'details', label: 'Contact details', fieldKeys: ['name', 'email', 'title'] },
+        { id: 'custom', label: 'Branch information', fieldKeys: harness.omitCustom ? [] : ['custom-name'] },
+      ] : [{ id: 'details', label: 'Contact details', fieldKeys: ['name', 'email', 'phone', 'title', 'custom-name'] }],
     }];
     if (key === 'customFieldDefs') return [{
       id: 'custom-name', module: 'contacts', key: 'customName', label: 'Custom name', type: 'text', required: true,
@@ -70,6 +76,8 @@ function nodes(node: ReactNode): import('react').ReactElement<NodeProps>[] {
 
 beforeEach(() => {
   harness.role = 'admin';
+  harness.splitLayout = false;
+  harness.omitCustom = false;
   vi.clearAllMocks();
   harness.states = [];
   harness.cursor = 0;
@@ -169,4 +177,45 @@ describe('ContactForm Harbor states', () => {
     expect(html).toContain('value="morgan@example.com"');
     expect(html).not.toContain('disabled=""');
   });
+});
+
+describe('ContactForm cross-tab validation', () => {
+  it.each(['standard', 'custom'])('reveals and focuses an invalid %s field on an inactive tab', async (kind) => {
+    harness.splitLayout = true;
+    let tree = ContactForm();
+    if (kind === 'custom') {
+      const draft = harness.states[1];
+      if (typeof draft !== 'object' || draft === null) throw new Error('Missing draft');
+      harness.states[1] = { ...draft, name: 'Amara', email: 'amara@example.com' };
+      harness.cursor = 0;
+      tree = ContactForm();
+    }
+    expect(renderToStaticMarkup(tree)).not.toContain('aria-invalid="true"');
+    await nodes(tree).find((node) => node.type === 'form')?.props.onSubmit?.({ preventDefault: vi.fn() });
+    harness.cursor = 0;
+    harness.effects = [];
+    const html = renderToStaticMarkup(ContactForm());
+    const id = kind === 'standard' ? 'contact-name' : 'custom-field-custom-name';
+    expect(harness.states[0]).toBe(kind === 'standard' ? 'details' : 'custom');
+    expect(html).toContain('id="' + id + '"');
+    expect(html).toContain('aria-describedby="' + id + '-error"');
+    const focus = vi.fn();
+    harness.ref.current = { querySelector: vi.fn(() => ({ focus })) };
+    harness.effects[0]();
+    expect(focus).toHaveBeenCalledOnce();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+});
+
+it('does not block a chosen layout on required custom fields omitted from that layout', async () => {
+  harness.splitLayout = true;
+  harness.omitCustom = true;
+  ContactForm();
+  const draft = harness.states[1];
+  if (typeof draft !== 'object' || draft === null) throw new Error('Missing draft');
+  harness.states[1] = { ...draft, name: 'Amara', email: 'amara@example.com' };
+  harness.cursor = 0;
+  vi.mocked(upsert).mockResolvedValueOnce({ ...draft, id: 'contact-1', name: 'Amara' });
+  await nodes(ContactForm()).find((node) => node.type === 'form')?.props.onSubmit?.({ preventDefault: vi.fn() });
+  expect(upsert).toHaveBeenCalledOnce();
 });

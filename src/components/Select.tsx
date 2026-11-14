@@ -136,8 +136,6 @@ export function Select({ value, options, onChange, placeholder = 'Selectâ€¦', te
               <li
                 key={option.value}
                 role="option"
-                tabIndex={0}
-                onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }}
                 aria-selected={option.value === value}
                 className={option.value === value ? 'selected' : ''}
                 onClick={() => {
@@ -205,8 +203,6 @@ export function SearchableSelect({ value, options, onChange, placeholder = 'Sele
                 <li
                   key={option.value}
                   role="option"
-                  tabIndex={0}
-                onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }}
                   aria-selected={option.value === value}
                   className={option.value === value ? 'selected' : ''}
                   onClick={() => {
@@ -247,8 +243,8 @@ export function MultiSelect({ values, options, onChange, placeholder = 'Selectâ€
     <div className="select" ref={ref}>
       <button
         type="button"
-        className="select-trigger multi"
         id={id}
+        className="select-trigger multi"
         data-testid={testId}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -285,8 +281,6 @@ export function MultiSelect({ values, options, onChange, placeholder = 'Selectâ€
               <li
                 key={option.value}
                 role="option"
-                tabIndex={0}
-                onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } }}
                 aria-selected={values.includes(option.value)}
                 onClick={() => toggle(option.value)}
               >

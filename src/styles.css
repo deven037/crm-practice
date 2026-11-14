@@ -1394,7 +1394,7 @@ div.empty-cell > p { margin: 4px 0 16px; }
 .contact-record .note-item p, .contact-record .file-list li { overflow-wrap: anywhere; }
 .contact-record .file-list li { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 @media (max-width: 780px) {
-  .contact-screen { margin: 0 calc(-1 * var(--space-2)); padding: 0; }
+  .contact-screen { padding: 0; }
   .contact-screen .form-grid { grid-template-columns: minmax(0, 1fr); }
   .contact-record .key-info-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .contact-record .detail-list { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
