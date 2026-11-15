@@ -59,7 +59,7 @@ code{font-size:13px;background:var(--surface-3);padding:2px 6px;border-radius:4p
  <nav class="crumbs" aria-label="Breadcrumb"><a href="#">Setup</a> / <a href="#">Assignment Rules</a> / <span aria-current="page">Referral leads to Tomas</span></nav>
  <div class="head">
   <div><div class="title"><h1>Referral leads to Tomas</h1><span class="pill on">Active</span></div>
-   <p class="sub">Runs 2nd of 5 rules</p></div>
+   <p class="sub">Runs 2nd of 5 active Leads rules</p></div>
   <div class="acts"><button class="btn" type="button"><svg class="i" aria-hidden="true"><use href="#edit"/></svg>Edit</button><button class="btn ghost-danger" type="button"><svg class="i" aria-hidden="true"><use href="#trash"/></svg>Delete</button></div>
  </div>
 
@@ -87,8 +87,8 @@ code{font-size:13px;background:var(--surface-3);padding:2px 6px;border-radius:4p
   <section class="glass" style="text-align:center;margin-top:12px"><p style="margin:0 0 12px">Rule not found.</p><a class="btn" href="#">Back to Assignment Rules</a></section></div>
 
  <section class="spec" aria-label="Build notes"><h2>Build notes</h2><div class="boxes">
-  <div class="box"><h3>Layout</h3><p>Title with Active/Inactive pill, Edit and Delete at right. Summary surface holds Module, Assign to, Priority and one sentence in plain words. Conditions list reads “If … and …”. “Runs 2nd of 5 rules” is new and uses the stored rule list sorted by priority.</p></div>
-  <div class="box"><h3>Kept as is</h3><p>Edit goes to <code>/setup/assignment-rules/:id/edit</code>; Delete opens the Modal; <code>confirm-delete-btn</code> and <code>assignment-rule-detail-page</code> stay. Toast and redirect unchanged. Roles: Edit and Delete show for admin and rep today; this design does not change that.</p></div>
+  <div class="box"><h3>Layout</h3><p>Title with Active/Inactive pill, Edit and Delete at right. Summary surface holds Module, Assign to, Priority and one sentence in plain words. Conditions list reads “If … and …”. The rank line is new. It counts only active rules of this rule’s module, sorted by priority, because <code>applyAssignmentRule</code> filters by module and active. An inactive rule shows “Inactive, never runs” instead of a rank.</p></div>
+  <div class="box"><h3>Kept as is</h3><p>Edit goes to <code>/setup/assignment-rules/:id/edit</code>; Delete opens the Modal; <code>confirm-delete-btn</code> and <code>assignment-rule-detail-page</code> stay. Toast and redirect unchanged. Roles: the detail route allows admin and rep (<code>App.tsx</code>), and the page itself shows Edit and Delete to both. The list is read-only for non-admins. This inconsistency exists today; the design does not change it, and Alex builds the detail as it behaves now.</p></div>
   <div class="box"><h3>Delete</h3><p>Outline-danger in the header, filled danger only inside the dialog, so only one filled danger is ever on screen.</p></div>
   <div class="box"><h3>390 px</h3><p>Edit and Delete share the row at 44 px; summary fields wrap to two columns; the dialog buttons stack full width with Delete rule on top and Cancel below.</p></div>
  </div></section>

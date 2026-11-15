@@ -103,12 +103,22 @@ code{font-size:12px;background:var(--surface-3);padding:1px 5px;border-radius:4p
   </section>
  </form>
 
- <div class="state"><h2>Validation error</h2><span>Shown on Save with empty required fields. Name and Assign to keep the toast “Name and an assign-to user are required.” as well. Nothing typed is cleared.</span>
-  <div class="banner" role="alert" style="margin-top:12px">Name and an assign-to user are required.</div>
+ <div class="state"><h2>Validation error</h2><span>Shown on Save. One error channel: inline messages under each field, plus the existing toast “Name and an assign-to user are required.” There is no in-page banner. Nothing typed is cleared. Focus moves to the first invalid field.</span>
   <section class="glass"><div class="grid">
    <div class="field"><label for="n2">Name *</label><input class="in" id="n2" aria-invalid="true" aria-describedby="n2e"><span class="err" id="n2e">Enter a name for this rule.</span></div>
    <div class="field"><label for="a2">Assign to *</label><select class="in" id="a2" aria-invalid="true" aria-describedby="a2e"><option>Choose user…</option></select><span class="err" id="a2e">Choose who owns matching records.</span></div>
+   <div class="field"><label for="p2">Priority</label><input class="in" id="p2" type="number" min="1" value="0" aria-invalid="true" aria-describedby="p2e"><span class="err" id="p2e">Enter a whole number of 1 or more.</span></div>
   </div></section></div>
+
+ <div class="state"><h2>No conditions</h2><span>A rule with no conditions never runs (verified in <code>applyAssignmentRule</code>), so Remove is allowed but Save is blocked. The message is inline in the Conditions surface; the toast is not used for this.</span>
+  <section class="glass"><h2>Conditions</h2>
+   <p class="err" id="nc" role="alert" style="margin:12px 0 0">Add at least one condition. A rule with no conditions never runs.</p>
+   <button class="btn" type="button" style="margin-top:12px" aria-describedby="nc"><svg class="i" aria-hidden="true"><use href="#plus"/></svg>Add condition</button>
+  </section></div>
+
+ <div class="state"><h2>Save failed</h2><span>If the save request fails, the existing error toast reports it (no banner). The button returns to “Save rule”, the form stays as typed, and Save can be pressed again. The build must catch the failed upsert; today it is not caught.</span>
+  <div class="banner" role="status" style="margin-top:12px;max-width:420px">Couldn’t save the rule. Your changes are still here. Try again.</div>
+  <div class="acts" style="margin-top:12px"><button class="btn" type="button">Cancel</button><button class="btn primary" type="button">Save rule</button></div></div>
 
  <div class="state"><h2>Saving</h2><span>Button disabled with spinner, label “Saving…”. Fields stay as typed.</span>
   <div class="acts" style="margin-top:12px"><button class="btn" type="button" disabled>Cancel</button><button class="btn primary" type="button" disabled><span class="spin" aria-hidden="true"></span>Saving…</button></div></div>
@@ -122,7 +132,7 @@ code{font-size:12px;background:var(--surface-3);padding:1px 5px;border-radius:4p
  <section class="spec" aria-label="Build notes"><h2>Build notes</h2><div class="boxes">
   <div class="box"><h3>Layout</h3><p>One 880 px column. Two surfaces: details, then conditions. Save and Cancel sit in a bar above the form, as today (Save is the single primary). Labels above inputs, 44 px controls. Priority gets a helper line.</p></div>
   <div class="box"><h3>Conditions</h3><p>Each condition is a row of Field, Operator, Value and Remove, with “and” between rows, because every condition must match. Value stays a select, true/false select or input by field kind. Changing Module resets conditions, as today. “+ Add condition” becomes “Add condition”.</p></div>
-  <div class="box"><h3>Kept as is</h3><p>Validation logic, toast text, redirects after save. Hooks: <code>assignment-rule-form-page, assignment-rule-name, -module, -assignto, -save-btn, -condition-field-N, -condition-value-N</code>. Inline errors are new and show only after Save is pressed.</p></div>
+  <div class="box"><h3>Kept as is</h3><p>Validation logic, toast text, redirects after save. Hooks: <code>assignment-rule-form-page, assignment-rule-name, -module, -assignto, -save-btn, -condition-field-N, -condition-value-N</code>. Inline errors are new and show only after Save is pressed. Priority must be a whole number of 1 or more (the code uses <code>Number(value)</code>, which can give 0 or NaN). Zero conditions blocks Save. One error channel: inline plus toast, no banner.</p></div>
   <div class="box"><h3>390 px</h3><p>Single column, Save above Cancel, full width, 44 px. Condition rows stack with Remove under them. No horizontal scroll (the old table scrolled).</p></div>
  </div></section>
 </main>
