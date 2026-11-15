@@ -1,4 +1,4 @@
-import { isValidElement, ReactElement, ReactNode } from 'react';
+import { ComponentProps, isValidElement, ReactElement, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccountDetail } from './AccountDetail';
 import { CampaignDetail } from './CampaignDetail';
@@ -7,12 +7,16 @@ import { LeadDetail } from './LeadDetail';
 import { ProductDetail } from './ProductDetail';
 import { QuoteDetail } from './QuoteDetail';
 import { TicketDetail } from './TicketDetail';
+import { Tickets } from './Tickets';
+import { TicketReadingPane } from '../components/TicketReadingPane';
+import { Ticket } from '../types';
 
 const harness = vi.hoisted(() => ({
   states: [] as unknown[],
   effects: [] as (() => void)[],
   cursor: 0,
   record: null as unknown,
+  tickets: [] as unknown[],
   removeViews: vi.fn(),
   removeMany: vi.fn(),
   navigate: vi.fn(),
@@ -24,10 +28,12 @@ vi.mock('react', async (original) => ({
     if (!(index in harness.states)) harness.states[index] = initial;
     return [harness.states[index], (value: unknown) => { harness.states[index] = value; }];
   },
+  useMemo: (factory: () => unknown) => factory(),
   useRef: (initial: unknown) => ({ current: initial }),
   useEffect: (effect: () => void) => { harness.effects.push(effect); },
 }));
 vi.mock('react-router-dom', () => ({
+  useSearchParams: () => [new URLSearchParams()],
   useParams: () => ({ id: 'rec-1' }), useNavigate: () => harness.navigate, Link: () => null,
 }));
 vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: { role: 'admin' } }) }));
@@ -38,18 +44,18 @@ vi.mock('../components/Toast', () => ({ useToast: () => ({ push: vi.fn() }) }));
 vi.mock('../data/store', async (original) => ({
   ...await original<typeof import('../data/store')>(),
   getById: async () => harness.record,
-  getAll: async () => [],
+  getAll: async () => harness.tickets,
   getAllSync: () => [],
   removeMany: harness.removeMany,
   saveAll: vi.fn(),
   upsert: vi.fn(),
 }));
 
-interface NodeProps { children?: ReactNode; footer?: ReactNode; actions?: ReactNode; onClick?: () => unknown; 'data-testid'?: string }
+interface NodeProps { children?: ReactNode; footer?: ReactNode; actions?: ReactNode; list?: ReactNode; detail?: ReactNode; onClick?: () => unknown; 'data-testid'?: string }
 function nodes(node: ReactNode): ReactElement<NodeProps>[] {
   if (Array.isArray(node)) return node.flatMap(nodes);
   if (!isValidElement<NodeProps>(node)) return [];
-  return [node, ...nodes(node.props.children), ...nodes(node.props.footer), ...nodes(node.props.actions)];
+  return [node, ...nodes(node.props.children), ...nodes(node.props.footer), ...nodes(node.props.actions), ...nodes(node.props.list), ...nodes(node.props.detail)];
 }
 
 const modules: { name: string; page: () => ReactNode; record: object }[] = [
@@ -85,6 +91,7 @@ function confirmDelete(page: () => ReactNode) {
 beforeEach(() => {
   harness.states = [];
   harness.record = null;
+  harness.tickets = [];
   harness.removeViews.mockReset();
   harness.removeMany.mockReset();
   harness.navigate.mockReset();
@@ -108,6 +115,57 @@ describe('Recently Accessed drops records that no longer exist (AIO-419)', () =>
       await confirmDelete(page).props.onClick?.();
       expect(harness.removeMany).toHaveBeenCalled();
       expect(harness.removeViews).toHaveBeenCalledWith(['rec-1']);
+    },
+  );
+});
+
+const closedTicket: Ticket = {
+  id: 'rec-1', subject: 'Dashboard loads slowly', description: '', requester: 'Admin',
+  priority: 'Medium', status: 'Closed', slaDue: '', createdAt: '', comments: [], attachments: [],
+};
+
+async function ticketDeleteButton(page: () => ReactNode) {
+  harness.record = closedTicket;
+  harness.tickets = [closedTicket];
+  await load(page);
+  if (page === Tickets) {
+    render(page).find((node) => node.props['data-testid'] === 'ticket-inbox-row-rec-1')?.props.onClick?.();
+  }
+  const pane = render(page).find((node) => node.type === TicketReadingPane);
+  if (!isValidElement<ComponentProps<typeof TicketReadingPane>>(pane)) throw new Error('Ticket pane missing');
+  harness.states = [];
+  const renderPane = () => TicketReadingPane(pane.props);
+  render(renderPane).find((node) => node.props['data-testid'] === 'delete-ticket-btn')?.props.onClick?.();
+  const confirm = render(renderPane).find((node) => node.props['data-testid'] === 'confirm-delete-btn');
+  if (!confirm?.props.onClick) throw new Error('Ticket delete confirmation missing');
+  return confirm.props.onClick;
+}
+
+describe('Ticket delete removes Recently Accessed from both callers (AIO-422)', () => {
+  it.each([['detail', TicketDetail], ['inbox', Tickets]] as const)(
+    'removes the row only after successful deletion from %s',
+    async (_name, page) => {
+      const confirm = await ticketDeleteButton(page);
+      let finishDelete: () => void = () => {};
+      harness.removeMany.mockImplementation(() => new Promise<void>((resolve) => { finishDelete = resolve; }));
+      const pending = confirm();
+      expect(harness.removeMany).toHaveBeenCalledWith('tickets', ['rec-1']);
+      expect(harness.removeViews).not.toHaveBeenCalled();
+      finishDelete();
+      await pending;
+      expect(harness.removeViews).toHaveBeenCalledExactlyOnceWith(['rec-1']);
+      if (page === TicketDetail) expect(harness.navigate).toHaveBeenCalledWith('/tickets');
+    },
+  );
+
+  it.each([['detail', TicketDetail], ['inbox', Tickets]] as const)(
+    'keeps the row when deletion fails from %s',
+    async (_name, page) => {
+      const confirm = await ticketDeleteButton(page);
+      harness.removeMany.mockRejectedValueOnce(new Error('Delete failed'));
+      await expect(confirm()).rejects.toThrow('Delete failed');
+      expect(harness.removeViews).not.toHaveBeenCalled();
+      expect(harness.navigate).not.toHaveBeenCalled();
     },
   );
 });
