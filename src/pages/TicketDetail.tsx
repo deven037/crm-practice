@@ -47,7 +47,10 @@ export function TicketDetail() {
         testId="ticket-detail-page"
         ticket={ticket}
         onUpdate={setTicket}
-        onDeleted={() => navigate('/tickets')}
+        onDeleted={() => {
+          removeViews([ticket.id]);
+          navigate('/tickets');
+        }}
       />
     </div>
   );

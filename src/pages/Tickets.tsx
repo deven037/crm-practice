@@ -7,6 +7,7 @@ import { Kanban } from '../components/Kanban';
 import { SplitPane } from '../components/SplitPane';
 import { TicketReadingPane } from '../components/TicketReadingPane';
 import { ToolBoxPanel } from '../components/ToolBoxPanel';
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { classNames, formatDateTime, isOverdue } from '../utils';
@@ -17,6 +18,7 @@ const STATUS_FILTERS = ['All', ACTIVE_FILTER, 'Open', 'In Progress', 'Resolved',
 export function Tickets() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { removeViews } = useRecentlyViewed();
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [params] = useSearchParams();
@@ -152,6 +154,7 @@ export function Tickets() {
                 onUpdate={updateTicket}
                 onDeleted={() => {
                   const deletedId = selected.id;
+                  removeViews([deletedId]);
                   setTickets((prev) => prev.filter((t) => t.id !== deletedId));
                   setSelectedId(null);
                 }}
