@@ -74,6 +74,7 @@ const deal: Deal = {
   id: 'd1', name: 'Pilot', accountId: 'a1', amount: 100, stage: 'Closed Lost',
   probability: 0, closeDate: '', ownerId: 'u1', createdAt: '',
 };
+const noRelatedFailure = { contacts: false, deals: false, quotes: false };
 const product: Product = {
   id: 'p1', name: 'Service', sku: 'S1', category: 'Service', price: 100,
   description: '', active: true, createdAt: '',
@@ -94,7 +95,7 @@ beforeEach(() => {
 });
 describe('AIO-401 fresh affected-record writes', () => {
   it.each([false, true])('account unlink delegates to guarded DELETE (empty stale relation list: %s)', async (empty) => {
-    harness.states = [account, false, empty ? [] : [contact], empty ? [] : [deal], [], false, null, true];
+    harness.states = [account, false, empty ? [] : [contact], empty ? [] : [deal], [], noRelatedFailure, false, null, true];
     await action(AccountDetail(), 'confirm-delete-btn');
     expect(harness.read).not.toHaveBeenCalled();
     expect(harness.save).not.toHaveBeenCalled();
@@ -146,7 +147,7 @@ describe('AIO-401 fresh affected-record writes', () => {
   });
 
   it.each([false, true])('account remains when a fresh open deal blocks DELETE (empty stale relation list: %s)', async (empty) => {
-    harness.states = [account, false, [contact], empty ? [] : [deal], [], false, null, true];
+    harness.states = [account, false, [contact], empty ? [] : [deal], [], noRelatedFailure, false, null, true];
     const serverAccounts = new Map([[account.id, account]]);
     const freshDeal = { ...deal, stage: 'Proposal' };
     harness.remove.mockImplementation(async (key: string, ids: string[]) => {
@@ -161,7 +162,7 @@ describe('AIO-401 fresh affected-record writes', () => {
     expect(harness.save).not.toHaveBeenCalled();
     expect(serverAccounts.get(account.id)).toEqual(account);
     expect(freshDeal.accountId).toBe(account.id);
-    expect(harness.states[10]).toBe(true);
-    expect(harness.states[9]).toBe(false);
+    expect(harness.states[11]).toBe(true);
+    expect(harness.states[10]).toBe(false);
   });
 });
