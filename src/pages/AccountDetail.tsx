@@ -60,7 +60,6 @@ export function AccountDetail() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [relatedFailed, setRelatedFailed] = useState({ contacts: false, deals: false, quotes: false });
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Account | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -69,6 +68,7 @@ export function AccountDetail() {
   const [deleteError, setDeleteError] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [relatedFailed, setRelatedFailed] = useState({ contacts: false, deals: false, quotes: false });
   const navigate = useNavigate();
   const { user } = useAuth();
   const canWrite = canWriteAccounts(user?.role);
