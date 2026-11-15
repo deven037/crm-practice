@@ -11,6 +11,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 it('labels the dialog, makes it focusable and describes it by its body', () => {
   vi.stubGlobal('document', { body: {} });
+  vi.stubGlobal('HTMLElement', class {});
   const html = renderToStaticMarkup(createElement(Modal, { title: 'Delete Acme?', onClose: vi.fn(), children: 'This cannot be undone.' }));
   const describedBy = /aria-describedby="([^"]+)"/.exec(html)?.[1];
   expect(html).toContain('tabindex="-1"');
