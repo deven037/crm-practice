@@ -36,10 +36,15 @@ export function SlaManagement() {
       return;
     }
     setBusyId(config.id);
-    await upsert('slaConfigs', { ...config, hours });
-    setBusyId(null);
-    toast.push('success', `${config.priority} SLA set to ${hours}h.`);
-    load();
+    try {
+      await upsert('slaConfigs', { ...config, hours });
+      toast.push('success', `${config.priority} SLA set to ${hours}h.`);
+      load();
+    } catch {
+      toast.push('error', `Could not save ${config.priority} SLA. Try again.`);
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const ordered = PRIORITY_ORDER.map((p) => configs.find((c) => c.priority === p)).filter((c): c is SlaConfig => Boolean(c));
