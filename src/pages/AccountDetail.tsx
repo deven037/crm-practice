@@ -238,7 +238,7 @@ export function AccountDetail() {
               >
                 <Pencil size={14} /> Edit
               </button>
-              <button className="btn btn-danger" data-testid="delete-account-btn" onClick={() => setDeleting(true)}>
+              <button className="btn btn-danger" data-testid="delete-account-btn" onClick={() => { setCascade('unlink'); setDeleting(true); }}>
                 <Trash2 size={14} /> Delete
               </button>
             </>
