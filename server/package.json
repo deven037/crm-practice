@@ -6,24 +6,29 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json && node --input-type=module -e \"import { copyFileSync } from 'node:fs'; copyFileSync('src/openapi.yaml', 'dist/openapi.yaml')\"",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "tsx --test test/accounts.contract.ts test/search.contract.ts test/tenancy.isolation.ts"
   },
   "dependencies": {
-    "express": "^4.21.2",
+    "@electric-sql/pglite": "^0.5.16",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
-    "jsonwebtoken": "^9.0.2",
-    "zod": "^3.24.1",
+    "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.23.1",
     "swagger-ui-express": "^5.0.1",
-    "yaml": "^2.6.1"
+    "yaml": "^2.6.1",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
-    "typescript": "^5.6.3",
-    "tsx": "^4.19.2",
-    "@types/express": "^4.17.21",
     "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.10.1",
+    "@types/pg": "^8.23.1",
     "@types/swagger-ui-express": "^4.1.7",
-    "@types/node": "^22.10.1"
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
   }
 }

@@ -14,4 +14,16 @@ export const env = {
   analysisGithubRef: process.env.ANALYSIS_GITHUB_REF ?? 'main',
   analysisWorkflowSecret: process.env.ANALYSIS_WORKFLOW_SECRET ?? '',
   publicApiUrl: process.env.PUBLIC_API_URL ?? '',
+  // PostgreSQL connection string (Neon). Empty: PGlite, a Postgres that runs inside this process.
+  databaseUrl: process.env.DATABASE_URL ?? '',
+  // Folder PGlite keeps its files in. Empty: memory only (tests).
+  pgliteDir: process.env.PGLITE_DIR ?? (process.env.NODE_ENV === 'test' ? '' : '.data/pglite'),
+  bcryptRounds: Number(process.env.BCRYPT_ROUNDS ?? 10),
+  // The platform owner's sign-in. Unset: nobody can sign in to the platform console.
+  platformAdminEmail: (process.env.PLATFORM_ADMIN_EMAIL ?? '').trim().toLowerCase(),
+  platformAdminPassword: process.env.PLATFORM_ADMIN_PASSWORD ?? '',
+  demoBankName: process.env.BANK_NAME?.trim() || 'Harbor Demo Bank',
+  // The public demo bank keeps the practice app's open reset and forgot-password routes.
+  demoOpenRoutes: process.env.DEMO_OPEN_ROUTES !== 'false',
+  registerRateLimitMax: Number(process.env.REGISTER_RATE_LIMIT_MAX ?? 10),
 };

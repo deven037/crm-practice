@@ -3,7 +3,9 @@ import { z } from 'zod';
 import { store, newId } from '../db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validateBody } from '../middleware/validate.js';
-import { notFound, forbidden, conflict } from '../errors.js';
+import { ApiError, notFound, forbidden, conflict } from '../errors.js';
+import { DEMO_BANK_ID } from '../banks.js';
+import { demoPasswordHash, hashPassword, passwordProblem } from '../passwords.js';
 import { userCreateSchema, userUpdateSchema } from '../schemas/user.js';
 import { User } from '../types.js';
 
@@ -27,12 +29,22 @@ usersRouter.get('/:id', requireAuth, requireRole('admin', 'rep'), (req, res) => 
 
 usersRouter.post('/', requireAuth, requireRole('admin', 'rep'), validateBody(userCreateSchema), (req, res) => {
   const body = req.body as z.infer<typeof userCreateSchema>;
+  const email = body.email.trim().toLowerCase();
+  if (store.users.all().some((u) => u.email.toLowerCase() === email)) {
+    throw conflict('email_taken', 'A user with this email already exists.');
+  }
+  // Only the public demo bank falls back to the documented demo password.
+  // Every other bank must choose one, and it has to meet the password rules.
+  const isDemo = req.user!.bankId === DEMO_BANK_ID;
+  if (!body.password && !isDemo) throw new ApiError(422, 'validation_error', 'Password is required.');
+  const problem = body.password && !isDemo ? passwordProblem(body.password) : null;
+  if (problem) throw new ApiError(422, 'validation_error', problem);
   const user: User = {
     id: newId('user'),
     name: body.name,
     email: body.email,
     phone: body.phone,
-    password: body.password || 'Pass@123',
+    password: body.password ? hashPassword(body.password) : demoPasswordHash(),
     role: body.role,
     active: body.active,
   };

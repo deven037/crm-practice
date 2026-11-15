@@ -1,6 +1,8 @@
-import { Router } from 'express';
+import { Request, Router } from 'express';
 import { store } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
+import { DEMO_BANK_ID, publicBank } from '../banks.js';
+import { apiBase } from './auth.js';
 
 export const bootstrapRouter = Router();
 
@@ -9,23 +11,28 @@ function publicUser(u: any) {
   return rest;
 }
 
-// Bank identity for the app shell; null when the environment has no bank name, so the
-// client can show the Harbor default with a plain-language message and Retry.
-function bankProfile() {
-  const name = process.env.BANK_NAME?.trim();
-  if (!name) return null;
+// Identity of the signed-in user's bank for the app shell: name, logo, colour and region.
+function bankProfile(req: Request) {
+  const bank = req.bank!;
+  const shown = publicBank(bank, apiBase(req));
   return {
-    name,
-    logoUrl: process.env.BANK_LOGO_URL?.trim() || null,
-    color: process.env.BANK_COLOR?.trim() || null,
+    id: bank.id,
+    name: bank.displayName,
+    // The demo bank may still take its logo from the environment, as before 3.0.
+    logoUrl: shown.logoUrl ?? (bank.id === DEMO_BANK_ID ? process.env.BANK_LOGO_URL?.trim() || null : null),
+    loginImageUrl: shown.loginImageUrl,
+    color: bank.profile.brandColor || null,
+    currency: bank.profile.currency,
+    locale: bank.profile.locale,
+    timezone: bank.profile.timezone,
   };
 }
 
 // One combined payload shaped like buildSeedData()'s return value, for the client's
 // initStore() to pre-warm its cache with every collection at boot.
-bootstrapRouter.get('/', requireAuth, (_req, res) => {
+bootstrapRouter.get('/', requireAuth, (req, res) => {
   res.json({
-    bankProfile: bankProfile(),
+    bankProfile: bankProfile(req),
     users: store.users.all().map(publicUser),
     accounts: store.accounts.all(),
     products: store.products.all(),
