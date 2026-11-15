@@ -102,6 +102,11 @@ let dbPromise: Promise<Db> | undefined;
 export function getDb(): Promise<Db> {
   if (!dbPromise) {
     dbPromise = (async () => {
+      // On the hosted service a missing connection string must stop the start-up:
+      // falling back to PGlite there would keep data on a disk that is wiped on every deploy.
+      if (!env.databaseUrl && process.env.REQUIRE_DATABASE_URL === 'true') {
+        throw new Error('DATABASE_URL is not set. Add the PostgreSQL connection string to this service.');
+      }
       const db = env.databaseUrl ? await openPostgres(env.databaseUrl) : await openPglite(env.pgliteDir);
       for (const statement of SCHEMA) await db.query(statement);
       return db;

@@ -1,0 +1,58 @@
+# Render blueprint for CRM 3.0 (branch v3). Free plan only.
+# In Render: New > Blueprint > this repository, branch v3, blueprint path render.v3.yaml.
+# The existing staging and production services are not part of this file and are not touched.
+services:
+  # The API.
+  - type: web
+    name: harbor-crm-v3-api
+    runtime: node
+    plan: free
+    region: singapore # next to the Neon database
+    branch: v3
+    rootDir: server
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      # Neon connection string. Typed in by the owner in Render; never stored in this repository.
+      - key: DATABASE_URL
+        sync: false
+      # The API refuses to start without DATABASE_URL instead of quietly using a local database.
+      - key: REQUIRE_DATABASE_URL
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 12h
+      # Platform owner sign-in. Typed in by the owner in Render.
+      - key: PLATFORM_ADMIN_EMAIL
+        sync: false
+      - key: PLATFORM_ADMIN_PASSWORD
+        sync: false
+      - key: CORS_ORIGIN
+        value: https://harbor-crm-v3.onrender.com,http://localhost:5173
+      - key: BANK_NAME
+        value: Harbor Demo Bank
+      - key: LOGIN_RATE_LIMIT_MAX
+        value: "50"
+      - key: RESET_RATE_LIMIT_MAX
+        value: "10"
+      - key: REGISTER_RATE_LIMIT_MAX
+        value: "10"
+
+  # The web app.
+  - type: web
+    name: harbor-crm-v3
+    runtime: static
+    branch: v3
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://harbor-crm-v3-api.onrender.com
+      - key: VITE_APP_ENV
+        value: v3
