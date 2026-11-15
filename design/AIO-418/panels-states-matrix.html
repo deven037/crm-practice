@@ -109,7 +109,7 @@ ol.dec{margin:0;padding-left:20px;max-width:80ch}ol.dec li{margin:0 0 8px}
    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">Q</span><span class="recent-item-name">Q-2041</span><span class="recent-when">Viewed 18 min ago</span><span class="recent-item-meta"><span>Status: Sent</span></span></a></div></section>
   <section class="toolbox-col"><h3 class="toolbox-col-head">ToolBox</h3><div class="toolbox-body"><div class="search-hint">No ToolBox items for this module.</div></div></section></div></div></div>
 
- <div class="tile"><h3>Loading (build target)</h3><p class="cap">Three skeleton rows the same height as real rows (52 px) so nothing jumps. ToolBox links stay visible. Shimmer stops under reduced motion. The panel is outside any page-level loading: Deals and Tickets keep it above their own skeleton or error.</p>
+ <div class="tile"><h3>Loading (reference only, not built)</h3><p class="cap">Not real today: the recents read is synchronous (see "Which states are real"). Three skeleton rows the same height as real rows (52 px) so nothing jumps. ToolBox links stay visible. Shimmer stops under reduced motion. The panel is outside any page-level loading: Deals and Tickets keep it above their own skeleton or error.</p>
  <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
   <section class="toolbox-col" role="status" aria-label="Loading recently accessed"><h3 class="toolbox-col-head">Recently Accessed</h3><div class="toolbox-body">
    <div class="sk"><i class="g"></i><i class="a"></i><i class="b"></i></div><div class="sk"><i class="g"></i><i class="a"></i><i class="b"></i></div><div class="sk"><i class="g"></i><i class="a"></i><i class="b"></i></div></div></section>
@@ -129,7 +129,7 @@ ol.dec{margin:0;padding-left:20px;max-width:80ch}ol.dec li{margin:0 0 8px}
    <a class="recent-item ghost" href="#"><span class="recent-glyph" aria-hidden="true">L</span><span class="recent-item-name">Tomas Weber</span><span class="recent-when">Viewed 22 min ago</span><span class="recent-item-meta"><span>Deleted in another tab. Opens "not found".</span></span></a></div></section>
   <section class="toolbox-col"><h3 class="toolbox-col-head">ToolBox</h3><div class="toolbox-body"><div class="search-hint">Unchanged.</div></div></section></div></div></div>
 
- <div class="tile"><h3>Deleted record: proposed, all 8 modules</h3><p class="cap">When a record is deleted, or its page reports "not found", its row is removed. The panel announces it politely and the row collapses in 160 ms (instant under reduced motion). The same call Contacts already uses, extended to the other seven.</p>
+ <div class="tile"><h3>Deleted record: proposed, all 8 modules (follow-up ticket, not built here)</h3><p class="cap">When a record is deleted, or its page reports "not found", its row is removed. The panel announces it politely and the row collapses in 160 ms (instant under reduced motion). The same call Contacts already uses, extended to the other seven.</p>
  <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
   <section class="toolbox-col"><h3 class="toolbox-col-head">Recently Accessed</h3><div class="toolbox-body">
    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">L</span><span class="recent-item-name">Priya Nair</span><span class="recent-when">Viewed 4 min ago</span><span class="recent-item-meta"><span>Company: Northwind Freight</span><span>Status: Qualified</span></span></a>
@@ -148,10 +148,13 @@ ol.dec{margin:0;padding-left:20px;max-width:80ch}ol.dec li{margin:0 0 8px}
    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#import"/></svg></span>Import Data</a>
   </div></section></div></div></div>
 
- <div class="tile"><h3>Viewer role (decision 2)</h3><p class="cap">Verified: the panel and its links show for every role, and all destinations are limited to admin and sales rep, so a viewer who follows one lands on Forbidden. The design keeps the links as they are, as drawn here. Hiding or marking them for viewers is not drawn and is not part of the build unless Morgan decides it (decision 2).</p>
+ <div class="tile"><h3>Viewer role (decision 2)</h3><p class="cap">Verified: the panel and its links show for every role, and all destinations are limited to admin and sales rep, so a viewer who follows one lands on Forbidden. The design keeps the links as they are, as drawn here. Hiding or marking them for viewers is not drawn and is not part of the build (review #103, decision 3).</p>
  <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
   <section class="toolbox-col"><h3 class="toolbox-col-head">Recently Accessed</h3><div class="toolbox-body"><div class="search-hint">No recently accessed records yet.<small>Open a lead and it appears here.</small></div></div></section>
   <section class="toolbox-col"><h3 class="toolbox-col-head">ToolBox</h3><div class="toolbox-body toolbox-links">
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#assign"/></svg></span>Assignment Rules</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#dedupe"/></svg></span>Dedupe Rule</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#status"/></svg></span>Status Codes</a>
    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#import"/></svg></span>Import Data</a>
    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#fields"/></svg></span>Custom Fields</a>
    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#layout"/></svg></span>Customise Page Layout</a>
@@ -204,16 +207,67 @@ ol.dec{margin:0;padding-left:20px;max-width:80ch}ol.dec li{margin:0 0 8px}
 <tr><td class="m">Row text colour</td><td><span class="tag">Changed</span></td><td>Record name goes from <code>--accent</code> blue to <code>--text</code>, underlined on hover, so the bank theme is not fought by a fixed blue.</td></tr>
 <tr><td class="m">Layout</td><td><span class="tag">Changed</span></td><td>Two bordered cards become one surface with two zones and a divider. Recents is wider (7:5). Links sit in two columns with an icon each. Under 720 px of container width the zones stack.</td></tr>
 <tr><td class="m">Meta layout</td><td><span class="tag">Changed</span></td><td>Meta no longer sits in a 3-column grid. It is one line, and the "Viewed" time moves to the right of the row on desktop.</td></tr>
-<tr><td class="m">Phone disclosure headings</td><td><span class="tag w">New, phone only</span></td><td>Each heading becomes a 48 px button with <code>aria-expanded</code>. Needs approval (decision 1). Not approved means both zones always open.</td></tr>
+<tr><td class="m">Phone disclosure headings</td><td><span class="tag">Dropped</span></td><td>Not built (review #103). Both zones stay open and stack at 980 px.</td></tr>
 <tr><td class="m">Empty hint line</td><td><span class="tag w">New copy</span></td><td>"Open a lead and it appears here." uses the module's singular noun (lead, contact, account, deal, product, quote, campaign, ticket).</td></tr>
 <tr><td class="m">Moved</td><td><span class="tag o">None</span></td><td>No control leaves the page. The panel stays where it is today, above the toolbar or view.</td></tr>
 </tbody></table></div>
 
-<h2>Decisions for Morgan</h2>
+<h2>Which states are real</h2>
+<p class="lede">Updated after design review #103. "Real" means something in the app can trigger it today. "Not real" cells are not built; the drawn tiles above are reference only. Basis: <code>ToolBoxPanel.tsx</code> (links are props, rendered with no data fetch) and <code>useRecentlyViewed.ts</code> (<code>useState</code> initialised by a synchronous <code>getValue</code>; no promise, no throw path in the hook).</p>
+<div class="tw"><table>
+<thead><tr><th>State</th><th>Recently Accessed zone</th><th>ToolBox zone</th><th>Build?</th></tr></thead>
+<tbody>
+<tr><td class="m">Populated</td><td><span class="tag o">Real</span> 1 to 5 rows</td><td><span class="tag o">Real</span> 2 to 6 links per module</td><td>Yes</td></tr>
+<tr><td class="m">Empty</td><td><span class="tag o">Real</span> first visit or all records removed</td><td><span class="tag w">Not reachable</span> all 8 modules pass links. The existing sentence stays in the component.</td><td>Recents yes. ToolBox: keep existing code path, no new design work.</td></tr>
+<tr><td class="m">Loading</td><td><span class="tag w">Not real</span> the read is synchronous, so the skeleton tile cannot appear</td><td><span class="tag w">Not real</span> static links</td><td>No. Do not build a skeleton or a shimmer. It is not a build target. If the hook ever becomes asynchronous, a new ticket adds it.</td></tr>
+<tr><td class="m">Error</td><td><span class="tag w">Not real</span> no failure path; an unreadable store gives the empty list</td><td><span class="tag w">Not real</span></td><td>No error state and no Retry. The Esc-on-Retry check from AIO-224 does not apply (decision 6).</td></tr>
+<tr><td class="m">Deleted record</td><td>Contacts <span class="tag o">row removed</span>. Other 7 <span class="tag w">stale row</span></td><td>Not applicable</td><td>Keep today's behaviour in all 8. The "Removed" tile is not built; follow-up ticket (decision 4).</td></tr>
+<tr><td class="m">Hover, focus, press</td><td><span class="tag o">Real</span></td><td><span class="tag o">Real</span></td><td>Yes</td></tr>
+<tr><td class="m">Page-level loading or error (Deals, Tickets, Contacts record)</td><td colspan="2">Real, but owned by the page below the panel. The panel renders above it unchanged.</td><td>Not part of the panel.</td></tr>
+</tbody></table></div>
+
+<h2>Viewer variant for create actions</h2>
+<p class="lede">The panel has no create action, so there is no viewer variant to draw inside it. The "New &lt;record&gt;" buttons belong to each list page, beside the panel. Verified by reading the lines around each button in <code>src/pages</code>. Gating found there is by the button's own condition only; I did not open the live pages as a viewer.</p>
+<div class="tw"><table>
+<thead><tr><th>Module</th><th>New button in code</th><th>Viewer sees it?</th></tr></thead>
+<tbody>
+<tr><td class="m">Leads</td><td><code>canCreateLeads(user?.role)</code></td><td>No (gated)</td></tr>
+<tr><td class="m">Contacts, Accounts, Deals</td><td><code>canWrite</code></td><td>No (gated)</td></tr>
+<tr><td class="m">Products, Quotes, Campaigns, Tickets</td><td>No role condition on the lines around the button</td><td><span class="tag w">Appears so</span>. Not changed by this design. Quinn or Alex confirms on staging.</td></tr>
+</tbody></table></div>
+<p class="lede" style="margin-top:12px">The viewer variant for the panel is therefore the one drawn above: panel and all links visible, destinations show Forbidden (decision 3). A viewer with an empty Recently Accessed zone sees the same empty tile.</p>
+
+<h2>Values that are not Harbor tokens</h2>
+<p class="lede">Checked against <code>src/styles.css</code> <code>:root</code> and <code>design/design-tokens.json</code>. Alex uses the token in the right column. A new token is added to <code>:root</code> only where the last column says so.</p>
+<div class="tw"><table>
+<thead><tr><th>Value in the mockup</th><th>Used for</th><th>In code today</th><th>Build with</th></tr></thead>
+<tbody>
+<tr><td class="m"><code>--border-strong:#8b93a3</code></td><td>Declared, not used by any panel rule</td><td><code>--border-strong:#d5dae1</code></td><td>Do not use. Mockup value was wrong.</td></tr>
+<tr><td class="m"><code>--ease</code></td><td>All 120 ms transitions</td><td><code>--ease-standard</code>, <code>--duration-fast:120ms</code></td><td><code>var(--duration-fast) var(--ease-standard)</code></td></tr>
+<tr><td class="m"><code>'Inter'</code> font</td><td>Mockup font only</td><td><code>--font-sans</code> ('Inter Variable')</td><td><code>var(--font-sans)</code></td></tr>
+<tr><td class="m"><code>--shadow-panel</code></td><td>Single panel surface</td><td>In <code>design-tokens.json</code> as <code>shadow.panel</code>, not in <code>:root</code></td><td>Add <code>--shadow-panel</code> to <code>:root</code> with the JSON value, or confirm it already exists elsewhere (Unknown; not found by search of <code>:root</code>).</td></tr>
+<tr><td class="m"><code>#fff</code> literals</td><td>Inset highlight, <code>.live</code> chip text</td><td><code>--surface</code>, <code>--on-accent</code></td><td>Use the tokens.</td></tr>
+<tr><td class="m">14% bank mix (glyph tint)</td><td>Record glyph fill</td><td>Pattern of <code>color-mix(in srgb, var(--bank-primary) N%, ...)</code> as in <code>--bank-accent</code></td><td>New one-off mix. Keep it on the panel rule; a fill only. Not a new global token.</td></tr>
+<tr><td class="m">55% mix of <code>--surface-2</code></td><td>Right zone tint</td><td>None</td><td>Use plain <code>--surface-2</code> if the mix is not wanted. Either is acceptable; flagged so it is a choice.</td></tr>
+<tr><td class="m">Radius 8 px (glyph, link icon), 4 px (code)</td><td>Small shapes</td><td>Radii are 6, 10, 14, 18, 999</td><td>8 px becomes <code>--radius-sm</code> (6) or <code>--radius-md</code> (10). 4 px is mockup-only.</td></tr>
+<tr><td class="m"><code>99px</code> pill</td><td>Mockup tags only</td><td><code>--radius-pill</code> (999)</td><td>Not in the panel.</td></tr>
+<tr><td class="m">Sizes 32 px glyph, 28 px link icon, 52 px row, 44 px link</td><td>Panel rows</td><td>Space scale is 4, 8, 12, 16, 24, 32, 48. Touch target is 44 px.</td><td>32 and 44 are on the scale. 28 and 52 are not: use 32 and 56, or keep them as panel-local values. Alex's call, say which on the ticket.</td></tr>
+<tr><td class="m">Row gap 2 px</td><td>Between rows</td><td>Smallest space token is 4</td><td>Use <code>--space-1</code>.</td></tr>
+<tr><td class="m">Font 13 px, 15 px</td><td>Meta and zone headings</td><td>Type scale has 13 (label) and 12 (hint); 15 is not on it</td><td>Zone heading: 14 or 18 per the scale. Alex's call.</td></tr>
+<tr><td class="m">Container breakpoints 720 px, 480 px</td><td>Panel stack and links to one column</td><td>Phone breakpoint 780 px in tokens; panel CSS uses 980 px</td><td>Use the existing 980 px (decision 2). The 720 and 480 container queries are mockup-only.</td></tr>
+<tr><td class="m">Column ratio 7fr / 5fr</td><td>Zone widths</td><td>None</td><td>Panel-local layout value.</td></tr>
+<tr><td class="m">Collapse 160 ms, skeleton shimmer 1.4 s</td><td>Removed tile and loading tile</td><td>Motion is 120 ms and 200 ms</td><td>Both belong to tiles that are not built.</td></tr>
+<tr><td class="m">Dark mode</td><td>Not drawn</td><td><code>[data-theme=dark]</code> overrides exist in <code>:root</code></td><td>Panel uses tokens only, so it follows. Not checked visually.</td></tr>
+</tbody></table></div>
+
+<h2>Decisions from design review #103</h2>
 <ol class="dec">
- <li><b>Phone folding.</b> Approve the 48 px disclosure headings with ToolBox folded by default, or keep both zones open. Leads on a phone is about 520 px tall when both are open.</li>
- <li><b>Viewer.</b> Keep showing all links to viewers, who land on Forbidden (today and the design), or hide or mark them. Both are small. Changing it needs a Decision, like D1 for SLA in AIO-416.</li>
- <li><b>Deleted records.</b> Extend the Contacts behaviour (remove the row on delete and on "not found") to the other seven modules. It touches seven detail pages, so it is Alex's build step, not styling.</li>
+ <li><b>Restyle only.</b> The design is approved as a restyle of the shared <code>ToolBoxPanel</code>, with the state changes above.</li>
+ <li><b>Phone.</b> Stack the two zones at the existing 980 px breakpoint, Recently Accessed first, ToolBox second. No collapsing and no 48 px disclosure buttons. The phone mockup's disclosure headings are superseded by this decision: the build is both zones open, structure unchanged.</li>
+ <li><b>Viewer.</b> Links stay visible and lead to Forbidden. Hiding them is a follow-up ticket.</li>
+ <li><b>Deleted records.</b> No change in this ticket. Removal in the other 7 modules is a follow-up ticket.</li>
+ <li><b>Destination pages and Setup hub.</b> Out of scope. Separate PRs; Setup hub deferred.</li>
+ <li><b>Error and Retry.</b> None is built. The Esc-on-Retry check does not apply.</li>
 </ol>
 <p class="lede" style="margin-top:24px">Not checked: the live staging screens, which I did not open for this sheet. The facts above come from the repository code on the release branch at the time of writing.</p>
 </main>
