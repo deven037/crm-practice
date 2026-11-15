@@ -153,7 +153,8 @@ describe('Ticket delete removes Recently Accessed from both callers (AIO-422)', 
       expect(harness.removeViews).not.toHaveBeenCalled();
       finishDelete();
       await pending;
-      expect(harness.removeViews).toHaveBeenCalledExactlyOnceWith(['rec-1']);
+      expect(harness.removeViews).toHaveBeenCalledTimes(1);
+      expect(harness.removeViews).toHaveBeenCalledWith(['rec-1']);
       if (page === TicketDetail) expect(harness.navigate).toHaveBeenCalledWith('/tickets');
     },
   );
