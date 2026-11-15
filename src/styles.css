@@ -1397,6 +1397,17 @@ div.empty-cell > p { margin: 4px 0 16px; }
 .contact-record .contact-edit { position: absolute; right: 0; top: 0; }
 .contact-record .note-item p, .contact-record .file-list li { overflow-wrap: anywhere; }
 .contact-record .file-list li { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.contact-list .page-header { border-bottom: 0; padding-bottom: 0; margin-bottom: var(--space-5); }
+.contact-list .page-actions > .btn { min-height: 40px; }
+.contact-list .view-toggle { padding: 2px; gap: 2px; border-radius: var(--radius-md); background: var(--surface-2); }
+.contact-list .view-toggle .btn { min-height: 36px; padding: 6px 10px; border: 0; border-radius: var(--radius-sm); background: transparent; }
+.contact-list .view-toggle .btn:hover:not(:disabled) { background: var(--surface-3); }
+.contact-list .view-toggle .btn.btn-active { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(31, 41, 55, 0.1); }
+.contact-list .search-input { max-width: 420px; }
+.contact-list .btn-small { min-height: 40px; }
+@media (max-width: 780px) {
+  .contact-list .page-actions > .btn, .contact-list .view-toggle .btn { min-height: 44px; }
+}
 @media (max-width: 780px) {
   .contact-screen { padding: 0; }
   .contact-screen .form-grid { grid-template-columns: minmax(0, 1fr); }

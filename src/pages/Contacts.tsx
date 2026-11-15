@@ -91,7 +91,7 @@ export function Contacts() {
   const filtered = useMemo(() => filterContacts(contacts, query, user?.role, accounts), [contacts, query, user?.role, accounts]);
 
   return (
-    <div data-testid="contacts-page">
+    <div className="contact-screen contact-list" data-testid="contacts-page">
       <div className="page-header">
         <div>
           <h1>Contacts</h1>
