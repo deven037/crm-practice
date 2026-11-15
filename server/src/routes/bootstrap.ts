@@ -3,13 +3,9 @@ import { store } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { DEMO_BANK_ID, publicBank } from '../banks.js';
 import { apiBase } from './auth.js';
+import { publicUser } from '../userView.js';
 
 export const bootstrapRouter = Router();
-
-function publicUser(u: any) {
-  const { password, ...rest } = u;
-  return rest;
-}
 
 // Identity of the signed-in user's bank for the app shell: name, logo, colour and region.
 function bankProfile(req: Request) {

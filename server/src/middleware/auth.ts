@@ -29,9 +29,18 @@ declare global {
 const signOptions = (): jwt.SignOptions => ({ expiresIn: env.jwtExpiresIn as jwt.SignOptions['expiresIn'] });
 
 /** A bank user's token. It names the bank, so it is only ever good for that bank's data. */
-export function signToken(user: { id: string; name: string; email: string; role: Role }, bankId: string): string {
-  return jwt.sign({ sub: user.id, role: user.role, name: user.name, email: user.email, bank: bankId }, env.jwtSecret, signOptions());
+export function signToken(
+  user: { id: string; name: string; email: string; role: Role; tokenVersion?: number },
+  bankId: string
+): string {
+  return jwt.sign(
+    { sub: user.id, role: user.role, name: user.name, email: user.email, bank: bankId, tv: user.tokenVersion ?? 0 },
+    env.jwtSecret,
+    signOptions()
+  );
 }
+
+const PASSWORD_CHANGE_ROUTES = new Set(['/api/auth/me', '/api/auth/change-password', '/api/auth/logout-all']);
 
 export function signPlatformToken(admin: { id: string; email: string; name: string }): string {
   return jwt.sign({ sub: admin.id, email: admin.email, name: admin.name, scope: 'platform' }, env.jwtSecret, signOptions());
@@ -71,6 +80,12 @@ async function authenticate(req: Request, res: Response): Promise<BankStore> {
   // The user must still exist and be active in this bank; the role is read fresh, not trusted from the token.
   const user = bankStore.store.users.get(payload.sub as string);
   if (!user || !user.active) throw unauthorized('Invalid or expired token.');
+  // "Sign out everywhere" and every password change raise the user's counter; older tokens end here.
+  if ((payload.tv ?? 0) !== (user.tokenVersion ?? 0)) throw unauthorized('Invalid or expired token.');
+  // Someone still on a password an admin chose for them may only replace it.
+  if (user.mustChangePassword && !PASSWORD_CHANGE_ROUTES.has(req.originalUrl.split('?')[0].replace(/\/$/, ''))) {
+    throw new ApiError(403, 'password_change_required', 'Set a new password to continue.');
+  }
 
   req.user = { id: user.id, name: user.name, email: user.email, role: user.role, bankId: bank.id };
   req.bank = bank;

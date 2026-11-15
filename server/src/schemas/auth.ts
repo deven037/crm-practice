@@ -14,6 +14,16 @@ export const loginSchema = z.object({
   bankName: z.string().min(1).optional(),
 });
 
+export const acceptInviteSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(1, 'Password is required.'),
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Enter your current password.'),
+  newPassword: z.string().min(1, 'Enter a new password.'),
+});
+
 export const forgotPasswordSchema = z.object({
   email: z.string().email('Enter a valid email address.'),
   newPassword: z.string().min(8, 'Password must be at least 8 characters.'),

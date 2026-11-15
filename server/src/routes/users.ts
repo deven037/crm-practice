@@ -8,13 +8,10 @@ import { DEMO_BANK_ID } from '../banks.js';
 import { demoPasswordHash, hashPassword, passwordProblem } from '../passwords.js';
 import { userCreateSchema, userUpdateSchema } from '../schemas/user.js';
 import { User } from '../types.js';
+import { newInvite, publicUser } from '../userView.js';
+import { UNUSABLE_PASSWORD } from '../passwords.js';
 
 export const usersRouter = Router();
-
-function publicUser(user: User) {
-  const { password, ...rest } = user;
-  return rest;
-}
 
 usersRouter.get('/', requireAuth, requireRole('admin', 'rep'), (req, res) => {
   const result = store.users.list(req.query as any);
@@ -33,24 +30,45 @@ usersRouter.post('/', requireAuth, requireRole('admin', 'rep'), validateBody(use
   if (store.users.all().some((u) => u.email.toLowerCase() === email)) {
     throw conflict('email_taken', 'A user with this email already exists.');
   }
-  // Only the public demo bank falls back to the documented demo password.
-  // Every other bank must choose one, and it has to meet the password rules.
-  const isDemo = req.user!.bankId === DEMO_BANK_ID;
-  if (!body.password && !isDemo) throw new ApiError(422, 'validation_error', 'Password is required.');
-  const problem = body.password && !isDemo ? passwordProblem(body.password) : null;
-  if (problem) throw new ApiError(422, 'validation_error', problem);
-  const user: User = {
-    id: newId('user'),
-    name: body.name,
-    email: body.email,
-    phone: body.phone,
-    password: body.password ? hashPassword(body.password) : demoPasswordHash(),
-    role: body.role,
-    active: body.active,
-  };
+  const id = newId('user');
+  const user: User = { id, name: body.name, email: body.email, phone: body.phone, password: UNUSABLE_PASSWORD, role: body.role, active: body.active };
+  let inviteToken: string | undefined;
+
+  if (req.user!.bankId === DEMO_BANK_ID) {
+    // The public demo bank keeps the practice app's behaviour: the documented demo
+    // password when none is given, and no forced change.
+    user.password = body.password ? hashPassword(body.password) : demoPasswordHash();
+  } else if (body.password) {
+    // The admin chose a password for this person: it must meet the rules, and the
+    // person has to replace it the first time they sign in.
+    const problem = passwordProblem(body.password);
+    if (problem) throw new ApiError(422, 'validation_error', problem);
+    user.password = hashPassword(body.password);
+    user.mustChangePassword = true;
+  } else {
+    // No password: the person sets their own through a one-time invite link.
+    const created = newInvite(req.user!.bankId, id);
+    user.invite = created.invite;
+    inviteToken = created.token;
+  }
+
   store.users.create(user);
   store.logAudit(req.user!.name, 'user.save', `Saved user ${user.name}`);
-  res.status(201).json(publicUser(user));
+  // inviteToken is returned once, here, and cannot be read again.
+  res.status(201).json({ ...publicUser(user), ...(inviteToken ? { inviteToken, inviteExpiresAt: user.invite!.expiresAt } : {}) });
+});
+
+// A fresh "set your password" link for an existing user: for an invite that expired,
+// or for someone who forgot their password. Their current password keeps working
+// until the link is used. Admins only.
+usersRouter.post('/:id/invite', requireAuth, requireRole('admin'), (req, res) => {
+  const user = store.users.get(req.params.id);
+  if (!user) throw notFound('User');
+  if (req.user!.bankId === DEMO_BANK_ID) throw forbidden('The demo bank does not use invite links.');
+  const created = newInvite(req.user!.bankId, user.id);
+  store.users.update(user.id, { invite: created.invite });
+  store.logAudit(req.user!.name, 'user.invite', `Sent ${user.name} a link to set a password`);
+  res.json({ inviteToken: created.token, inviteExpiresAt: created.invite.expiresAt });
 });
 
 // Self-service edit (Settings.tsx) is allowed for any role; only admin/rep can

@@ -251,16 +251,96 @@ describe('one bank cannot reach another bank\'s data', () => {
     const wrongBank = await login('admin@axisbank.test', 'Start-here-1', { bankId: hdfc.id });
     assert.equal(wrongBank.status, 401);
 
-    const noPassword = await api('POST', '/users', { token: hdfc.token, body: { name: 'New Rep', email: 'rep@hdfcbank.test', role: 'rep' } });
-    assert.equal(noPassword.status, 422);
+    const weak = await api('POST', '/users', { token: hdfc.token, body: { name: 'New Rep', email: 'rep@hdfcbank.test', role: 'rep', password: 'short' } });
+    assert.equal(weak.status, 422);
     const made = await api('POST', '/users', {
       token: hdfc.token,
       body: { name: 'New Rep', email: 'rep@hdfcbank.test', role: 'rep', password: 'Rep-pass-12' },
     });
     assert.equal(made.status, 201);
     assert.equal(made.body.password, undefined);
-    assert.equal((await login('rep@hdfcbank.test', 'Rep-pass-12')).status, 200);
     assert.equal((await api('POST', '/users', { token: hdfc.token, body: { name: 'Twin', email: 'rep@hdfcbank.test', role: 'rep', password: 'Rep-pass-12' } })).status, 409);
+  });
+
+  it('makes a person replace a password an admin chose for them before anything else', async () => {
+    const signedIn = await login('rep@hdfcbank.test', 'Rep-pass-12');
+    assert.equal(signedIn.status, 200);
+    assert.equal(signedIn.body.mustChangePassword, true);
+    const temp = signedIn.body.token;
+
+    const blocked = await api('GET', '/leads', { token: temp });
+    assert.equal(blocked.status, 403);
+    assert.equal(blocked.body.error.code, 'password_change_required');
+    assert.equal((await api('GET', '/bootstrap', { token: temp })).status, 403);
+    assert.equal((await api('GET', '/auth/me', { token: temp })).status, 200);
+
+    const change = (currentPassword: string, newPassword: string) =>
+      api('POST', '/auth/change-password', { token: temp, body: { currentPassword, newPassword } });
+    assert.equal((await change('Wrong-pass-1', 'Brand-new-12')).body.error.code, 'wrong_password');
+    assert.equal((await change('Rep-pass-12', 'weak')).status, 422);
+    assert.equal((await change('Rep-pass-12', 'Rep-pass-12')).status, 422);
+    const changed = await change('Rep-pass-12', 'Brand-new-12');
+    assert.equal(changed.status, 200);
+
+    // The old token and the old password are both finished; the new ones work.
+    assert.equal((await api('GET', '/leads', { token: temp })).status, 401);
+    assert.equal((await api('GET', '/leads', { token: changed.body.token })).status, 200);
+    assert.equal((await login('rep@hdfcbank.test', 'Rep-pass-12')).status, 401);
+    const again = await login('rep@hdfcbank.test', 'Brand-new-12');
+    assert.equal(again.body.mustChangePassword, false);
+  });
+
+  it('lets an invited person set their own password with a one-time link', async () => {
+    const invited = await api('POST', '/users', { token: hdfc.token, body: { name: 'Invited Rep', email: 'invited@hdfcbank.test', role: 'rep' } });
+    assert.equal(invited.status, 201);
+    assert.equal(invited.body.invitePending, true);
+    assert.equal(invited.body.invite, undefined, 'the stored hash is never sent');
+    const token = invited.body.inviteToken as string;
+    assert.ok(token);
+
+    // No password yet, so no sign-in; and the list never shows the link again.
+    assert.equal((await login('invited@hdfcbank.test', '!')).status, 401);
+    const listed = (await api('GET', '/users', { token: hdfc.token })).body.data.find((u: any) => u.email === 'invited@hdfcbank.test');
+    assert.equal(listed.invitePending, true);
+    assert.equal(listed.inviteToken, undefined);
+    assert.equal(listed.invite, undefined);
+
+    const info = await api('GET', `/auth/invite?token=${encodeURIComponent(token)}`);
+    assert.equal(info.status, 200);
+    assert.deepEqual([info.body.name, info.body.email, info.body.bank.name], ['Invited Rep', 'invited@hdfcbank.test', 'HDFC Bank']);
+
+    assert.equal((await api('GET', '/auth/invite?token=not.a.token')).status, 404);
+    const tampered = token.slice(0, -3) + 'xyz';
+    assert.equal((await api('POST', '/auth/accept-invite', { body: { token: tampered, password: 'Chosen-pass-1' } })).status, 404);
+    assert.equal((await api('POST', '/auth/accept-invite', { body: { token, password: 'weak' } })).status, 422);
+
+    const accepted = await api('POST', '/auth/accept-invite', { body: { token, password: 'Chosen-pass-1' } });
+    assert.equal(accepted.status, 200);
+    assert.equal(accepted.body.user.invitePending, false);
+    assert.equal((await api('GET', '/leads', { token: accepted.body.token })).status, 200);
+    assert.equal((await login('invited@hdfcbank.test', 'Chosen-pass-1')).status, 200);
+
+    // Used once: the same link does nothing more.
+    assert.equal((await api('POST', '/auth/accept-invite', { body: { token, password: 'Another-pass-1' } })).status, 404);
+    assert.equal((await api('GET', `/auth/invite?token=${encodeURIComponent(token)}`)).status, 404);
+
+    // Only an admin can issue a new link, and a link for one bank's user means nothing to another bank.
+    const repToken = accepted.body.token;
+    assert.equal((await api('POST', `/users/${invited.body.id}/invite`, { token: repToken })).status, 403);
+    const fresh = await api('POST', `/users/${invited.body.id}/invite`, { token: hdfc.token });
+    assert.equal(fresh.status, 200);
+    assert.equal((await login('invited@hdfcbank.test', 'Chosen-pass-1')).status, 200, 'the old password works until the link is used');
+    assert.equal((await api('POST', `/users/${invited.body.id}/invite`, { token: axis.token })).status, 404);
+  });
+
+  it('signs a person out everywhere on request, and nobody else', async () => {
+    const first = (await login('invited@hdfcbank.test', 'Chosen-pass-1')).body.token;
+    const second = (await login('invited@hdfcbank.test', 'Chosen-pass-1')).body.token;
+    assert.equal((await api('POST', '/auth/logout-all', { token: first })).status, 200);
+    assert.equal((await api('GET', '/leads', { token: first })).status, 401);
+    assert.equal((await api('GET', '/leads', { token: second })).status, 401);
+    assert.equal((await api('GET', '/leads', { token: hdfc.token })).status, 200);
+    assert.equal((await login('invited@hdfcbank.test', 'Chosen-pass-1')).status, 200);
   });
 
   it('holds every collection apart in the database, and keeps it across a restart', async () => {
@@ -320,5 +400,16 @@ describe('suspending and removing a bank', () => {
     const before = (await api('GET', `/leads?pageSize=1`, { token: axis.token })).body.total;
     assert.equal((await api('POST', '/reset')).status, 200);
     assert.equal((await api('GET', `/leads?pageSize=1`, { token: axis.token })).body.total, before);
+  });
+});
+
+describe('API documentation', () => {
+  it('lists the CRM 3.0 routes next to the original ones', async () => {
+    const doc = (await api('GET', '/openapi.json')).body;
+    for (const path of ['/leads', '/auth/login', '/auth/identify', '/auth/accept-invite', '/auth/change-password', '/auth/logout-all',
+      '/users/{id}/invite', '/platform/banks', '/platform/banks/{id}/{action}', '/bank/profile', '/public/banks/{id}/assets/{kind}']) {
+      assert.ok(doc.paths[path], `${path} is documented`);
+    }
+    assert.ok(doc.components.schemas.BankRegistration);
   });
 });

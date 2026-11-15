@@ -1,0 +1,275 @@
+# CRM 3.0 routes: banks, the platform owner console, and the new sign-in steps.
+# Merged into openapi.yaml by openapi.ts.
+tags:
+  - name: Platform
+    description: Bank registration and the platform owner's console.
+  - name: Bank
+    description: The signed-in user's own bank.
+
+schemas:
+  PublicBank:
+    type: object
+    description: What anyone may know about a bank; enough to draw its login page. Colour and images are null unless the bank is active.
+    properties:
+      id: { type: string }
+      name: { type: string }
+      status: { type: string, enum: [pending, active, rejected, suspended] }
+      color: { type: string, nullable: true, example: '#97144d' }
+      logoUrl: { type: string, nullable: true }
+      loginImageUrl: { type: string, nullable: true }
+  BankProfile:
+    type: object
+    required: [displayName, legalName, bankType, registrationNumber, country, address, contactName, contactPhone, contactEmail, emailDomains, currency, locale, timezone, brandColor, branches, expectedUsers]
+    properties:
+      displayName: { type: string, maxLength: 80, example: Axis Bank }
+      legalName: { type: string, example: Axis Bank Limited }
+      bankType: { type: string, enum: [commercial, cooperative, small_finance, nbfc, other] }
+      registrationNumber: { type: string, description: Licence or registration number. }
+      country: { type: string, description: Two-letter country code., example: IN }
+      address: { type: string }
+      website: { type: string, format: uri }
+      contactName: { type: string }
+      contactPhone: { type: string }
+      contactEmail: { type: string, format: email }
+      emailDomains:
+        type: array
+        minItems: 1
+        maxItems: 5
+        items: { type: string, example: axisbank.com }
+        description: The bank's own email domains. Sign-in finds the bank from these. Public mail services are refused.
+      currency: { type: string, example: INR }
+      locale: { type: string, example: en-IN }
+      timezone: { type: string, example: Asia/Kolkata }
+      brandColor: { type: string, example: '#97144d' }
+      branches: { type: integer, minimum: 1 }
+      expectedUsers: { type: integer, minimum: 1 }
+      sampleData: { type: boolean, default: false, description: Start with sample records. Sample users cannot sign in. }
+  BankRegistration:
+    allOf:
+      - $ref: '#/components/schemas/BankProfile'
+      - type: object
+        required: [admin]
+        properties:
+          admin:
+            type: object
+            required: [name, email, password]
+            properties:
+              name: { type: string }
+              email: { type: string, format: email, description: Must be on one of emailDomains. }
+              password: { type: string, description: At least 8 characters with a letter and a number. }
+          logo: { type: string, description: 'PNG, JPEG or WebP as a data URL, up to 1 MB.' }
+          loginImage: { type: string, description: 'PNG, JPEG or WebP as a data URL, up to 3 MB.' }
+  SignedIn:
+    type: object
+    properties:
+      token: { type: string }
+      user: { type: object }
+      bank: { $ref: '#/components/schemas/PublicBank' }
+      mustChangePassword: { type: boolean, description: 'true: every route except /auth/me, /auth/change-password and /auth/logout-all answers 403 password_change_required until the password is changed.' }
+
+paths:
+  /auth/identify:
+    post:
+      tags: [Auth]
+      summary: Find the bank an email belongs to
+      description: Step one of sign-in. Matches the email's domain to the banks that registered it. The answer does not depend on whether the person has an account.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [email], properties: { email: { type: string, format: email } } }
+      responses:
+        '200':
+          description: Matching banks (empty when the domain is unknown).
+          content:
+            application/json:
+              schema: { type: object, properties: { banks: { type: array, items: { $ref: '#/components/schemas/PublicBank' } } } }
+  /auth/invite:
+    get:
+      tags: [Auth]
+      summary: Who an invite link is for
+      security: []
+      parameters:
+        - { name: token, in: query, required: true, schema: { type: string } }
+      responses:
+        '200': { description: 'The invited person''s name and email, and their bank.' }
+        '404': { description: The link is wrong, used or expired (invite_invalid). }
+  /auth/accept-invite:
+    post:
+      tags: [Auth]
+      summary: Set a password with a one-time invite link
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [token, password], properties: { token: { type: string }, password: { type: string } } }
+      responses:
+        '200': { description: Password set; the person is signed in., content: { application/json: { schema: { $ref: '#/components/schemas/SignedIn' } } } }
+        '404': { description: The link is wrong, used or expired (invite_invalid). }
+        '422': { description: The password does not meet the rules. }
+  /auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Change your own password
+      description: Signs out every other device and returns a new token for this one.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [currentPassword, newPassword], properties: { currentPassword: { type: string }, newPassword: { type: string } } }
+      responses:
+        '200': { description: Changed. Use the new token from now on. }
+        '422': { description: 'wrong_password, or the new password does not meet the rules.' }
+  /auth/logout-all:
+    post:
+      tags: [Auth]
+      summary: Sign out everywhere
+      description: Every token this person holds, on any device, stops working.
+      responses:
+        '200': { description: Done. }
+  /users/{id}/invite:
+    post:
+      tags: [Users]
+      summary: Issue a new set-your-password link for a user
+      description: Admins only. The link is returned once. The user's current password keeps working until the link is used. Not available in the demo bank.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: 'inviteToken and inviteExpiresAt.' }
+  /platform/banks:
+    post:
+      tags: [Platform]
+      summary: Register a bank
+      description: Open to anyone, rate limited. The bank is saved as pending and nobody can sign in to it until the platform owner approves it.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BankRegistration' }
+      responses:
+        '201': { description: 'Registered: id, name and status pending.' }
+        '409': { description: A bank with this name is already registered (bank_name_taken). }
+        '422': { description: 'A field is wrong, or an image is not a PNG, JPEG or WebP within the size limit (invalid_image).' }
+    get:
+      tags: [Platform]
+      summary: List banks (platform owner)
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [pending, active, rejected, suspended] } }
+      responses:
+        '200': { description: 'Banks with their details, user count and record count.' }
+        '403': { description: Not the platform owner. }
+  /platform/registration-status:
+    get:
+      tags: [Platform]
+      summary: Check whether a registration has been approved
+      security: []
+      parameters:
+        - { name: email, in: query, required: true, description: The admin email used at registration., schema: { type: string } }
+      responses:
+        '200': { description: 'name, status, reason, registeredAt, decidedAt.' }
+        '404': { description: No registration for this email. }
+  /platform/login:
+    post:
+      tags: [Platform]
+      summary: Sign in as the platform owner
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [email, password], properties: { email: { type: string }, password: { type: string } } }
+      responses:
+        '200': { description: A platform token. It does not open any bank's data. }
+        '401': { description: Invalid email or password. }
+  /platform/banks/{id}:
+    get:
+      tags: [Platform]
+      summary: One bank's details (platform owner)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: The bank. }
+    delete:
+      tags: [Platform]
+      summary: Delete a bank and all of its data (platform owner)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '204': { description: Deleted. }
+        '409': { description: The demo bank cannot be deleted. }
+  /platform/banks/{id}/{action}:
+    post:
+      tags: [Platform]
+      summary: Approve, reject, suspend or reactivate a bank (platform owner)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: action, in: path, required: true, schema: { type: string, enum: [approve, reject, suspend, reactivate] } }
+      requestBody:
+        content:
+          application/json:
+            schema: { type: object, properties: { reason: { type: string, description: Required for reject and suspend. } } }
+      responses:
+        '200': { description: The bank with its new status. }
+        '409': { description: The bank's current status does not allow this (invalid_state). }
+        '422': { description: A reason is required. }
+  /platform/banks/{id}/assets/{kind}:
+    get:
+      tags: [Platform]
+      summary: A bank's logo or login image, including before approval (platform owner)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: kind, in: path, required: true, schema: { type: string, enum: [logo, login] } }
+      responses:
+        '200': { description: The image. }
+  /public/banks/{id}/assets/{kind}:
+    get:
+      tags: [Bank]
+      summary: An active bank's logo or login image
+      security: []
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: kind, in: path, required: true, schema: { type: string, enum: [logo, login] } }
+      responses:
+        '200': { description: The image. }
+        '404': { description: 'No such image, or the bank is not active.' }
+  /bank:
+    get:
+      tags: [Bank]
+      summary: Your bank's details and branding
+      responses:
+        '200': { description: The bank. }
+  /bank/profile:
+    put:
+      tags: [Bank]
+      summary: Change your bank's details (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/BankProfile' }
+      responses:
+        '200': { description: The updated bank. }
+  /bank/assets/{kind}:
+    put:
+      tags: [Bank]
+      summary: Replace your bank's logo or login image (admin)
+      parameters:
+        - { name: kind, in: path, required: true, schema: { type: string, enum: [logo, login] } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [image], properties: { image: { type: string, description: 'PNG, JPEG or WebP as a data URL.' } } }
+      responses:
+        '200': { description: The bank with its new image address. }
+        '422': { description: Not an accepted image (invalid_image). }
+    delete:
+      tags: [Bank]
+      summary: Remove your bank's logo or login image (admin)
+      parameters:
+        - { name: kind, in: path, required: true, schema: { type: string, enum: [logo, login] } }
+      responses:
+        '204': { description: Removed. }
