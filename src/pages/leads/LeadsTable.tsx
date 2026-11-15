@@ -161,9 +161,9 @@ export function LeadsTable({
                   onChange={() => onToggleSelect(lead.id)}
                 />
               </td>
-              <td>{lead.name}</td>
-              <td>{lead.company}</td>
-              {showContactDetails && <td>{lead.email}</td>}
+              <td title={lead.name}>{lead.name}</td>
+              <td title={lead.company}>{lead.company}</td>
+              {showContactDetails && <td title={lead.email}>{lead.email}</td>}
               {showContactDetails && <td>{lead.phone}</td>}
               <td>
                 <span data-testid="lead-status" className={`pill status-${lead.status.toLowerCase()}`}>{lead.status}</span>
