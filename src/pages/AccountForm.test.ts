@@ -75,6 +75,13 @@ describe('AccountForm accessibility and validation', () => {
     }
   });
 
+  it('announces "Saving account" in a status region while the create button is disabled', () => {
+    harness.states[4] = true;
+    const html = renderToStaticMarkup(AccountForm());
+    expect(html).toContain('role="status">Saving account</span>');
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Creating…<\/button>/);
+  });
+
   it('shows field errors for negative employees and revenue and sends no request', async () => {
     nodes(AccountForm()).find((node) => node.props.id === 'account-employees-input')?.props.onChange?.({ target: { value: '-5' } });
     harness.cursor = 0;

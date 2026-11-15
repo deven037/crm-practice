@@ -213,6 +213,7 @@ export function AccountForm() {
           <button className="btn" onClick={() => navigate('/accounts')}>
             Cancel
           </button>
+          <span className="sr-only" role="status">{busy ? 'Saving account' : ''}</span>
           <button className="btn btn-primary" disabled={busy} onClick={submit}>
             {busy ? 'Creating…' : 'Create account'}
           </button>

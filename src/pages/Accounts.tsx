@@ -149,7 +149,10 @@ export function Accounts() {
         )}
       </div>
       {loading ? (
-        <SkeletonRows rows={8} />
+        <>
+          <div className="sr-only" role="status">Loading accounts</div>
+          <SkeletonRows rows={8} />
+        </>
       ) : loadError ? (
         <div className="banner banner-error contacts-error" role="alert" data-testid="accounts-load-error">
           <p>Accounts couldn’t load. Check your connection and try again.</p>

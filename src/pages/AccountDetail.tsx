@@ -254,6 +254,7 @@ export function AccountDetail() {
               >
                 Cancel
               </button>
+              <span className="sr-only" role="status">{saveBusy ? 'Saving account' : ''}</span>
               <button className="btn btn-primary" data-testid="save-account-btn" disabled={saveBusy} onClick={save}>
                 {saveBusy ? 'Saving…' : 'Save'}
               </button>
