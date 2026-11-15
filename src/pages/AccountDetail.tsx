@@ -35,7 +35,7 @@ export function AccountDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const canWrite = canWriteAccounts(user?.role);
-  const { recordView } = useRecentlyViewed();
+  const { recordView, removeViews } = useRecentlyViewed();
 
   useEffect(() => {
     (async () => {
@@ -47,6 +47,7 @@ export function AccountDetail() {
       ]);
       if (!a) {
         setNotFound(true);
+        removeViews([id ?? '']);
         return;
       }
       setAccount(a);
@@ -89,8 +90,10 @@ export function AccountDetail() {
       // Delete related contacts and (closed) deals along with the account.
       await removeMany('contacts', contacts.map((c) => c.id));
       await removeMany('deals', deals.map((d) => d.id));
+      removeViews([...contacts.map((c) => c.id), ...deals.map((d) => d.id)]);
     }
     await removeMany('accounts', [account.id]);
+    removeViews([account.id]);
     toast.push('success', 'Account deleted.');
     navigate('/accounts');
   };
