@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assignment Rules list (Harbor CRM)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--border-strong:#8b93a3;--text:#1f2937;--text-muted:#5b6472;--bank-primary:#1d3a6e;--bank-on:#fff;--bank-accent:color-mix(in srgb,var(--bank-primary) 40%,#fff);--tone-ok-bg:#dcfce7;--tone-ok-text:#166534;--tone-info-bg:#dbeafe;--tone-info-text:#1e40af;--tone-danger-bg:#fee2e2;--tone-danger-text:#991b1b;--neutral-text:#374151;--danger:#dc2626;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-pill:999px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;--ease:cubic-bezier(.4,0,.2,1);--shadow-panel:inset 0 1px 0 #fff,0 1px 2px #1f29370d,0 12px 28px -16px #1f293733}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(900px 420px at 85% -80px,color-mix(in srgb,var(--bank-accent) 20%,transparent),transparent),var(--bg);color:var(--text);font:14px/20px var(--font-sans);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--text)}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.page{max-width:1200px;margin:0 auto;padding:28px 32px 64px}
+.crumbs{font-size:13px;color:var(--text-muted);margin:0 0 12px}.crumbs a{color:var(--text-muted)}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+h1{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.01em}
+h2{margin:0;font-size:18px;line-height:24px;font-weight:600}
+.sub{margin:4px 0 24px;color:var(--text-muted);font-size:15px;line-height:22px;max-width:68ch}
+.btn{min-height:40px;padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:500;transition:background 120ms var(--ease),transform 120ms var(--ease)}
+.btn:hover{background:var(--surface-2)}.btn:active{transform:scale(.98)}
+.primary{background:var(--bank-primary);border-color:var(--bank-primary);color:var(--bank-on);font-weight:600}
+.primary:hover{background:color-mix(in srgb,var(--bank-primary) 85%,#000)}
+.link{border:0;background:none;padding:8px;min-height:40px;border-radius:var(--radius-sm);color:var(--text);text-decoration:underline;text-underline-offset:3px;font-weight:500}
+.link:hover{background:var(--surface-2)}
+.glass{background:color-mix(in srgb,var(--surface) 84%,transparent);backdrop-filter:blur(12px);border:1px solid color-mix(in srgb,var(--surface) 55%,var(--border));border-radius:var(--radius-lg);box-shadow:var(--shadow-panel)}
+.pill{display:inline-flex;align-items:center;border-radius:var(--radius-pill);padding:1px 8px;font-size:12px;font-weight:600;white-space:nowrap}
+.on{background:var(--tone-ok-bg);color:var(--tone-ok-text)}.off{background:var(--surface-3);color:var(--neutral-text)}
+.mod{background:var(--tone-info-bg);color:var(--tone-info-text)}
+
+/* THE memorable element: a priority spine. Rules run top to bottom; the first match wins. */
+.rules{list-style:none;margin:0;padding:8px 20px;position:relative}
+.rule{display:grid;grid-template-columns:40px minmax(0,1fr) auto auto;gap:4px 16px;align-items:center;padding:16px 0;position:relative}
+.rule+.rule{border-top:1px solid var(--border)}
+.rule::before{content:"";position:absolute;left:19px;top:0;bottom:0;width:2px;background:color-mix(in srgb,var(--bank-primary) 16%,transparent)}
+.rule:first-child::before{top:50%}.rule:last-child::before{bottom:50%}.rule:only-child::before{display:none}
+.num{position:relative;z-index:1;width:40px;height:40px;border-radius:50%;background:var(--bank-primary);color:var(--bank-on);display:grid;place-items:center;font-weight:700;font-variant-numeric:tabular-nums;box-shadow:0 0 0 4px var(--surface)}
+.rule.is-off .num{background:var(--surface-3);color:var(--neutral-text)}
+.r-main{min-width:0;display:block;text-decoration:none;border-radius:var(--radius-md);padding:4px 8px;margin:-4px -8px}
+.r-main:hover{background:var(--surface-2)}
+.r-name{font-weight:600;font-size:15px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r-main:hover .r-name{text-decoration:underline;text-underline-offset:3px}
+.r-meta{display:block;color:var(--text-muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.r-tags{display:flex;gap:8px;align-items:center}
+.runs{display:flex;justify-content:space-between;gap:12px;padding:0 4px 8px;color:var(--text-muted);font-size:13px}
+.state{margin-top:40px;display:grid;gap:12px}.state .hd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}.state .hd span{color:var(--text-muted);font-size:13px}
+.note{padding:12px 16px;border-radius:var(--radius-md);background:var(--surface-2);border:1px solid var(--border);max-width:70ch}
+.note.bad{background:var(--tone-danger-bg);color:var(--tone-danger-text);border-color:#fecaca}.note.bad .btn{margin-left:8px;color:var(--text)}
+.empty{padding:40px 24px;text-align:center;display:grid;justify-items:center;gap:8px}.empty p{margin:0;color:var(--text-muted);max-width:44ch}
+.empty .ring{width:56px;height:56px;border-radius:50%;border:2px dashed var(--border-strong);display:grid;place-items:center;color:var(--text-muted);margin-bottom:4px}
+.sk{height:14px;border-radius:var(--radius-pill);background:linear-gradient(90deg,var(--surface-3),var(--surface-2),var(--surface-3));background-size:200% 100%;animation:sh 1.4s linear infinite}@keyframes sh{to{background-position:-200% 0}}
+.sk.c{width:40px;height:40px;border-radius:50%}
+.spec{margin-top:40px;border-top:1px solid var(--border);padding-top:24px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:12px}
+.box{border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);padding:16px}.box h3{margin:0 0 6px;font-size:15px}.box p{margin:4px 0;color:var(--text-muted)}
+code{font-size:12px;background:var(--surface-3);padding:1px 5px;border-radius:4px}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:780px){
+ .page{padding:20px 16px 48px}
+ .head{flex-direction:column}.head .btn{width:100%;min-height:44px}
+ .rules{padding:4px 16px}
+ .rule{grid-template-columns:40px minmax(0,1fr);}
+ .rule>.sk:nth-child(n+3){display:none}
+ .r-tags{grid-column:2}.rule>.link{grid-column:2;justify-self:start;min-height:44px}
+ .r-name,.r-meta{white-space:normal}
+ .grid{grid-template-columns:1fr}.note.bad .btn{display:flex;margin:8px 0 0;width:100%;min-height:44px}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="assign" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.900 1.900 6.500 5.500M17 11l2 2 3.500-4"/></symbol></svg>
+<main class="page" data-testid="assignment-rules-page">
+ <nav class="crumbs" aria-label="Breadcrumb"><a href="#">Setup</a> / <span aria-current="page">Assignment Rules</span></nav>
+ <div class="head">
+  <div>
+   <h1>Assignment Rules</h1>
+   <p class="sub">Whenever a record is created or saved, the first active rule (lowest priority number first) whose conditions match sets its owner automatically.</p>
+  </div>
+  <button class="btn primary" type="button"><svg class="i" aria-hidden="true"><use href="#plus"/></svg>New Rule</button>
+ </div>
+
+ <section class="glass" aria-label="Rules in the order they run, admin">
+  <div class="runs" style="padding:16px 20px 0"><span>Runs first</span><span>5 rules</span></div>
+  <ol class="rules">
+   <li class="rule"><span class="num" aria-label="Priority 1">1</span>
+    <a class="r-main" href="#"><span class="r-name">Enterprise web leads to Priya</span><span class="r-meta">Source equals Web, Company size equals 500+, assign to Priya Nair</span></a>
+    <span class="r-tags"><span class="pill mod">Leads</span><span class="pill on">Active</span></span><button class="link" type="button" aria-label="Delete rule Enterprise web leads to Priya">Delete</button></li>
+   <li class="rule"><span class="num" aria-label="Priority 2">2</span>
+    <a class="r-main" href="#"><span class="r-name">Referral leads to Tomas</span><span class="r-meta">Source equals Referral, assign to Tomas Weber</span></a>
+    <span class="r-tags"><span class="pill mod">Leads</span><span class="pill on">Active</span></span><button class="link" type="button" aria-label="Delete rule Referral leads to Tomas">Delete</button></li>
+   <li class="rule"><span class="num" aria-label="Priority 3">3</span>
+    <a class="r-main" href="#"><span class="r-name">Large deals to Mei</span><span class="r-meta">Stage equals Negotiation, assign to Mei Tanaka</span></a>
+    <span class="r-tags"><span class="pill mod">Deals</span><span class="pill on">Active</span></span><button class="link" type="button" aria-label="Delete rule Large deals to Mei">Delete</button></li>
+   <li class="rule"><span class="num" aria-label="Priority 4">4</span>
+    <a class="r-main" href="#"><span class="r-name">Treasury contacts to Elena</span><span class="r-meta">Title contains Treasury, assign to Elena Marković</span></a>
+    <span class="r-tags"><span class="pill mod">Contacts</span><span class="pill on">Active</span></span><button class="link" type="button" aria-label="Delete rule Treasury contacts to Elena">Delete</button></li>
+   <li class="rule is-off"><span class="num" aria-label="Priority 5">5</span>
+    <a class="r-main" href="#"><span class="r-name">Event leads to Amara</span><span class="r-meta">Source equals Event, assign to Amara Okafor</span></a>
+    <span class="r-tags"><span class="pill mod">Leads</span><span class="pill off">Inactive</span></span><button class="link" type="button" aria-label="Delete rule Event leads to Amara">Delete</button></li>
+  </ol>
+  <div class="runs" style="padding:0 20px 16px"><span>Runs last</span><span>No match leaves the owner as it is</span></div>
+ </section>
+
+ <div class="state"><div class="hd"><h2>Empty</h2><span>No rules yet. Admin sees the action; rep sees the note.</span></div>
+  <div class="glass"><div class="empty"><span class="ring"><svg class="i" aria-hidden="true" style="width:24px;height:24px"><use href="#assign"/></svg></span><h2>No assignment rules yet</h2><p>Auto-assign new records based on field conditions.</p><button class="btn primary" type="button" style="margin-top:8px"><svg class="i" aria-hidden="true"><use href="#plus"/></svg>New Rule</button></div></div></div>
+
+ <div class="state"><div class="hd"><h2>Loading</h2><span>Skeleton rows keep the spine and number circles</span></div>
+  <div class="glass"><ol class="rules" aria-busy="true" aria-label="Loading rules">
+   <li class="rule"><span class="sk c"></span><div><div class="sk" style="width:45%"></div><div class="sk" style="width:70%;margin-top:8px"></div></div><span class="sk" style="width:120px"></span><span></span></li>
+   <li class="rule"><span class="sk c"></span><div><div class="sk" style="width:38%"></div><div class="sk" style="width:62%;margin-top:8px"></div></div><span class="sk" style="width:120px"></span><span></span></li>
+   <li class="rule"><span class="sk c"></span><div><div class="sk" style="width:50%"></div><div class="sk" style="width:55%;margin-top:8px"></div></div><span class="sk" style="width:120px"></span><span></span></li></ol></div></div>
+
+ <div class="state"><div class="hd"><h2>Load failed</h2><span>New state: the code has none today</span></div>
+  <div class="note bad" role="alert">Assignment rules didn’t load. Check your connection. <button class="btn" type="button">Retry</button></div></div>
+
+ <div class="state"><div class="hd"><h2>Rep (read only)</h2><span>No New Rule, no Delete; rules still open</span></div>
+  <div class="note" role="note">Only admins can add or delete assignment rules.</div></div>
+
+ <section class="spec" aria-label="Build notes"><h2>Build notes</h2><div class="grid">
+  <div class="box"><h3>What changes</h3><p>The card gallery becomes one ordered list, because priority order is what the page is about. Each row: priority circle on a connecting line, name, a one-line summary of conditions and assignee, module and Active pills, Delete. Sorted by priority ascending (ties keep stored order). The dashed “create tile” becomes the header button and the empty state; label stays “New Rule”.</p></div>
+  <div class="box"><h3>Kept as is</h3><p>Route, copy of the intro, row opens <code>/setup/assignment-rules/:id</code>, Delete asks <code>window.confirm</code> with the same text and shows the same toast. Hooks: <code>assignment-rules-page</code>. Rep/viewer rule: <code>user.role !== 'admin'</code> hides create and delete.</p></div>
+  <div class="box"><h3>Tokens and a11y</h3><p>Circle fill is <code>--bank-primary</code> with <code>--bank-on</code> text; inactive is neutral. Pills are never colour only (the word is shown). Row link and Delete are separate tab stops, 44 px on phone. Focus ring 2 px <code>--text</code>.</p></div>
+  <div class="box"><h3>390 px</h3><p>Circle and text sit in two columns; pills and Delete drop under the name; New Rule is full width, 44 px. Nothing scrolls sideways; long names wrap.</p></div>
+ </div></section>
+</main>
+</body>
+</html>

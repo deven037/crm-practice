@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Assignment rule form (Harbor CRM)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--border-strong:#8b93a3;--text:#1f2937;--text-muted:#5b6472;--bank-primary:#1d3a6e;--bank-on:#fff;--bank-accent:color-mix(in srgb,var(--bank-primary) 40%,#fff);--tone-danger-bg:#fee2e2;--tone-danger-text:#991b1b;--danger:#dc2626;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--radius-pill:999px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;--ease:cubic-bezier(.4,0,.2,1);--shadow-panel:inset 0 1px 0 #fff,0 1px 2px #1f29370d,0 12px 28px -16px #1f293733}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(900px 420px at 85% -80px,color-mix(in srgb,var(--bank-accent) 20%,transparent),transparent),var(--bg);color:var(--text);font:14px/20px var(--font-sans);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--text)}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.page{max-width:880px;margin:0 auto;padding:28px 32px 64px}
+.crumbs{font-size:13px;color:var(--text-muted);margin:0 0 12px}.crumbs a{color:var(--text-muted)}
+h1{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.01em}
+h2{margin:0;font-size:18px;line-height:24px;font-weight:600}
+.sub{margin:4px 0 0;color:var(--text-muted);max-width:68ch}
+.btn{min-height:40px;padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:500;transition:background 120ms var(--ease),transform 120ms var(--ease)}
+.btn:hover{background:var(--surface-2)}.btn:active{transform:scale(.98)}.btn:disabled{opacity:.6;cursor:not-allowed}
+.primary{background:var(--bank-primary);border-color:var(--bank-primary);color:var(--bank-on);font-weight:600}
+.primary:hover:not(:disabled){background:color-mix(in srgb,var(--bank-primary) 85%,#000)}
+.glass{background:color-mix(in srgb,var(--surface) 84%,transparent);backdrop-filter:blur(12px);border:1px solid color-mix(in srgb,var(--surface) 55%,var(--border));border-radius:var(--radius-lg);box-shadow:var(--shadow-panel);padding:24px;margin-top:24px}
+.glass+.glass{margin-top:16px}
+.bar{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 0;margin-top:16px}
+.acts{display:flex;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 24px;margin-top:16px}
+.field{display:grid;gap:6px;align-content:start}
+.field>label,.lbl{font-weight:600;font-size:13px}
+.hint{font-size:13px;color:var(--text-muted)}
+.in{min-height:44px;width:100%;border:1px solid var(--border-strong);border-radius:var(--radius-md);background:var(--surface);padding:8px 12px;transition:border-color 120ms var(--ease),box-shadow 120ms var(--ease)}
+.in:hover{border-color:var(--text-muted)}
+.in:focus-visible{outline:2px solid var(--text);outline-offset:1px}
+.in[aria-invalid=true]{border-color:var(--danger);box-shadow:inset 3px 0 var(--danger)}
+.err{color:var(--tone-danger-text);font-size:13px}
+.check{display:flex;align-items:center;gap:10px;min-height:44px;margin-top:8px}
+.check input{width:20px;height:20px;accent-color:var(--bank-primary)}
+.cond{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr) minmax(0,1.2fr) auto;gap:12px;align-items:end;padding:12px 0;border-top:1px solid var(--border)}
+.cond:first-of-type{border-top:0}
+.cond .field>label{font-weight:500;color:var(--text-muted)}
+.link{border:0;background:none;min-height:44px;padding:0 12px;border-radius:var(--radius-sm);text-decoration:underline;text-underline-offset:3px;font-weight:500}.link:hover{background:var(--surface-2)}
+.joiner{margin:0;font-size:13px;color:var(--text-muted)}
+.banner{padding:12px 16px;border-radius:var(--radius-md);background:var(--tone-danger-bg);color:var(--tone-danger-text);border:1px solid #fecaca;margin-top:16px}
+.spin{width:14px;height:14px;border:2px solid #ffffff66;border-top-color:#fff;border-radius:50%;animation:s 700ms linear infinite}@keyframes s{to{transform:rotate(360deg)}}
+.sk{height:14px;border-radius:var(--radius-pill);background:linear-gradient(90deg,var(--surface-3),var(--surface-2),var(--surface-3));background-size:200% 100%;animation:sh 1.4s linear infinite}@keyframes sh{to{background-position:-200% 0}}
+.state{margin-top:40px}.state>span{display:block;color:var(--text-muted);font-size:13px;margin-top:2px}
+.spec{margin-top:40px;border-top:1px solid var(--border);padding-top:24px}
+.boxes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:12px}
+.box{border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);padding:16px}.box h3{margin:0 0 6px;font-size:15px}.box p{margin:4px 0;color:var(--text-muted)}
+code{font-size:12px;background:var(--surface-3);padding:1px 5px;border-radius:4px}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media (max-width:780px){
+ .page{padding:20px 16px 48px}.glass{padding:16px}
+ .grid{grid-template-columns:1fr}
+ .bar{flex-direction:column;align-items:stretch;position:static}.acts{flex-direction:column-reverse}.acts .btn{min-height:44px;width:100%}
+ .cond{grid-template-columns:1fr;gap:12px;padding:16px 0}.cond .link{justify-self:start}
+ .boxes{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol></svg>
+<main class="page" data-testid="assignment-rule-form-page">
+ <nav class="crumbs" aria-label="Breadcrumb"><a href="#">Setup</a> / <a href="#">Assignment Rules</a> / <span aria-current="page">New rule</span></nav>
+ <h1>New assignment rule</h1>
+ <p class="sub">Choose which records this rule matches and who becomes their owner.</p>
+
+ <form novalidate>
+  <div class="bar">
+   <span class="hint">Fields marked * are required</span>
+   <div class="acts"><button class="btn" type="button">Cancel</button><button class="btn primary" type="submit" data-testid="assignment-rule-save-btn">Save rule</button></div>
+  </div>
+
+  <section class="glass" aria-labelledby="d">
+   <h2 id="d">Rule details</h2>
+   <div class="grid">
+    <div class="field"><label for="n">Name *</label><input class="in" id="n" data-testid="assignment-rule-name" value="Referral leads to Tomas"></div>
+    <div class="field"><label for="m">Module</label><select class="in" id="m" data-testid="assignment-rule-module"><option>Leads</option><option>Contacts</option><option>Deals</option></select></div>
+    <div class="field"><label for="a">Assign to *</label><select class="in" id="a" data-testid="assignment-rule-assignto"><option>Tomas Weber</option></select></div>
+    <div class="field"><label for="p">Priority</label><input class="in" id="p" type="number" min="1" value="2" aria-describedby="ph"><span class="hint" id="ph">Lower numbers run first.</span></div>
+   </div>
+   <label class="check"><input type="checkbox" checked>Active</label>
+  </section>
+
+  <section class="glass" aria-labelledby="c">
+   <h2 id="c">Conditions</h2>
+   <p class="sub">A record must match every condition below for this rule to apply, on create or edit.</p>
+   <div style="margin-top:8px">
+    <div class="cond" role="group" aria-label="Condition 1">
+     <div class="field"><label for="f0">Field</label><select class="in" id="f0" data-testid="assignment-rule-condition-field-0"><option>Source</option></select></div>
+     <div class="field"><label for="o0">Operator</label><select class="in" id="o0"><option>equals</option><option>contains</option></select></div>
+     <div class="field"><label for="v0">Value</label><select class="in" id="v0" data-testid="assignment-rule-condition-value-0"><option>Referral</option></select></div>
+     <button class="link" type="button" aria-label="Remove condition 1">Remove</button></div>
+    <p class="joiner" aria-hidden="true">and</p>
+    <div class="cond" role="group" aria-label="Condition 2" style="border-top:0">
+     <div class="field"><label for="f1">Field</label><select class="in" id="f1" data-testid="assignment-rule-condition-field-1"><option>Company</option></select></div>
+     <div class="field"><label for="o1">Operator</label><select class="in" id="o1"><option>contains</option></select></div>
+     <div class="field"><label for="v1">Value</label><input class="in" id="v1" data-testid="assignment-rule-condition-value-1" value="Freight"></div>
+     <button class="link" type="button" aria-label="Remove condition 2">Remove</button></div>
+   </div>
+   <button class="btn" type="button" style="margin-top:8px"><svg class="i" aria-hidden="true"><use href="#plus"/></svg>Add condition</button>
+  </section>
+ </form>
+
+ <div class="state"><h2>Validation error</h2><span>Shown on Save with empty required fields. Name and Assign to keep the toast “Name and an assign-to user are required.” as well. Nothing typed is cleared.</span>
+  <div class="banner" role="alert" style="margin-top:12px">Name and an assign-to user are required.</div>
+  <section class="glass"><div class="grid">
+   <div class="field"><label for="n2">Name *</label><input class="in" id="n2" aria-invalid="true" aria-describedby="n2e"><span class="err" id="n2e">Enter a name for this rule.</span></div>
+   <div class="field"><label for="a2">Assign to *</label><select class="in" id="a2" aria-invalid="true" aria-describedby="a2e"><option>Choose user…</option></select><span class="err" id="a2e">Choose who owns matching records.</span></div>
+  </div></section></div>
+
+ <div class="state"><h2>Saving</h2><span>Button disabled with spinner, label “Saving…”. Fields stay as typed.</span>
+  <div class="acts" style="margin-top:12px"><button class="btn" type="button" disabled>Cancel</button><button class="btn primary" type="button" disabled><span class="spin" aria-hidden="true"></span>Saving…</button></div></div>
+
+ <div class="state"><h2>Loading an existing rule</h2><span>Edit route, until the rule arrives</span>
+  <section class="glass" aria-busy="true" aria-label="Loading rule"><div class="grid"><div><div class="sk" style="width:40%"></div><div class="sk" style="height:44px;border-radius:10px;margin-top:8px"></div></div><div><div class="sk" style="width:40%"></div><div class="sk" style="height:44px;border-radius:10px;margin-top:8px"></div></div></div></section></div>
+
+ <div class="state"><h2>Rule not found</h2><span>Edit route with an unknown id. Same words as today, with a clear way back.</span>
+  <section class="glass" style="text-align:center"><p style="margin:0 0 12px">Rule not found.</p><a class="btn" href="#">Back to Assignment Rules</a></section></div>
+
+ <section class="spec" aria-label="Build notes"><h2>Build notes</h2><div class="boxes">
+  <div class="box"><h3>Layout</h3><p>One 880 px column. Two surfaces: details, then conditions. Save and Cancel sit in a bar above the form, as today (Save is the single primary). Labels above inputs, 44 px controls. Priority gets a helper line.</p></div>
+  <div class="box"><h3>Conditions</h3><p>Each condition is a row of Field, Operator, Value and Remove, with “and” between rows, because every condition must match. Value stays a select, true/false select or input by field kind. Changing Module resets conditions, as today. “+ Add condition” becomes “Add condition”.</p></div>
+  <div class="box"><h3>Kept as is</h3><p>Validation logic, toast text, redirects after save. Hooks: <code>assignment-rule-form-page, assignment-rule-name, -module, -assignto, -save-btn, -condition-field-N, -condition-value-N</code>. Inline errors are new and show only after Save is pressed.</p></div>
+  <div class="box"><h3>390 px</h3><p>Single column, Save above Cancel, full width, 44 px. Condition rows stack with Remove under them. No horizontal scroll (the old table scrolled).</p></div>
+ </div></section>
+</main>
+</body>
+</html>
