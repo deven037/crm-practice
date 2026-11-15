@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useId, useRef } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 interface ModalProps {
@@ -10,6 +10,8 @@ interface ModalProps {
 }
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+let modalCount = 0;
 
 // Where Tab/Shift+Tab should go to stay inside the dialog; null lets the browser move focus normally.
 export function trapTarget<T>(focusables: T[], dialog: T, active: unknown, shift: boolean): T | null {
@@ -23,11 +25,16 @@ export function trapTarget<T>(focusables: T[], dialog: T, active: unknown, shift
 
 export function Modal({ title, onClose, children, footer, wide }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
-  const bodyId = useId();
+  const idRef = useRef<string | null>(null);
+  if (idRef.current === null) idRef.current = `modal-body-${++modalCount}`;
+  const bodyId = idRef.current;
+  // Captured during the first render, before any autoFocus field inside the dialog takes focus.
+  const openerRef = useRef<HTMLElement | null | undefined>(undefined);
+  if (openerRef.current === undefined) openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const opener = openerRef.current;
     if (dialog && !dialog.contains(document.activeElement)) dialog.focus();
     return () => {
       if (opener && opener.isConnected) opener.focus();
