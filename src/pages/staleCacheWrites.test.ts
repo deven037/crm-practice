@@ -33,7 +33,7 @@ vi.mock('react-router-dom', async (original) => ({
 }));
 vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: { role: 'admin' } }) }));
 vi.mock('../components/Toast', () => ({ useToast: () => ({ push: vi.fn() }) }));
-vi.mock('../hooks/useRecentlyViewed', () => ({ useRecentlyViewed: () => ({ recordView: vi.fn() }) }));
+vi.mock('../hooks/useRecentlyViewed', () => ({ useRecentlyViewed: () => ({ recordView: vi.fn(), removeViews: vi.fn() }) }));
 vi.mock('../utils/rules', () => ({
   applyAssignmentRule: (...args: unknown[]) => harness.rule(...args),
   getStatusOptions: (_module: string, _field: string, fallback: string[]) => fallback,
