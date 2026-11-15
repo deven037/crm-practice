@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToolBox and Recently Accessed panels: all 8 modules (desktop)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Harbor tokens (design/design-tokens.json). A bank profile sets only --bank-primary and --bank-on. */
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--border-strong:#8b93a3;--text:#1f2937;--text-muted:#5b6472;--bank-primary:#1d3a6e;--bank-on:#fff;--bank-accent:color-mix(in srgb,var(--bank-primary) 40%,#fff);--tone-info-bg:#dbeafe;--tone-info-text:#1e40af;--radius-sm:6px;--radius-md:10px;--radius-lg:14px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;--ease:cubic-bezier(.4,0,.2,1);--shadow-panel:inset 0 1px 0 #fff,0 1px 2px #1f29370d,0 12px 28px -16px #1f293733}
+*{box-sizing:border-box}
+body{margin:0;font:14px/20px var(--font-sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.page{max-width:1200px;margin:0 auto;padding:32px 32px 64px}
+h1{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.01em}
+.sub{margin:4px 0 32px;color:var(--text-muted);font-size:15px;max-width:68ch}
+.mod{margin:0 0 32px}
+.mod-h{display:flex;align-items:baseline;gap:12px;margin:0 0 8px}
+.mod-h h2{margin:0;font-size:18px;line-height:24px;font-weight:600}
+.mod-h span{color:var(--text-muted);font-size:13px}
+.stub{margin-top:12px;height:44px;border:1px dashed var(--border-strong);border-radius:var(--radius-md);display:flex;align-items:center;padding:0 16px;color:var(--text-muted);font-size:13px}
+.note{margin:0 0 12px;color:var(--text-muted);font-size:13px;max-width:80ch}
+
+/* ===== the redesigned panel (build to this) ===== */
+.tbx{container-type:inline-size}
+.toolbox-panel-row{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-panel);overflow:hidden}
+.toolbox-col{min-width:0;padding:12px 20px 12px}
+.toolbox-col+.toolbox-col{border-left:1px solid var(--border);background:color-mix(in srgb,var(--surface-2) 55%,var(--surface))}
+.toolbox-col-head{margin:0 0 4px;padding:4px 0;font-size:15px;line-height:24px;font-weight:600}
+.toolbox-body{display:grid;gap:2px}
+.recent-item{display:grid;grid-template-columns:32px minmax(0,1fr) auto;column-gap:12px;align-items:center;min-height:52px;margin:0 -8px;padding:6px 8px;border-radius:var(--radius-md);color:var(--text);text-decoration:none;transition:background 120ms var(--ease)}
+.recent-item:hover{background:var(--surface-2)}
+.recent-item:active{background:var(--surface-3)}
+.recent-glyph{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:700;background:color-mix(in srgb,var(--bank-primary) 14%,var(--surface));color:var(--text);grid-row:1/3}
+.recent-item-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent-item:hover .recent-item-name{text-decoration:underline;text-underline-offset:3px}
+.recent-item-meta{display:flex;gap:4px 16px;font-size:13px;line-height:18px;color:var(--text-muted);min-width:0;overflow:hidden;white-space:nowrap}
+.recent-item-meta span{overflow:hidden;text-overflow:ellipsis}
+.recent-when{grid-column:3;grid-row:1/3;font-size:13px;color:var(--text-muted);white-space:nowrap}
+.recent-item .recent-item-name{grid-column:2}
+.recent-item .recent-item-meta{grid-column:2}
+.toolbox-links{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px}
+.toolbox-link{display:flex;align-items:center;gap:12px;min-height:44px;margin:0 -8px;padding:0 8px;border-radius:var(--radius-md);color:var(--text);font-size:14px;font-weight:500;text-decoration:none;transition:background 120ms var(--ease)}
+.toolbox-link:hover{background:var(--surface-3)}
+.toolbox-link:active{background:var(--border)}
+.tl-ic{width:28px;height:28px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;flex:none}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.search-hint{padding:8px 0;color:var(--text-muted);font-size:14px}
+.search-hint small{display:block;font-size:13px;margin-top:2px}
+@container (max-width:720px){
+ .toolbox-panel-row{grid-template-columns:1fr}
+ .toolbox-col+.toolbox-col{border-left:0;border-top:1px solid var(--border)}
+}
+@container (max-width:480px){.toolbox-links{grid-template-columns:1fr}}
+@media (max-width:780px){.page{padding:24px 16px 48px}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="assign" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.900 1.900 6.500 5.500M17 11l2 2 3.500-4"/></symbol>
+<symbol id="dedupe" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+<symbol id="status" viewBox="0 0 24 24"><path d="M3 12V4h8l9.500 9.500a1.500 1.500 0 0 1 0 2.100l-4.900 4.900a1.500 1.500 0 0 1-2.100 0z"/><circle cx="7.500" cy="8.500" r="1"/></symbol>
+<symbol id="sla" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.500 2M9 3h6"/></symbol>
+<symbol id="import" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></symbol>
+<symbol id="fields" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+<symbol id="layout" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M10 10v10"/></symbol>
+</svg>
+<main class="page">
+<h1>ToolBox and Recently Accessed panels</h1>
+<p class="sub">One surface per list page, two zones: recent records on the left, setup links on the right. Every module uses the same component. Only the links and the meta keys change. Shown at 1200 px content width, populated, admin.</p>
+
+<!-- LEADS -->
+<section class="mod" aria-labelledby="m-leads">
+ <div class="mod-h"><h2 id="m-leads">Leads</h2><span>6 links, 5 recent records (the maximum shown)</span></div>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col" aria-labelledby="ra-leads"><h3 class="toolbox-col-head" id="ra-leads">Recently Accessed</h3>
+   <div class="toolbox-body">
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">L</span><span class="recent-item-name">Priya Nair</span><span class="recent-when">Viewed 4 min ago</span><span class="recent-item-meta"><span>Company: Northwind Freight</span><span>Status: Qualified</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">L</span><span class="recent-item-name">Tomas Weber</span><span class="recent-when">Viewed 22 min ago</span><span class="recent-item-meta"><span>Company: Weber &amp; Sons Logistics</span><span>Status: Contacted</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">L</span><span class="recent-item-name">Amara Okafor</span><span class="recent-when">Viewed 1 hour ago</span><span class="recent-item-meta"><span>Company: —</span><span>Status: New</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">L</span><span class="recent-item-name">Jonas Lindqvist</span><span class="recent-when">Viewed 3 hours ago</span><span class="recent-item-meta"><span>Company: Fjord Marine</span><span>Status: Unqualified</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">L</span><span class="recent-item-name">Mei Tanaka</span><span class="recent-when">Viewed yesterday</span><span class="recent-item-meta"><span>Company: Tanaka Textiles</span><span>Status: Converted</span></span></a>
+   </div></section>
+  <section class="toolbox-col" aria-labelledby="tb-leads"><h3 class="toolbox-col-head" id="tb-leads">ToolBox</h3>
+   <div class="toolbox-body toolbox-links">
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#assign"/></svg></span>Assignment Rules</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#dedupe"/></svg></span>Dedupe Rule</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#status"/></svg></span>Status Codes</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#import"/></svg></span>Import Data</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#fields"/></svg></span>Custom Fields</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#layout"/></svg></span>Customise Page Layout</a>
+   </div></section>
+ </div></div>
+ <div class="stub">Leads toolbar and table continue here, unchanged</div>
+</section>
+
+<!-- CONTACTS -->
+<section class="mod" aria-labelledby="m-contacts">
+ <div class="mod-h"><h2 id="m-contacts">Contacts</h2><span>4 links</span></div>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col" aria-labelledby="ra-contacts"><h3 class="toolbox-col-head" id="ra-contacts">Recently Accessed</h3>
+   <div class="toolbox-body">
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">C</span><span class="recent-item-name">Elena Marković</span><span class="recent-when">Viewed 9 min ago</span><span class="recent-item-meta"><span>Title: Head of Treasury</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">C</span><span class="recent-item-name">Samuel Adeyemi</span><span class="recent-when">Viewed 2 hours ago</span><span class="recent-item-meta"><span>Title: —</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">C</span><span class="recent-item-name">Clara Dubois</span><span class="recent-when">Viewed yesterday</span><span class="recent-item-meta"><span>Title: Finance Director</span></span></a>
+   </div></section>
+  <section class="toolbox-col" aria-labelledby="tb-contacts"><h3 class="toolbox-col-head" id="tb-contacts">ToolBox</h3>
+   <div class="toolbox-body toolbox-links">
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#dedupe"/></svg></span>Dedupe Rule</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#import"/></svg></span>Import Data</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#fields"/></svg></span>Custom Fields</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#layout"/></svg></span>Customise Page Layout</a>
+   </div></section>
+ </div></div>
+</section>
+
+<!-- ACCOUNTS -->
+<section class="mod" aria-labelledby="m-accounts">
+ <div class="mod-h"><h2 id="m-accounts">Accounts</h2><span>3 links</span></div>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col" aria-labelledby="ra-accounts"><h3 class="toolbox-col-head" id="ra-accounts">Recently Accessed</h3>
+   <div class="toolbox-body">
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">A</span><span class="recent-item-name">Northwind Freight</span><span class="recent-when">Viewed 12 min ago</span><span class="recent-item-meta"><span>Industry: Logistics</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">A</span><span class="recent-item-name">Fjord Marine</span><span class="recent-when">Viewed 3 hours ago</span><span class="recent-item-meta"><span>Industry: Shipping</span></span></a>
+   </div></section>
+  <section class="toolbox-col" aria-labelledby="tb-accounts"><h3 class="toolbox-col-head" id="tb-accounts">ToolBox</h3>
+   <div class="toolbox-body toolbox-links">
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#import"/></svg></span>Import Data</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#fields"/></svg></span>Custom Fields</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#layout"/></svg></span>Customise Page Layout</a>
+   </div></section>
+ </div></div>
+</section>
+
+<!-- DEALS -->
+<section class="mod" aria-labelledby="m-deals">
+ <div class="mod-h"><h2 id="m-deals">Deals</h2><span>4 links. Shown above the pipeline, board or list.</span></div>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col" aria-labelledby="ra-deals"><h3 class="toolbox-col-head" id="ra-deals">Recently Accessed</h3>
+   <div class="toolbox-body">
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">D</span><span class="recent-item-name">Northwind fleet financing</span><span class="recent-when">Viewed 6 min ago</span><span class="recent-item-meta"><span>Stage: Negotiation</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">D</span><span class="recent-item-name">Fjord Marine renewal</span><span class="recent-when">Viewed 1 hour ago</span><span class="recent-item-meta"><span>Stage: Proposal</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">D</span><span class="recent-item-name">Tanaka Textiles expansion</span><span class="recent-when">Viewed yesterday</span><span class="recent-item-meta"><span>Stage: Closed won</span></span></a>
+   </div></section>
+  <section class="toolbox-col" aria-labelledby="tb-deals"><h3 class="toolbox-col-head" id="tb-deals">ToolBox</h3>
+   <div class="toolbox-body toolbox-links">
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#assign"/></svg></span>Assignment Rules</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#status"/></svg></span>Status Codes</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#fields"/></svg></span>Custom Fields</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#layout"/></svg></span>Customise Page Layout</a>
+   </div></section>
+ </div></div>
+</section>
+
+<!-- PRODUCTS -->
+<section class="mod" aria-labelledby="m-products">
+ <div class="mod-h"><h2 id="m-products">Products</h2><span>3 links</span></div>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col" aria-labelledby="ra-products"><h3 class="toolbox-col-head" id="ra-products">Recently Accessed</h3>
+   <div class="toolbox-body">
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">P</span><span class="recent-item-name">Business Current Account</span><span class="recent-when">Viewed 31 min ago</span><span class="recent-item-meta"><span>SKU: BCA-100</span><span>Category: Accounts</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">P</span><span class="recent-item-name">Equipment Loan 5-year</span><span class="recent-when">Viewed yesterday</span><span class="recent-item-meta"><span>SKU: EQL-205</span><span>Category: Lending</span></span></a>
+   </div></section>
+  <section class="toolbox-col" aria-labelledby="tb-products"><h3 class="toolbox-col-head" id="tb-products">ToolBox</h3>
+   <div class="toolbox-body toolbox-links">
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#import"/></svg></span>Import Data</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#fields"/></svg></span>Custom Fields</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#layout"/></svg></span>Customise Page Layout</a>
+   </div></section>
+ </div></div>
+</section>
+
+<!-- QUOTES -->
+<section class="mod" aria-labelledby="m-quotes">
+ <div class="mod-h"><h2 id="m-quotes">Quotes</h2><span>2 links. The record name is the quote number.</span></div>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col" aria-labelledby="ra-quotes"><h3 class="toolbox-col-head" id="ra-quotes">Recently Accessed</h3>
+   <div class="toolbox-body">
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">Q</span><span class="recent-item-name">Q-2041</span><span class="recent-when">Viewed 18 min ago</span><span class="recent-item-meta"><span>Status: Sent</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">Q</span><span class="recent-item-name">Q-2037</span><span class="recent-when">Viewed 2 hours ago</span><span class="recent-item-meta"><span>Status: Draft</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">Q</span><span class="recent-item-name">Q-2029</span><span class="recent-when">Viewed yesterday</span><span class="recent-item-meta"><span>Status: Accepted</span></span></a>
+   </div></section>
+  <section class="toolbox-col" aria-labelledby="tb-quotes"><h3 class="toolbox-col-head" id="tb-quotes">ToolBox</h3>
+   <div class="toolbox-body toolbox-links">
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#fields"/></svg></span>Custom Fields</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#layout"/></svg></span>Customise Page Layout</a>
+   </div></section>
+ </div></div>
+</section>
+
+<!-- CAMPAIGNS -->
+<section class="mod" aria-labelledby="m-campaigns">
+ <div class="mod-h"><h2 id="m-campaigns">Campaigns</h2><span>3 links</span></div>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col" aria-labelledby="ra-campaigns"><h3 class="toolbox-col-head" id="ra-campaigns">Recently Accessed</h3>
+   <div class="toolbox-body">
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">C</span><span class="recent-item-name">Spring SME lending push</span><span class="recent-when">Viewed 44 min ago</span><span class="recent-item-meta"><span>Channel: Email</span><span>Status: Active</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">C</span><span class="recent-item-name">Branch open day</span><span class="recent-when">Viewed yesterday</span><span class="recent-item-meta"><span>Channel: Event</span><span>Status: Completed</span></span></a>
+   </div></section>
+  <section class="toolbox-col" aria-labelledby="tb-campaigns"><h3 class="toolbox-col-head" id="tb-campaigns">ToolBox</h3>
+   <div class="toolbox-body toolbox-links">
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#status"/></svg></span>Status Codes</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#fields"/></svg></span>Custom Fields</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#layout"/></svg></span>Customise Page Layout</a>
+   </div></section>
+ </div></div>
+</section>
+
+<!-- TICKETS -->
+<section class="mod" aria-labelledby="m-tickets">
+ <div class="mod-h"><h2 id="m-tickets">Tickets</h2><span>3 links. The record name is the ticket subject. Shown above the status chips, inbox and board.</span></div>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col" aria-labelledby="ra-tickets"><h3 class="toolbox-col-head" id="ra-tickets">Recently Accessed</h3>
+   <div class="toolbox-body">
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">T</span><span class="recent-item-name">Card payments declined at branch POS</span><span class="recent-when">Viewed 7 min ago</span><span class="recent-item-meta"><span>Status: Open</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">T</span><span class="recent-item-name">Statement export missing March</span><span class="recent-when">Viewed 50 min ago</span><span class="recent-item-meta"><span>Status: In progress</span></span></a>
+    <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">T</span><span class="recent-item-name">Update signatory on business account</span><span class="recent-when">Viewed yesterday</span><span class="recent-item-meta"><span>Status: Resolved</span></span></a>
+   </div></section>
+  <section class="toolbox-col" aria-labelledby="tb-tickets"><h3 class="toolbox-col-head" id="tb-tickets">ToolBox</h3>
+   <div class="toolbox-body toolbox-links">
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#sla"/></svg></span>SLA Management</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#fields"/></svg></span>Custom Fields</a>
+    <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#layout"/></svg></span>Customise Page Layout</a>
+   </div></section>
+ </div></div>
+</section>
+</main>
+</body>
+</html>

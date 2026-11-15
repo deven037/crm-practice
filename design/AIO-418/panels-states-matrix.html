@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToolBox and Recently Accessed: states and navigation matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--surface-3:#e9ecef;--border:#e1e4e8;--border-strong:#8b93a3;--text:#1f2937;--text-muted:#5b6472;--bank-primary:#1d3a6e;--bank-on:#fff;--tone-warn-bg:#fef3c7;--tone-warn-text:#92400e;--tone-info-bg:#dbeafe;--tone-info-text:#1e40af;--tone-ok-bg:#d1fae5;--tone-ok-text:#065f46;--radius-md:10px;--radius-lg:14px;--font-sans:'Inter',-apple-system,'Segoe UI',Roboto,sans-serif;--ease:cubic-bezier(.4,0,.2,1);--shadow-panel:inset 0 1px 0 #fff,0 1px 2px #1f29370d,0 12px 28px -16px #1f293733}
+*{box-sizing:border-box}
+body{margin:0;font:14px/20px var(--font-sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.page{max-width:1200px;margin:0 auto;padding:32px 32px 64px}
+h1{margin:0;font-size:24px;line-height:32px;font-weight:700;letter-spacing:-.01em}
+.sub{margin:4px 0 32px;color:var(--text-muted);font-size:15px;max-width:68ch}
+h2{margin:48px 0 4px;font-size:18px;line-height:24px;font-weight:600}
+.lede{margin:0 0 16px;color:var(--text-muted);max-width:76ch}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.tile h3{margin:0 0 4px;font-size:15px;line-height:20px;font-weight:600}
+.tile p.cap{margin:0 0 8px;color:var(--text-muted);font-size:13px;line-height:18px;max-width:64ch}
+.tbx{container-type:inline-size}
+code{font:13px/18px ui-monospace,Menlo,Consolas,monospace;background:var(--surface-3);padding:1px 5px;border-radius:4px}
+
+/* panel (identical to panels-desktop.html) */
+.toolbox-panel-row{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-panel);overflow:hidden}
+.toolbox-col{min-width:0;padding:12px 20px}
+.toolbox-col+.toolbox-col{border-left:1px solid var(--border);background:color-mix(in srgb,var(--surface-2) 55%,var(--surface))}
+.toolbox-col-head{margin:0 0 4px;padding:4px 0;font-size:15px;line-height:24px;font-weight:600}
+.toolbox-body{display:grid;gap:2px}
+.recent-item{display:grid;grid-template-columns:32px minmax(0,1fr) auto;column-gap:12px;align-items:center;min-height:52px;margin:0 -8px;padding:6px 8px;border-radius:var(--radius-md);color:var(--text);text-decoration:none;transition:background 120ms var(--ease)}
+.recent-item:hover,.recent-item.is-hover{background:var(--surface-2)}
+.recent-item.is-hover .recent-item-name{text-decoration:underline;text-underline-offset:3px}
+.recent-glyph{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:700;background:color-mix(in srgb,var(--bank-primary) 14%,var(--surface));grid-row:1/3}
+.recent-item-name{grid-column:2;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent-item-meta{grid-column:2;display:flex;gap:4px 16px;font-size:13px;line-height:18px;color:var(--text-muted);min-width:0;overflow:hidden;white-space:nowrap}
+.recent-when{grid-column:3;grid-row:1/3;font-size:13px;color:var(--text-muted);white-space:nowrap}
+.toolbox-links{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px}
+.toolbox-link{display:flex;align-items:center;gap:12px;min-height:44px;margin:0 -8px;padding:0 8px;border-radius:var(--radius-md);color:var(--text);font-size:14px;font-weight:500;text-decoration:none;transition:background 120ms var(--ease)}
+.toolbox-link:hover,.toolbox-link.is-hover{background:var(--surface-3)}
+.toolbox-link.is-focus{outline:2px solid var(--text);outline-offset:2px}
+.tl-ic{width:28px;height:28px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:grid;place-items:center;flex:none}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.search-hint{padding:8px 0;color:var(--text-muted);font-size:14px}
+.search-hint small{display:block;font-size:13px;margin-top:2px}
+@container (max-width:720px){.toolbox-panel-row{grid-template-columns:1fr}.toolbox-col+.toolbox-col{border-left:0;border-top:1px solid var(--border)}}
+@container (max-width:480px){.toolbox-links{grid-template-columns:1fr}}
+
+/* state-only pieces */
+.sk{display:grid;grid-template-columns:32px 1fr;column-gap:12px;align-items:center;min-height:52px;padding:6px 0}
+.sk i{display:block;border-radius:6px;background:linear-gradient(90deg,var(--surface-3),var(--surface-2),var(--surface-3));background-size:200% 100%;animation:sh 1.4s linear infinite}
+.sk .g{width:32px;height:32px;grid-row:1/3;border-radius:8px}.sk .a{height:12px;width:55%;margin-bottom:6px}.sk .b{height:10px;width:75%}
+@keyframes sh{to{background-position:-200% 0}}
+.gone{display:flex;align-items:center;gap:12px;min-height:52px;margin:0 -8px;padding:6px 8px;border-radius:var(--radius-md);background:var(--tone-warn-bg);color:var(--tone-warn-text);font-size:13px;line-height:18px}
+.gone b{font-weight:600}
+.ghost{opacity:.55;text-decoration:line-through;text-decoration-color:var(--text-muted)}
+.live{margin-top:8px;font-size:13px;color:var(--text-muted)}
+.live span{display:inline-block;background:var(--text);color:#fff;padding:6px 12px;border-radius:var(--radius-md)}
+.lock{margin-left:auto;font-size:12px;line-height:16px;color:var(--tone-warn-text);background:var(--tone-warn-bg);padding:2px 8px;border-radius:99px}
+
+/* tables */
+.tw{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:880px}
+th{text-align:left;font-size:13px;font-weight:600;color:var(--text-muted);padding:0 12px;height:44px;background:var(--surface-2);white-space:nowrap}
+td{padding:10px 12px;border-top:1px solid var(--border);vertical-align:top}
+td.m{font-weight:600;white-space:nowrap}
+ul.ln{margin:0;padding:0;list-style:none}
+ul.ln li{padding:2px 0}
+.tag{display:inline-block;font-size:12px;line-height:16px;padding:2px 8px;border-radius:99px;background:var(--tone-info-bg);color:var(--tone-info-text);font-weight:500}
+.tag.w{background:var(--tone-warn-bg);color:var(--tone-warn-text)}
+.tag.o{background:var(--tone-ok-bg);color:var(--tone-ok-text)}
+.muted{color:var(--text-muted)}
+ol.dec{margin:0;padding-left:20px;max-width:80ch}ol.dec li{margin:0 0 8px}
+@media (max-width:900px){.tiles{grid-template-columns:1fr}.page{padding:24px 16px 48px}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="assign" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M17 11l2 2 3.5-4"/></symbol>
+<symbol id="dedupe" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+<symbol id="status" viewBox="0 0 24 24"><path d="M3 12V4h8l9.5 9.5a1.5 1.5 0 0 1 0 2.1l-4.900 4.900a1.500 1.500 0 0 1-2.100 0z"/><circle cx="7.500" cy="8.500" r="1"/></symbol>
+<symbol id="import" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></symbol>
+<symbol id="fields" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+<symbol id="layout" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M10 10v10"/></symbol>
+</svg>
+<main class="page">
+<h1>ToolBox and Recently Accessed: states and navigation matrix</h1>
+<p class="sub">States are drawn once on Leads and apply to all 8 modules. The matrix after them lists every link, its target and who can open it. Facts marked Verified come from the code in <code>src/components/ToolBoxPanel.tsx</code>, <code>src/hooks/useRecentlyViewed.ts</code>, the seven module pages and <code>src/App.tsx</code>.</p>
+
+<h2>States</h2>
+<p class="lede">The ToolBox links are static, so they render at once and never wait on data. Recently Accessed reads the browser store synchronously today (Verified), so it has no loading state in the app now. The skeleton below is the build target if that read ever becomes asynchronous.</p>
+<div class="tiles">
+
+ <div class="tile"><h3>Empty: no recent records yet</h3><p class="cap">First visit, or after every recent record was deleted. Keeps the existing sentence. The second line is new and tells the person what to do.</p>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col"><h3 class="toolbox-col-head">Recently Accessed</h3><div class="toolbox-body"><div class="search-hint">No recently accessed records yet.<small>Open a lead and it appears here.</small></div></div></section>
+  <section class="toolbox-col"><h3 class="toolbox-col-head">ToolBox</h3><div class="toolbox-body toolbox-links">
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#assign"/></svg></span>Assignment Rules</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#dedupe"/></svg></span>Dedupe Rule</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#status"/></svg></span>Status Codes</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#import"/></svg></span>Import Data</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#fields"/></svg></span>Custom Fields</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#layout"/></svg></span>Customise Page Layout</a>
+  </div></section></div></div></div>
+
+ <div class="tile"><h3>Empty: no ToolBox links for a module</h3><p class="cap">Not reachable today, since all 8 modules pass links (Verified). Drawn so the component handles an empty list. Keeps the existing sentence.</p>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col"><h3 class="toolbox-col-head">Recently Accessed</h3><div class="toolbox-body">
+   <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">Q</span><span class="recent-item-name">Q-2041</span><span class="recent-when">Viewed 18 min ago</span><span class="recent-item-meta"><span>Status: Sent</span></span></a></div></section>
+  <section class="toolbox-col"><h3 class="toolbox-col-head">ToolBox</h3><div class="toolbox-body"><div class="search-hint">No ToolBox items for this module.</div></div></section></div></div></div>
+
+ <div class="tile"><h3>Loading (build target)</h3><p class="cap">Three skeleton rows the same height as real rows (52 px) so nothing jumps. ToolBox links stay visible. Shimmer stops under reduced motion. The panel is outside any page-level loading: Deals and Tickets keep it above their own skeleton or error.</p>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col" role="status" aria-label="Loading recently accessed"><h3 class="toolbox-col-head">Recently Accessed</h3><div class="toolbox-body">
+   <div class="sk"><i class="g"></i><i class="a"></i><i class="b"></i></div><div class="sk"><i class="g"></i><i class="a"></i><i class="b"></i></div><div class="sk"><i class="g"></i><i class="a"></i><i class="b"></i></div></div></section>
+  <section class="toolbox-col"><h3 class="toolbox-col-head">ToolBox</h3><div class="toolbox-body toolbox-links">
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#assign"/></svg></span>Assignment Rules</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#dedupe"/></svg></span>Dedupe Rule</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#status"/></svg></span>Status Codes</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#import"/></svg></span>Import Data</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#fields"/></svg></span>Custom Fields</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#layout"/></svg></span>Customise Page Layout</a>
+  </div></section></div></div></div>
+
+ <div class="tile"><h3>Deleted record: today, for 7 of 8 modules</h3><p class="cap">Verified: only Contacts removes a deleted record from Recently Accessed (<code>ContactDetail.tsx</code>, <code>Contacts.tsx</code>). In the other seven the row stays and opens that module's "not found" page. The design keeps that behaviour until Morgan approves the change on the right.</p>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col"><h3 class="toolbox-col-head">Recently Accessed</h3><div class="toolbox-body">
+   <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">L</span><span class="recent-item-name">Priya Nair</span><span class="recent-when">Viewed 4 min ago</span><span class="recent-item-meta"><span>Company: Northwind Freight</span><span>Status: Qualified</span></span></a>
+   <a class="recent-item ghost" href="#"><span class="recent-glyph" aria-hidden="true">L</span><span class="recent-item-name">Tomas Weber</span><span class="recent-when">Viewed 22 min ago</span><span class="recent-item-meta"><span>Deleted in another tab. Opens "not found".</span></span></a></div></section>
+  <section class="toolbox-col"><h3 class="toolbox-col-head">ToolBox</h3><div class="toolbox-body"><div class="search-hint">Unchanged.</div></div></section></div></div></div>
+
+ <div class="tile"><h3>Deleted record: proposed, all 8 modules</h3><p class="cap">When a record is deleted, or its page reports "not found", its row is removed. The panel announces it politely and the row collapses in 160 ms (instant under reduced motion). The same call Contacts already uses, extended to the other seven.</p>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col"><h3 class="toolbox-col-head">Recently Accessed</h3><div class="toolbox-body">
+   <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">L</span><span class="recent-item-name">Priya Nair</span><span class="recent-when">Viewed 4 min ago</span><span class="recent-item-meta"><span>Company: Northwind Freight</span><span>Status: Qualified</span></span></a>
+   <div class="gone" role="status"><b>Removed:</b> Tomas Weber was deleted.</div></div></section>
+  <section class="toolbox-col"><h3 class="toolbox-col-head">ToolBox</h3><div class="toolbox-body"><div class="search-hint">Unchanged.</div></div></section></div></div></div>
+
+ <div class="tile"><h3>Hover, keyboard focus, press</h3><p class="cap">Hover tints the row (<code>--surface-2</code>) and underlines the name. Focus is a 2 px <code>--text</code> ring with a 2 px offset, never the bank colour. Press steps one tone darker. All changes take 120 ms and stop under reduced motion. Tab order: Recently Accessed rows top to bottom, then ToolBox links in the order passed.</p>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col"><h3 class="toolbox-col-head">Recently Accessed</h3><div class="toolbox-body">
+   <a class="recent-item is-hover" href="#"><span class="recent-glyph" aria-hidden="true">L</span><span class="recent-item-name">Priya Nair</span><span class="recent-when">Viewed 4 min ago</span><span class="recent-item-meta"><span>Company: Northwind Freight</span><span>Status: Qualified</span></span></a>
+   <a class="recent-item" href="#"><span class="recent-glyph" aria-hidden="true">L</span><span class="recent-item-name">Tomas Weber</span><span class="recent-when">Viewed 22 min ago</span><span class="recent-item-meta"><span>Company: Weber &amp; Sons Logistics</span><span>Status: Contacted</span></span></a></div></section>
+  <section class="toolbox-col"><h3 class="toolbox-col-head">ToolBox</h3><div class="toolbox-body toolbox-links">
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#assign"/></svg></span>Assignment Rules</a>
+   <a class="toolbox-link is-focus" href="#"><span class="tl-ic"><svg class="i"><use href="#dedupe"/></svg></span>Dedupe Rule</a>
+   <a class="toolbox-link is-hover" href="#"><span class="tl-ic"><svg class="i"><use href="#status"/></svg></span>Status Codes</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#import"/></svg></span>Import Data</a>
+  </div></section></div></div></div>
+
+ <div class="tile"><h3>Viewer role (decision 2)</h3><p class="cap">Verified: the panel and its links show for every role, and all destinations are limited to admin and sales rep, so a viewer who follows one lands on Forbidden. The design keeps the links as they are, as drawn here. Hiding or marking them for viewers is not drawn and is not part of the build unless Morgan decides it (decision 2).</p>
+ <div class="tbx"><div class="toolbox-panel-row" data-testid="toolbox-panel">
+  <section class="toolbox-col"><h3 class="toolbox-col-head">Recently Accessed</h3><div class="toolbox-body"><div class="search-hint">No recently accessed records yet.<small>Open a lead and it appears here.</small></div></div></section>
+  <section class="toolbox-col"><h3 class="toolbox-col-head">ToolBox</h3><div class="toolbox-body toolbox-links">
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#import"/></svg></span>Import Data</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#fields"/></svg></span>Custom Fields</a>
+   <a class="toolbox-link" href="#"><span class="tl-ic"><svg class="i"><use href="#layout"/></svg></span>Customise Page Layout</a>
+  </div></section></div></div></div>
+
+ <div class="tile"><h3>Error</h3><p class="cap">There is no error state. The component reads local data and renders static links (Verified). If the store cannot be read, the hook returns its default empty list, so the empty state above applies. Page-level load errors (Deals, Tickets, Contacts record) appear below the panel and do not hide it.</p></div>
+</div>
+
+<h2>Navigation matrix</h2>
+<p class="lede">Order of links is exactly the order in each page's <code>links</code> array. Every ToolBox target is guarded for admin and sales rep only (<code>Protected roles</code> in App.tsx lines 134-152). Recent rows link to <code>/&lt;module&gt;/:id</code> and show up to 5 of the last 8 viewed records for that module.</p>
+<div class="tw"><table>
+<thead><tr><th>Module</th><th>ToolBox links in order, with target</th><th>Recent row: name</th><th>Recent row: meta shown</th><th>Opens</th></tr></thead>
+<tbody>
+<tr><td class="m">Leads</td><td><ul class="ln"><li>Assignment Rules <span class="muted">/setup/assignment-rules</span></li><li>Dedupe Rule <span class="muted">/setup/dedupe-rules</span></li><li>Status Codes <span class="muted">/setup/status-codes</span></li><li>Import Data <span class="muted">/setup/import</span></li><li>Custom Fields <span class="muted">/admin/objects/leads</span></li><li>Customise Page Layout <span class="muted">/setup/layouts/leads</span></li></ul></td><td>Lead name</td><td>Company, Status</td><td><span class="muted">/leads/:id</span></td></tr>
+<tr><td class="m">Contacts</td><td><ul class="ln"><li>Dedupe Rule <span class="muted">/setup/dedupe-rules</span></li><li>Import Data <span class="muted">/setup/import</span></li><li>Custom Fields <span class="muted">/admin/objects/contacts</span></li><li>Customise Page Layout <span class="muted">/setup/layouts/contacts</span></li></ul></td><td>Contact name</td><td>Title</td><td><span class="muted">/contacts/:id</span></td></tr>
+<tr><td class="m">Accounts</td><td><ul class="ln"><li>Import Data <span class="muted">/setup/import</span></li><li>Custom Fields <span class="muted">/admin/objects/accounts</span></li><li>Customise Page Layout <span class="muted">/setup/layouts/accounts</span></li></ul></td><td>Account name</td><td>Industry</td><td><span class="muted">/accounts/:id</span></td></tr>
+<tr><td class="m">Deals</td><td><ul class="ln"><li>Assignment Rules <span class="muted">/setup/assignment-rules</span></li><li>Status Codes <span class="muted">/setup/status-codes</span></li><li>Custom Fields <span class="muted">/admin/objects/deals</span></li><li>Customise Page Layout <span class="muted">/setup/layouts/deals</span></li></ul></td><td>Deal name</td><td>Stage</td><td><span class="muted">/deals/:id</span></td></tr>
+<tr><td class="m">Products</td><td><ul class="ln"><li>Import Data <span class="muted">/setup/import</span></li><li>Custom Fields <span class="muted">/admin/objects/products</span></li><li>Customise Page Layout <span class="muted">/setup/layouts/products</span></li></ul></td><td>Product name</td><td>SKU, Category</td><td><span class="muted">/products/:id</span></td></tr>
+<tr><td class="m">Quotes</td><td><ul class="ln"><li>Custom Fields <span class="muted">/admin/objects/quotes</span></li><li>Customise Page Layout <span class="muted">/setup/layouts/quotes</span></li></ul></td><td>Quote number</td><td>Status</td><td><span class="muted">/quotes/:id</span></td></tr>
+<tr><td class="m">Campaigns</td><td><ul class="ln"><li>Status Codes <span class="muted">/setup/status-codes</span></li><li>Custom Fields <span class="muted">/admin/objects/campaigns</span></li><li>Customise Page Layout <span class="muted">/setup/layouts/campaigns</span></li></ul></td><td>Campaign name</td><td>Channel, Status</td><td><span class="muted">/campaigns/:id</span></td></tr>
+<tr><td class="m">Tickets</td><td><ul class="ln"><li>SLA Management <span class="muted">/setup/sla</span></li><li>Custom Fields <span class="muted">/admin/objects/tickets</span></li><li>Customise Page Layout <span class="muted">/setup/layouts/tickets</span></li></ul></td><td>Ticket subject</td><td>Status</td><td><span class="muted">/tickets/:id</span></td></tr>
+</tbody></table></div>
+
+<h2>State matrix per panel</h2>
+<p class="lede">Same behaviour in every module unless a cell says otherwise.</p>
+<div class="tw"><table>
+<thead><tr><th>Module</th><th>Populated</th><th>Empty recents</th><th>Deleted record</th><th>Loading</th><th>Where the panel sits</th><th>Viewer</th></tr></thead>
+<tbody>
+<tr><td class="m">Leads</td><td>Up to 5 rows, 6 links</td><td>Existing sentence + hint</td><td><span class="tag w">Stale row</span> until decision 3</td><td>Panel unaffected; table skeleton or triage skeleton below</td><td>Above both Table and Triage views</td><td>Panel and links shown, destinations Forbidden</td></tr>
+<tr><td class="m">Contacts</td><td>Up to 5 rows, 4 links</td><td>Same</td><td><span class="tag o">Row removed</span> (Verified: <code>removeRecentViews</code>)</td><td>Panel unaffected</td><td>Above toolbar and list or cards</td><td>Same as Leads</td></tr>
+<tr><td class="m">Accounts</td><td>Up to 5 rows, 3 links</td><td>Same</td><td><span class="tag w">Stale row</span></td><td>Panel unaffected</td><td>Above toolbar</td><td>Same</td></tr>
+<tr><td class="m">Deals</td><td>Up to 5 rows, 4 links</td><td>Same</td><td><span class="tag w">Stale row</span></td><td>Panel stays; "Loading deals" skeleton below it (Verified)</td><td>Above pipeline, board and list; also above the failed state</td><td>Same</td></tr>
+<tr><td class="m">Products</td><td>Up to 5 rows, 3 links</td><td>Same</td><td><span class="tag w">Stale row</span></td><td>Panel unaffected</td><td>Above toolbar</td><td>Same</td></tr>
+<tr><td class="m">Quotes</td><td>Up to 5 rows, 2 links</td><td>Same</td><td><span class="tag w">Stale row</span></td><td>Panel unaffected</td><td>Above toolbar</td><td>Same</td></tr>
+<tr><td class="m">Campaigns</td><td>Up to 5 rows, 3 links</td><td>Same</td><td><span class="tag w">Stale row</span></td><td>Panel unaffected</td><td>Above toolbar</td><td>Same</td></tr>
+<tr><td class="m">Tickets</td><td>Up to 5 rows, 3 links</td><td>Same</td><td><span class="tag w">Stale row</span></td><td>Panel unaffected; ticket states in AIO-348 sit below</td><td>Above status chips, inbox and board</td><td>Same. Rep SLA edit rules unchanged (AIO-320 brief)</td></tr>
+</tbody></table></div>
+
+<h2>Preserved, changed and moved</h2>
+<p class="lede">Nothing is removed. Every item under "Preserved" is a build constraint for Alex.</p>
+<div class="tw"><table>
+<thead><tr><th>Item</th><th>Status</th><th>Detail</th></tr></thead>
+<tbody>
+<tr><td class="m">Hook <code>data-testid="toolbox-panel"</code></td><td><span class="tag o">Preserved</span></td><td>On the outer row, once per page. It is the only test id in the panel (Verified by search of <code>src</code>). Nothing new is added.</td></tr>
+<tr><td class="m">Class names</td><td><span class="tag o">Preserved</span></td><td><code>toolbox-panel-row</code>, <code>toolbox-col</code>, <code>toolbox-col-head</code>, <code>toolbox-body</code>, <code>recent-item</code>, <code>recent-item-name</code>, <code>recent-item-meta</code>, <code>toolbox-link</code>, <code>search-hint</code>. New: <code>recent-glyph</code>, <code>recent-when</code>, <code>toolbox-links</code>, <code>tl-ic</code>, <code>disc</code> (phone).</td></tr>
+<tr><td class="m">Visible text</td><td><span class="tag o">Preserved</span></td><td>"Recently Accessed", "ToolBox", every link label, "Viewed 4 min ago", "Key: value" meta with "—" for a blank value, and both empty sentences keep their exact wording and case. Link accessible names stay the label only.</td></tr>
+<tr><td class="m">Links, order, targets, roles</td><td><span class="tag o">Preserved</span></td><td>As in the navigation matrix. No role filtering is added.</td></tr>
+<tr><td class="m">Recent rule</td><td><span class="tag o">Preserved</span></td><td>Last 8 stored, 5 shown, newest first, per module.</td></tr>
+<tr><td class="m">Bank tokens</td><td><span class="tag o">Preserved</span></td><td>Bank colour only fills the record glyph tint (14% mix). Text stays on <code>--text</code> and <code>--text-muted</code>. No bank colour is used as text.</td></tr>
+<tr><td class="m">Row text colour</td><td><span class="tag">Changed</span></td><td>Record name goes from <code>--accent</code> blue to <code>--text</code>, underlined on hover, so the bank theme is not fought by a fixed blue.</td></tr>
+<tr><td class="m">Layout</td><td><span class="tag">Changed</span></td><td>Two bordered cards become one surface with two zones and a divider. Recents is wider (7:5). Links sit in two columns with an icon each. Under 720 px of container width the zones stack.</td></tr>
+<tr><td class="m">Meta layout</td><td><span class="tag">Changed</span></td><td>Meta no longer sits in a 3-column grid. It is one line, and the "Viewed" time moves to the right of the row on desktop.</td></tr>
+<tr><td class="m">Phone disclosure headings</td><td><span class="tag w">New, phone only</span></td><td>Each heading becomes a 48 px button with <code>aria-expanded</code>. Needs approval (decision 1). Not approved means both zones always open.</td></tr>
+<tr><td class="m">Empty hint line</td><td><span class="tag w">New copy</span></td><td>"Open a lead and it appears here." uses the module's singular noun (lead, contact, account, deal, product, quote, campaign, ticket).</td></tr>
+<tr><td class="m">Moved</td><td><span class="tag o">None</span></td><td>No control leaves the page. The panel stays where it is today, above the toolbar or view.</td></tr>
+</tbody></table></div>
+
+<h2>Decisions for Morgan</h2>
+<ol class="dec">
+ <li><b>Phone folding.</b> Approve the 48 px disclosure headings with ToolBox folded by default, or keep both zones open. Leads on a phone is about 520 px tall when both are open.</li>
+ <li><b>Viewer.</b> Keep showing all links to viewers, who land on Forbidden (today and the design), or hide or mark them. Both are small. Changing it needs a Decision, like D1 for SLA in AIO-416.</li>
+ <li><b>Deleted records.</b> Extend the Contacts behaviour (remove the row on delete and on "not found") to the other seven modules. It touches seven detail pages, so it is Alex's build step, not styling.</li>
+</ol>
+<p class="lede" style="margin-top:24px">Not checked: the live staging screens, which I did not open for this sheet. The facts above come from the repository code on the release branch at the time of writing.</p>
+</main>
+</body>
+</html>
