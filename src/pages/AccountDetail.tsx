@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Pencil, Trash2 } from 'lucide-react';
 import { getAll, getById, removeMany, upsert } from '../data/store';
@@ -74,7 +74,7 @@ export function AccountDetail() {
   const canWrite = canWriteAccounts(user?.role);
   const { recordView, removeViews } = useRecentlyViewed();
 
-  const load = useCallback(async () => {
+  const load = async () => {
     const { account: a, contacts: c, deals: d, quotes: q } = await loadAccountDetail(getById, getAll, id ?? '');
     if (!a) {
       setNotFound(true);
@@ -86,12 +86,12 @@ export function AccountDetail() {
     setDeals(d ?? []);
     setQuotes(q ?? []);
     setRelatedFailed({ contacts: !c, deals: !d, quotes: !q });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  };
 
   useEffect(() => {
     load();
-  }, [load]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   useEffect(() => {
     if (account) recordView({ module: 'accounts', id: account.id, label: account.name, link: `/accounts/${account.id}`, meta: { Industry: account.industry } });
