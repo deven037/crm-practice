@@ -59,7 +59,7 @@ code{font-size:13px;background:var(--surface-3);padding:2px 6px;border-radius:4p
  <nav class="crumbs" aria-label="Breadcrumb"><a href="#">Setup</a> / <a href="#">Assignment Rules</a> / <span aria-current="page">Referral leads to Tomas</span></nav>
  <div class="head">
   <div><div class="title"><h1>Referral leads to Tomas</h1><span class="pill on">Active</span></div>
-   <p class="sub">Runs 2nd of 5 rules</p></div>
+   <p class="sub">Runs 2nd of 5 active Leads rules</p></div>
   <div class="acts"><button class="btn" type="button"><svg class="i" aria-hidden="true"><use href="#edit"/></svg>Edit</button><button class="btn ghost-danger" type="button"><svg class="i" aria-hidden="true"><use href="#trash"/></svg>Delete</button></div>
  </div>
 
@@ -74,7 +74,11 @@ code{font-size:13px;background:var(--surface-3);padding:2px 6px;border-radius:4p
   <ul class="conds"><li><span class="and">If</span><strong>Source</strong> equals <code>Referral</code></li><li><span class="and">and</span><strong>Company</strong> contains <code>Freight</code></li></ul>
  </section>
 
- <div class="state"><h2>No conditions</h2><span>Same words as today</span>
+ <div class="state"><h2>Inactive rule</h2><span>The position line is replaced, because inactive rules never run. The pill reads Inactive.</span>
+  <div style="margin-top:12px"><div class="title"><h1 style="font-size:20px">Referral leads to Tomas</h1><span class="pill off">Inactive</span></div><p class="sub">Doesn't run while inactive</p></div></div>
+
+ <div class="state"><h2>No conditions</h2><span>Same words as today. The position line is replaced too, because a rule with no conditions never matches (src/utils/rules.ts, applyAssignmentRule). The form blocks saving this state (review #104, decision 1); it can only come from older data.</span>
+  <div style="margin-top:12px"><p class="sub">Never runs: no conditions</p></div>
   <section class="glass" style="margin-top:12px"><h2>Conditions</h2><p class="muted">No conditions — this rule never matches.</p></section></div>
 
  <div class="state"><h2>Delete dialog</h2><span>Existing Modal. Danger button is the only filled button; focus starts on Cancel. Escape and Cancel close it.</span>
@@ -87,9 +91,9 @@ code{font-size:13px;background:var(--surface-3);padding:2px 6px;border-radius:4p
   <section class="glass" style="text-align:center;margin-top:12px"><p style="margin:0 0 12px">Rule not found.</p><a class="btn" href="#">Back to Assignment Rules</a></section></div>
 
  <section class="spec" aria-label="Build notes"><h2>Build notes</h2><div class="boxes">
-  <div class="box"><h3>Layout</h3><p>Title with Active/Inactive pill, Edit and Delete at right. Summary surface holds Module, Assign to, Priority and one sentence in plain words. Conditions list reads “If … and …”. “Runs 2nd of 5 rules” is new and uses the stored rule list sorted by priority.</p></div>
-  <div class="box"><h3>Kept as is</h3><p>Edit goes to <code>/setup/assignment-rules/:id/edit</code>; Delete opens the Modal; <code>confirm-delete-btn</code> and <code>assignment-rule-detail-page</code> stay. Toast and redirect unchanged. Roles: Edit and Delete show for admin and rep today; this design does not change that.</p></div>
-  <div class="box"><h3>Delete</h3><p>Outline-danger in the header, filled danger only inside the dialog, so only one filled danger is ever on screen.</p></div>
+  <div class="box"><h3>Layout</h3><p>Title with Active/Inactive pill, Edit and Delete at right. Summary surface holds Module, Assign to, Priority and one sentence in plain words. Conditions list reads “If … and …”. The position line is new. Count scope, checked against <code>applyAssignmentRule</code>: only active rules of the same module, sorted by ascending priority. “2nd of 5 active Leads rules” means position in that list; the module name changes with the rule. Equal priorities follow the stored order, so the position is the same order the engine tries them in.</p></div>
+  <div class="box"><h3>Kept as is</h3><p>Edit goes to <code>/setup/assignment-rules/:id/edit</code>; Delete opens the Modal; <code>confirm-delete-btn</code> and <code>assignment-rule-detail-page</code> stay. Toast and redirect unchanged. Roles: the route allows admin and rep, and <code>AssignmentRuleDetail.tsx</code> shows Edit and Delete to both with no role check. The list is different: <code>AssignmentRules.tsx</code> hides Delete and New Rule from non-admins. This design keeps detail as it is today and does not change permissions. The mismatch is an existing gap for the owner to decide, not part of this restyle.</p></div>
+  <div class="box"><h3>Delete</h3><p>Outline-danger in the header, filled danger only inside the dialog, so only one filled danger is ever on screen. This page already uses the Modal. Only the list still uses <code>window.confirm</code>, and its design keeps that.</p></div>
   <div class="box"><h3>390 px</h3><p>Edit and Delete share the row at 44 px; summary fields wrap to two columns; the dialog buttons stack full width with Delete rule on top and Cancel below.</p></div>
  </div></section>
 </main>
