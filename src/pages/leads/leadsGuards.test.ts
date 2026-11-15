@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { beginOnce, canChangeLeads, canExportLeads, clearSelection, emptyStateKind, getAriaSort, pageWindow, shouldOpenRowOnKeyDown, validateLeadEdit } from './leadsGuards';
+import { beginOnce, canChangeLeads, canCreateLeads, canExportLeads, clearSelection, emptyStateKind, getAriaSort, pageWindow, shouldOpenRowOnKeyDown, validateLeadEdit } from './leadsGuards';
 
 describe('canExportLeads', () => {
   it('allows admin and rep', () => {
@@ -10,6 +10,15 @@ describe('canExportLeads', () => {
   it('denies viewer and a missing role', () => {
     expect(canExportLeads('viewer')).toBe(false);
     expect(canExportLeads(undefined)).toBe(false);
+  });
+});
+
+describe('canCreateLeads', () => {
+  it('allows admin and rep, denies viewer and a missing role', () => {
+    expect(canCreateLeads('admin')).toBe(true);
+    expect(canCreateLeads('rep')).toBe(true);
+    expect(canCreateLeads('viewer')).toBe(false);
+    expect(canCreateLeads(undefined)).toBe(false);
   });
 });
 

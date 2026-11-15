@@ -25,7 +25,7 @@ function render(rows: Lead[], totalLeads = rows.length) {
     sortKey: 'name', sortDir: 'asc', ownerName: () => 'Owner',
     sortIndicator: () => '', onToggleSort: vi.fn(),
     onToggleSelectAll: vi.fn(), onToggleSelect: vi.fn(),
-    onOpen: vi.fn(), onContextMenu: vi.fn(), onConvert: vi.fn(),
+    onOpen: vi.fn(), onContextMenu: vi.fn(), onRowMenu: vi.fn(),
   }));
 }
 
@@ -66,28 +66,21 @@ describe('Leads table contact field visibility', () => {
   });
 });
 
-function leadWithStatus(status: LeadStatus): Lead {
-  return { ...lead, status };
-}
-
-function convertButton(status: LeadStatus): string {
-  const match = render([leadWithStatus(status)]).match(/<button[^>]*>Convert<\/button>/);
-  if (!match) throw new Error('Convert button not rendered');
-  return match[0];
-}
-
-describe('LeadsTable Convert button', () => {
+describe('LeadsTable row actions and status', () => {
   beforeEach(() => { auth.role = 'admin'; });
 
-  it('is disabled with an explanation for a Converted lead', () => {
-    const button = convertButton('Converted');
-    expect(button).toContain('disabled');
-    expect(button).toContain('This lead is already converted.');
+  it('replaces the Convert button with a row actions menu button', () => {
+    const html = render([lead]);
+    expect(html).not.toContain('>Convert</button>');
+    expect(html).toContain('aria-label="Actions for Tara Iyer"');
   });
 
-  it.each<LeadStatus>(['New', 'Contacted', 'Qualified', 'Unqualified'])('is enabled for a %s lead', (status) => {
-    const button = convertButton(status);
-    expect(button).not.toContain('disabled');
-    expect(button).not.toContain('already converted');
+  it.each<LeadStatus>(['New', 'Converted'])('marks a %s lead with the lead-status test id', (status) => {
+    const html = render([{ ...lead, status }]);
+    expect(html).toContain(`data-testid="lead-status" class="pill status-${status.toLowerCase()}">${status}</span>`);
+  });
+
+  it('renders a card list for phones alongside the table', () => {
+    expect(render([lead])).toContain('<ul class="lead-cards"');
   });
 });
