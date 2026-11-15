@@ -35,14 +35,16 @@ export function LeadDetail() {
   const convertingRef = useRef(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { recordView } = useRecentlyViewed();
+  const { recordView, removeViews } = useRecentlyViewed();
   const canChange = canChangeLeads(user?.role);
 
   useEffect(() => {
     (async () => {
       const l = await getById<Lead>('leads', id ?? '');
-      if (!l) setNotFound(true);
-      else setLead(l);
+      if (!l) {
+        setNotFound(true);
+        removeViews([id ?? '']);
+      } else setLead(l);
     })();
   }, [id]);
 
@@ -349,6 +351,7 @@ export function LeadDetail() {
                 data-testid="confirm-delete-btn"
                 onClick={async () => {
                   await removeMany('leads', [lead.id]);
+                  removeViews([lead.id]);
                   toast.push('success', `Lead "${lead.name}" deleted.`);
                   navigate('/leads');
                 }}

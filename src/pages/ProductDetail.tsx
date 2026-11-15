@@ -26,7 +26,7 @@ export function ProductDetail() {
   const [deleting, setDeleting] = useState(false);
   const [confirmName, setConfirmName] = useState('');
   const { user } = useAuth();
-  const { recordView } = useRecentlyViewed();
+  const { recordView, removeViews } = useRecentlyViewed();
 
   useEffect(() => {
     (async () => {
@@ -37,6 +37,7 @@ export function ProductDetail() {
       ]);
       if (!p) {
         setNotFound(true);
+        removeViews([id ?? '']);
         return;
       }
       setProduct(p);
@@ -80,6 +81,7 @@ export function ProductDetail() {
     // so QuoteLineItemsView falls back to "{productName} (deleted product)" once the
     // product no longer resolves — no write needed to keep the quote's history readable.
     await removeMany('products', [product.id]);
+    removeViews([product.id]);
     toast.push('success', `Product "${product.name}" deleted.${leads.length > 0 ? ` ${leads.length} lead(s) unlinked.` : ''}`);
     navigate('/products');
   };

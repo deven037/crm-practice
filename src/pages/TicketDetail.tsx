@@ -11,12 +11,15 @@ export function TicketDetail() {
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [notFound, setNotFound] = useState(false);
   const navigate = useNavigate();
-  const { recordView } = useRecentlyViewed();
+  const { recordView, removeViews } = useRecentlyViewed();
 
   useEffect(() => {
     (async () => {
       const t = await getById<Ticket>('tickets', id ?? '');
-      if (!t) setNotFound(true);
+      if (!t) {
+        setNotFound(true);
+        removeViews([id ?? '']);
+      }
       else setTicket(t);
     })();
   }, [id]);

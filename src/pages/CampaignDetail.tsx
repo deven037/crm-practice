@@ -35,7 +35,7 @@ export function CampaignDetail() {
   const [deleting, setDeleting] = useState(false);
   const [confirmName, setConfirmName] = useState('');
   const { user } = useAuth();
-  const { recordView } = useRecentlyViewed();
+  const { recordView, removeViews } = useRecentlyViewed();
 
   useEffect(() => {
     (async () => {
@@ -46,6 +46,7 @@ export function CampaignDetail() {
       ]);
       if (!c) {
         setNotFound(true);
+        removeViews([id ?? '']);
         return;
       }
       setCampaign(c);
@@ -97,6 +98,7 @@ export function CampaignDetail() {
       await saveAll('deals', allDeals);
     }
     await removeMany('campaigns', [campaign.id]);
+    removeViews([campaign.id]);
     toast.push('success', `Campaign "${campaign.name}" deleted.`);
     navigate('/campaigns');
   };

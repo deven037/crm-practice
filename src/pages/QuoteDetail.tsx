@@ -35,13 +35,15 @@ export function QuoteDetail() {
   const [draft, setDraft] = useState<QuoteDraft | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [dealAlreadyClosedNote, setDealAlreadyClosedNote] = useState(false);
-  const { recordView } = useRecentlyViewed();
+  const { recordView, removeViews } = useRecentlyViewed();
 
   useEffect(() => {
     (async () => {
       const q = await getById<Quote>('quotes', id ?? '');
-      if (!q) setNotFound(true);
-      else setQuote(q);
+      if (!q) {
+        setNotFound(true);
+        removeViews([id ?? '']);
+      } else setQuote(q);
     })();
   }, [id]);
 
@@ -122,6 +124,7 @@ export function QuoteDetail() {
 
   const doDelete = async () => {
     await removeMany('quotes', [quote.id]);
+    removeViews([quote.id]);
     toast.push('success', `Quote "${quote.quoteNumber}" deleted.`);
     navigate('/quotes');
   };
