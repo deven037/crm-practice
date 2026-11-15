@@ -7,6 +7,7 @@ import { Account, Contact, Role } from '../types';
 import { SkeletonRows } from '../components/Spinner';
 import { BulkActionsBar } from '../components/BulkActionsBar';
 import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
+import { ToolBoxPanel } from '../components/ToolBoxPanel';
 import { useToast } from '../components/Toast';
 import { removeRecentViews } from '../hooks/useRecentlyViewed';
 import { classNames, initials } from '../utils';
@@ -126,12 +127,15 @@ export function Contacts() {
         </div>
       </div>
 
-      <nav className="contact-tools" aria-label="Contact tools">
-        <Link to="/setup/dedupe-rules">Dedupe Rule</Link>
-        <Link to="/setup/import">Import Data</Link>
-        <Link to="/admin/objects/contacts">Custom Fields</Link>
-        <Link to="/setup/layouts/contacts">Customise Page Layout</Link>
-      </nav>
+      <ToolBoxPanel
+        module="contacts"
+        links={[
+          { label: 'Dedupe Rule', to: '/setup/dedupe-rules' },
+          { label: 'Import Data', to: '/setup/import' },
+          { label: 'Custom Fields', to: '/admin/objects/contacts' },
+          { label: 'Customise Page Layout', to: '/setup/layouts/contacts' },
+        ]}
+      />
 
       <div className="toolbar">
         <input

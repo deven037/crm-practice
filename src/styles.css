@@ -1403,14 +1403,10 @@ div.empty-cell > p { margin: 4px 0 16px; }
 .contact-list .view-toggle .btn { min-height: 36px; padding: 6px 10px; border: 0; border-radius: var(--radius-sm); background: transparent; }
 .contact-list .view-toggle .btn:hover:not(:disabled) { background: var(--surface-3); }
 .contact-list .view-toggle .btn.btn-active { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(31, 41, 55, 0.1); }
-.contact-tools { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: var(--space-4); margin-bottom: var(--space-4); font-size: 13px; }
-.contact-tools a { color: var(--text-muted); text-decoration: none; }
-.contact-tools a:hover { color: var(--text); text-decoration: underline; }
 .contact-list .search-input { max-width: 420px; }
 .contact-list .btn-small { min-height: 40px; }
 @media (max-width: 780px) {
   .contact-list .page-actions > .btn, .contact-list .view-toggle .btn { min-height: 44px; }
-  .contact-tools { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; white-space: nowrap; }
 }
 @media (max-width: 780px) {
   .contact-screen { padding: 0; }
