@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIO-421 Viewer ToolBox links: keep, hide or mark</title>
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--surface-2:#f1f3f5;--border:#e1e4e8;--text:#1f2937;--muted:#5b6472;--bank:#1d3a6e;--bank-on:#fff;--ok:#0f6b3a;--warn-bg:#fff6db;--warn:#6b4e00;--r-md:10px;--r-lg:14px;--r-sm:6px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1180px;margin:0 auto;padding:32px 20px 56px}
+h1{font-size:28px;line-height:1.2;margin:0 0 8px}
+h2{font-size:20px;margin:0 0 4px}
+p{margin:0}
+.sub{color:var(--muted);max-width:68ch}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:28px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.opt{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;display:flex;flex-direction:column;gap:14px}
+.opt.rec{outline:2px solid var(--bank);outline-offset:2px}
+.badge{align-self:flex-start;background:var(--bank);color:var(--bank-on);font-size:13px;font-weight:600;padding:2px 10px;border-radius:999px}
+.panel{background:var(--surface-2);border-radius:var(--r-md);padding:12px}
+.head{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.link{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border-radius:var(--r-sm);color:var(--bank);font-weight:500;text-decoration:none}
+.link:hover{background:#e6ebf4}
+.link:focus-visible{outline:3px solid #2f6fdb;outline-offset:2px}
+.link.marked{color:var(--muted);cursor:not-allowed}
+.lock{margin-left:auto;font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:0 8px;line-height:22px}
+.hint{color:var(--muted);font-size:14px;padding:8px 12px}
+ul{margin:0;padding-left:18px;color:var(--text)}
+li{margin:4px 0}
+.pros b{color:var(--ok)}
+.cons b{color:var(--warn)}
+.forbidden{background:var(--warn-bg);color:var(--warn);border-radius:var(--r-md);padding:12px 14px;font-size:14px}
+table{width:100%;border-collapse:collapse;margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+th{background:var(--surface-2);font-weight:600}
+.scroll{overflow-x:auto}
+section{margin-top:36px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Viewer ToolBox links: keep, hide or mark</h1>
+  <p class="sub">Today a viewer sees every ToolBox link and lands on Forbidden, because all <code>/setup/*</code> routes allow only admin and sales rep (src/App.tsx:133-156). Below are the three options for the owner to choose from. The Leads ToolBox is drawn as the example; the other seven modules follow the same rule.</p>
+
+  <div class="grid">
+    <article class="opt" aria-labelledby="o1">
+      <div><h2 id="o1">A. Keep as is</h2><p class="sub">Viewer sees all six Leads links (four drawn), each ends on Forbidden.</p></div>
+      <div class="panel">
+        <div class="head">ToolBox</div>
+        <a class="link" href="#o1">Assignment Rules</a>
+        <a class="link" href="#o1">Dedupe Rule</a>
+        <a class="link" href="#o1">Status Codes</a>
+        <a class="link" href="#o1">Import Data</a>
+      </div>
+      <div class="forbidden" role="note">After a click: the Forbidden page.</div>
+      <div class="pros"><b>Good:</b> no code or test change.</div>
+      <div class="cons"><b>Cost:</b> the viewer clicks and hits an error that looks like a fault.</div>
+    </article>
+
+    <article class="opt rec" aria-labelledby="o2">
+      <span class="badge">Recommended</span>
+      <div><h2 id="o2">B. Hide for viewers</h2><p class="sub">Viewer sees no ToolBox links and one plain line.</p></div>
+      <div class="panel">
+        <div class="head">ToolBox</div>
+        <p class="hint">ToolBox links are for admins and sales reps.</p>
+      </div>
+      <div class="pros"><b>Good:</b> no dead ends, no new control to learn, and the panel stays the same size.</div>
+      <div class="cons"><b>Cost:</b> a small change in <code>ToolBoxPanel</code>, plus role tests. Typing the URL still shows Forbidden.</div>
+    </article>
+
+    <article class="opt" aria-labelledby="o3">
+      <div><h2 id="o3">C. Mark as unavailable</h2><p class="sub">Viewer sees the links greyed, with a lock label.</p></div>
+      <div class="panel">
+        <div class="head">ToolBox</div>
+        <span class="link marked" aria-disabled="true" tabindex="0">Assignment Rules <span class="lock">Admin or rep</span></span>
+        <span class="link marked" aria-disabled="true" tabindex="0">Dedupe Rule <span class="lock">Admin or rep</span></span>
+        <span class="link marked" aria-disabled="true" tabindex="0">Status Codes <span class="lock">Admin or rep</span></span>
+        <span class="link marked" aria-disabled="true" tabindex="0">Import Data <span class="lock">Admin or rep</span></span>
+      </div>
+      <div class="pros"><b>Good:</b> viewers learn the tools exist.</div>
+      <div class="cons"><b>Cost:</b> repeats the lock label up to 6 times per panel, and adds a disabled-link pattern the app has no component for.</div>
+    </article>
+  </div>
+
+  <section aria-labelledby="rules">
+    <h2 id="rules">Rules if B or C is chosen</h2>
+    <div class="scroll">
+    <table>
+      <thead><tr><th>Item</th><th>Rule</th></tr></thead>
+      <tbody>
+        <tr><td>Who sees links</td><td>Admin and sales rep see all links exactly as today. Only the viewer role changes.</td></tr>
+        <tr><td>Direct URL</td><td>A viewer who opens <code>/setup/...</code> still gets the Forbidden page (acceptance criterion 3). No route guard changes.</td></tr>
+        <tr><td>Hooks</td><td><code>data-testid="toolbox-panel"</code> and the Recently Accessed column are unchanged. In B the link elements are not rendered for a viewer; in C they render with <code>aria-disabled="true"</code> and no <code>href</code>.</td></tr>
+        <tr><td>Empty text (B)</td><td>"ToolBox links are for admins and sales reps." in the existing hint style (muted 14 px). The existing "No ToolBox items for this module." text stays for a module with no links at all.</td></tr>
+        <tr><td>Marked link (C)</td><td>44 px row, muted text (#5b6472 on #f1f3f5, 5.4:1), label "Admin or rep" in a pill, focusable so a screen reader announces "unavailable".</td></tr>
+        <tr><td>Phone 390 px</td><td>No change to the stacking in AIO-418 decision 2: Recently Accessed first, ToolBox second. In C the pill wraps under the label.</td></tr>
+        <tr><td>Role tests (Quinn)</td><td>Viewer: B shows 0 links and the hint; C shows disabled links that do not navigate. Admin and rep: links unchanged. Viewer opens <code>/setup/status-codes</code>: Forbidden.</td></tr>
+        <tr><td>Tokens</td><td>Only existing Harbor tokens: --surface-2, --text-muted, --bank-primary, --radius-sm/md. No new values.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="ask">
+    <h2 id="ask">Decision needed from the owner</h2>
+    <p class="sub">Pick A, B or C. Until then nothing is built. I recommend B: the viewer never meets a dead link, and it is the smallest change that removes the confusing error.</p>
+  </section>
+</main>
+</body>
+</html>
