@@ -129,12 +129,13 @@ export function AccountDetail() {
           </div>
         )}
         <div className="field">
-          <span className="field-label">Industry</span>
-          <input className="input" value={draft.industry} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} />
+          <label className="field-label" htmlFor="account-industry">Industry</label>
+          <input id="account-industry" className="input" value={draft.industry} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} />
         </div>
         <div className="field">
-          <span className="field-label">Employees</span>
+          <label className="field-label" htmlFor="account-employees">Employees</label>
           <input
+            id="account-employees"
             className="input"
             type="number"
             value={draft.employees}
@@ -142,12 +143,12 @@ export function AccountDetail() {
           />
         </div>
         <div className="field">
-          <span className="field-label">Phone</span>
-          <input className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
+          <label className="field-label" htmlFor="account-phone">Phone</label>
+          <input id="account-phone" className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
         </div>
         <div className="field">
-          <span className="field-label">Website</span>
-          <input className="input" value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
+          <label className="field-label" htmlFor="account-website">Website</label>
+          <input id="account-website" className="input" value={draft.website} onChange={(e) => setDraft({ ...draft, website: e.target.value })} />
         </div>
         <CustomFieldsSection
           module="accounts"

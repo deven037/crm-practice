@@ -6,6 +6,7 @@ export function ExpandToggle({ open, onClick }: { open: boolean; onClick: () => 
     <button
       className={`expand-toggle${open ? ' open' : ''}`}
       aria-label={open ? 'Collapse row' : 'Expand row'}
+      aria-expanded={open}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
