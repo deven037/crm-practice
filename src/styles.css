@@ -187,7 +187,7 @@ code { background: var(--surface-2); border: 1px solid var(--border); border-rad
 .main-column { border-top: 3px solid var(--bank-accent); }
 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 
-.page { padding: var(--space-5) var(--space-5); max-width: 1320px; width: 100%; }
+.page { padding: var(--space-5) var(--space-5); max-width: 1320px; width: 100%; min-width: 0; }
 
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: var(--space-4); flex-wrap: wrap; padding-bottom: var(--space-4); border-bottom: 1px solid var(--border); }
 .page-actions { display: flex; gap: 8px; align-items: center; }
@@ -409,9 +409,10 @@ code { background: var(--surface-2); border: 1px solid var(--border); border-rad
 .process-legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
 
 /* ---------- table ---------- */
-.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.table-wrap { max-width: 100%; overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
 .table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .table th, .table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+.table td { overflow-wrap: anywhere; }
 .table th { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); white-space: nowrap; }
 .table th.num, .table td.num { text-align: right; }
 .table tbody tr:hover { background: var(--surface-2); }
@@ -1451,7 +1452,7 @@ div.empty-cell > p { margin: 4px 0 16px; }
 .lead-card { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; padding: 8px 8px 12px 4px; margin-bottom: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
 .lead-card.row-selected { background: color-mix(in srgb, var(--bank-primary) 7%, var(--surface)); }
 .lead-card-check { display: grid; place-items: center; width: 44px; height: 44px; }
-.lead-card-top { display: flex; flex-direction: column; min-width: 0; padding: 6px 0; border: 0; background: none; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.lead-card-top { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; padding: 6px 0; border: 0; background: none; text-align: left; font: inherit; color: inherit; cursor: pointer; }
 .lead-card-meta { grid-column: 2 / 4; display: flex; justify-content: space-between; gap: 8px; padding-right: 8px; font-size: 13px; color: var(--text-muted); }
 .lead-card-meta b { color: var(--text); }
 .leads-screen .pagination { margin-top: var(--space-4); }

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -78,6 +80,20 @@ describe('LeadsTable row actions and status', () => {
   it.each<LeadStatus>(['New', 'Converted'])('marks a %s lead with the lead-status test id', (status) => {
     const html = render([{ ...lead, status }]);
     expect(html).toContain(`data-testid="lead-status" class="pill status-${status.toLowerCase()}">${status}</span>`);
+  });
+
+  it('keeps long automation values readable with a title so the page does not widen', () => {
+    const email = 'qa20417947347917191.automation.regression@example.com';
+    expect(email.length).toBeGreaterThan(40);
+    const html = render([{ ...lead, email }]);
+    expect(html).toContain(`<td title="${email}">${email}</td>`);
+  });
+
+  it('wraps long cell values and lets the page shrink inside the main column', () => {
+    const css = readFileSync(resolve(__dirname, '../../styles.css'), 'utf8');
+    expect(css).toMatch(/\.table td \{ overflow-wrap: anywhere; \}/);
+    expect(css).toMatch(/\.table-wrap \{ max-width: 100%; overflow-x: auto;/);
+    expect(css).toMatch(/\.page \{[^}]*min-width: 0;/);
   });
 
   it('renders a card list for phones alongside the table', () => {
