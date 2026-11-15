@@ -1,9 +1,10 @@
+import './setup.js';
 import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Server } from 'node:http';
 import express from 'express';
 import { store } from '../src/db.js';
-import { signToken } from '../src/middleware/auth.js';
+import { demoToken, useDemoBank } from './helpers.js';
 import { errorHandler } from '../src/middleware/errorHandler.js';
 import { accountsRouter } from '../src/routes/accounts.js';
 
@@ -15,6 +16,7 @@ const dealIds = ['deal-delete-open', 'deal-delete-closed'];
 const createdAt = '2026-11-09T00:00:00.000Z';
 
 before(async () => {
+  await useDemoBank();
   const app = express();
   app.use(express.json());
   app.use('/api/accounts', accountsRouter);
@@ -63,10 +65,7 @@ describe('DELETE /api/accounts/:id with open deals', () => {
           accounts: store.accounts.all(), contacts: store.contacts.all(),
           deals: store.deals.all(), quotes: store.quotes.all(), audit: store.audit.all(),
         });
-        const token = signToken({
-          id: 'user-1', name: 'Delete test', email: 'delete@example.test',
-          role: role === 'admin' ? 'admin' : 'rep',
-        });
+        const token = demoToken(role === 'admin' ? 'admin' : 'rep');
         const response = await fetch(`${base}/api/accounts/${accountId}?cascade=${cascade}`, {
           method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
         });

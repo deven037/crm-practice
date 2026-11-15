@@ -13,14 +13,20 @@ info:
     time (no auth required — see that endpoint's description). Seed login:
     `admin@crm.com` / `Pass@123` (also `rep@crm.com`, `viewer@crm.com`,
     `sam@crm.com`, `priya@crm.com` — all deactivated except `priya@crm.com`,
-    same password). **Passwords are stored in plaintext by design** — this is
-    a training tool with no real user data, and the seed credentials are
-    published intentionally for testers to use.
+    same password). These are the users of the public **demo bank**; their
+    credentials are published intentionally for testers to use. Passwords are
+    stored only as bcrypt hashes.
+
+
+    **Banks (CRM 3.0)**: every bank has its own data. A token is good for one
+    bank only. Banks register through `POST /api/platform/banks` and can be
+    used once the platform owner approves them. The reset route and the open
+    forgot-password route affect the demo bank only.
 
 
     **Free-tier note**: this server may be deployed on a free host that sleeps
-    after inactivity; a cold start re-seeds automatically, so state resets
-    after idle periods. This is expected, not a bug.
+    after inactivity, so the first request after a pause is slow. Data is kept
+    in PostgreSQL and does not reset.
 servers:
   - url: /api
 security:

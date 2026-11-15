@@ -105,3 +105,24 @@ the in-memory arrays inside `src/db.ts`'s `Collection<T>` for a real query
 against a free hosted Postgres (e.g. Neon, Supabase). Every route file only
 calls `list/get/create/update/remove` on a `Collection`, so this is a
 contained change — no route or OpenAPI-spec changes needed.
+
+## CRM 3.0: many banks
+
+- **Storage.** Records are kept in PostgreSQL. Set `DATABASE_URL` (Neon) in production. With no
+  `DATABASE_URL` the API uses PGlite, a Postgres that runs inside Node and keeps its files in
+  `PGLITE_DIR` (default `.data/pglite`), so local development needs no database install.
+- **Banks.** Every bank has its own data; a token is good for one bank. A bank registers with
+  `POST /api/platform/banks` and can be used once the platform owner approves it.
+- **Platform owner.** Set `PLATFORM_ADMIN_EMAIL` and `PLATFORM_ADMIN_PASSWORD` to enable
+  `POST /api/platform/login` and the `/api/platform/*` console routes.
+- **Sign-in.** `POST /api/auth/identify` finds the bank from the email's domain. Passwords are
+  stored as bcrypt hashes. New users set their own password through a one-time invite link, or
+  must replace a password an admin chose for them. `POST /api/auth/logout-all` signs a person
+  out everywhere.
+- **Demo bank.** The practice data and the demo users above live in one bank (`bank-demo`,
+  email domain `crm.com`). `POST /api/reset` and the open forgot-password route affect only it;
+  `DEMO_OPEN_ROUTES=false` closes both.
+- **Tests.** `npm test` runs the contract tests and `test/tenancy.isolation.ts`, which proves
+  one bank cannot reach another bank's data.
+
+The new routes are documented in `src/openapi.v3.yaml` and appear in Swagger UI at `/api/docs`.

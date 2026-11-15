@@ -1,4 +1,6 @@
 import { buildSeedData } from './seed.js';
+import { currentBankStore } from './context.js';
+import { demoPasswordHash } from './passwords.js';
 import {
   Account,
   Activity,
@@ -141,7 +143,16 @@ export class Collection<T extends { id: string }> {
   }
 }
 
-class Store {
+/** Every collection a bank has, by name. tenancy.ts loads and saves exactly these. */
+export const COLLECTION_NAMES = [
+  'users', 'leads', 'contacts', 'accounts', 'deals', 'products', 'tickets', 'campaigns', 'quotes', 'tasks',
+  'activities', 'notifications', 'customFieldDefs', 'layouts', 'pageLayouts', 'roleDefs', 'assignmentRules',
+  'dedupeRules', 'statusCodeSets', 'slaConfigs', 'autoFlowProcesses', 'audit',
+] as const;
+export type CollectionName = (typeof COLLECTION_NAMES)[number];
+
+/** One bank's data. A separate Store exists per bank; they never share a collection. */
+export class Store {
   users = new Collection<User>('users', ['name', 'email']);
   leads = new Collection<Lead>('leads', ['name', 'company', 'email']);
   contacts = new Collection<Contact>('contacts', ['name', 'email']);
@@ -169,7 +180,8 @@ class Store {
 
   reset() {
     const data = buildSeedData();
-    this.users.seed(data.users);
+    // The demo bank's users keep the documented demo password, stored as a hash.
+    this.users.seed(data.users.map((user) => ({ ...user, password: demoPasswordHash() })));
     this.leads.seed(data.leads);
     this.contacts.seed(data.contacts);
     this.accounts.seed(data.accounts);
@@ -213,8 +225,36 @@ class Store {
   }
 }
 
-export const store = new Store();
-store.reset();
+/**
+ * The store of the bank the current request belongs to (see context.ts). Route files
+ * keep using `store.leads`, `store.logAudit(...)` and so on; each call reaches only
+ * the signed-in user's bank. With no bank selected it throws.
+ */
+export const store: Store = new Proxy({} as Store, {
+  get(_target, property) {
+    if (typeof property === 'string' && property in collectionHandles) return collectionHandles[property];
+    const real = currentBankStore() as any;
+    const value = real[property];
+    return typeof value === 'function' ? value.bind(real) : value;
+  },
+});
+
+// Route files hold on to a collection when they are first loaded
+// (`crudRouter({ collection: store.leads })`), long before any request. So
+// `store.leads` is a stand-in that looks up the current bank's leads each time one of
+// its methods is called, never a fixed bank's collection.
+const collectionHandles: Record<string, unknown> = Object.fromEntries(
+  COLLECTION_NAMES.map((name) => [
+    name,
+    new Proxy({} as Collection<any>, {
+      get(_target, property) {
+        const real = (currentBankStore() as any)[name];
+        const value = real[property];
+        return typeof value === 'function' ? value.bind(real) : value;
+      },
+    }),
+  ])
+);
 
 let idCounter = 0;
 export function newId(prefix: string) {

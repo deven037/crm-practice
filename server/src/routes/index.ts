@@ -26,6 +26,8 @@ import { autoFlowProcessesRouter } from './autoFlowProcesses.js';
 import { auditRouter } from './audit.js';
 import { analysisRouter } from './analysis.js';
 import { searchRouter } from './search.js';
+import { platformRouter } from './platform.js';
+import { bankRouter, publicRouter } from './bank.js';
 
 export const apiRouter = Router();
 
@@ -56,3 +58,6 @@ apiRouter.use('/autoFlowProcesses', autoFlowProcessesRouter);
 apiRouter.use('/audit', auditRouter);
 apiRouter.use('/analysis', analysisRouter);
 apiRouter.use('/search', searchRouter);
+apiRouter.use('/platform', platformRouter);
+apiRouter.use('/bank', bankRouter);
+apiRouter.use('/public', publicRouter);

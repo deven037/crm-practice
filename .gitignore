@@ -8,3 +8,6 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+# CRM 3.0 local database files (PGlite)
+.data/

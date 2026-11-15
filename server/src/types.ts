@@ -9,9 +9,16 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
+  /** A bcrypt hash, or '!' when no password has been set (invited, or a sample user). */
   password: string;
   role: Role;
   active: boolean;
+  /** Set when an admin chose this person's password: they must replace it before doing anything else. */
+  mustChangePassword?: boolean;
+  /** Goes up on "sign out everywhere" and on every password change; older tokens stop working. */
+  tokenVersion?: number;
+  /** A pending "set your password" link: the hash of its secret, and when it stops working. */
+  invite?: { tokenHash: string; expiresAt: string };
 }
 
 export type LeadStatus = 'New' | 'Contacted' | 'Qualified' | 'Unqualified' | 'Converted';

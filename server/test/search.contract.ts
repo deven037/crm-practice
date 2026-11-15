@@ -1,3 +1,4 @@
+import './setup.js';
 import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Server } from 'node:http';
@@ -6,7 +7,7 @@ import express from 'express';
 import { store } from '../src/db.js';
 import { env } from '../src/env.js';
 import { simulatedLatency } from '../src/middleware/latency.js';
-import { signToken } from '../src/middleware/auth.js';
+import { demoToken, useDemoBank } from './helpers.js';
 import { errorHandler } from '../src/middleware/errorHandler.js';
 import { apiRouter } from '../src/routes/index.js';
 import { runSearch } from '../src/routes/search.js';
@@ -15,7 +16,7 @@ import { Role } from '../src/types.js';
 let server: Server;
 let base = '';
 
-const tokenFor = (role: Role) => signToken({ id: `u-${role}`, name: role, email: `${role}@crm.com`, role });
+const tokenFor = (role: Role) => demoToken(role);
 
 async function search(query: string, role: Role | null) {
   const res = await fetch(`${base}/api/search${query}`, {
@@ -39,6 +40,7 @@ const lead = (id: string, over: Record<string, unknown>) => ({
 });
 
 before(async () => {
+  await useDemoBank();
   const app = express();
   app.use(express.json());
   app.use(simulatedLatency);
