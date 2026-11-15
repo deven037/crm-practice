@@ -16,6 +16,42 @@ import { canWriteAccounts } from './Accounts';
 import { runRecoverable } from './accountRecovery';
 import { formatCurrency, formatDate } from '../utils';
 
+export interface AccountDetailData {
+  account: Account | undefined;
+  contacts: Contact[] | null;
+  deals: Deal[] | null;
+  quotes: Quote[] | null;
+}
+
+// Loads the account and its related lists. A failed related list comes back as null so the account still shows.
+export async function loadAccountDetail(
+  fetchOne: typeof getById,
+  fetchAll: typeof getAll,
+  id: string,
+): Promise<AccountDetailData> {
+  const account = await fetchOne<Account>('accounts', id);
+  const related = async <T extends { accountId: string | null }>(module: string) => {
+    try {
+      return (await fetchAll<T>(module)).filter((x) => x.accountId === id);
+    } catch {
+      return null;
+    }
+  };
+  const [contacts, deals, quotes] = await Promise.all([related<Contact>('contacts'), related<Deal>('deals'), related<Quote>('quotes')]);
+  return { account, contacts, deals, quotes };
+}
+
+function RelatedError({ label, onRetry }: { label: string; onRetry: () => void }) {
+  return (
+    <div className="banner banner-error" role="alert" data-testid={`account-${label.toLowerCase()}-error`}>
+      <p>{label} couldn’t load. Check your connection and try again.</p>
+      <button type="button" className="btn" onClick={onRetry}>
+        Retry
+      </button>
+    </div>
+  );
+}
+
 export function AccountDetail() {
   const { id } = useParams();
   const toast = useToast();
@@ -32,29 +68,29 @@ export function AccountDetail() {
   const [deleteError, setDeleteError] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [relatedFailed, setRelatedFailed] = useState({ contacts: false, deals: false, quotes: false });
   const navigate = useNavigate();
   const { user } = useAuth();
   const canWrite = canWriteAccounts(user?.role);
   const { recordView, removeViews } = useRecentlyViewed();
 
+  const load = async () => {
+    const { account: a, contacts: c, deals: d, quotes: q } = await loadAccountDetail(getById, getAll, id ?? '');
+    if (!a) {
+      setNotFound(true);
+      removeViews([id ?? '']);
+      return;
+    }
+    setAccount(a);
+    setContacts(c ?? []);
+    setDeals(d ?? []);
+    setQuotes(q ?? []);
+    setRelatedFailed({ contacts: !c, deals: !d, quotes: !q });
+  };
+
   useEffect(() => {
-    (async () => {
-      const [a, c, d, q] = await Promise.all([
-        getById<Account>('accounts', id ?? ''),
-        getAll<Contact>('contacts'),
-        getAll<Deal>('deals'),
-        getAll<Quote>('quotes'),
-      ]);
-      if (!a) {
-        setNotFound(true);
-        removeViews([id ?? '']);
-        return;
-      }
-      setAccount(a);
-      setContacts(c.filter((x) => x.accountId === a.id));
-      setDeals(d.filter((x) => x.accountId === a.id));
-      setQuotes(q.filter((x) => x.accountId === a.id));
-    })();
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
@@ -163,8 +199,9 @@ export function AccountDetail() {
   const relatedTab = (
     <>
       {/* Nested accordions: outer sections contain inner per-deal accordions */}
-      <Accordion title="Related contacts" badge={contacts.length} defaultOpen>
-        {contacts.length === 0 && <p className="muted">No contacts linked to this account.</p>}
+      <Accordion title="Related contacts" badge={relatedFailed.contacts ? undefined : contacts.length} defaultOpen>
+        {relatedFailed.contacts && <RelatedError label="Contacts" onRetry={load} />}
+        {!relatedFailed.contacts && contacts.length === 0 && <p className="muted">No contacts linked to this account.</p>}
         <ul className="related-list">
           {contacts.map((c) => (
             <li key={c.id}>
@@ -174,8 +211,9 @@ export function AccountDetail() {
         </ul>
       </Accordion>
 
-      <Accordion title="Related deals" badge={deals.length}>
-        {deals.length === 0 && <p className="muted">No deals for this account.</p>}
+      <Accordion title="Related deals" badge={relatedFailed.deals ? undefined : deals.length}>
+        {relatedFailed.deals && <RelatedError label="Deals" onRetry={load} />}
+        {!relatedFailed.deals && deals.length === 0 && <p className="muted">No deals for this account.</p>}
         {deals.map((deal) => (
           <Accordion key={deal.id} title={`${deal.name} — ${formatCurrency(deal.amount)}`}>
             <Link to={`/deals/${deal.id}`}>View deal →</Link>
@@ -191,8 +229,9 @@ export function AccountDetail() {
         ))}
       </Accordion>
 
-      <Accordion title="Quotes" badge={quotes.length}>
-        {quotes.length === 0 && <p className="muted">No quotes for this account.</p>}
+      <Accordion title="Quotes" badge={relatedFailed.quotes ? undefined : quotes.length}>
+        {relatedFailed.quotes && <RelatedError label="Quotes" onRetry={load} />}
+        {!relatedFailed.quotes && quotes.length === 0 && <p className="muted">No quotes for this account.</p>}
         <ul className="related-list">
           {quotes.map((q) => (
             <li key={q.id}>
