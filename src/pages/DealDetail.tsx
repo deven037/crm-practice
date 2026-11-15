@@ -38,13 +38,15 @@ export function DealDetail() {
   const [confirmText, setConfirmText] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { recordView } = useRecentlyViewed();
+  const { recordView, removeViews } = useRecentlyViewed();
 
   useEffect(() => {
     (async () => {
       const d = await getById<Deal>('deals', id ?? '');
-      if (!d) setNotFound(true);
-      else setDeal(d);
+      if (!d) {
+        setNotFound(true);
+        removeViews([id ?? '']);
+      } else setDeal(d);
     })();
   }, [id]);
 
@@ -236,6 +238,7 @@ export function DealDetail() {
                 disabled={deal.stage === 'Closed Won' && confirmText !== 'DELETE'}
                 onClick={async () => {
                   await removeMany('deals', [deal.id]);
+                  removeViews([deal.id]);
                   toast.push('success', `Deal "${deal.name}" deleted.`);
                   navigate('/deals');
                 }}
