@@ -1,9 +1,9 @@
-import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, CheckSquare, ChevronsLeft, Home, LogOut, Menu, Moon, Pin, PinOff, Search, Settings, Shield, Sun, Target, X } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { BankProfile, fetchBankProfile, getAllSync, getValue, setValue } from '../data/store';
-import { AppNotification, Lead, TaskItem, Ticket } from '../types';
+import { AppNotification } from '../types';
 import { initials } from '../utils';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { usePinned } from '../hooks/usePinned';
@@ -11,7 +11,7 @@ import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { CommandBar, isCloseKey } from './CommandBar';
 import { SidebarLink } from './SidebarLink';
 import { NotificationsPanel } from './shell/NotificationsPanel';
-import { NAV_GROUPS, badgeText, navCounts, placeForPath } from './shell/nav';
+import { NAV_GROUPS, badgeText, placeForPath } from './shell/nav';
 import './feedback-widget';
 import { applyBankTheme } from '../theme/bankTheme';
 
@@ -208,11 +208,6 @@ export function Layout({ children, initialSidebarCollapsed = false }: { children
   const contentCollapsed = collapsed && !isMobile;
 
   const place = placeForPath(location.pathname);
-  // Counts are read from what the app already holds; they refresh whenever the page changes.
-  const counts = useMemo(
-    () => navCounts(getAllSync<Lead>('leads'), getAllSync<TaskItem>('tasks'), getAllSync<Ticket>('tickets')),
-    [location.pathname]
-  );
   const unread = notifications.filter((n) => !n.read).length;
 
   const changeNotifications = (next: AppNotification[]) => {
@@ -262,22 +257,17 @@ export function Layout({ children, initialSidebarCollapsed = false }: { children
           {NAV_GROUPS.map((group) => (
             <div key={group.label} className="nav-group">
               <div className="nav-group-label">{contentCollapsed ? <span className="sr-only">{group.label}</span> : group.label}</div>
-              {group.items.map((item) => {
-                const count = counts[item.to];
-                return (
-                  <SidebarLink
-                    key={item.to}
-                    to={item.to}
-                    label={item.label}
-                    icon={<item.icon size={18} />}
-                    collapsed={contentCollapsed}
-                    end={item.to === '/'}
-                    badge={count && count.count > 0 ? badgeText(count.count) : undefined}
-                    badgeHot={count?.hot}
-                    onClick={closeSheet}
-                  />
-                );
-              })}
+              {group.items.map((item) => (
+                <SidebarLink
+                  key={item.to}
+                  to={item.to}
+                  label={item.label}
+                  icon={<item.icon size={18} />}
+                  collapsed={contentCollapsed}
+                  end={item.to === '/'}
+                  onClick={closeSheet}
+                />
+              ))}
             </div>
           ))}
           {pinned.length > 0 && !contentCollapsed && (

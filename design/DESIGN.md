@@ -63,7 +63,7 @@ Every metric states its time basis. Solid chip = follows the page range ("Last 3
 
 ### App shell (`src/components/Layout.tsx`, `src/components/shell/`, `src/styles/shell.css`)
 - Design: `design/v3/shell.html` (clickable; bank, screen size and theme can be switched in it).
-- Side menu: a floating panel in the bank's colour. Groups are Home, Customers, Sales, Service, Insights. One highlight glides between links (Motion `layoutId` in `SidebarLink`). Leads, Tasks and Tickets carry a count of waiting work (`navCounts`); the count turns warm when something is late or urgent. It collapses to icons and the choice is remembered on the device.
+- Side menu: a floating panel in the bank's colour. Groups are Home, Customers, Sales, Service, Insights. One highlight glides between links (Motion `layoutId` in `SidebarLink`). No module carries a count or number beside its name. It collapses to icons and the choice is remembered on the device.
 - Pinned: a record page shows a pin button in the top bar; pinned records list at the bottom of the menu (up to 6, kept on the device, `usePinned`).
 - Top bar: glass, floating. Where you are (group / page / record), the search pill, the light and dark switch, the bell, and the profile chip at the top right. The chip opens Setup, Profile settings and Log out. Settings and Test Cases are not in the menu: Settings is in the profile menu, Test Cases is a card in Setup.
 - No shared create button anywhere in the shell (top bar, command bar, phone bar). Each module has its own create button on its own page.

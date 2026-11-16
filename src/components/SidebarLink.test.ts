@@ -26,6 +26,11 @@ describe('SidebarLink', () => {
     expect(html).not.toContain('>Leads</span>');
   });
 
+  it('shows no count beside a module', () => {
+    expect(render(false)).not.toMatch(/nav-badge|nav-dot|waiting/);
+    expect(render(true)).not.toMatch(/nav-badge|nav-dot|waiting/);
+  });
+
   it('shows the visible label when expanded', () => {
     const html = render(false);
     expect(html).toMatch(/<a[^>]*aria-label="Leads"[^>]*>/);

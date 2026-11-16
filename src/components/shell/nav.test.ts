@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NAV_GROUPS, badgeText, navCounts, placeForPath } from './nav';
+import { NAV_GROUPS, badgeText, placeForPath } from './nav';
 import { groupNotifications, lookFor } from './NotificationsPanel';
 import { togglePinned } from '../../hooks/usePinned';
 import { matchPages } from '../CommandBar';
@@ -20,29 +20,6 @@ describe('side menu', () => {
     expect(placeForPath('/setup/users')).toMatchObject({ group: null, label: 'Setup' });
     expect(placeForPath('/settings').label).toBe('Profile settings');
     expect(placeForPath('/nowhere').label).toBe('Page not found');
-  });
-
-  it('counts the work that is waiting', () => {
-    const counts = navCounts(
-      [{ status: 'New' }, { status: 'New' }, { status: 'Qualified' }],
-      [
-        { completed: false, dueDate: '2026-11-16' },
-        { completed: false, dueDate: '2026-11-10' },
-        { completed: true, dueDate: '2026-11-01' },
-        { completed: false, dueDate: '2026-12-01' },
-      ],
-      [{ status: 'Open', priority: 'Urgent' }, { status: 'In Progress', priority: 'Low' }, { status: 'Closed', priority: 'Urgent' }],
-      '2026-11-16T09:00:00.000Z',
-    );
-    expect(counts['/leads']).toEqual({ count: 2, hot: false });
-    expect(counts['/tasks']).toEqual({ count: 2, hot: true });
-    expect(counts['/tickets']).toEqual({ count: 2, hot: true });
-  });
-
-  it('is calm when nothing is late or urgent', () => {
-    const counts = navCounts([], [{ completed: false, dueDate: '2026-11-16' }], [{ status: 'Open', priority: 'Low' }], '2026-11-16T09:00:00.000Z');
-    expect(counts['/tasks'].hot).toBe(false);
-    expect(counts['/tickets'].hot).toBe(false);
   });
 
   it('keeps a big count inside its badge', () => {

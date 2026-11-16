@@ -2,6 +2,7 @@
  * Harbor CRM 3.0 app shell (design/v3/shell.html).
  * Loaded after v3.css. A floating menu in the bank's colour, a glass top bar, the profile
  * chip at the top right, notifications as a side panel, and a bottom bar on phones.
+ * The side menu shows no counts beside any module.
  * The shell holds no create button: each module has its own on its own page.
  */
 
@@ -50,15 +51,8 @@
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 6px 16px -8px rgba(0, 0, 0, 0.6);
 }
 .nav-pill::before { content: ''; position: absolute; left: -10px; top: 9px; bottom: 9px; width: 4px; border-radius: 0 4px 4px 0; background: var(--bank-accent); }
-.nav-icon, .nav-label, .nav-badge { position: relative; }
+.nav-icon, .nav-label { position: relative; }
 .nav-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.nav-badge {
-  min-width: 20px; padding: 1px 6px; border-radius: var(--radius-pill); text-align: center;
-  font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; background: rgba(255, 255, 255, 0.12); color: var(--chrome-text-active);
-}
-.nav-badge.hot { background: #ffb4a8; color: #5a1208; }
-.nav-dot { position: absolute; top: 7px; right: 14px; width: 7px; height: 7px; border-radius: 50%; background: var(--bank-accent); box-shadow: 0 0 0 2px var(--chrome-bg); }
-.nav-dot.hot { background: #ffb4a8; }
 .sidebar-collapsed .nav-link { justify-content: center; padding: 0; }
 
 .nav-pin-row { position: relative; }
