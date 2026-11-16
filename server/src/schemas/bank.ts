@@ -68,5 +68,13 @@ export const bankRegistrationSchema = bankProfileSchema
   });
 
 export const assetUploadSchema = z.object({ image: imageDataUrl });
-export const decisionSchema = z.object({ reason: z.string().trim().max(500).optional() });
+export const decisionSchema = z.object({
+  reason: z.string().trim().max(500).optional(),
+  /** On approve: protect the bank from the console's "Reset data" from the start. */
+  keep: z.boolean().optional(),
+});
+export const keepSchema = z.object({ keep: z.boolean() });
+/** Typed by the platform owner to confirm "Reset data". */
+export const RESET_PHRASE = 'RESET DATA';
+export const resetDataSchema = z.object({ confirm: z.literal(RESET_PHRASE) });
 export const platformLoginSchema = z.object({ email: z.string().min(1), password: z.string().min(1) });

@@ -1,10 +1,10 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, Check, Database, Hourglass, LogOut, Moon, PauseCircle, RefreshCw, Search, ShieldCheck, Sun, Users as UsersIcon, XCircle } from 'lucide-react';
+import { Building2, Check, Database, Eraser, Hourglass, Lock, LogOut, Moon, PauseCircle, RefreshCw, Search, ShieldCheck, Sun, Users as UsersIcon, XCircle } from 'lucide-react';
 import { AnimatePresence, motion, MotionConfig } from 'motion/react';
 import {
-  BANK_TYPES, BankAction, BankStatus, clearPlatformToken, ConsoleBank, decideBank, deleteBank, getPlatformToken, platformBankImage,
-  platformBanks, platformLogin,
+  BANK_TYPES, BankAction, BankStatus, clearPlatformToken, ConsoleBank, decideBank, deleteBank, DEMO_BANK_ID, getPlatformToken, platformBankImage,
+  platformBanks, platformDatabase, platformLogin, RESET_PHRASE, resetPlatformData, setBankKeep,
 } from '../data/frontDoor';
 import { getValue, setValue } from '../data/store';
 import { Modal } from '../components/Modal';
@@ -46,6 +46,34 @@ export function filterBanks(banks: ConsoleBank[], filter: Filter, query: string)
       (!q || [bank.displayName, bank.profile.legalName, bank.adminEmail, ...bank.profile.emailDomains].some((text) => text?.toLowerCase().includes(q)))
   );
 }
+
+/** What "Reset data" will do: which banks go, which stay. The demo bank always stays. */
+export function resetPlan(banks: ConsoleBank[]): { removed: ConsoleBank[]; kept: ConsoleBank[] } {
+  const stays = (bank: ConsoleBank) => bank.id === DEMO_BANK_ID || bank.keep;
+  return { removed: banks.filter((bank) => !stays(bank)), kept: banks.filter(stays) };
+}
+
+/** 1536 -> "1.5 KB". Whole numbers from 100 up, one decimal below. */
+export function formatBytes(bytes: number): string {
+  const units = ['bytes', 'KB', 'MB', 'GB', 'TB'];
+  let value = Math.max(0, bytes);
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  return `${unit === 0 || value >= 100 ? Math.round(value) : Math.round(value * 10) / 10} ${units[unit]}`;
+}
+
+/** How full the database is, for the bar: a whole percentage (never over 100) and whether to warn (from 80%). */
+export function storageLevel(usedBytes: number, limitBytes: number): { percent: number; warn: boolean } {
+  if (!(limitBytes > 0)) return { percent: 0, warn: false };
+  const share = Math.max(0, usedBytes) / limitBytes;
+  return { percent: Math.min(100, Math.round(share * 100)), warn: share >= 0.8 };
+}
+
+const isKept = (bank: ConsoleBank) => bank.id === DEMO_BANK_ID || bank.keep;
+const people = (n: number) => `${n.toLocaleString()} user${n === 1 ? '' : 's'}`;
 
 function StatusPill({ status }: { status: BankStatus }) {
   return <span className={`pill pc-status pc-status-${status}`}>{STATUS_LABEL[status]}</span>;
@@ -103,7 +131,9 @@ function SignIn({ onDone }: { onDone: (email: string) => void }) {
 }
 
 /** Everything a bank registered with, its pictures, and the decisions the owner can take. */
-function BankPanel({ bank, onClose, onAction, onDelete }: { bank: ConsoleBank; onClose: () => void; onAction: (action: BankAction) => void; onDelete: () => void }) {
+function BankPanel({ bank, onClose, onAction, onDelete, onKeep, busy }: {
+  bank: ConsoleBank; onClose: () => void; onAction: (action: BankAction) => void; onDelete: () => void; onKeep: (keep: boolean) => void; busy: boolean;
+}) {
   const [images, setImages] = useState<Partial<Record<'logo' | 'login', string>>>({});
 
   // A pending bank's pictures are not public, so they are fetched with the console's own token.
@@ -142,7 +172,11 @@ function BankPanel({ bank, onClose, onAction, onDelete }: { bank: ConsoleBank; o
       testId="platform-bank-panel"
       footer={
         <>
-          {bank.id !== 'bank-demo' && <button className="btn pc-delete" data-testid="platform-delete" onClick={onDelete}>Delete</button>}
+          {bank.id !== DEMO_BANK_ID && (
+            <button className="btn pc-delete" data-testid="platform-delete" disabled={bank.keep} title={bank.keep ? 'Turn Keep off to delete this bank' : undefined} onClick={onDelete}>
+              Delete
+            </button>
+          )}
           {ACTIONS[bank.status].map((action) => (
             <button key={action} className={`btn${ACTION_COPY[action].primary ? ' btn-primary' : ''}`} data-testid={`platform-${action}`} onClick={() => onAction(action)}>
               {ACTION_COPY[action].label}
@@ -159,6 +193,23 @@ function BankPanel({ bank, onClose, onAction, onDelete }: { bank: ConsoleBank; o
         </div>
       </div>
       {bank.statusReason && <div className="banner banner-info" data-testid="platform-reason"><strong>Reason: </strong>{bank.statusReason}</div>}
+      <label className={`pc-keep${isKept(bank) ? ' is-on' : ''}`} data-testid="platform-keep">
+        <span className="pc-keep-icon"><Lock size={16} aria-hidden="true" /></span>
+        <span className="pc-keep-text">
+          <strong>Keep this bank when resetting data</strong>
+          <small>
+            {bank.id === DEMO_BANK_ID
+              ? 'The demo bank is always kept.'
+              : bank.keep
+                ? 'Reset data skips this bank, and it cannot be deleted.'
+                : 'Off: Reset data removes this bank and everything in it.'}
+          </small>
+        </span>
+        <span className="switch">
+          <input type="checkbox" role="switch" data-testid="platform-keep-switch" checked={isKept(bank)} disabled={busy || bank.id === DEMO_BANK_ID} onChange={(e) => onKeep(e.target.checked)} />
+          <span className="switch-slider" />
+        </span>
+      </label>
       {images.login && <img className="pc-panel-image" src={images.login} alt={`${bank.displayName} sign-in picture`} />}
       <dl className="pc-facts">
         {facts.filter(([, value]) => value !== undefined && value !== '').map(([label, value]) => (
@@ -181,6 +232,10 @@ export function PlatformConsole() {
   const [asking, setAsking] = useState<{ bank: ConsoleBank; action: BankAction } | null>(null);
   const [deleting, setDeleting] = useState<ConsoleBank | null>(null);
   const [reason, setReason] = useState('');
+  const [keepOnApprove, setKeepOnApprove] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [typedPhrase, setTypedPhrase] = useState('');
+  const [storage, setStorage] = useState<{ usedBytes: number | null; limitBytes: number } | null>(null);
   const [typedName, setTypedName] = useState('');
   const [busy, setBusy] = useState(false);
   const [theme, setTheme] = useState<string>(() => getValue('theme', 'light'));
@@ -199,6 +254,8 @@ export function PlatformConsole() {
     try {
       const list = await platformBanks();
       setBanks(list);
+      // The storage bar is extra: the list still shows when the size cannot be read.
+      platformDatabase().then(setStorage, () => setStorage(null));
       return list;
     } catch (error) {
       if (!getPlatformToken()) setSignedIn(false);
@@ -230,11 +287,11 @@ export function PlatformConsole() {
     setSignedIn(false);
   };
 
-  const act = async (bank: ConsoleBank, action: BankAction, why?: string) => {
+  const act = async (bank: ConsoleBank, action: BankAction, why?: string, keep?: boolean) => {
     setBusy(true);
     try {
-      await decideBank(bank.id, action, why);
-      toast.push('success', `${bank.displayName} ${ACTION_COPY[action].done}.`);
+      await decideBank(bank.id, action, why, keep);
+      toast.push('success', `${bank.displayName} ${ACTION_COPY[action].done}${keep ? ' and kept' : ''}.`);
       setAsking(null);
       setReason('');
       await load();
@@ -246,8 +303,10 @@ export function PlatformConsole() {
   };
 
   const startAction = (bank: ConsoleBank, action: BankAction) => {
-    if (ACTION_COPY[action].needsReason) {
+    // Reject and suspend ask for a reason; approve asks whether to keep the bank.
+    if (ACTION_COPY[action].needsReason || action === 'approve') {
       setReason('');
+      setKeepOnApprove(bank.keep);
       setAsking({ bank, action });
     } else {
       act(bank, action);
@@ -269,6 +328,37 @@ export function PlatformConsole() {
       setBusy(false);
     }
   };
+
+  const changeKeep = async (bank: ConsoleBank, keep: boolean) => {
+    setBusy(true);
+    try {
+      await setBankKeep(bank.id, keep);
+      toast.push('success', keep ? `${bank.displayName} is kept.` : `${bank.displayName} is no longer kept.`);
+      await load();
+    } catch (error) {
+      toast.push('error', (error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const plan = resetPlan(banks ?? []);
+  const confirmReset = async () => {
+    setBusy(true);
+    try {
+      const { removed } = await resetPlatformData();
+      toast.push('success', removed.length === 1 ? '1 bank and its data removed.' : `${removed.length} banks and their data removed.`);
+      setResetting(false);
+      setOpenId(null);
+      setFilter('all');
+      await load();
+    } catch (error) {
+      toast.push('error', (error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const level = storage && storage.usedBytes !== null ? storageLevel(storage.usedBytes, storage.limitBytes) : null;
 
   if (!signedIn) {
     return (
@@ -310,7 +400,21 @@ export function PlatformConsole() {
                 <UsersIcon size={14} aria-hidden="true" /> <AnimatedNumber value={totalUsers} /> users · <Database size={14} aria-hidden="true" /> <AnimatedNumber value={totalRecords} /> records across {counts.all} bank{counts.all === 1 ? '' : 's'}
               </p>
             </div>
-            <button className="btn" onClick={() => load()} data-testid="platform-refresh"><RefreshCw size={15} /> Refresh</button>
+            <div className="pc-heading-actions">
+              {level && storage && (
+                <div className={`pc-storage${level.warn ? ' is-warn' : ''}`} data-testid="platform-storage" title={level.warn ? 'The database is nearly full. Reset data to free space.' : undefined}>
+                  <span><Database size={13} aria-hidden="true" /> Storage <strong>{formatBytes(storage.usedBytes!)}</strong> of {formatBytes(storage.limitBytes)}</span>
+                  <div className="pc-storage-bar" role="progressbar" aria-label="Database storage used" aria-valuemin={0} aria-valuemax={100} aria-valuenow={level.percent}>
+                    <motion.i initial={{ width: 0 }} animate={{ width: `${Math.max(level.percent, 2)}%` }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} />
+                  </div>
+                  {level.warn && <small>Nearly full</small>}
+                </div>
+              )}
+              <button className="btn" onClick={() => load()} data-testid="platform-refresh"><RefreshCw size={15} /> Refresh</button>
+              <button className="btn pc-reset" data-testid="platform-reset-data" disabled={banks === null} onClick={() => { setTypedPhrase(''); setResetting(true); }}>
+                <Eraser size={15} /> Reset data
+              </button>
+            </div>
           </div>
 
           <div className="pc-tiles">
@@ -379,7 +483,7 @@ export function PlatformConsole() {
                     <button type="button" className="pc-bank-open" onClick={() => setOpenId(bank.id)} aria-label={`Open ${bank.displayName}`}>
                       <Initial bank={bank} />
                       <span className="pc-bank-name">
-                        <strong>{bank.displayName}</strong>
+                        <strong><span>{bank.displayName}</span>{isKept(bank) && <em className="pc-kept" data-testid={`platform-kept-${bank.id}`}><Lock size={11} aria-hidden="true" /> Kept</em>}</strong>
                         <small>{typeLabel(bank.profile.bankType)} · {countryName(bank.profile.country)} · {bank.profile.emailDomains.map((d) => `@${d}`).join(', ')}</small>
                       </span>
                       <span className="pc-bank-meta"><Building2 size={14} aria-hidden="true" /> {bank.profile.branches.toLocaleString()} branch{bank.profile.branches === 1 ? '' : 'es'}</span>
@@ -400,7 +504,9 @@ export function PlatformConsole() {
           )}
         </main>
 
-        {open && <BankPanel bank={open} onClose={() => setOpenId(null)} onAction={(action) => startAction(open, action)} onDelete={() => { setTypedName(''); setDeleting(open); }} />}
+        {open && (
+          <BankPanel bank={open} busy={busy} onClose={() => setOpenId(null)} onAction={(action) => startAction(open, action)} onKeep={(keep) => changeKeep(open, keep)} onDelete={() => { setTypedName(''); setDeleting(open); }} />
+        )}
 
         {asking && (
           <Modal
@@ -409,17 +515,89 @@ export function PlatformConsole() {
             footer={
               <>
                 <button className="btn" onClick={() => setAsking(null)}>Cancel</button>
-                <button className="btn btn-danger" data-testid="platform-reason-confirm" disabled={busy || !reason.trim()} onClick={() => act(asking.bank, asking.action, reason.trim())}>
-                  {ACTION_COPY[asking.action].label}
+                {asking.action === 'approve' ? (
+                  <button className="btn btn-primary" data-testid="platform-approve-confirm" disabled={busy} onClick={() => act(asking.bank, 'approve', undefined, keepOnApprove)}>
+                    Approve
+                  </button>
+                ) : (
+                  <button className="btn btn-danger" data-testid="platform-reason-confirm" disabled={busy || !reason.trim()} onClick={() => act(asking.bank, asking.action, reason.trim())}>
+                    {ACTION_COPY[asking.action].label}
+                  </button>
+                )}
+              </>
+            }
+          >
+            {asking.action === 'approve' ? (
+              <>
+                <p className="muted" style={{ marginTop: 0 }}>
+                  {asking.bank.displayName}'s admin ({asking.bank.adminEmail}) can sign in as soon as you approve.
+                </p>
+                <label className="pc-keep-check">
+                  <input type="checkbox" data-testid="platform-approve-keep" checked={keepOnApprove} onChange={(e) => setKeepOnApprove(e.target.checked)} />
+                  <span>
+                    <strong>Keep this bank</strong>
+                    <small>Tick this for a real bank. Reset data then skips it and it cannot be deleted. Leave it off for a test bank.</small>
+                  </span>
+                </label>
+              </>
+            ) : (
+              <>
+                <p className="muted" style={{ marginTop: 0 }}>{ACTION_COPY[asking.action].ask}</p>
+                <label className="field">
+                  <span className="field-label">Reason</span>
+                  <textarea className="input" rows={4} maxLength={500} autoFocus data-testid="platform-reason-input" value={reason} onChange={(e) => setReason(e.target.value)} />
+                </label>
+              </>
+            )}
+          </Modal>
+        )}
+
+        {resetting && (
+          <Modal
+            title="Reset data"
+            onClose={() => setResetting(false)}
+            footer={
+              <>
+                <button className="btn" onClick={() => setResetting(false)}>Cancel</button>
+                <button className="btn btn-danger" data-testid="platform-reset-confirm" disabled={busy || plan.removed.length === 0 || typedPhrase.trim() !== RESET_PHRASE} onClick={confirmReset}>
+                  {plan.removed.length === 1 ? 'Remove 1 bank' : `Remove ${plan.removed.length} banks`}
                 </button>
               </>
             }
           >
-            <p className="muted" style={{ marginTop: 0 }}>{ACTION_COPY[asking.action].ask}</p>
-            <label className="field">
-              <span className="field-label">Reason</span>
-              <textarea className="input" rows={4} maxLength={500} autoFocus data-testid="platform-reason-input" value={reason} onChange={(e) => setReason(e.target.value)} />
-            </label>
+            {plan.removed.length === 0 ? (
+              <div className="banner banner-info" data-testid="platform-reset-nothing">There is nothing to remove: every bank is kept.</div>
+            ) : (
+              <div className="banner banner-error">
+                This removes {plan.removed.length === 1 ? 'the bank' : 'the banks'} below with all users, records and pictures, for good. It cannot be undone.
+              </div>
+            )}
+            <div className="pc-reset-lists">
+              <section data-testid="platform-reset-removed">
+                <h4>Will be removed <span className="pc-count">{plan.removed.length}</span></h4>
+                {plan.removed.length === 0 ? <p className="muted">No banks.</p> : (
+                  <ul>
+                    {plan.removed.map((bank) => (
+                      <li key={bank.id}><Initial bank={bank} /><span><strong>{bank.displayName}</strong><small>{STATUS_LABEL[bank.status]} · {people(bank.users)} · {bank.records.toLocaleString()} records</small></span></li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+              <section data-testid="platform-reset-kept">
+                <h4>Kept <span className="pc-count">{plan.kept.length}</span></h4>
+                <ul>
+                  {plan.kept.map((bank) => (
+                    <li key={bank.id}><Initial bank={bank} /><span><strong>{bank.displayName}</strong><small>{bank.id === DEMO_BANK_ID ? 'Demo bank, left exactly as it is' : `${people(bank.users)} · ${bank.records.toLocaleString()} records`}</small></span></li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+            {plan.removed.length > 0 && (
+              <label className="field">
+                <span className="field-label">Type {RESET_PHRASE} to confirm</span>
+                <input className="input" autoFocus autoComplete="off" data-testid="platform-reset-phrase" value={typedPhrase} onChange={(e) => setTypedPhrase(e.target.value)} />
+              </label>
+            )}
           </Modal>
         )}
 

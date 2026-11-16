@@ -7,6 +7,8 @@ import { createApp, prepare } from '../src/app.js';
 import { COLLECTION_NAMES } from '../src/db.js';
 import { DEMO_BANK_ID } from '../src/banks.js';
 import { forgetBankStore, getBankStore } from '../src/tenancy.js';
+import { getDb } from '../src/pg.js';
+import { demoToken } from './helpers.js';
 
 process.env.DISABLE_LATENCY = 'true';
 
@@ -403,11 +405,111 @@ describe('suspending and removing a bank', () => {
   });
 });
 
+describe('Reset data in the platform console', () => {
+  let kept: { id: string; token: string };
+  let loose: { id: string; token: string };
+  let waiting = '';
+
+  async function rowsOf(bankId: string): Promise<number> {
+    const db = await getDb();
+    const { rows } = await db.query<{ n: number }>(
+      `SELECT (SELECT count(*) FROM banks WHERE id = $1) + (SELECT count(*) FROM records WHERE bank_id = $1)
+            + (SELECT count(*) FROM bank_assets WHERE bank_id = $1) + (SELECT count(*) FROM bank_domains WHERE bank_id = $1) AS n`,
+      [bankId]
+    );
+    return Number(rows[0].n);
+  }
+
+  it('lets the owner tick Keep while approving, and switch it later', async () => {
+    const one = await api('POST', '/platform/banks', { body: registration('Kept Bank', 'keptbank.test') });
+    const two = await api('POST', '/platform/banks', { body: registration('Loose Bank', 'loosebank.test') });
+    const three = await api('POST', '/platform/banks', { body: registration('Waiting Bank', 'waitingbank.test') });
+    waiting = three.body.id;
+
+    const approvedKept = await api('POST', `/platform/banks/${one.body.id}/approve`, { token: owner, body: { keep: true } });
+    assert.equal(approvedKept.body.status, 'active');
+    assert.equal(approvedKept.body.keep, true);
+    const approvedLoose = await api('POST', `/platform/banks/${two.body.id}/approve`, { token: owner, body: {} });
+    assert.equal(approvedLoose.body.keep, false, 'Keep is off unless it is asked for');
+
+    kept = { id: one.body.id, token: (await login('admin@keptbank.test')).body.token };
+    loose = { id: two.body.id, token: (await login('admin@loosebank.test')).body.token };
+
+    // The switch in the bank's panel, both ways.
+    assert.equal((await api('PUT', `/platform/banks/${loose.id}/keep`, { token: owner, body: { keep: true } })).body.keep, true);
+    assert.equal((await api('PUT', `/platform/banks/${loose.id}/keep`, { token: owner, body: { keep: false } })).body.keep, false);
+    assert.equal((await api('PUT', `/platform/banks/${loose.id}/keep`, { token: owner, body: {} })).status, 422);
+    assert.equal((await api('PUT', '/platform/banks/bank-nobody/keep', { token: owner, body: { keep: true } })).status, 404);
+  });
+
+  it('always keeps the demo bank', async () => {
+    const list = (await api('GET', '/platform/banks', { token: owner })).body.data as { id: string; keep: boolean }[];
+    assert.equal(list.find((bank) => bank.id === DEMO_BANK_ID)!.keep, true);
+    const off = await api('PUT', `/platform/banks/${DEMO_BANK_ID}/keep`, { token: owner, body: { keep: false } });
+    assert.equal(off.status, 409);
+    assert.equal(off.body.error.code, 'demo_bank');
+  });
+
+  it('refuses to delete a kept bank on its own', async () => {
+    const refused = await api('DELETE', `/platform/banks/${kept.id}`, { token: owner });
+    assert.equal(refused.status, 409);
+    assert.equal(refused.body.error.code, 'bank_kept');
+    assert.equal((await api('GET', '/leads', { token: kept.token })).status, 200);
+  });
+
+  it('is for the platform owner only, and needs the typed phrase', async () => {
+    const body = { confirm: 'RESET DATA' };
+    assert.equal((await api('POST', '/platform/reset-data', { body })).status, 401);
+    assert.equal((await api('POST', '/platform/reset-data', { token: loose.token, body })).status, 403, 'a bank user is not the platform owner');
+    assert.equal((await api('POST', '/platform/reset-data', { token: owner, body: {} })).status, 422);
+    assert.equal((await api('POST', '/platform/reset-data', { token: owner, body: { confirm: 'reset data' } })).status, 422);
+    assert.ok((await rowsOf(loose.id)) > 0, 'nothing was removed by the refused calls');
+  });
+
+  it('removes every bank that is not kept, with all of its data, and leaves the rest alone', async () => {
+    const demoLeads = (await api('GET', '/leads?pageSize=1', { token: demoToken('admin') })).body.total;
+    const keptLeads = (await api('GET', '/leads?pageSize=1', { token: kept.token })).body.total;
+    for (const id of [axis.id, loose.id, waiting]) assert.ok((await rowsOf(id)) > 1, `${id} has data before the reset`);
+
+    const reset = await api('POST', '/platform/reset-data', { token: owner, body: { confirm: 'RESET DATA' } });
+    assert.equal(reset.status, 200);
+    const removed = reset.body.removed.map((bank: { id: string }) => bank.id).sort();
+    assert.deepEqual(removed, [axis.id, loose.id, waiting].sort(), 'active and pending banks alike');
+    assert.deepEqual(reset.body.kept.map((bank: { id: string }) => bank.id).sort(), [DEMO_BANK_ID, kept.id].sort());
+
+    for (const id of [axis.id, loose.id, waiting]) assert.equal(await rowsOf(id), 0, `no row of ${id} is left in any table`);
+    assert.equal((await api('GET', '/leads', { token: loose.token })).status, 401);
+    assert.equal((await login('admin@loosebank.test')).status, 401);
+    assert.deepEqual((await api('POST', '/auth/identify', { body: { email: 'someone@loosebank.test' } })).body.banks, []);
+
+    assert.equal((await api('GET', '/leads?pageSize=1', { token: kept.token })).body.total, keptLeads, 'the kept bank is untouched');
+    assert.equal((await api('GET', '/leads?pageSize=1', { token: demoToken('admin') })).body.total, demoLeads, 'the demo bank is as it was');
+
+    const left = (await api('GET', '/platform/banks', { token: owner })).body.data.map((bank: { id: string }) => bank.id).sort();
+    assert.deepEqual(left, [DEMO_BANK_ID, kept.id].sort());
+  });
+
+  it('can run again with nothing to remove, and a freed name can register again', async () => {
+    const again = await api('POST', '/platform/reset-data', { token: owner, body: { confirm: 'RESET DATA' } });
+    assert.deepEqual(again.body.removed, []);
+    assert.equal((await api('POST', '/platform/banks', { body: registration('Loose Bank', 'loosebank.test') })).status, 201);
+    await api('POST', '/platform/reset-data', { token: owner, body: { confirm: 'RESET DATA' } });
+  });
+
+  it('tells the owner how full the database is', async () => {
+    assert.equal((await api('GET', '/platform/database')).status, 401);
+    const size = await api('GET', '/platform/database', { token: owner });
+    assert.equal(size.status, 200);
+    assert.equal(size.body.limitBytes, 512 * 1024 * 1024);
+    assert.ok(size.body.usedBytes === null || size.body.usedBytes > 0);
+  });
+});
+
 describe('API documentation', () => {
   it('lists the CRM 3.0 routes next to the original ones', async () => {
     const doc = (await api('GET', '/openapi.json')).body;
     for (const path of ['/leads', '/auth/login', '/auth/identify', '/auth/accept-invite', '/auth/change-password', '/auth/logout-all',
-      '/users/{id}/invite', '/platform/banks', '/platform/banks/{id}/{action}', '/bank/profile', '/public/banks/{id}/assets/{kind}']) {
+      '/users/{id}/invite', '/platform/banks', '/platform/banks/{id}/{action}', '/platform/banks/{id}/keep', '/platform/reset-data', '/platform/database', '/bank/profile', '/public/banks/{id}/assets/{kind}']) {
       assert.ok(doc.paths[path], `${path} is documented`);
     }
     assert.ok(doc.components.schemas.BankRegistration);

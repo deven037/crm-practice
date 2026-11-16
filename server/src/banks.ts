@@ -39,6 +39,8 @@ export interface Bank {
   createdAt: string;
   updatedAt: string;
   decidedAt: string | null;
+  /** Kept banks survive the console's "Reset data" and cannot be deleted. The demo bank is always kept. */
+  keep: boolean;
   /** Which images the bank has uploaded, with a version for cache busting. */
   assets: Partial<Record<AssetKind, string>>;
 }
@@ -93,6 +95,7 @@ async function readBanks(where: string, params: unknown[]): Promise<Bank[]> {
       createdAt: toIso(row.created_at),
       updatedAt: toIso(row.updated_at),
       decidedAt: row.decided_at ? toIso(row.decided_at) : null,
+      keep: row.id === DEMO_BANK_ID || row.keep === true,
       assets,
     };
     cache.set(bank.id, bank);
@@ -210,6 +213,12 @@ export async function setBankStatus(id: string, status: BankStatus, reason?: str
   return getBank(id, true);
 }
 
+export async function setBankKeep(id: string, keep: boolean): Promise<Bank | undefined> {
+  const db = await getDb();
+  await db.query('UPDATE banks SET keep = $2, updated_at = now() WHERE id = $1', [id, keep]);
+  return getBank(id, true);
+}
+
 export async function updateBankProfile(id: string, displayName: string, profile: BankProfile): Promise<Bank> {
   const db = await getDb();
   const domains = [...new Set(profile.emailDomains.map((d) => d.toLowerCase()))];
@@ -233,6 +242,30 @@ export async function deleteBank(id: string): Promise<boolean> {
   cache.delete(id);
   forgetBankStore(id);
   return rows.length > 0;
+}
+
+/**
+ * The console's "Reset data": removes every bank and everything it owns (users,
+ * records, images, email domains), except the demo bank and banks marked Keep.
+ * The demo bank's own data is not touched.
+ */
+export async function removeUnkeptBanks(): Promise<{ removed: Bank[]; kept: Bank[] }> {
+  const banks = await listBanks();
+  const removed = banks.filter((bank) => !bank.keep);
+  for (const bank of removed) await deleteBank(bank.id);
+  return { removed, kept: banks.filter((bank) => bank.keep) };
+}
+
+/** Bytes the database holds now, or null when the engine cannot say. */
+export async function databaseSize(): Promise<number | null> {
+  try {
+    const db = await getDb();
+    const { rows } = await db.query<{ bytes: number | string }>('SELECT pg_database_size(current_database()) AS bytes');
+    const bytes = Number(rows[0]?.bytes);
+    return Number.isFinite(bytes) ? bytes : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function recordCounts(): Promise<Map<string, Record<string, number>>> {

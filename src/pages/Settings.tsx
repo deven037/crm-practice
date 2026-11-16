@@ -7,6 +7,16 @@ import { Accordion } from '../components/Accordion';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { SecurityCard } from './settings/SecurityCard';
+import { DEMO_BANK_ID, rememberedBank } from '../data/frontDoor';
+
+/**
+ * "Reset all data" restores the public demo bank's sample data and nothing else, so
+ * only the demo bank's users see it. (A device that remembers no bank is an older
+ * demo session.)
+ */
+export function showsDemoReset(bank: { id: string } | null): boolean {
+  return !bank || bank.id === DEMO_BANK_ID;
+}
 
 interface Prefs {
   emailNotifs: boolean;
@@ -307,7 +317,8 @@ export function Settings() {
         </Accordion>
       </section>
 
-      <section className="card danger-zone">
+      {showsDemoReset(rememberedBank()) && (
+      <section className="card danger-zone" data-testid="danger-zone">
         <h3>Danger zone</h3>
         <p className="muted">
           Reset all CRM data back to the original seed state. Use this to get a clean, repeatable dataset before test runs.
@@ -317,6 +328,7 @@ export function Settings() {
           Reset all data
         </button>
       </section>
+      )}
 
       {confirmReset && (
         <Modal

@@ -16,6 +16,8 @@ export const env = {
   publicApiUrl: process.env.PUBLIC_API_URL ?? '',
   // PostgreSQL connection string (Neon). Empty: PGlite, a Postgres that runs inside this process.
   databaseUrl: process.env.DATABASE_URL ?? '',
+  // How much the database may hold, for the console's "storage used" bar. Neon's free plan: 0.5 GB.
+  databaseLimitBytes: Number(process.env.DATABASE_LIMIT_MB ?? 512) * 1024 * 1024,
   // Folder PGlite keeps its files in. Empty: memory only (tests).
   pgliteDir: process.env.PGLITE_DIR ?? (process.env.NODE_ENV === 'test' ? '' : '.data/pglite'),
   bcryptRounds: Number(process.env.BCRYPT_ROUNDS ?? 10),
