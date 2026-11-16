@@ -1,5 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useRef, useState } from 'react';
-import { CheckCircle2, Info, XCircle } from 'lucide-react';
+import { Info, XCircle } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { SavedTick } from './v3';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -13,7 +15,6 @@ const ToastContext = createContext<{ push: (type: ToastType, message: string) =>
   push: () => {},
 });
 
-const ICONS: Record<ToastType, typeof CheckCircle2> = { success: CheckCircle2, error: XCircle, info: Info };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -29,9 +30,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ push }}>
       {children}
       <div className="toast-container" data-testid="toast-container" aria-live="polite">
+        <AnimatePresence initial={false}>
         {toasts.map((toast) => (
-          <div key={toast.id} className={`toast toast-${toast.type}`} data-testid="toast" role={toast.type === 'error' ? 'alert' : 'status'}>
-            <span className="toast-icon">{(() => { const Icon = ICONS[toast.type]; return <Icon size={16} />; })()}</span>
+          <motion.div
+            key={toast.id}
+            layout
+            initial={{ opacity: 0, x: 48, scale: 0.94 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 48, scale: 0.94, transition: { duration: 0.16 } }}
+            transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+            className={`toast toast-${toast.type}`}
+            data-testid="toast"
+            role={toast.type === 'error' ? 'alert' : 'status'}
+          >
+            <span className="toast-icon">
+              {toast.type === 'success' ? <SavedTick size={18} label="" /> : toast.type === 'error' ? <XCircle size={16} /> : <Info size={16} />}
+            </span>
             <span className="toast-message">{toast.message}</span>
             <button
               className="toast-close"
@@ -40,8 +54,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             >
               ×
             </button>
-          </div>
+            <span className="toast-life" aria-hidden="true" />
+          </motion.div>
         ))}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );

@@ -38,13 +38,18 @@ export function Kanban<T>({
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
+  // The card that was just moved: it settles into its new column with a small bounce.
+  const [droppedId, setDroppedId] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const handleDrop = (e: DragEvent, columnKey: string) => {
     e.preventDefault();
     setDragOver(null);
     const id = e.dataTransfer.getData('text/kanban-id') || dragId;
-    if (id) onDrop(id, columnKey);
+    if (id) {
+      onDrop(id, columnKey);
+      setDroppedId(id);
+    }
     setDragId(null);
   };
 
@@ -84,7 +89,9 @@ export function Kanban<T>({
               return (
                 <div
                   key={id}
-                  className="kanban-card"
+                  className={classNames('kanban-card', dragId === id && 'dragging', droppedId === id && 'just-dropped')}
+                  onDragEnd={() => setDragId(null)}
+                  onAnimationEnd={() => droppedId === id && setDroppedId(null)}
                   data-kanban-id={id}
                   draggable={!readOnly}
                   role={getLabel ? 'group' : undefined}

@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Activity as ActivityIcon, Bell, Building2, CheckSquare, ChevronDown, ChevronRight, Database, DollarSign, FlaskConical, LayoutDashboard,
   LogOut, Megaphone, Menu, Moon, Package, Receipt, Search, Settings, Shield, Sun, Target, Ticket, User,
@@ -13,6 +13,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { CommandBar, isCloseKey } from './CommandBar';
 import { SidebarLink } from './SidebarLink';
 import './feedback-widget';
+import { applyBankTheme } from '../theme/bankTheme';
 
 const PRODUCT_NAME = import.meta.env.VITE_PRODUCT_NAME?.trim() || 'Harbor CRM';
 
@@ -199,6 +200,9 @@ export function Layout({ children, initialSidebarCollapsed = false }: { children
   const [commandOpen, setCommandOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 780px)');
+  const location = useLocation();
+  // The module part of the address: the page slides in when it changes, not on every sub-page.
+  const section = location.pathname.split('/')[1] ?? '';
   const [profile, setProfile] = useState<BankProfile | null>(null);
   const [profileStatus, setProfileStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
 
@@ -208,6 +212,8 @@ export function Layout({ children, initialSidebarCollapsed = false }: { children
       (p) => {
         setProfile(p);
         setProfileStatus(p?.name.trim() ? 'ready' : 'failed');
+        // One colour from the bank's profile re-themes the whole app.
+        applyBankTheme(p?.color);
       },
       () => setProfileStatus('failed')
     );
@@ -338,7 +344,7 @@ export function Layout({ children, initialSidebarCollapsed = false }: { children
             </button>
           </div>
         )}
-        <main className="page">{children}</main>
+        <main className="page v3-page-enter" key={section}>{children}</main>
       </div>
       <feedback-widget />
     </div>

@@ -6,7 +6,7 @@ interface BarChartProps {
   color?: string;
 }
 
-export function BarChart({ data, height = 180, color = 'var(--accent)' }: BarChartProps) {
+export function BarChart({ data, height = 180, color = 'var(--bank-primary)' }: BarChartProps) {
   const max = Math.max(...data.map((d) => d.value), 1);
   const barWidth = 100 / data.length;
   return (
@@ -22,7 +22,9 @@ export function BarChart({ data, height = 180, color = 'var(--accent)' }: BarCha
               height={h}
               rx={1.5}
               fill={color}
-              opacity={0.85}
+              opacity={0.9}
+              className="chart-bar"
+              style={{ animationDelay: `${i * 45}ms` }}
             >
               <title>{`${d.label}: ${d.value}`}</title>
             </rect>
@@ -36,7 +38,8 @@ export function BarChart({ data, height = 180, color = 'var(--accent)' }: BarCha
   );
 }
 
-const DONUT_COLORS = ['#4f46e5', '#0ea5e9', '#f59e0b', '#ef4444', '#10b981', '#8b5cf6'];
+// The first slice is the bank's colour; the rest are fixed hues that sit beside any bank colour.
+const DONUT_COLORS = ['var(--bank-primary)', '#0ea5e9', '#f59e0b', '#ef4444', '#10b981', '#8b5cf6'];
 
 export function DonutChart({ data }: { data: { label: string; value: number }[] }) {
   const total = data.reduce((sum, d) => sum + d.value, 0) || 1;
@@ -58,6 +61,8 @@ export function DonutChart({ data }: { data: { label: string; value: number }[] 
               strokeWidth="6"
               strokeDasharray={`${pct} ${100 - pct}`}
               strokeDashoffset={offset}
+              className="donut-seg"
+              style={{ animationDelay: `${i * 80}ms` }}
             >
               <title>{`${d.label}: ${d.value}`}</title>
             </circle>
@@ -81,16 +86,16 @@ export function DonutChart({ data }: { data: { label: string; value: number }[] 
   );
 }
 
-export function LineChart({ data, color = '#10b981' }: { data: { label: string; value: number }[]; color?: string }) {
+export function LineChart({ data, color = 'var(--bank-primary)' }: { data: { label: string; value: number }[]; color?: string }) {
   const max = Math.max(...data.map((d) => d.value), 1);
   const stepX = 100 / Math.max(data.length - 1, 1);
   const points = data.map((d, i) => `${i * stepX},${40 - (d.value / max) * 34}`).join(' ');
   return (
     <svg viewBox="-4 -4 108 56" className="chart" role="img" aria-label="Line chart">
-      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+      <polyline className="chart-line" points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
       {data.map((d, i) => (
         <g key={d.label}>
-          <circle cx={i * stepX} cy={40 - (d.value / max) * 34} r="1.8" fill={color}>
+          <circle className="chart-dot" style={{ animationDelay: `${300 + i * 60}ms` }} cx={i * stepX} cy={40 - (d.value / max) * 34} r="1.8" fill={color}>
             <title>{`${d.label}: ${d.value}`}</title>
           </circle>
           <text x={i * stepX} y={49} textAnchor="middle" className="chart-label">
