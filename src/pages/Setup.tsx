@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { History, Landmark, Package, ShieldCheck, UploadCloud, Users as UsersIcon, Workflow } from 'lucide-react';
+import { FlaskConical, History, Landmark, Package, ShieldCheck, UploadCloud, Users as UsersIcon, Workflow } from 'lucide-react';
 import { getAllSync } from '../data/store';
 import { AutoFlowProcess, RoleDef, User } from '../types';
 
@@ -35,6 +35,7 @@ export function Setup() {
     },
     { to: '/setup/audit', label: 'Audit Log', icon: History, testId: 'setup-card-audit', describe: () => 'Recent admin activity' },
     { to: '/setup/import', label: 'Import Data', icon: UploadCloud, testId: 'setup-card-import', describe: () => 'CSV → bulk create' },
+    { to: '/testcases', label: 'Test Cases', icon: FlaskConical, testId: 'setup-card-testcases', describe: () => 'The catalogue of test cases for this app' },
   ];
 
   return (

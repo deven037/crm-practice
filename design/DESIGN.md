@@ -61,6 +61,17 @@ Every metric states its time basis. Solid chip = follows the page range ("Last 3
 - "Reset all data" in Settings is shown to Harbor Demo Bank users only.
 - Lists that a bank can extend without limit (status codes, custom values) never get a fixed row of buttons: use a searchable picker or an overflow menu.
 
+### App shell (`src/components/Layout.tsx`, `src/components/shell/`, `src/styles/shell.css`)
+- Design: `design/v3/shell.html` (clickable; bank, screen size and theme can be switched in it).
+- Side menu: a floating panel in the bank's colour. Groups are Home, Customers, Sales, Service, Insights. One highlight glides between links (Motion `layoutId` in `SidebarLink`). Leads, Tasks and Tickets carry a count of waiting work (`navCounts`); the count turns warm when something is late or urgent. It collapses to icons and the choice is remembered on the device.
+- Pinned: a record page shows a pin button in the top bar; pinned records list at the bottom of the menu (up to 6, kept on the device, `usePinned`).
+- Top bar: glass, floating. Where you are (group / page / record), the search pill, the light and dark switch, the bell, and the profile chip at the top right. The chip opens Setup, Profile settings and Log out. Settings and Test Cases are not in the menu: Settings is in the profile menu, Test Cases is a card in Setup.
+- No shared create button anywhere in the shell (top bar, command bar, phone bar). Each module has its own create button on its own page.
+- Command bar (Ctrl K): finds records and pages; recent records show first. It has no create actions.
+- Notifications: a panel that slides in from the right, grouped Today and Earlier, with All and Unread tabs and Mark all read. Reading is saved through `/api/notifications`.
+- Phones (under 780 px): the menu becomes a sheet and a bottom bar takes over: Home, Leads, Search, Tasks, Menu.
+- Kept test ids: `sidebar`, `topbar`, `sidebar-toggle`, `global-search`, `theme-toggle`, `avatar-menu`, `setup-menu-item`, `logout-btn`, `command-bar`, `command-input`, `bank-profile-error`, `bank-profile-retry`. New: `notifications-bell`, `notifications-panel`, `pin-record`, `pinned-records`, `tabbar`, `command-page`, `command-recent`, `setup-card-testcases`.
+
 ### 3.0 screens
 - The front door has no HTML mockups in `design/`; the built pages are the reference.
 - The old sign-in design `design/AIO-101/login.html` and its `.lg-` styles are retired.

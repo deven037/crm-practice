@@ -57,7 +57,10 @@ vi.mock('react/jsx-dev-runtime', async (importOriginal) => {
     },
   };
 });
-vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn(), useLocation: () => ({ pathname: '/' }) }));
+vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn(), useLocation: () => ({ pathname: '/' }), Link: () => null, NavLink: () => null }));
+vi.mock('../hooks/usePinned', () => ({ usePinned: () => ({ items: [], toggle: vi.fn() }) }));
+vi.mock('../hooks/useRecentlyViewed', () => ({ useRecentlyViewed: () => ({ items: [] }) }));
+vi.mock('./shell/NotificationsPanel', () => ({ NotificationsPanel: () => null }));
 vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
 vi.mock('../hooks/useMediaQuery', () => ({ useMediaQuery: () => false }));
 vi.mock('./CommandBar', () => ({ CommandBar: () => null, isCloseKey: (key: string) => key === 'Escape' }));
@@ -125,17 +128,18 @@ describe('bank profile fallback and recovery', () => {
     expect(harness.fetchProfile).toHaveBeenCalledTimes(2);
     expect(html).not.toContain('data-testid="bank-profile-error"');
     expect(html).toContain('>Redfern Credit Union</span>');
-    expect(html).not.toContain('class="brand-logo"');
+    expect(html).toContain('<span class="brand-logo" aria-hidden="true">R</span>');
     expect(html).toContain('data-bank-profile="default"');
   });
 
-  it('keeps a bank without a logo named when the sidebar is collapsed', async () => {
+  it('shows the bank initial and keeps the name for screen readers when the sidebar is collapsed', async () => {
     harness.fetchProfile.mockResolvedValue({ name: 'Redfern Credit Union', logoUrl: null, color: null });
     render(true);
     await load();
     const html = render(true);
-    expect(html).toContain('>Redfern Credit Union</span>');
-    expect(html).not.toContain('class="brand-logo"');
+    expect(html).toContain('<span class="sr-only">Redfern Credit Union</span>');
+    expect(html).toContain('<span class="brand-logo" aria-hidden="true">R</span>');
+    expect(html).not.toContain('class="brand-name"');
   });
 
   it('closes the avatar menu and notifications panel on Escape, not on other keys', () => {
@@ -204,5 +208,13 @@ describe('bank profile fallback and recovery', () => {
 it('gives the header search an explicit name while preserving its visible text', () => {
   const html = render();
   expect(html).toMatch(/<button[^>]*data-testid="global-search"[^>]*aria-label="Search leads, contacts, accounts"/);
-  expect(html).toContain('<span>Search leads, contacts, accounts…</span>');
+  expect(html).toContain('<span>Search or jump to…</span>');
+});
+
+it('has no shared create button and keeps the profile menu out of the side menu', () => {
+  const html = render();
+  expect(html).not.toMatch(/>\s*New\s*</);
+  const sidebar = html.slice(html.indexOf('data-testid="sidebar"'), html.indexOf('class="main-column"'));
+  expect(sidebar).not.toContain('avatar');
+  expect(html).toContain('data-testid="notifications-bell"');
 });

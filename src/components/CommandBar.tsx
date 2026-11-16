@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, Clock, Target, User, Building2, DollarSign, ArrowRight, AlertTriangle, X, type LucideIcon } from 'lucide-react';
+import { Search, Clock, Target, User, Building2, DollarSign, ArrowRight, AlertTriangle, X, type LucideIcon } from 'lucide-react';
 import { apiFetch } from '../data/apiFetch';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
+import { NAV_GROUPS } from './shell/nav';
 
 // Owner decisions (AIO-199, question #112): changing an answer is a one-line change here.
 const SEARCH_DEBOUNCE_MS = 250;
@@ -38,7 +39,8 @@ interface CommandItem {
   id: string;
   label: string;
   sublabel?: string;
-  group: 'Quick actions' | 'Recent';
+  group: 'Recent' | 'Go to';
+  icon: LucideIcon;
   onSelect: () => void;
 }
 
@@ -52,15 +54,16 @@ interface ResultOption {
   to: string;
 }
 
-const QUICK_ACTIONS: { label: string; to: string }[] = [
-  { label: '+ New Lead', to: '/leads/new' },
-  { label: '+ New Contact', to: '/contacts/new' },
-  { label: '+ New Account', to: '/accounts/new' },
-  { label: '+ New Product', to: '/products/new' },
-  { label: '+ New Campaign', to: '/campaigns/new' },
-  { label: '+ New Quote', to: '/quotes/new' },
-  { label: '+ New Deal', to: '/deals/new' },
-];
+/** Every page in the side menu, so the bar can jump to one by name. Creating a record stays on each module's own page. */
+const PAGES = NAV_GROUPS.flatMap((group) => group.items.map((item) => ({ ...item, group: group.label })));
+const PAGES_IDLE = 5;
+const PAGES_MATCHED = 6;
+
+/** The pages whose name contains what was typed; the first few when nothing is typed yet. */
+export function matchPages(query: string) {
+  const q = query.trim().toLowerCase();
+  return PAGES.filter((page) => !q || page.label.toLowerCase().includes(q)).slice(0, q ? PAGES_MATCHED : PAGES_IDLE);
+}
 
 /** Esc is handled on the document while the panel is open, so it also works when focus is on "Try again", Close, a result, or has dropped to the body. */
 export const isCloseKey = (key: string) => key === 'Escape';
@@ -111,7 +114,7 @@ interface CommandBarProps {
   onClose: () => void;
 }
 
-/** Global ⌘K/Ctrl+K search — the header search button opens it. Grouped results come from GET /api/search; quick actions and recent records show before a term is typed. Controlled by Layout.tsx. */
+/** Global ⌘K/Ctrl+K search — the header search button opens it. Grouped results come from GET /api/search; recent records and pages show before a term is typed, and pages can be found by name. Controlled by Layout.tsx. */
 export function CommandBar({ open, onClose }: CommandBarProps) {
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
@@ -191,25 +194,30 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
   }, [open, onClose]);
 
   const items: CommandItem[] = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const actions: CommandItem[] = QUICK_ACTIONS.filter((a) => a.label.toLowerCase().includes(q)).map((a) => ({
-      id: `action-${a.to}`,
-      label: a.label,
-      group: 'Quick actions',
-      onSelect: () => navigate(a.to),
+    const pages: CommandItem[] = matchPages(query).map((page) => ({
+      id: `page-${page.to}`,
+      label: page.label,
+      sublabel: page.group,
+      group: 'Go to',
+      icon: page.icon,
+      onSelect: () => navigate(page.to),
     }));
-    const recentItems: CommandItem[] = recent.slice(0, 5).map((r) => ({
-      id: `recent-${r.id}`,
-      label: r.label,
-      sublabel: r.module,
-      group: 'Recent',
-      onSelect: () => navigate(r.link),
-    }));
-    return [...actions, ...recentItems];
+    const recentItems: CommandItem[] = query.trim()
+      ? []
+      : recent.slice(0, 5).map((r) => ({
+          id: `recent-${r.id}`,
+          label: r.label,
+          sublabel: r.module,
+          group: 'Recent',
+          icon: Clock,
+          onSelect: () => navigate(r.link),
+        }));
+    return [...recentItems, ...pages];
   }, [query, recent, navigate]);
 
   const options = useMemo(() => buildOptions(data), [data]);
-  const optionCount = searching ? options.length : items.length;
+  // While searching, matching pages come first and the records found follow them.
+  const optionCount = searching ? items.length + options.length : items.length;
   const optionId = (index: number) => `command-option-${index}`;
   const activeId = activeIndex >= 0 && activeIndex < optionCount ? optionId(activeIndex) : undefined;
 
@@ -233,9 +241,14 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
       setActiveIndex((i) => (i <= 0 ? optionCount - 1 : i - 1));
     } else if (consumeEnter(e)) {
       if (searching) {
+        if (activeIndex >= 0 && activeIndex < items.length) {
+          selectItem(items[activeIndex]);
+          return;
+        }
         // Results still loading or for an older term: wait, so a stale first option is never used.
         if (status !== 'ready' || resultTerm !== term) return;
-        if (activeIndex >= 0 && options[activeIndex]) openOption(options[activeIndex]);
+        const chosen = activeIndex >= 0 ? options[activeIndex - items.length] : undefined;
+        if (chosen) openOption(chosen);
         else if (options[0]) openOption({ ...options[0], to: `/${options[0].type}?q=${encodeURIComponent(term)}` });
       } else if (items[activeIndex]) {
         selectItem(items[activeIndex]);
@@ -257,13 +270,13 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
   if (!open) return null;
 
   const hasMatches = data !== null && TYPES.some(({ key }) => data[key].total > 0);
-  let optionIndex = 0;
+  let optionIndex = items.length;
 
   return (
     <div className="command-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className="command-panel" data-testid="command-bar">
         <div className="command-input-row">
-          <Search size={16} color="var(--text-muted)" />
+          <Search size={18} color="var(--bank-ink)" />
           <input
             ref={inputRef}
             value={query}
@@ -276,7 +289,7 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
             aria-busy={status === 'loading'}
             aria-invalid={status === 'error'}
             data-testid="command-input"
-            placeholder="Search or jump to an action…"
+            placeholder="Search records and pages"
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
           />
@@ -304,34 +317,37 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
             </div>
           )}
 
-          {!searching &&
-            (['Quick actions', 'Recent'] as const).map((group) => {
-              const groupItems = items.filter((item) => item.group === group);
-              if (groupItems.length === 0) return null;
-              return (
-                <div key={group}>
-                  <div className="command-group-label">{group}</div>
-                  {groupItems.map((item) => {
-                    const idx = items.indexOf(item);
-                    return (
-                      <div
-                        key={item.id}
-                        id={optionId(idx)}
-                        role="option"
-                        aria-selected={idx === activeIndex}
-                        className={`command-item${idx === activeIndex ? ' active' : ''}`}
-                        onMouseEnter={() => setActiveIndex(idx)}
-                        onClick={() => selectItem(item)}
-                      >
-                        {group === 'Quick actions' ? <Plus size={14} /> : <Clock size={14} />}
-                        <span>{item.label}</span>
-                        {item.sublabel && <span className="muted" style={{ marginLeft: 'auto', fontSize: 12 }}>{item.sublabel}</span>}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
+          {(['Recent', 'Go to'] as const).map((group) => {
+            const groupItems = items.filter((item) => item.group === group);
+            if (groupItems.length === 0) return null;
+            return (
+              <div key={group}>
+                <div className="command-group-label">{group}</div>
+                {groupItems.map((item) => {
+                  const idx = items.indexOf(item);
+                  return (
+                    <div
+                      key={item.id}
+                      id={optionId(idx)}
+                      role="option"
+                      aria-selected={idx === activeIndex}
+                      className={`command-result${idx === activeIndex ? ' active' : ''}`}
+                      data-testid={group === 'Go to' ? 'command-page' : 'command-recent'}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onMouseEnter={() => setActiveIndex(idx)}
+                      onClick={() => selectItem(item)}
+                    >
+                      <span className="command-glyph"><item.icon size={16} /></span>
+                      <span className="command-result-main">
+                        <strong>{item.label}</strong>
+                        {item.sublabel && <small>{item.sublabel}</small>}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
 
           {searching && status === 'loading' && slow && (
             <div data-testid="search-loading" aria-hidden="true">
@@ -434,12 +450,17 @@ export function CommandBar({ open, onClose }: CommandBarProps) {
               );
             })}
         </div>
-        {searching && status === 'ready' && data !== null && hasMatches && (
-          <div className="command-foot" data-testid="search-total">
-            {plural(TYPES.reduce((sum, { key }) => sum + data[key].total, 0), 'result')} in{' '}
-            {plural(TYPES.filter(({ key }) => data[key].total > 0).length, 'type')}
-          </div>
-        )}
+        <div className="command-foot">
+          {searching && status === 'ready' && data !== null && hasMatches && (
+            <span data-testid="search-total">
+              {plural(TYPES.reduce((sum, { key }) => sum + data[key].total, 0), 'result')} in{' '}
+              {plural(TYPES.filter(({ key }) => data[key].total > 0).length, 'type')}
+            </span>
+          )}
+          <span className="command-keys" aria-hidden="true">
+            <kbd>↑</kbd><kbd>↓</kbd> move <kbd>Enter</kbd> open <kbd>Esc</kbd> close
+          </span>
+        </div>
       </div>
     </div>
   );
