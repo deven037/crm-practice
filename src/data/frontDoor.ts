@@ -142,6 +142,9 @@ export const removeBankImage = (kind: 'logo' | 'login') => apiFetch<void>(`/bank
 
 // ---------- platform owner console ----------
 
+/** The public demo bank: always there, always kept, and the only bank with the open "reset" route. */
+export const DEMO_BANK_ID = 'bank-demo';
+
 const PLATFORM_KEY = 'crm.platformToken';
 export const getPlatformToken = () => sessionStorage.getItem(PLATFORM_KEY);
 export const clearPlatformToken = () => sessionStorage.removeItem(PLATFORM_KEY);
@@ -157,6 +160,8 @@ export interface ConsoleBank {
   createdAt: string;
   updatedAt: string;
   decidedAt: string | null;
+  /** Kept banks are skipped by "Reset data" and cannot be deleted. */
+  keep: boolean;
   assets: Partial<Record<'logo' | 'login', string>>;
   users: number;
   records: number;
@@ -195,8 +200,23 @@ export async function platformLogin(email: string, password: string): Promise<{ 
 export const platformBanks = async () => (await platformFetch<{ data: ConsoleBank[] }>('/banks')).data;
 
 export type BankAction = 'approve' | 'reject' | 'suspend' | 'reactivate';
-export const decideBank = (id: string, action: BankAction, reason?: string) =>
-  platformFetch<ConsoleBank>(`/banks/${id}/${action}`, { method: 'POST', body: JSON.stringify(reason ? { reason } : {}) });
+export const decideBank = (id: string, action: BankAction, reason?: string, keep?: boolean) =>
+  platformFetch<ConsoleBank>(`/banks/${id}/${action}`, {
+    method: 'POST',
+    body: JSON.stringify({ ...(reason ? { reason } : {}), ...(keep === undefined ? {} : { keep }) }),
+  });
+export const setBankKeep = (id: string, keep: boolean) =>
+  platformFetch<ConsoleBank>(`/banks/${id}/keep`, { method: 'PUT', body: JSON.stringify({ keep }) });
+
+/** What the platform owner types to confirm "Reset data". The server checks the same phrase. */
+export const RESET_PHRASE = 'RESET DATA';
+/** Removes every bank and its data, except the demo bank and kept banks. */
+export const resetPlatformData = () =>
+  platformFetch<{ removed: { id: string; name: string }[]; kept: { id: string; name: string }[] }>('/reset-data', {
+    method: 'POST',
+    body: JSON.stringify({ confirm: RESET_PHRASE }),
+  });
+export const platformDatabase = () => platformFetch<{ usedBytes: number | null; limitBytes: number }>('/database');
 export const deleteBank = (id: string) => platformFetch<void>(`/banks/${id}`, { method: 'DELETE' });
 
 /** A pending bank's images are not public yet, so the console fetches them with its own token. */

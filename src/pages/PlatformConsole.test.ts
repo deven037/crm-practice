@@ -20,6 +20,7 @@ function bank(displayName: string, status: BankStatus, over: { legalName?: strin
     createdAt: '2026-11-15T10:00:00.000Z',
     updatedAt: '2026-11-15T10:00:00.000Z',
     decidedAt: null,
+    keep: false,
     assets: {},
     users: 1,
     records: 0,

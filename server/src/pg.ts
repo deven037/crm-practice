@@ -59,6 +59,8 @@ const SCHEMA = [
      updated_at timestamptz NOT NULL DEFAULT now(),
      PRIMARY KEY (bank_id, collection, id)
    )`,
+  // Kept banks are skipped by the console's "Reset data" and cannot be deleted one by one.
+  `ALTER TABLE banks ADD COLUMN IF NOT EXISTS keep boolean NOT NULL DEFAULT false`,
 ];
 
 async function openPostgres(url: string): Promise<Db> {

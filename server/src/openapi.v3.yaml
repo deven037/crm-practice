@@ -199,7 +199,41 @@ paths:
         - { name: id, in: path, required: true, schema: { type: string } }
       responses:
         '204': { description: Deleted. }
-        '409': { description: The demo bank cannot be deleted. }
+        '409': { description: 'The demo bank cannot be deleted (demo_bank), or the bank is marked Keep (bank_kept).' }
+  /platform/banks/{id}/keep:
+    put:
+      tags: [Platform]
+      summary: Mark a bank as kept, or not (platform owner)
+      description: Kept banks are skipped by Reset data and cannot be deleted. The demo bank is always kept.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [keep], properties: { keep: { type: boolean } } }
+      responses:
+        '200': { description: The bank. }
+        '409': { description: The demo bank is always kept. }
+  /platform/reset-data:
+    post:
+      tags: [Platform]
+      summary: Remove every bank and its data, except the demo bank and kept banks (platform owner)
+      description: The demo bank's own data is not changed. There is no undo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [confirm], properties: { confirm: { type: string, enum: [RESET DATA] } } }
+      responses:
+        '200': { description: 'The banks that were removed and the banks that were kept, each as id and name.' }
+        '422': { description: The confirmation phrase is missing or wrong. }
+  /platform/database:
+    get:
+      tags: [Platform]
+      summary: How full the database is (platform owner)
+      responses:
+        '200': { description: 'usedBytes (null when unknown) and limitBytes.' }
   /platform/banks/{id}/{action}:
     post:
       tags: [Platform]
@@ -210,7 +244,11 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: { type: object, properties: { reason: { type: string, description: Required for reject and suspend. } } }
+            schema:
+              type: object
+              properties:
+                reason: { type: string, description: Required for reject and suspend. }
+                keep: { type: boolean, description: 'On approve: also mark the bank as kept.' }
       responses:
         '200': { description: The bank with its new status. }
         '409': { description: The bank's current status does not allow this (invalid_state). }

@@ -57,6 +57,8 @@ Every metric states its time basis. Solid chip = follows the page range ("Last 3
 - Register a bank (`/register`): five steps and a review, with "Save and continue later" on the device (the password is never saved). Status page at `/register/status`.
 - Invite link (`/invite`) and forced first password (`/set-password`) use the same shell in the bank's colours.
 - Platform console (`/platform`): the platform owner's own sign-in, registrations and banks by state, approve, reject, suspend, reactivate, delete.
+- Reset data (console): one button removes every bank and its data except Harbor Demo Bank and banks marked Keep. Its dialog lists what goes and what stays, and asks for the phrase RESET DATA. Keep is a switch in the bank panel and a tick box on Approve; a kept bank shows a "Kept" tag and cannot be deleted. The storage bar turns to the warning colour from 80%.
+- "Reset all data" in Settings is shown to Harbor Demo Bank users only.
 - Lists that a bank can extend without limit (status codes, custom values) never get a fixed row of buttons: use a searchable picker or an overflow menu.
 
 ### 3.0 screens

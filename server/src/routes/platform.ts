@@ -6,10 +6,10 @@ import { ApiError, conflict, notFound } from '../errors.js';
 import { requirePlatform, signPlatformToken } from '../middleware/auth.js';
 import { loginLimiter } from '../middleware/rateLimiter.js';
 import { validateBody } from '../middleware/validate.js';
-import { bankRegistrationSchema, decisionSchema, platformLoginSchema } from '../schemas/bank.js';
+import { bankRegistrationSchema, decisionSchema, keepSchema, platformLoginSchema, resetDataSchema } from '../schemas/bank.js';
 import {
-  AssetKind, Bank, BankStatus, DEMO_BANK_ID, bankByName, createBank, deleteBank, findPlatformAdmin, getBank,
-  latestRegistrationFor, listBanks, parseImage, readAsset, recordCounts, saveAsset, setBankStatus,
+  AssetKind, Bank, BankStatus, DEMO_BANK_ID, bankByName, createBank, databaseSize, deleteBank, findPlatformAdmin, getBank,
+  latestRegistrationFor, listBanks, parseImage, readAsset, recordCounts, removeUnkeptBanks, saveAsset, setBankKeep, setBankStatus,
 } from '../banks.js';
 import { hashPassword, verifyPassword } from '../passwords.js';
 
@@ -158,7 +158,50 @@ platformRouter.post(
     }
     if (move.needsReason && !req.body.reason) throw new ApiError(422, 'validation_error', 'Give a reason.');
     if (bank.id === DEMO_BANK_ID && move.to !== 'active') throw conflict('demo_bank', 'The demo bank cannot be suspended.');
-    res.json(await setBankStatus(bank.id, move.to, req.body.reason));
+    await setBankStatus(bank.id, move.to, req.body.reason);
+    // "Keep this bank" ticked while approving: protected from the first moment it is active.
+    if (req.params.action === 'approve' && typeof req.body.keep === 'boolean') await setBankKeep(bank.id, req.body.keep);
+    res.json(await getBank(bank.id, true));
+  })
+);
+
+/** Marks a bank as kept (or not): kept banks survive "Reset data" and cannot be deleted. */
+platformRouter.put(
+  '/banks/:id/keep',
+  requirePlatform,
+  smallJson,
+  validateBody(keepSchema),
+  wrap(async (req, res) => {
+    if (req.params.id === DEMO_BANK_ID) throw conflict('demo_bank', 'The demo bank is always kept.');
+    const bank = await setBankKeep(req.params.id, req.body.keep);
+    if (!bank) throw notFound('Bank');
+    res.json(consoleBank(bank, (await recordCounts()).get(bank.id)));
+  })
+);
+
+/**
+ * "Reset data": removes every bank and all of its data, except the demo bank and
+ * kept banks. The demo bank's data stays as it is. There is no undo, so the body
+ * must carry the phrase the platform owner typed.
+ */
+platformRouter.post(
+  '/reset-data',
+  requirePlatform,
+  smallJson,
+  validateBody(resetDataSchema),
+  wrap(async (_req, res) => {
+    const { removed, kept } = await removeUnkeptBanks();
+    const brief = (bank: Bank) => ({ id: bank.id, name: bank.displayName });
+    res.json({ removed: removed.map(brief), kept: kept.map(brief) });
+  })
+);
+
+/** How full the database is, for the console. usedBytes is null when the engine cannot say. */
+platformRouter.get(
+  '/database',
+  requirePlatform,
+  wrap(async (_req, res) => {
+    res.json({ usedBytes: await databaseSize(), limitBytes: env.databaseLimitBytes });
   })
 );
 
@@ -167,6 +210,9 @@ platformRouter.delete(
   requirePlatform,
   wrap(async (req, res) => {
     if (req.params.id === DEMO_BANK_ID) throw conflict('demo_bank', 'The demo bank cannot be deleted.');
+    const bank = await getBank(req.params.id, true);
+    if (!bank) throw notFound('Bank');
+    if (bank.keep) throw conflict('bank_kept', 'This bank is marked Keep. Turn Keep off before deleting it.');
     if (!(await deleteBank(req.params.id))) throw notFound('Bank');
     res.status(204).end();
   })
