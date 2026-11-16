@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { closeWithExit, originFromLastClick } from './v3';
 
 interface ModalProps {
   title: string;
@@ -23,8 +24,10 @@ export function trapTarget<T>(focusables: T[], dialog: T, active: unknown, shift
   return null;
 }
 
-export function Modal({ title, onClose, children, footer, wide }: ModalProps) {
+export function Modal({ title, onClose: onClosed, children, footer, wide }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  // Closing from inside the dialog (Escape, the backdrop, the close button) plays the exit first.
+  const onClose = () => closeWithExit(dialogRef.current?.parentElement, onClosed);
   const idRef = useRef<string | null>(null);
   if (idRef.current === null) idRef.current = `modal-body-${++modalCount}`;
   const bodyId = idRef.current;
@@ -35,6 +38,10 @@ export function Modal({ title, onClose, children, footer, wide }: ModalProps) {
   useEffect(() => {
     const dialog = dialogRef.current;
     const opener = openerRef.current;
+    // The dialog grows out of the click that opened it.
+    if (dialog) {
+      for (const [name, value] of Object.entries(originFromLastClick(dialog.getBoundingClientRect()))) dialog.style.setProperty(name, value);
+    }
     if (dialog && !dialog.contains(document.activeElement)) dialog.focus();
     return () => {
       if (opener && opener.isConnected) opener.focus();

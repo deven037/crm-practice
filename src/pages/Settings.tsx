@@ -6,6 +6,7 @@ import { Modal } from '../components/Modal';
 import { Accordion } from '../components/Accordion';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
+import { SecurityCard } from './settings/SecurityCard';
 
 interface Prefs {
   emailNotifs: boolean;
@@ -180,6 +181,8 @@ export function Settings() {
           Save profile
         </button>
       </section>
+
+      <SecurityCard />
 
       <section className="card">
         <h3>Notification preferences</h3>

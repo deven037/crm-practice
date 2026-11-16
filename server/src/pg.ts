@@ -88,6 +88,8 @@ async function openPostgres(url: string): Promise<Db> {
 
 async function openPglite(dataDir: string | undefined): Promise<Db> {
   const { PGlite } = await import('@electric-sql/pglite');
+  // PGlite creates only the last folder of the path; make the ones above it first.
+  if (dataDir) (await import('node:fs')).mkdirSync(dataDir, { recursive: true });
   const lite = dataDir ? new PGlite(dataDir) : new PGlite();
   await lite.waitReady;
   return {

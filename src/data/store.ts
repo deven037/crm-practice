@@ -6,6 +6,16 @@ export interface BankProfile {
   name: string;
   logoUrl: string | null;
   color: string | null;
+  currency?: string;
+  locale?: string;
+  timezone?: string;
+}
+
+let bankProfile: BankProfile | null = null;
+
+/** The signed-in bank's name, logo, colour and region, as last loaded. Null before sign-in. */
+export function bankProfileSync(): BankProfile | null {
+  return bankProfile;
 }
 
 type BootstrapPayload = Record<string, any[]> & { bankProfile?: BankProfile | null };
@@ -13,14 +23,18 @@ type BootstrapPayload = Record<string, any[]> & { bankProfile?: BankProfile | nu
 /** Pre-warms the cache for every collection at boot, since many components read a
  * collection synchronously that their own page never explicitly fetches. */
 export async function initStore(): Promise<void> {
-  const { bankProfile: _bankProfile, ...collections } = await apiFetch<BootstrapPayload>('/bootstrap');
+  const { bankProfile: profile, ...collections } = await apiFetch<BootstrapPayload>('/bootstrap');
+  bankProfile = profile ?? null;
+  // A different bank may have signed in on this device: drop what the last one left behind.
+  for (const key of Object.keys(cache)) delete cache[key];
   Object.assign(cache, collections);
 }
 
 /** Loads the bank profile for the app shell; null when the server has none. Throws when the request fails. */
 export async function fetchBankProfile(): Promise<BankProfile | null> {
   const payload = await apiFetch<BootstrapPayload>('/bootstrap');
-  return payload.bankProfile ?? null;
+  bankProfile = payload.bankProfile ?? null;
+  return bankProfile;
 }
 
 // ---- async repository (real network calls) ----

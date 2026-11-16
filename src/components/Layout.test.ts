@@ -57,7 +57,7 @@ vi.mock('react/jsx-dev-runtime', async (importOriginal) => {
     },
   };
 });
-vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }));
+vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn(), useLocation: () => ({ pathname: '/' }) }));
 vi.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
 vi.mock('../hooks/useMediaQuery', () => ({ useMediaQuery: () => false }));
 vi.mock('./CommandBar', () => ({ CommandBar: () => null, isCloseKey: (key: string) => key === 'Escape' }));

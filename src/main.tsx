@@ -4,7 +4,13 @@ import { App } from './App';
 import { getValue } from './data/store';
 import { apiFetch } from './data/apiFetch';
 import '@fontsource-variable/inter';
+import '@fontsource-variable/ibm-plex-sans';
+import '@fontsource-variable/bricolage-grotesque';
 import './styles.css';
+import './styles/v3.css';
+import './styles/front-door.css';
+import './styles/front-door-pages.css';
+import { applyBankTheme, rememberedBankColor } from './theme/bankTheme';
 
 async function boot() {
   // ?reset=true wipes the server's data and reseeds — for repeatable automated test runs.
@@ -22,9 +28,9 @@ async function boot() {
   // AuthContext confirms a valid session — see initStore() in AuthContext.tsx.)
   document.documentElement.dataset.theme = getValue('theme', 'light');
 
-  // Bank colour profile from the build (e.g. VITE_BANK_TONE=amber). Unset keeps the Harbor default.
-  const bankTone = import.meta.env.VITE_BANK_TONE?.trim();
-  if (bankTone) document.documentElement.dataset.bankTone = bankTone;
+  // The bank's colour comes from its profile in the database. Until that loads, paint the
+  // colour this device showed last, so a reload does not flash the default first.
+  applyBankTheme(rememberedBankColor(), false);
 
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>

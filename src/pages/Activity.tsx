@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getAll } from '../data/store';
+import { bankProfileSync, getAll } from '../data/store';
 import { Activity } from '../types';
 import { timeAgo } from '../utils';
 
 const LOAD_TIMEOUT_MS = 10_000;
-const BANK_NAME = import.meta.env.VITE_BANK_NAME?.trim() || 'Your bank';
 
 function loadActivities(): Promise<Activity[]> {
   return new Promise((resolve, reject) => {
@@ -39,7 +38,7 @@ export function ActivityView({ loading, failed, activities, onRetry }: ActivityV
           <h1>Activity</h1>
           <p className="activity-intro">Recent changes across your leads, deals, tasks and tickets.</p>
         </div>
-        <div className="activity-bank">{BANK_NAME}</div>
+        <div className="activity-bank">{bankProfileSync()?.name?.trim() || 'Your bank'}</div>
       </div>
 
       <section id="activity-content" className="activity-content" aria-labelledby="activity-feed-title" tabIndex={-1}>

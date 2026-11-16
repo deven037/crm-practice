@@ -1,6 +1,7 @@
 import { ReactNode, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { closeWithExit } from './v3';
 
 interface SlideOverProps {
   title: string;
@@ -12,7 +13,12 @@ interface SlideOverProps {
 }
 
 /** Drawer-from-edge primitive — same overlay/Escape/click-outside contract as Modal.tsx. */
-export function SlideOver({ title, onClose, children, footer, side = 'right', testId }: SlideOverProps) {
+export function SlideOver({ title, onClose: onClosed, children, footer, side = 'right', testId }: SlideOverProps) {
+  // Closing from inside the panel plays the slide-out first.
+  const onClose = () => {
+    const overlays = document.querySelectorAll?.<HTMLElement>('.slideover-overlay:not(.v3-closing)');
+    closeWithExit(overlays?.[overlays.length - 1], onClosed, 200);
+  };
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
