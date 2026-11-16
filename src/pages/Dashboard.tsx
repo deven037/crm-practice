@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getAll } from '../data/store';
+import { bankProfileSync, getAll } from '../data/store';
 import { Activity, Deal, DEAL_STAGES, Lead, LEAD_STATUSES, TaskItem, Ticket } from '../types';
 import { BarChart, DonutChart } from '../components/charts';
 import { Select } from '../components/Select';
@@ -22,12 +22,9 @@ const LOAD_TIMEOUT_MS = 10_000;
 
 // Product name and bank identity are replaceable; the bank settings are shared with Login.
 const PRODUCT_NAME = import.meta.env.VITE_PRODUCT_NAME?.trim() || 'Harbor CRM';
-const BANK_NAME = import.meta.env.VITE_BANK_NAME?.trim() || 'Your bank';
-const BANK_LOGO_URL = import.meta.env.VITE_BANK_LOGO_URL?.trim();
 
-function makeMoneyFormatter(): (amount: number) => string {
-  const locale = import.meta.env.VITE_BANK_LOCALE?.trim() || 'en-US';
-  const currency = import.meta.env.VITE_BANK_CURRENCY?.trim() || 'USD';
+// Money is shown in the signed-in bank's own currency and number style.
+function makeMoneyFormatter(locale = 'en-US', currency = 'USD'): (amount: number) => string {
   try {
     const fmt = new Intl.NumberFormat(locale, { style: 'currency', currency, notation: 'compact', maximumFractionDigits: 2 });
     return (amount) => fmt.format(amount);
@@ -37,7 +34,17 @@ function makeMoneyFormatter(): (amount: number) => string {
     return (amount) => fmt.format(amount);
   }
 }
-const formatMoney = makeMoneyFormatter();
+let moneyFor = '';
+let moneyFormatter = makeMoneyFormatter();
+function formatMoney(amount: number): string {
+  const bank = bankProfileSync();
+  const key = `${bank?.locale ?? ''}|${bank?.currency ?? ''}`;
+  if (key !== moneyFor) {
+    moneyFor = key;
+    moneyFormatter = makeMoneyFormatter(bank?.locale || undefined, bank?.currency || undefined);
+  }
+  return moneyFormatter(amount);
+}
 
 type DataKey = 'leads' | 'deals' | 'tasks' | 'tickets' | 'activities';
 
@@ -70,6 +77,8 @@ function Unavailable({ what, onRetry }: { what: string; onRetry: () => void }) {
 
 export function Dashboard() {
   const { user } = useAuth();
+  const bank = bankProfileSync();
+  const bankName = bank?.name?.trim() || 'Your bank';
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState<DataKey[]>([]);
@@ -182,12 +191,12 @@ export function Dashboard() {
           <p className="dash-sub" data-testid="dashboard-identity">
             <span className="dash-product">{PRODUCT_NAME}</span>
             <span className="dash-bank">
-              {BANK_LOGO_URL ? (
-                <img className="dash-bank-logo" src={BANK_LOGO_URL} alt="" />
+              {bank?.logoUrl ? (
+                <img className="dash-bank-logo" src={bank.logoUrl} alt="" />
               ) : (
-                <b className="dash-bank-mark" aria-hidden="true">{BANK_NAME.charAt(0).toUpperCase()}</b>
+                <b className="dash-bank-mark" aria-hidden="true">{bankName.charAt(0).toUpperCase()}</b>
               )}
-              <span>{BANK_NAME}</span>
+              <span>{bankName}</span>
             </span>
           </p>
           <p className="dash-sub">Metrics marked with a range follow the date range you pick.</p>

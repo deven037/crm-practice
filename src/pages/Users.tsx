@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Check, Copy, Link2 } from 'lucide-react';
 import { getAll, getAllSync, newId, removeMany, saveAll, upsert } from '../data/store';
+import { apiFetch } from '../data/apiFetch';
 import { Account, Deal, Lead, Role, User } from '../types';
 import { Modal } from '../components/Modal';
 import { Select } from '../components/Select';
@@ -28,6 +30,34 @@ export function Users() {
   const [editing, setEditing] = useState<User | null>(null);
   const [reassigning, setReassigning] = useState<{ target: User; leads: number; accounts: number; deals: number } | null>(null);
   const [reassignTo, setReassignTo] = useState('');
+  // A fresh "set your password" link. The server shows it once, so it is kept only while this dialog is open.
+  const [invite, setInvite] = useState<{ name: string; link: string; expiresAt: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const showInvite = (name: string, token: string, expiresAt: string) => {
+    setCopied(false);
+    setInvite({ name, link: `${window.location.origin}/invite?token=${encodeURIComponent(token)}`, expiresAt });
+  };
+
+  const sendNewLink = async (target: User) => {
+    try {
+      const created = await apiFetch<{ inviteToken: string; inviteExpiresAt: string }>(`/users/${target.id}/invite`, { method: 'POST' });
+      showInvite(target.name, created.inviteToken, created.inviteExpiresAt);
+      load();
+    } catch (error) {
+      toast.push('error', (error as Error).message);
+    }
+  };
+
+  const copyInvite = async () => {
+    if (!invite) return;
+    try {
+      await navigator.clipboard.writeText(invite.link);
+      setCopied(true);
+    } catch {
+      toast.push('error', 'Could not copy. Select the link and copy it yourself.');
+    }
+  };
 
   const load = async () => {
     setUsers(await getAll<User>('users'));
@@ -95,10 +125,15 @@ export function Users() {
       toast.push('error', 'Name and a valid email are required.');
       return;
     }
-    await upsert('users', target);
-    toast.push('success', `User "${target.name}" saved.`);
-    setEditing(null);
-    load();
+    try {
+      const saved = (await upsert('users', target)) as User & { inviteToken?: string; inviteExpiresAt?: string };
+      toast.push('success', `User "${target.name}" saved.`);
+      setEditing(null);
+      if (saved.inviteToken) showInvite(saved.name, saved.inviteToken, saved.inviteExpiresAt ?? '');
+      load();
+    } catch (error) {
+      toast.push('error', (error as Error).message);
+    }
   };
 
   return (
@@ -112,7 +147,7 @@ export function Users() {
           <button
             className="btn btn-create"
             disabled={readOnly}
-            onClick={() => setEditing({ id: newId('user'), name: '', email: '', password: 'Pass@123', role: 'rep', active: true })}
+            onClick={() => setEditing({ id: newId('user'), name: '', email: '', role: 'rep', active: true })}
           >
             + Add user
           </button>
@@ -154,7 +189,10 @@ export function Users() {
               <tbody>
                 {filtered.map((u) => (
                   <tr key={u.id}>
-                    <td>{u.name}</td>
+                    <td>
+                      {u.name}
+                      {u.invitePending && <span className="pill pill-due users-invited" title="Has not set a password yet">Invited</span>}
+                    </td>
                     <td>{u.email}</td>
                     <td>
                       <span className={`pill role-${u.role}`}>{ROLES.find((r) => r.value === u.role)?.label}</span>
@@ -177,6 +215,9 @@ export function Users() {
                       </button>{' '}
                       <button className="link-btn" disabled={readOnly} onClick={() => deleteUser(u)}>
                         Delete
+                      </button>{' '}
+                      <button className="link-btn" disabled={readOnly} data-testid={`user-invite-${u.id}`} title="Create a one-time link for this person to set a new password" onClick={() => sendNewLink(u)}>
+                        Password link
                       </button>
                     </td>
                   </tr>
@@ -234,6 +275,31 @@ export function Users() {
         </Modal>
       )}
 
+      {invite && (
+        <Modal
+          title={`Sign-in link for ${invite.name}`}
+          onClose={() => setInvite(null)}
+          footer={
+            <button className="btn btn-primary" onClick={() => setInvite(null)}>
+              Done
+            </button>
+          }
+        >
+          <p style={{ marginTop: 0 }}>
+            Send this link to {invite.name}. It lets them choose their own password and works once
+            {invite.expiresAt ? `, until ${new Date(invite.expiresAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}` : ''}.
+          </p>
+          <div className="invite-link" data-testid="invite-link-box">
+            <Link2 size={16} aria-hidden="true" />
+            <input className="input" readOnly aria-label="Sign-in link" data-testid="invite-link" value={invite.link} onFocus={(e) => e.target.select()} />
+            <button className="btn" data-testid="invite-copy" onClick={copyInvite}>
+              {copied ? <Check size={15} /> : <Copy size={15} />} {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+          <p className="muted">This is the only time the link is shown. If it is lost, use "Password link" on their row to make a new one.</p>
+        </Modal>
+      )}
+
       {editing && (
         <Modal
           title={users.some((u) => u.id === editing.id) ? `Edit user — ${editing.name}` : 'Add user'}
@@ -270,6 +336,9 @@ export function Users() {
             <input type="checkbox" checked={editing.active} onChange={(e) => setEditing({ ...editing, active: e.target.checked })} />
             Active
           </label>
+          {!users.some((u) => u.id === editing.id) && (
+            <p className="muted" style={{ marginBottom: 0 }}>After saving you get a one-time link to send them, so they choose their own password.</p>
+          )}
         </Modal>
       )}
     </div>

@@ -14,6 +14,9 @@ export function RequireAuth({ children, roles }: { children: ReactNode; roles?: 
   if (!user) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
+  if (user.mustChangePassword) {
+    return <Navigate to="/set-password" replace />;
+  }
   if (roles && !roles.includes(user.role)) {
     return <Navigate to="/forbidden" replace />;
   }

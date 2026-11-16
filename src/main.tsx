@@ -8,6 +8,8 @@ import '@fontsource-variable/ibm-plex-sans';
 import '@fontsource-variable/bricolage-grotesque';
 import './styles.css';
 import './styles/v3.css';
+import './styles/front-door.css';
+import './styles/front-door-pages.css';
 import { applyBankTheme, rememberedBankColor } from './theme/bankTheme';
 
 async function boot() {

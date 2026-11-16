@@ -5,9 +5,14 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
-  password: string;
+  /** Only ever sent when an admin chooses a first password; the API never returns it. */
+  password?: string;
   role: Role;
   active: boolean;
+  /** On a password an admin chose: must be replaced before anything else. */
+  mustChangePassword?: boolean;
+  /** Has an unused "set your password" link. */
+  invitePending?: boolean;
 }
 
 export type LeadStatus = 'New' | 'Contacted' | 'Qualified' | 'Unqualified' | 'Converted';

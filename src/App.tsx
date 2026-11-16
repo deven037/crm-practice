@@ -5,6 +5,12 @@ import { RequireAuth } from './auth/RequireAuth';
 import { ToastProvider } from './components/Toast';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
+import { AcceptInvite } from './pages/AcceptInvite';
+import { SetPassword } from './pages/SetPassword';
+import { Register } from './pages/Register';
+import { RegistrationStatus } from './pages/RegistrationStatus';
+import { PlatformConsole } from './pages/PlatformConsole';
+import { BankSettings } from './pages/BankSettings';
 import { Dashboard } from './pages/Dashboard';
 import { ActivityPage } from './pages/Activity';
 import { Leads } from './pages/Leads';
@@ -100,6 +106,11 @@ export function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/invite" element={<AcceptInvite />} />
+            <Route path="/set-password" element={<SetPassword />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/register/status" element={<RegistrationStatus />} />
+            <Route path="/platform" element={<PlatformConsole />} />
             <Route path="/" element={<Protected><Dashboard /></Protected>} />
             <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
             <Route path="/activity" element={<Protected><ActivityPage /></Protected>} />
@@ -133,6 +144,7 @@ export function App() {
             <Route path="/admin" element={<Protected roles={['admin', 'rep']}><Navigate to="/setup" replace /></Protected>} />
             <Route path="/admin/objects/:module" element={<Protected roles={['admin', 'rep']}><ObjectConfig /></Protected>} />
             <Route path="/setup" element={<Protected roles={['admin', 'rep']}><Setup /></Protected>} />
+            <Route path="/setup/bank" element={<Protected roles={['admin', 'rep']}><BankSettings /></Protected>} />
             <Route path="/setup/users" element={<Protected roles={['admin', 'rep']}><Users /></Protected>} />
             <Route path="/setup/roles" element={<Protected roles={['admin', 'rep']}><Roles /></Protected>} />
             <Route path="/setup/roles/:id" element={<Protected roles={['admin', 'rep']}><RoleForm /></Protected>} />

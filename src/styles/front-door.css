@@ -1,0 +1,167 @@
+/*
+ * The front door: every page a person sees before they are inside a bank's CRM.
+ * Sign-in, invite and password pages share the split frame (.fd-shell); registration
+ * (.rg-) and the platform console (.pc-) have their own layouts further down.
+ */
+
+/* ---------- the split frame ---------- */
+.fd-shell {
+  min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 46fr) minmax(0, 54fr);
+  background: var(--surface); color: var(--text); font-size: 15px; line-height: 22px;
+}
+.fd-side { position: relative; display: flex; flex-direction: column; padding: 32px clamp(24px, 6vw, 72px) 24px; min-width: 0; }
+.fd-top { min-height: 48px; display: flex; align-items: center; }
+.fd-home { text-decoration: none; color: inherit; border-radius: 10px; display: inline-flex; }
+.fd-product { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; color: var(--text); }
+.fd-product i { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--bank-primary); color: var(--bank-on); box-shadow: var(--shadow-bank); }
+.fd-top-bank { display: flex; align-items: center; gap: 12px; transform-origin: left center; }
+.fd-top-bank strong { display: block; font-family: var(--font-display); font-size: 18px; line-height: 22px; letter-spacing: -0.01em; }
+.fd-top-bank small { display: block; font-size: 12.5px; line-height: 16px; color: var(--text-muted); }
+.fd-bankmark {
+  display: inline-grid; place-items: center; flex: none; border-radius: 26%; overflow: hidden;
+  background: var(--bank-primary); color: var(--bank-on); font-family: var(--font-display); font-weight: 700;
+  box-shadow: var(--shadow-bank), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+/* em, not %: a percentage would be measured against the row the mark sits in, not the mark */
+.fd-bankmark.has-logo { background: #fff; box-shadow: var(--shadow), inset 0 0 0 1px var(--border); padding: 0.26em; }
+.fd-bankmark img { width: 100%; height: 100%; object-fit: contain; }
+
+.fd-panel { width: 100%; max-width: 400px; margin: auto; padding: 32px 0; }
+.fd-panel h1 { font-family: var(--font-display); margin: 0 0 6px; font-size: 32px; line-height: 38px; font-weight: 700; letter-spacing: -0.025em; overflow-wrap: anywhere; }
+.fd-sub { margin: 0 0 26px; color: var(--text-muted); font-size: 15px; }
+.fd-badge-icon { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; margin-bottom: 18px; background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+
+/* ---------- fields ---------- */
+.fd-field { display: block; margin-bottom: 18px; }
+.fd-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 13.5px; line-height: 18px; font-weight: 600; margin-bottom: 7px; }
+.fd-label em { font-style: normal; font-weight: 400; font-size: 12.5px; color: var(--text-muted); }
+.fd-ctl { position: relative; }
+.fd-field input, .fd-field textarea, .fd-input {
+  width: 100%; height: 48px; padding: 0 14px; font: inherit; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+  transition: border-color var(--duration-fast), box-shadow var(--duration-base), background var(--duration-fast);
+}
+.fd-field textarea { height: auto; min-height: 96px; padding: 12px 14px; resize: vertical; line-height: 22px; }
+.fd-field input::placeholder, .fd-field textarea::placeholder { color: color-mix(in srgb, var(--text-muted) 70%, transparent); }
+.fd-field input:hover, .fd-field textarea:hover { border-color: color-mix(in srgb, var(--bank-primary) 45%, var(--border-strong)); }
+.fd-field input:focus, .fd-field textarea:focus, .fd-input:focus { outline: none; border-color: var(--bank-ink); box-shadow: 0 0 0 4px color-mix(in srgb, var(--bank-primary) 20%, transparent); }
+.fd-field.has-error input, .fd-field.has-error textarea { border-color: var(--danger); }
+.fd-field.has-error input:focus, .fd-field.has-error textarea:focus { box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 18%, transparent); }
+.fd-ctl input { padding-right: 50px; }
+.fd-eye { position: absolute; right: 3px; top: 3px; width: 42px; height: 42px; display: grid; place-items: center; border: 0; background: none; border-radius: 10px; color: var(--text-muted); cursor: pointer; transition: background var(--duration-fast), color var(--duration-fast); }
+.fd-eye:hover { background: var(--surface-2); color: var(--text); }
+.fd-err { display: block; margin-top: 7px; font-size: 13px; line-height: 18px; color: var(--tone-danger-text); font-weight: 500; }
+.fd-hint { display: block; margin-top: 7px; font-size: 13px; line-height: 18px; color: var(--text-muted); }
+.fd-rules { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 0 0; padding: 0; font-size: 13px; color: var(--text-muted); }
+.fd-rules li { display: inline-flex; align-items: center; gap: 6px; transition: color var(--duration-base); }
+.fd-rules i { display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--border-strong); color: #fff; transition: background var(--duration-base), border-color var(--duration-base), transform var(--duration-slow) var(--ease-spring); }
+.fd-rules li.is-met { color: var(--text); }
+.fd-rules li.is-met i { background: var(--success); border-color: var(--success); transform: scale(1.1); }
+
+.fd-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 2px 0 22px; min-height: 44px; }
+.fd-chk { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; min-height: 44px; }
+.fd-chk input { width: 18px; height: 18px; margin: 0; accent-color: var(--bank-primary); }
+.fd-who { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 0 24px; padding: 6px 6px 6px 14px; border-radius: var(--radius-pill); background: var(--surface-2); border: 1px solid var(--border); font-size: 14px; }
+.fd-who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+
+/* ---------- buttons and links ---------- */
+.fd-btn {
+  position: relative; width: 100%; min-height: 50px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 18px;
+  font: inherit; font-weight: 600; font-size: 15.5px; border-radius: var(--radius-md); cursor: pointer; text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--bank-primary) 86%, #000); color: var(--bank-on);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bank-primary) 90%, #fff), var(--bank-primary));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), var(--shadow-bank);
+  transition: transform var(--duration-fast) var(--ease-spring), box-shadow var(--duration-base), filter var(--duration-fast), opacity var(--duration-fast);
+}
+.fd-btn > span { display: inline-flex; align-items: center; gap: 8px; }
+.fd-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.06); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 12px 28px -8px color-mix(in srgb, var(--bank-primary) 80%, transparent); }
+.fd-btn:hover:not(:disabled) svg { transform: translateX(3px); }
+.fd-btn svg { transition: transform var(--duration-base) var(--ease-out); }
+.fd-btn:active:not(:disabled) { transform: translateY(0) scale(0.985); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+.fd-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.fd-btn-quiet { background: var(--surface); color: var(--text); border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+.fd-btn-quiet:hover:not(:disabled) { background: var(--surface-2); filter: none; box-shadow: var(--shadow); }
+.fd-btn-quiet:hover:not(:disabled) svg { transform: translateX(-3px); }
+.fd-btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; box-shadow: none; }
+.fd-btn-inline { width: auto; min-height: 44px; }
+.fd-spin { width: 17px; height: 17px; border: 2px solid color-mix(in srgb, currentColor 30%, transparent); border-top-color: currentColor; border-radius: 50%; animation: spin 0.7s linear infinite; }
+.fd-link { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 8px 10px; font: inherit; font-size: 14px; font-weight: 600; color: var(--bank-ink); cursor: pointer; border-radius: var(--radius-sm); text-decoration: none; transition: background var(--duration-fast); }
+.fd-link:hover { background: var(--bank-soft); }
+.fd-link-row { display: flex; margin: 14px auto 0; }
+
+/* ---------- notices ---------- */
+.fd-notice { display: flex; gap: 11px; align-items: flex-start; padding: 13px 15px; margin-bottom: 20px; border-radius: var(--radius-md); font-size: 14px; line-height: 20px; border: 1px solid var(--tone-danger-line); background: var(--tone-danger-bg); color: var(--tone-danger-text); }
+.fd-notice svg { flex: none; margin-top: 2px; }
+.fd-notice strong { display: block; margin-bottom: 1px; }
+.fd-notice-info { border-color: var(--tone-info-line); background: var(--tone-info-bg); color: var(--tone-info-text); }
+.fd-notice-ok { border-color: color-mix(in srgb, var(--tone-ok-text) 25%, transparent); background: var(--tone-ok-bg); color: var(--tone-ok-text); }
+.fd-notice-warn { border-color: color-mix(in srgb, var(--tone-warn-text) 25%, transparent); background: var(--tone-warn-bg); color: var(--tone-warn-text); }
+
+/* ---------- the two doors under the sign-in form ---------- */
+.fd-cards { display: grid; gap: 10px; margin-top: 30px; padding-top: 26px; border-top: 1px solid var(--border); }
+.fd-card { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: var(--radius-lg); text-decoration: none; color: var(--text); background: var(--bank-soft); border: 1px solid var(--bank-soft-line); transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base), border-color var(--duration-fast); }
+.fd-card > span:not(.fd-card-icon) { flex: 1; min-width: 0; }
+.fd-card strong { display: block; font-size: 15px; }
+.fd-card small { display: block; font-size: 13px; color: var(--text-muted); }
+.fd-card-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--bank-primary); color: var(--bank-on); flex: none; }
+.fd-card > svg { color: var(--text-muted); transition: transform var(--duration-base) var(--ease-out); }
+.fd-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--bank-ink); }
+.fd-card:hover > svg { transform: translateX(4px); color: var(--bank-ink); }
+.fd-card-quiet { background: transparent; border-color: var(--border); }
+
+.fd-banks { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 10px; }
+.fd-bank-option { width: 100%; display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: var(--radius-lg); border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; box-shadow: var(--shadow-sm); transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base), border-color var(--duration-fast); }
+.fd-bank-option strong { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.fd-bank-option:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--bank-ink); }
+
+.fd-foot { display: flex; flex-wrap: wrap; gap: 4px 20px; justify-content: center; align-items: center; min-height: 40px; font-size: 13px; color: var(--text-muted); }
+.fd-foot a { color: var(--text-muted); padding: 10px 2px; text-decoration: none; }
+.fd-foot a:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- the picture side ---------- */
+.fd-stage { position: relative; margin: 12px 12px 12px 0; border-radius: 28px; overflow: hidden; isolation: isolate; min-height: 520px; }
+.fd-stage-platform { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: clamp(28px, 4vw, 56px); color: #fff; background: linear-gradient(160deg, #0d1a36 0%, #1d3a6e 55%, #2b55a0 100%); }
+.fd-orb { position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.55; animation: fd-drift 16s ease-in-out infinite alternate; }
+.fd-orb-a { width: 46%; aspect-ratio: 1; left: -8%; top: -10%; background: #4f8dff; }
+.fd-orb-b { width: 40%; aspect-ratio: 1; right: -6%; top: 28%; background: #19c3b1; animation-delay: -6s; animation-duration: 20s; }
+.fd-tides { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 56%; pointer-events: none; }
+.fd-tides path { fill: #fff; animation: fd-tide 14s ease-in-out infinite alternate; }
+.fd-glass-stack { position: absolute; inset: 9% 8% auto 8%; height: 46%; }
+.fd-glass { position: absolute; padding: 16px 18px; border-radius: 18px; color: #fff; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.22); -webkit-backdrop-filter: blur(16px) saturate(1.5); backdrop-filter: blur(16px) saturate(1.5); box-shadow: 0 20px 40px -16px rgba(0, 0, 0, 0.45); }
+.fd-glass small { display: block; font-size: 12.5px; opacity: 0.8; }
+.fd-glass strong { display: block; font-family: var(--font-display); font-size: 30px; line-height: 36px; letter-spacing: -0.02em; }
+.fd-glass em { font-style: normal; font-size: 12.5px; opacity: 0.8; }
+.fd-glass-1 { left: 0; top: 6%; width: min(260px, 58%); }
+.fd-glass-2 { right: 0; top: 34%; width: min(220px, 50%); }
+.fd-glass-3 { left: 12%; bottom: -4%; display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 500; border-radius: 999px; padding: 11px 18px; }
+.fd-dot { width: 9px; height: 9px; border-radius: 50%; background: #5ff0b0; box-shadow: 0 0 0 4px rgba(95, 240, 176, 0.25); animation: fd-pulse 2.4s ease-in-out infinite; }
+.fd-spark { display: flex; align-items: flex-end; gap: 5px; height: 44px; margin-top: 10px; }
+.fd-spark i { flex: 1; border-radius: 4px 4px 2px 2px; background: linear-gradient(180deg, #fff, rgba(255, 255, 255, 0.45)); transform-origin: bottom; animation: v3-bar-grow 800ms var(--ease-out) backwards; }
+.fd-spark i:nth-child(2) { animation-delay: 60ms; } .fd-spark i:nth-child(3) { animation-delay: 120ms; }
+.fd-spark i:nth-child(4) { animation-delay: 180ms; } .fd-spark i:nth-child(5) { animation-delay: 240ms; } .fd-spark i:nth-child(6) { animation-delay: 300ms; }
+.fd-pitch { position: relative; max-width: 480px; }
+.fd-pitch h2 { font-family: var(--font-display); margin: 0 0 12px; font-size: clamp(28px, 3vw, 40px); line-height: 1.1; font-weight: 700; letter-spacing: -0.03em; }
+.fd-pitch p { margin: 0; font-size: 16px; line-height: 24px; opacity: 0.85; }
+
+.fd-stage-bank { position: absolute; inset: 0; z-index: 1; overflow: hidden; background: linear-gradient(160deg, color-mix(in srgb, var(--bank-primary) 70%, #000) 0%, var(--bank-primary) 55%, color-mix(in srgb, var(--bank-primary) 70%, #fff) 100%); }
+.fd-bank-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.fd-bank-letter { position: absolute; right: -4%; bottom: -16%; font-family: var(--font-display); font-weight: 800; font-size: min(70vh, 46vw); line-height: 0.8; color: var(--bank-on); opacity: 0.14; user-select: none; }
+.fd-bank-shade { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(8, 11, 20, 0.72) 100%); }
+.fd-bank-caption { position: absolute; left: clamp(24px, 4vw, 48px); right: clamp(24px, 4vw, 48px); bottom: clamp(24px, 4vw, 48px); display: flex; align-items: center; gap: 16px; color: #fff; }
+.fd-bank-caption strong { display: block; font-family: var(--font-display); font-size: clamp(22px, 2.4vw, 30px); line-height: 1.15; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.fd-bank-caption span:not(.fd-bankmark) { font-size: 14px; opacity: 0.85; }
+
+@keyframes fd-drift { to { transform: translate(8%, 10%) scale(1.15); } }
+@keyframes fd-tide { to { transform: translateX(-3%) scaleY(1.08); } }
+@keyframes fd-pulse { 50% { box-shadow: 0 0 0 8px rgba(95, 240, 176, 0); } }
+
+@media (max-width: 900px) {
+  .fd-shell { grid-template-columns: 1fr; }
+  .fd-stage { display: none; }
+  .fd-side { padding: 20px 20px 16px; min-height: 100dvh; }
+  .fd-panel { margin: 0 auto; padding: 36px 0 24px; }
+  .fd-panel h1 { font-size: 28px; line-height: 34px; }
+  /* with the picture gone, the bank's colour still marks the page as the bank's */
+  .fd-shell.is-bank .fd-side::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 132px; background: linear-gradient(180deg, color-mix(in srgb, var(--bank-primary) 24%, transparent), transparent); pointer-events: none; animation: v3-fade 600ms var(--ease-out); }
+  .fd-top { position: relative; }
+}

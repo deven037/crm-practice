@@ -1,224 +1,308 @@
 import { FormEvent, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Building2, ChevronRight, KeyRound } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
 import { useAuth } from '../auth/AuthContext';
-import { EMAIL_PATTERN, RESET_UNAVAILABLE_MESSAGE } from './loginValidation';
+import { identify, PublicBank, rememberBank, rememberedBank } from '../data/frontDoor';
+import { EMAIL_PATTERN } from './loginValidation';
+import { BankMark, FrontDoorShell, Step } from './frontdoor/FrontDoorShell';
+import { Field, Notice, PasswordField, SubmitButton } from './frontdoor/fields';
 
-// Only the email-request step exists. The code and new-password steps were removed
-// because no reset endpoint exists yet; add them back together with that endpoint.
-type Mode = 'login' | 'forgot-email';
+/**
+ * Sign-in is email first. The person types their work email; the email's domain tells
+ * the platform which bank they belong to, and the page becomes that bank's page before
+ * it asks for the password.
+ *
+ *   email ──▶ (pick: the domain belongs to more than one bank) ──▶ password
+ *   byName: for people whose email is not on their bank's domain
+ *   forgot: how to get a new password
+ */
+type Stage = 'email' | 'pick' | 'password' | 'byName' | 'forgot';
 
-// Product and bank identity come from settings (design/DESIGN.md); the bank colour is --bank-primary.
-const PRODUCT_NAME = import.meta.env.VITE_PRODUCT_NAME?.trim() || 'Harbor CRM';
-const BANK_NAME = import.meta.env.VITE_BANK_NAME?.trim() || 'Your bank';
-const BANK_LOGO_URL = import.meta.env.VITE_BANK_LOGO_URL?.trim();
 const HELP_URL = import.meta.env.VITE_HELP_URL?.trim();
 const PRIVACY_URL = import.meta.env.VITE_PRIVACY_URL?.trim();
 const APP_VERSION = import.meta.env.VITE_APP_VERSION?.trim();
 const APP_ENV = import.meta.env.VITE_APP_ENV?.trim();
 const BUILD_LABEL = [APP_VERSION && `v${APP_VERSION}`, APP_ENV].filter(Boolean).join(' · ');
 
-function BankMark() {
-  return BANK_LOGO_URL ? (
-    <img className="lg-bank-logo" src={BANK_LOGO_URL} alt="" />
-  ) : (
-    <b aria-hidden="true">{BANK_NAME.charAt(0).toUpperCase()}</b>
-  );
-}
+/** Sign-in failures that are about the bank, not about what was typed. */
+const BANK_STATE_TITLES: Record<string, string> = {
+  bank_pending: 'Waiting for approval',
+  bank_rejected: 'Registration not approved',
+  bank_suspended: 'Bank suspended',
+  account_deactivated: 'Account deactivated',
+};
 
-const TIDES = [
-  { opacity: 0.05, d: 'M0 120 C160 60 300 170 460 110 S720 60 800 100 V400 H0Z' },
-  { opacity: 0.07, d: 'M0 200 C140 150 320 240 480 190 S700 150 800 190 V400 H0Z' },
-  { opacity: 0.09, d: 'M0 280 C180 230 300 320 500 270 S700 240 800 275 V400 H0Z' },
-  { opacity: 0.12, d: 'M0 345 C200 310 320 380 520 340 S720 320 800 345 V400 H0Z' },
-];
+export function emailProblem(email: string): string | undefined {
+  if (!email.trim()) return 'Email is required.';
+  if (!EMAIL_PATTERN.test(email.trim())) return 'Enter a valid email address.';
+  return undefined;
+}
 
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [mode, setMode] = useState<Mode>('login');
+  // A bank this device has signed in to before: its page opens directly.
+  const [bank, setBank] = useState<PublicBank | null>(() => rememberedBank());
+  const [stage, setStage] = useState<Stage>('email');
+  const [back, setBack] = useState(false);
+  const [choices, setChoices] = useState<PublicBank[]>([]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [bankName, setBankName] = useState('');
   const [remember, setRemember] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
-  const [touched, setTouched] = useState<{ email?: boolean; password?: boolean }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; bankName?: string }>({});
+  const [notice, setNotice] = useState<{ title?: string; message: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
 
-  const check = (nextEmail: string, nextPassword: string) => {
-    const errs: { email?: string; password?: string } = {};
-    if (!nextEmail.trim()) errs.email = 'Email is required.';
-    else if (!EMAIL_PATTERN.test(nextEmail.trim())) errs.email = 'Enter a valid email address.';
-    if (!nextPassword) errs.password = 'Password is required.';
-    return errs;
+  const go = (next: Stage, goingBack = false) => {
+    setBack(goingBack);
+    setErrors({});
+    setNotice(null);
+    setStage(next);
   };
 
-  const validate = () => {
-    const errs = check(email, password);
-    setFieldErrors(errs);
-    setTouched({ email: true, password: true });
-    return Object.keys(errs).length === 0;
+  /** "Not your bank?": forget the remembered bank and start again from the plain page. */
+  const forgetBank = () => {
+    rememberBank(null);
+    setBank(null);
+    setChoices([]);
+    setPassword('');
+    go('email', true);
   };
 
-  // Field errors show only after the field is touched or the form is submitted.
-  const blurField = (field: 'email' | 'password') => {
-    setTouched((t) => ({ ...t, [field]: true }));
-    setFieldErrors((prev) => ({ ...prev, [field]: check(email, password)[field] }));
-  };
-
-  const handleLogin = async (e: FormEvent) => {
+  const continueWithEmail = async (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
-    if (!validate()) return;
+    const problem = emailProblem(email);
+    if (problem) {
+      setErrors({ email: problem });
+      return;
+    }
+    // The bank is already known on this device: go straight to the password.
+    if (bank) {
+      go('password');
+      return;
+    }
     setBusy(true);
+    setNotice(null);
     try {
-      const err = await login(email, password, remember);
-      if (err) setFieldErrors((prev) => ({ ...prev, password: err }));
-      else {
-        const from = (location.state as { from?: string } | null)?.from ?? '/';
-        navigate(from, { replace: true });
+      const banks = await identify(email.trim());
+      if (banks.length > 1) {
+        setChoices(banks);
+        go('pick');
+      } else {
+        // No bank for this domain: the same password step on the plain page, so the
+        // page never says which domains or people are known.
+        setBank(banks[0] ?? null);
+        go('password');
       }
-    } catch {
-      setError('Unable to sign in right now. Please try again.');
+    } catch (error) {
+      setNotice({ message: (error as Error).message || 'Unable to continue right now. Please try again.' });
     } finally {
       setBusy(false);
     }
   };
 
-  const handleForgotEmail = (e: FormEvent) => {
+  const signIn = async (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
-    if (!EMAIL_PATTERN.test(resetEmail.trim())) {
-      setError('Enter a valid email address.');
+    const byName = stage === 'byName';
+    const next: typeof errors = {};
+    if (byName) next.email = emailProblem(email);
+    if (byName && !bankName.trim()) next.bankName = 'Enter your bank\'s name.';
+    if (!password) next.password = 'Password is required.';
+    if (next.email || next.bankName || next.password) {
+      setErrors(next);
       return;
     }
-    // No email reset request endpoint exists yet. Do not claim a code was sent.
-    setError(RESET_UNAVAILABLE_MESSAGE);
+    setErrors({});
+    setNotice(null);
+    setBusy(true);
+    try {
+      const failure = await login(email.trim(), password, remember, byName ? { bankName: bankName.trim() } : bank ? { bankId: bank.id } : {});
+      if (!failure) {
+        const from = (location.state as { from?: string } | null)?.from ?? '/';
+        navigate(from, { replace: true });
+      } else if (failure.code === 'bank_required' && failure.banks?.length) {
+        setChoices(failure.banks);
+        go('pick');
+      } else if (BANK_STATE_TITLES[failure.code]) {
+        setNotice({ title: BANK_STATE_TITLES[failure.code], message: failure.message });
+      } else if (failure.code === 'invalid_credentials') {
+        setErrors({ password: byName ? 'The email, bank name or password is not correct.' : failure.message });
+      } else {
+        setNotice({ message: failure.message || 'Unable to sign in right now. Please try again.' });
+      }
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const emailError = touched.email ? fieldErrors.email : undefined;
-  const passwordError = touched.password ? fieldErrors.password : undefined;
+  const footer = (
+    <>
+      {HELP_URL && <a href={HELP_URL}>Help</a>}
+      {PRIVACY_URL && <a href={PRIVACY_URL}>Privacy</a>}
+      <Link to="/platform">Platform owner</Link>
+      {BUILD_LABEL && <span>{BUILD_LABEL}</span>}
+    </>
+  );
 
   return (
-    <div className="lg-shell">
-      <aside className="lg-brand" aria-label="Product">
-        <div className="lg-mark">
-          <i aria-hidden="true">◆</i>
-          <span>{PRODUCT_NAME}</span>
-        </div>
-        <svg viewBox="0 0 800 400" preserveAspectRatio="none" aria-hidden="true">
-          {TIDES.map((t) => <path key={t.d} opacity={t.opacity} d={t.d} />)}
-        </svg>
-        <div className="lg-pitch">
-          <h2>Every customer, every deal, in one calm place.</h2>
-          <p>Leads, contacts, quotes and tickets for your branch team, with nothing to set up before you start.</p>
-        </div>
-        <div className="lg-bankline" aria-label={BANK_NAME}>
-          <BankMark />
-          <span>{BANK_NAME}</span>
-        </div>
-      </aside>
+    <FrontDoorShell bank={stage === 'byName' || stage === 'pick' ? null : bank} testId="login-page" footer={footer}>
+      <AnimatePresence mode="wait" initial={false}>
+        {stage === 'email' && (
+          <Step id="email" key="email" back={back}>
+            <form onSubmit={continueWithEmail} noValidate>
+              <h1>{bank ? 'Welcome back' : 'Sign in'}</h1>
+              <p className="fd-sub">{bank ? `Sign in to ${bank.name}.` : 'Use your work email to continue.'}</p>
+              {notice && <Notice testId="login-error" title={notice.title}>{notice.message}</Notice>}
+              <Field
+                label="Work email"
+                type="email"
+                testId="login-email"
+                autoComplete="username"
+                autoFocus
+                placeholder="you@yourbank.com"
+                value={email}
+                onChange={setEmail}
+                error={errors.email}
+              />
+              <SubmitButton busy={busy} busyLabel="Finding your bank…" testId="login-continue">
+                Continue <ArrowRight size={17} aria-hidden="true" />
+              </SubmitButton>
+              {bank ? (
+                <button type="button" className="fd-link fd-link-row" data-testid="login-not-my-bank" onClick={forgetBank}>
+                  Not your bank?
+                </button>
+              ) : (
+                <button type="button" className="fd-link fd-link-row" data-testid="login-by-name" onClick={() => go('byName')}>
+                  My email is not on my bank's domain
+                </button>
+              )}
+            </form>
+            {!bank && (
+              <div className="fd-cards">
+                <Link to="/register" className="fd-card" data-testid="register-link">
+                  <span className="fd-card-icon"><Building2 size={19} /></span>
+                  <span>
+                    <strong>Register your bank</strong>
+                    <small>Set up your bank's own CRM in a few minutes.</small>
+                  </span>
+                  <ChevronRight size={17} aria-hidden="true" />
+                </Link>
+                <Link to="/register/status" className="fd-card fd-card-quiet" data-testid="status-link">
+                  <span>
+                    <strong>Already registered?</strong>
+                    <small>Check whether your bank has been approved.</small>
+                  </span>
+                  <ChevronRight size={17} aria-hidden="true" />
+                </Link>
+              </div>
+            )}
+          </Step>
+        )}
 
-      <main className="lg-side" data-testid="login-page">
-        <div className="lg-panel">
-          <div className="lg-mobile-mark">
-            <i aria-hidden="true">◆</i>
-            <span>{PRODUCT_NAME}</span>
-            <small>{BANK_NAME}</small>
-          </div>
-
-          {mode === 'login' && (
-            <form onSubmit={handleLogin} noValidate>
-              <h1>Sign in</h1>
-              <p className="lg-sub">Use your work email to continue.</p>
-              <label className="lg-field">
-                <span>Email</span>
-                <input
-                  type="email"
-                  data-testid="login-email"
-                  aria-invalid={Boolean(emailError)}
-                  aria-describedby={emailError ? 'login-email-error' : undefined}
-                  autoComplete="username"
-                  placeholder="you@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onBlur={() => blurField('email')}
-                />
-                {emailError && <span id="login-email-error" className="lg-err" role="alert">{emailError}</span>}
-              </label>
-              <label className="lg-field">
-                <span>Password</span>
-                <div className="lg-ctl">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    data-testid="login-password"
-                    aria-invalid={Boolean(passwordError)}
-                    aria-describedby={passwordError ? 'login-password-error' : undefined}
-                    autoComplete="current-password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onBlur={() => blurField('password')}
-                  />
-                  <button type="button" className="lg-eye" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword((s) => !s)}>
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+        {stage === 'pick' && (
+          <Step id="pick" key="pick" back={back}>
+            <h1>Choose your bank</h1>
+            <p className="fd-sub">More than one bank uses this email domain.</p>
+            <ul className="fd-banks" data-testid="login-bank-choices">
+              {choices.map((choice) => (
+                <li key={choice.id}>
+                  <button
+                    type="button"
+                    className="fd-bank-option"
+                    onClick={() => {
+                      setBank(choice);
+                      go('password');
+                    }}
+                  >
+                    <BankMark bank={choice} size={40} />
+                    <strong>{choice.name}</strong>
+                    <ChevronRight size={17} aria-hidden="true" />
                   </button>
-                </div>
-                {passwordError && <span id="login-password-error" className="lg-err" data-testid="login-error" role="alert">{passwordError}</span>}
-              </label>
-              <div className="lg-row">
-                <label className="lg-chk">
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="fd-link fd-link-row" onClick={() => go('email', true)}>
+              <ArrowLeft size={15} aria-hidden="true" /> Use a different email
+            </button>
+          </Step>
+        )}
+
+        {stage === 'password' && (
+          <Step id="password" key="password" back={back}>
+            <form onSubmit={signIn} noValidate>
+              <h1>{bank ? `Sign in to ${bank.name}` : 'Enter your password'}</h1>
+              <div className="fd-who">
+                <span title={email}>{email}</span>
+                <button type="button" className="fd-link" data-testid="login-change-email" onClick={() => { setPassword(''); go('email', true); }}>
+                  Change
+                </button>
+              </div>
+              {notice && <Notice testId="login-error" tone={notice.title ? 'warn' : 'error'} title={notice.title}>{notice.message}</Notice>}
+              <PasswordField
+                label="Password"
+                testId="login-password"
+                errorTestId="login-error"
+                autoComplete="current-password"
+                autoFocus
+                placeholder="Enter your password"
+                value={password}
+                onChange={setPassword}
+                error={errors.password}
+              />
+              <div className="fd-row">
+                <label className="fd-chk">
                   <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Remember me
                 </label>
-                <button type="button" className="lg-link" onClick={() => { setError(null); setMode('forgot-email'); }}>
+                <button type="button" className="fd-link" onClick={() => go('forgot')}>
                   Forgot password?
                 </button>
               </div>
-              {error && (
-                <div className="lg-banner" data-testid="login-error" role="alert">
-                  <AlertCircle size={16} aria-hidden="true" />
-                  <span>{error}</span>
-                </div>
+              <SubmitButton busy={busy} busyLabel="Signing in…" testId="login-submit">Sign in</SubmitButton>
+              {bank && (
+                <button type="button" className="fd-link fd-link-row" data-testid="login-not-my-bank" onClick={forgetBank}>
+                  Not your bank?
+                </button>
               )}
-              <button type="submit" className="lg-btn" data-testid="login-submit" disabled={busy} aria-busy={busy}>
-                {busy && <span className="lg-spin" aria-hidden="true" />}
-                {busy ? 'Signing in…' : 'Sign in'}
+            </form>
+          </Step>
+        )}
+
+        {stage === 'byName' && (
+          <Step id="byName" key="byName" back={back}>
+            <form onSubmit={signIn} noValidate>
+              <h1>Sign in with your bank's name</h1>
+              <p className="fd-sub">For people whose email is not on their bank's own domain. Type the bank's name exactly as it appears in the CRM.</p>
+              {notice && <Notice testId="login-error" tone={notice.title ? 'warn' : 'error'} title={notice.title}>{notice.message}</Notice>}
+              <Field label="Bank name" testId="login-bank-name" autoFocus placeholder="Your bank's name" value={bankName} onChange={setBankName} error={errors.bankName} />
+              <Field label="Email" type="email" testId="login-email" autoComplete="username" placeholder="you@example.com" value={email} onChange={setEmail} error={errors.email} />
+              <PasswordField label="Password" testId="login-password" errorTestId="login-error" autoComplete="current-password" placeholder="Enter your password" value={password} onChange={setPassword} error={errors.password} />
+              <SubmitButton busy={busy} busyLabel="Signing in…" testId="login-submit">Sign in</SubmitButton>
+              <button type="button" className="fd-link fd-link-row" onClick={() => go('email', true)}>
+                <ArrowLeft size={15} aria-hidden="true" /> Back to work email
               </button>
             </form>
-          )}
+          </Step>
+        )}
 
-          {mode === 'forgot-email' && (
-            <form onSubmit={handleForgotEmail} noValidate>
-              <h1>Reset password</h1>
-              <p className="lg-sub">Enter your account email to request a reset.</p>
-              {error && (
-                <div className="lg-banner" data-testid="reset-error" role="alert">
-                  <AlertCircle size={16} aria-hidden="true" />
-                  <span>{error}</span>
-                </div>
-              )}
-              <label className="lg-field">
-                <span>Email</span>
-                <input type="email" autoComplete="username" placeholder="you@company.com" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
-              </label>
-              <button type="submit" className="lg-btn">Request reset</button>
-              <button type="button" className="lg-btn lg-btn-quiet" onClick={() => { setError(null); setMode('login'); }}>
-                Back to sign in
-              </button>
-            </form>
-          )}
-        </div>
-
-        <div className="lg-foot">
-          {HELP_URL && <a href={HELP_URL}>Help</a>}
-          {PRIVACY_URL && <a href={PRIVACY_URL}>Privacy</a>}
-          {BUILD_LABEL && <span>{BUILD_LABEL}</span>}
-        </div>
-      </main>
-    </div>
+        {stage === 'forgot' && (
+          <Step id="forgot" key="forgot" back={back}>
+            <span className="fd-badge-icon"><KeyRound size={22} /></span>
+            <h1>Forgot your password?</h1>
+            <p className="fd-sub">
+              Ask {bank ? `an administrator at ${bank.name}` : 'your bank\'s CRM administrator'} for a new sign-in link. They can create one from Setup, Users.
+              The link lets you choose a new password and works once.
+            </p>
+            <Notice tone="info" testId="reset-info">For your security, passwords are never sent by email and nobody at the bank can see yours.</Notice>
+            <button type="button" className="fd-btn fd-btn-quiet" onClick={() => go(email ? 'password' : 'email', true)}>
+              <ArrowLeft size={16} aria-hidden="true" /> Back to sign in
+            </button>
+          </Step>
+        )}
+      </AnimatePresence>
+    </FrontDoorShell>
   );
 }

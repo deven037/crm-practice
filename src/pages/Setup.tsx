@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { History, Package, ShieldCheck, UploadCloud, Users as UsersIcon, Workflow } from 'lucide-react';
+import { History, Landmark, Package, ShieldCheck, UploadCloud, Users as UsersIcon, Workflow } from 'lucide-react';
 import { getAllSync } from '../data/store';
 import { AutoFlowProcess, RoleDef, User } from '../types';
 
@@ -22,6 +22,7 @@ export function Setup() {
   const autoFlowProcesses = getAllSync<AutoFlowProcess>('autoFlowProcesses');
 
   const cards: SetupCard[] = [
+    { to: '/setup/bank', label: 'Bank profile', icon: Landmark, testId: 'setup-card-bank', describe: () => 'Logo, colour, sign-in page and details' },
     { to: '/setup/users', label: 'Users', icon: UsersIcon, testId: 'setup-card-users', describe: () => `${users.length} user(s)` },
     { to: '/setup/roles', label: 'Roles', icon: ShieldCheck, testId: 'setup-card-roles', describe: () => `${roles.length} role(s)` },
     { to: '/products', label: 'Product', icon: Package, testId: 'setup-card-product', describe: () => 'Manage the product catalog' },
