@@ -116,7 +116,7 @@ describe('AIO-401 fresh affected-record writes', () => {
     // Existing page state order, matching the Contacts component-action test harness.
     harness.states = [
       false, false, [lead, { ...lead, id: 'l2' }], [], 'table', '', '', [], '', '',
-      false, 'createdAt', 'desc', 1, 10, ['l1'], false, null, null, true, 'u2', true, false,
+      'createdAt', 'desc', 1, 10, ['l1'], false, null, null, true, 'u2', true, false,
     ];
     return Leads();
   }

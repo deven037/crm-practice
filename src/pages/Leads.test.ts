@@ -1,12 +1,12 @@
 import { isValidElement, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Leads } from './Leads';
+import { Leads, LEAD_TOOLBOX_LINKS, leadFlow } from './Leads';
 import { Lead } from '../types';
 import { LeadsTable } from './leads/LeadsTable';
 import { LeadConvertWizard, WizardState } from './leads/LeadConvertWizard';
 import { ContextMenu, ContextMenuItem } from '../components/ContextMenu';
-import { ToolBoxPanel } from '../components/ToolBoxPanel';
-import { LeadFilterPanel } from './leads/LeadFilterPanel';
+import { ToolBoxMenu } from '../components/ToolBoxMenu';
+import { StatusPicker, filterStatuses, statusClass, toggleStatus } from './leads/StatusPicker';
 
 const harness = vi.hoisted(() => ({
   ...(() => { const states: unknown[] = []; const effects: (() => void)[] = []; return { states, effects }; })(), cursor: 0,
@@ -79,12 +79,11 @@ function openMenu(record: Lead) {
 beforeEach(() => { harness.states = []; harness.role = 'admin'; harness.getAll.mockReset(); });
 
 describe('AIO-411 restored controls', () => {
-  it.each(['admin', 'rep', 'viewer'])('restores the full Leads panel: %s', async (role) => {
+  it.each(['admin', 'rep', 'viewer'])('keeps every ToolBox link behind the ToolBox button: %s', async (role) => {
     harness.role = role;
     await load();
-    const panel = render().find((node) => node.type === ToolBoxPanel);
-    expect(panel?.props.module).toBe('leads');
-    expect(panel?.props.links).toEqual([
+    const menu = render().find((node) => node.type === ToolBoxMenu);
+    expect(menu?.props.links).toEqual([
       { label: 'Assignment Rules', to: '/setup/assignment-rules' },
       { label: 'Dedupe Rule', to: '/setup/dedupe-rules' },
       { label: 'Status Codes', to: '/setup/status-codes' },
@@ -92,13 +91,10 @@ describe('AIO-411 restored controls', () => {
       { label: 'Custom Fields', to: '/admin/objects/leads' },
       { label: 'Customise Page Layout', to: '/setup/layouts/leads' },
     ]);
-    const rendered = nodes(ToolBoxPanel({ module: panel?.props.module ?? '', links: panel?.props.links ?? [] }));
-    expect(rendered[0].props['data-testid']).toBe('toolbox-panel');
-    expect(rendered.some((node) => node.props.children === 'Recently Accessed')).toBe(true);
-    expect(rendered.filter((node) => node.props.to).map((node) => node.props.to)).toEqual(panel?.props.links?.map((link) => link.to));
+    expect(menu?.props.links).toBe(LEAD_TOOLBOX_LINKS);
   });
 
-  it('opens conversion from the row menu and traverses all three wizard steps', async () => {
+  it('opens conversion from the row menu and traverses all four wizard steps', async () => {
     await load();
     const item = openMenu(lead)?.find((entry) => entry.label === 'Convert lead…');
     expect(item?.disabled).toBe(false);
@@ -108,13 +104,13 @@ describe('AIO-411 restored controls', () => {
     if (!entry) throw new Error('Wizard did not open');
     let wizard: WizardState | null = entry;
     const setWizard = (next: WizardState | null) => { wizard = next; };
-    for (const step of [1, 2, 3]) {
+    for (const step of [1, 2, 3, 4]) {
       if (!wizard) throw new Error('Wizard closed unexpectedly');
       const page = nodes(LeadConvertWizard({
         wizard, setWizard, accounts: [], onFinish: vi.fn(), isFinishing: false,
       }));
-      expect(page[0].props.title).toBe(`Convert lead — Step ${step} of 3`);
-      if (step < 3) page.find((node) => node.props.children === 'Next ›')?.props.onClick?.();
+      expect(page[0].props.title).toBe(`Convert lead — Step ${step} of 4`);
+      if (step < 4) page.find((node) => node.props.children === 'Next ›')?.props.onClick?.();
       else expect(page.some((node) => node.props.children === 'Finish conversion')).toBe(true);
     }
   });
@@ -128,18 +124,32 @@ describe('AIO-411 restored controls', () => {
     expect(render().some((node) => node.type === LeadConvertWizard)).toBe(false);
   });
 
-  it('status chips add and remove filters without dropping another selection', () => {
-    const onStatusChange = vi.fn();
-    const page = nodes(LeadFilterPanel({
-      statusFilter: ['New'], statusOptions: ['New', 'Qualified'], sourceFilter: '',
-      ownerFilter: '', ownerOptions: [], onStatusChange,
-      onSourceChange: vi.fn(), onOwnerChange: vi.fn(), onClear: vi.fn(),
-    }));
-    const inputs = page.filter((node) => node.type === 'input');
-    expect(inputs.map((node) => node.props.checked)).toEqual([true, false]);
-    inputs[1].props.onChange?.();
-    expect(onStatusChange).toHaveBeenLastCalledWith(['New', 'Qualified']);
-    inputs[0].props.onChange?.();
-    expect(onStatusChange).toHaveBeenLastCalledWith([]);
+  it('the status filter adds and removes statuses without dropping another selection', async () => {
+    expect(toggleStatus(['New'], 'Qualified')).toEqual(['New', 'Qualified']);
+    expect(toggleStatus(['New', 'Qualified'], 'New')).toEqual(['Qualified']);
+    expect(toggleStatus(['New'], 'New')).toEqual([]);
+    await load();
+    const picker = render().find((node) => node.type === StatusPicker);
+    expect(picker?.props).toMatchObject({ multi: true, selected: [], label: 'Filter by status' });
+  });
+
+  it('finds a status by part of its name, including one a bank added', () => {
+    expect(filterStatuses(['New', 'KYC pending', 'Call back'], 'kyc')).toEqual(['KYC pending']);
+    expect(filterStatuses(['New', 'Qualified'], '  ')).toEqual(['New', 'Qualified']);
+    expect(filterStatuses(['New'], 'zzz')).toEqual([]);
+    expect(statusClass('KYC pending')).toBe('status-kyc-pending');
+  });
+
+  it('counts leads in each standard status for the bar above the list', () => {
+    const flow = leadFlow([{ status: 'New' }, { status: 'New' }, { status: 'Converted' }]);
+    expect(flow.map((step) => step.status)).toEqual(['New', 'Contacted', 'Qualified', 'Unqualified', 'Converted']);
+    expect(flow.map((step) => step.count)).toEqual([2, 0, 0, 0, 1]);
+  });
+
+  it('has no shared filter panel toggle and keeps its own New lead button', async () => {
+    await load();
+    const page = render();
+    expect(page.some((node) => node.props['data-testid'] === 'filters-toggle')).toBe(false);
+    expect(page.some((node) => node.props['data-testid'] === 'new-lead-btn')).toBe(true);
   });
 });
