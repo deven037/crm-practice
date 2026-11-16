@@ -1,11 +1,14 @@
-import { MoreHorizontal } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronsUpDown, Mail, MoreHorizontal, Phone } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { Lead } from '../../types';
-import { formatCurrency, formatDate } from '../../utils';
+import { formatCurrency, formatDate, initials } from '../../utils';
 import { emptyStateKind, getAriaSort, shouldOpenRowOnKeyDown } from './leadsGuards';
 
 export type SortKey = 'name' | 'company' | 'status' | 'source' | 'value' | 'createdAt';
 export type SortDir = 'asc' | 'desc';
+
+/** Columns shown to every role. Email and phone are not columns: writers get call and email buttons on the row. */
+export const LEAD_COLUMNS = 8;
 
 interface Props {
   rows: Lead[];
@@ -15,7 +18,6 @@ interface Props {
   sortKey: SortKey;
   sortDir: SortDir;
   ownerName: (id: string) => string;
-  sortIndicator: (key: SortKey) => string;
   onToggleSort: (key: SortKey) => void;
   onToggleSelectAll: () => void;
   onToggleSelect: (id: string) => void;
@@ -32,7 +34,6 @@ export function LeadsTable({
   sortKey,
   sortDir,
   ownerName,
-  sortIndicator,
   onToggleSort,
   onToggleSelectAll,
   onToggleSelect,
@@ -43,106 +44,59 @@ export function LeadsTable({
   const { user } = useAuth();
   const showContactDetails = user?.role === 'admin' || user?.role === 'rep';
 
-  const handleSortKeyDown = (e: React.KeyboardEvent, key: SortKey) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onToggleSort(key);
-    }
-  };
+  const sortable = (key: SortKey, label: string, extra = '') => (
+    <th
+      scope="col"
+      role="columnheader"
+      tabIndex={0}
+      aria-sort={getAriaSort(key, sortKey, sortDir)}
+      onClick={() => onToggleSort(key)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onToggleSort(key);
+        }
+      }}
+      className={`sortable${extra}`}
+    >
+      <span className="lead-sort">
+        {label}
+        {sortKey !== key ? <ChevronsUpDown size={13} aria-hidden="true" /> : sortDir === 'asc' ? <ArrowUp size={13} aria-hidden="true" /> : <ArrowDown size={13} aria-hidden="true" />}
+      </span>
+    </th>
+  );
 
   return (
     <>
-    <div className="table-wrap">
+    <div className="table-wrap lead-table">
       <table className="table">
         <thead>
           <tr>
             <th className="checkbox-cell">
               <input type="checkbox" aria-label="Select all" checked={allPageSelected} onChange={onToggleSelectAll} />
             </th>
-            <th
-              scope="col"
-              role="columnheader"
-              tabIndex={0}
-              aria-sort={getAriaSort('name', sortKey, sortDir)}
-              onClick={() => onToggleSort('name')}
-              onKeyDown={(e) => handleSortKeyDown(e, 'name')}
-              className="sortable"
-            >
-              Name{sortIndicator('name')}
-            </th>
-            <th
-              scope="col"
-              role="columnheader"
-              tabIndex={0}
-              aria-sort={getAriaSort('company', sortKey, sortDir)}
-              onClick={() => onToggleSort('company')}
-              onKeyDown={(e) => handleSortKeyDown(e, 'company')}
-              className="sortable"
-            >
-              Company{sortIndicator('company')}
-            </th>
-            {showContactDetails && <th scope="col">Email</th>}
-            {showContactDetails && <th scope="col">Phone</th>}
-            <th
-              scope="col"
-              role="columnheader"
-              tabIndex={0}
-              aria-sort={getAriaSort('status', sortKey, sortDir)}
-              onClick={() => onToggleSort('status')}
-              onKeyDown={(e) => handleSortKeyDown(e, 'status')}
-              className="sortable"
-            >
-              Status{sortIndicator('status')}
-            </th>
-            <th
-              scope="col"
-              role="columnheader"
-              tabIndex={0}
-              aria-sort={getAriaSort('source', sortKey, sortDir)}
-              onClick={() => onToggleSort('source')}
-              onKeyDown={(e) => handleSortKeyDown(e, 'source')}
-              className="sortable"
-            >
-              Source{sortIndicator('source')}
-            </th>
+            {sortable('name', 'Lead')}
+            {sortable('status', 'Status')}
+            {sortable('source', 'Source')}
             <th scope="col">Owner</th>
-            <th
-              scope="col"
-              role="columnheader"
-              tabIndex={0}
-              aria-sort={getAriaSort('value', sortKey, sortDir)}
-              onClick={() => onToggleSort('value')}
-              onKeyDown={(e) => handleSortKeyDown(e, 'value')}
-              className="sortable num"
-            >
-              Value{sortIndicator('value')}
-            </th>
-            <th
-              scope="col"
-              role="columnheader"
-              tabIndex={0}
-              aria-sort={getAriaSort('createdAt', sortKey, sortDir)}
-              onClick={() => onToggleSort('createdAt')}
-              onKeyDown={(e) => handleSortKeyDown(e, 'createdAt')}
-              className="sortable"
-            >
-              Created{sortIndicator('createdAt')}
-            </th>
+            {sortable('value', 'Value', ' num')}
+            {sortable('createdAt', 'Created')}
             <th scope="col"><span className="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 && (
             <tr>
-              <td colSpan={showContactDetails ? 11 : 9} className="empty-cell">
+              <td colSpan={LEAD_COLUMNS} className="empty-cell">
                 {emptyStateKind(totalLeads) === 'no-leads' ? 'No leads yet.' : 'No leads match the current filters.'}
               </td>
             </tr>
           )}
-          {rows.map((lead) => (
+          {rows.map((lead, index) => (
             <tr
               key={lead.id}
               className={`row-clickable${selected.includes(lead.id) ? ' row-selected' : ''}`}
+              style={{ animationDelay: `${Math.min(index, 12) * 28}ms` }}
               tabIndex={0}
               onClick={() => onOpen(lead)}
               onKeyDown={(e) => {
@@ -161,27 +115,49 @@ export function LeadsTable({
                   onChange={() => onToggleSelect(lead.id)}
                 />
               </td>
-              <td title={lead.name}>{lead.name}</td>
-              <td title={lead.company}>{lead.company}</td>
-              {showContactDetails && <td title={lead.email}>{lead.email}</td>}
-              {showContactDetails && <td>{lead.phone}</td>}
+              <td title={lead.name}>
+                <span className="lead-who">
+                  <span className="lead-avatar" aria-hidden="true">{initials(lead.name)}</span>
+                  <span className="lead-who-text">
+                    <b>{lead.name}</b>
+                    <small>{lead.company || '—'}</small>
+                  </span>
+                </span>
+              </td>
               <td>
                 <span data-testid="lead-status" className={`pill status-${lead.status.toLowerCase()}`}>{lead.status}</span>
               </td>
               <td>{lead.source}</td>
-              <td>{ownerName(lead.ownerId)}</td>
+              <td>
+                <span className="lead-owner">
+                  <span className="lead-avatar small" aria-hidden="true">{initials(ownerName(lead.ownerId))}</span>
+                  {ownerName(lead.ownerId)}
+                </span>
+              </td>
               <td className="num">{formatCurrency(lead.value)}</td>
               <td>{formatDate(lead.createdAt)}</td>
               <td onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  className="lead-more"
-                  aria-label={`Actions for ${lead.name}`}
-                  aria-haspopup="menu"
-                  onClick={(e) => onRowMenu(e, lead)}
-                >
-                  <MoreHorizontal size={18} />
-                </button>
+                <span className="lead-row-actions">
+                  {showContactDetails && lead.phone && (
+                    <a className="lead-quick" href={`tel:${lead.phone}`} aria-label={`Call ${lead.name}`} title={lead.phone}>
+                      <Phone size={15} />
+                    </a>
+                  )}
+                  {showContactDetails && (
+                    <a className="lead-quick" href={`mailto:${lead.email}`} aria-label={`Email ${lead.name}`} title={lead.email}>
+                      <Mail size={15} />
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    className="lead-more"
+                    aria-label={`Actions for ${lead.name}`}
+                    aria-haspopup="menu"
+                    onClick={(e) => onRowMenu(e, lead)}
+                  >
+                    <MoreHorizontal size={18} />
+                  </button>
+                </span>
               </td>
             </tr>
           ))}

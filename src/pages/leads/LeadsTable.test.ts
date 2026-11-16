@@ -25,7 +25,7 @@ function render(rows: Lead[], totalLeads = rows.length) {
   return renderToStaticMarkup(createElement(LeadsTable, {
     rows, totalLeads, selected: [], allPageSelected: false,
     sortKey: 'name', sortDir: 'asc', ownerName: () => 'Owner',
-    sortIndicator: () => '', onToggleSort: vi.fn(),
+    onToggleSort: vi.fn(),
     onToggleSelectAll: vi.fn(), onToggleSelect: vi.fn(),
     onOpen: vi.fn(), onContextMenu: vi.fn(), onRowMenu: vi.fn(),
   }));
@@ -37,30 +37,29 @@ describe('Leads table contact field visibility', () => {
   it.each<Role | undefined>(['viewer', undefined])('omits headers and values for %s', (role) => {
     auth.role = role;
     const html = render([lead]);
-    expect(html).not.toContain('>Email</th>');
-    expect(html).not.toContain('>Phone</th>');
     expect(html).not.toContain(lead.email);
     expect(html).not.toContain(lead.phone);
+    expect(html).not.toContain('aria-label="Call Tara Iyer"');
+    expect(html).not.toContain('aria-label="Email Tara Iyer"');
     expect(html).toContain(lead.name);
     expect(html).toContain(lead.company);
-    expect(html.match(/<th[ >]/g)).toHaveLength(9);
-    expect(html.match(/<td[ >]/g)).toHaveLength(9);
+    expect(html.match(/<th[ >]/g)).toHaveLength(8);
+    expect(html.match(/<td[ >]/g)).toHaveLength(8);
   });
 
   it.each<Role>(['admin', 'rep'])('preserves headers and values for %s', (role) => {
     auth.role = role;
     const html = render([lead]);
-    expect(html).toContain('>Email</th>');
-    expect(html).toContain('>Phone</th>');
-    expect(html).toContain(lead.email);
-    expect(html).toContain(lead.phone);
-    expect(html.match(/<th[ >]/g)).toHaveLength(11);
-    expect(html.match(/<td[ >]/g)).toHaveLength(11);
+    // Email and phone are no longer columns: writers get call and email buttons on the row.
+    expect(html).toContain(`href="mailto:${lead.email}"`);
+    expect(html).toContain(`href="tel:${lead.phone}"`);
+    expect(html.match(/<th[ >]/g)).toHaveLength(8);
+    expect(html.match(/<td[ >]/g)).toHaveLength(8);
   });
 
   it.each<Role>(['viewer', 'admin', 'rep'])('spans the visible columns in both empty states for %s', (role) => {
     auth.role = role;
-    const span = role === 'viewer' ? 9 : 11;
+    const span = 8;
     expect(render([])).toContain(`colSpan="${span}"`);
     expect(render([])).toContain('No leads yet.');
     expect(render([], 1)).toContain(`colSpan="${span}"`);
@@ -82,11 +81,18 @@ describe('LeadsTable row actions and status', () => {
     expect(html).toContain(`data-testid="lead-status" class="pill status-${status.toLowerCase()}">${status}</span>`);
   });
 
-  it('keeps long automation values readable with a title so the page does not widen', () => {
-    const email = 'qa20417947347917191.automation.regression@example.com';
-    expect(email.length).toBeGreaterThan(40);
-    const html = render([{ ...lead, email }]);
-    expect(html).toContain(`<td title="${email}">${email}</td>`);
+  it('keeps a long name readable with a title so the page does not widen', () => {
+    const name = 'Qa20417947347917191 Automation Regression Lead Name';
+    expect(name.length).toBeGreaterThan(40);
+    const html = render([{ ...lead, name }]);
+    expect(html).toContain(`<td title="${name}">`);
+    expect(html).toContain(`<b>${name}</b>`);
+  });
+
+  it('shows the lead with the company under the name and who owns it', () => {
+    const html = render([lead]);
+    expect(html).toContain('<b>Tara Iyer</b><small>Example</small>');
+    expect(html).toContain('class="lead-owner"');
   });
 
   it('wraps long cell values and lets the page shrink inside the main column', () => {

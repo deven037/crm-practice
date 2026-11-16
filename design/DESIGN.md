@@ -63,7 +63,7 @@ Every metric states its time basis. Solid chip = follows the page range ("Last 3
 
 ### App shell (`src/components/Layout.tsx`, `src/components/shell/`, `src/styles/shell.css`)
 - Design: `design/v3/shell.html` (clickable; bank, screen size and theme can be switched in it).
-- Side menu: a floating panel in the bank's colour. Groups are Home, Customers, Sales, Service, Insights. One highlight glides between links (Motion `layoutId` in `SidebarLink`). Leads, Tasks and Tickets carry a count of waiting work (`navCounts`); the count turns warm when something is late or urgent. It collapses to icons and the choice is remembered on the device.
+- Side menu: a floating panel in the bank's colour. Groups are Home, Customers, Sales, Service, Insights. One highlight glides between links (Motion `layoutId` in `SidebarLink`). No module carries a count or number beside its name. It collapses to icons and the choice is remembered on the device.
 - Pinned: a record page shows a pin button in the top bar; pinned records list at the bottom of the menu (up to 6, kept on the device, `usePinned`).
 - Top bar: glass, floating. Where you are (group / page / record), the search pill, the light and dark switch, the bell, and the profile chip at the top right. The chip opens Setup, Profile settings and Log out. Settings and Test Cases are not in the menu: Settings is in the profile menu, Test Cases is a card in Setup.
 - No shared create button anywhere in the shell (top bar, command bar, phone bar). Each module has its own create button on its own page.
@@ -71,6 +71,17 @@ Every metric states its time basis. Solid chip = follows the page range ("Last 3
 - Notifications: a panel that slides in from the right, grouped Today and Earlier, with All and Unread tabs and Mark all read. Reading is saved through `/api/notifications`.
 - Phones (under 780 px): the menu becomes a sheet and a bottom bar takes over: Home, Leads, Search, Tasks, Menu.
 - Kept test ids: `sidebar`, `topbar`, `sidebar-toggle`, `global-search`, `theme-toggle`, `avatar-menu`, `setup-menu-item`, `logout-btn`, `command-bar`, `command-input`, `bank-profile-error`, `bank-profile-retry`. New: `notifications-bell`, `notifications-panel`, `pin-record`, `pinned-records`, `tabbar`, `command-page`, `command-recent`, `setup-card-testcases`.
+
+### Leads (`src/pages/Leads.tsx`, `LeadDetail.tsx`, `LeadForm.tsx`, `src/pages/leads/`, `src/styles/leads.css`)
+- Design: `design/v3/leads.html` (clickable, five screens). Every Leads screen carries the class `lead3`.
+- List: a bar above the table counts leads in the five standard statuses; a step filters the list. Toolbar: search, the Status picker, Owner, Source, Clear filters, Table or Triage. The table shows the lead (initials, name, company), status, source, owner, value and created date. Email and phone are not columns: writers get call and email buttons on the row. Ticked rows raise a selection bar that sticks to the bottom of the window.
+- Status picker (`StatusPicker`): a searchable list under a button, used for the list filter (several) and on a record (one). Statuses are never a row of buttons, because a bank adds its own. The five standard statuses have their own colour (`--s-new` and so on); a status a bank added takes the bank colour until status codes get a colour of their own in Setup.
+- ToolBox is a button in the page header (`ToolBoxMenu`) with the same six links. The Recently Accessed panel is gone from this page: recent records are in the command bar and pinned records in the side menu.
+- Record: a header card (initials, name, company, the status button, Edit, Delete, Convert lead), a progress line New, Contacted, Qualified, Converted (`leadStage`; Unqualified stops the line, a bank-added status counts as in progress), Details, the estimated value, and Reach out (call and email). The status button changes the status without opening Edit; Converted is only reached through Convert lead.
+- New lead: three short sections (Who is it, About the lead, What they want) and a preview card that fills in while typing. Page layouts, AutoFlow steps, the duplicate warning and custom fields work as before.
+- Convert: four steps, Contact, Account, Deal, Review. Nothing is saved before Finish conversion; the closing screen lists what was made.
+- Triage: one lead at a time as a stack of cards. Q qualifies, D disqualifies, the right arrow skips, the left arrow goes back, Escape leaves.
+- Test ids kept: `leads-page`, `export-csv-btn`, `view-table`, `view-triage`, `bulk-bar`, `mass-update-btn`, `clear-created-filter`, `leads-load-error`, `lead-status`, `pagination`, `lead-detail-page`, `lead-detail-status`, `edit-lead-btn`, `delete-lead-btn`, `save-lead-btn`, `confirm-delete-btn`, `lead-form-page` and its field ids, `wizard-finish`, `lead-triage-mode`, `triage-qualify`, `triage-skip`, `triage-disqualify`. Removed: `filters-toggle`, `filter-panel`, `toolbox-panel` (on Leads), `lead-detail-page-tabs`. New: `new-lead-btn`, `toolbox-menu`, `lead-flow`, `status-filter`, `owner-filter`, `source-filter`, `clear-filters`, `lead-status-change`, `lead-progress`, `lead-preview`, `convert-summary`, `convert-done`.
 
 ### 3.0 screens
 - The front door has no HTML mockups in `design/`; the built pages are the reference.

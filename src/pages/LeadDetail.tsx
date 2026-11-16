@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Pencil, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Mail, Pencil, Phone, Trash2 } from 'lucide-react';
 import { getAllSync, getById, removeMany, upsert } from '../data/store';
 import { Account, Campaign, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Product, User } from '../types';
 import { apiFetch } from '../data/apiFetch';
@@ -8,14 +8,28 @@ import { LeadConvertWizard, WizardState } from './leads/LeadConvertWizard';
 import { Modal } from '../components/Modal';
 import { SearchableSelect, Select } from '../components/Select';
 import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
-import { RecordShell } from '../components/RecordShell';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
-import { formatCurrency, formatDate } from '../utils';
+import { formatCurrency, formatDate, initials } from '../utils';
 import { applyAssignmentRule, getStatusOptions } from '../utils/rules';
 import { beginOnce, canChangeLeads, LeadEditErrors, validateLeadEdit } from './leads/leadsGuards';
+import { StatusPicker } from './leads/StatusPicker';
+
+/** The four standard points on a lead's progress line. */
+export const LEAD_STAGES = ['New', 'Contacted', 'Qualified', 'Converted'];
+
+/**
+ * Where a status sits on the progress line: 0 to 3 for the standard statuses,
+ * -1 for Unqualified (the line stops), and 1 for a status a bank added itself
+ * (in progress, between New and Qualified).
+ */
+export function leadStage(status: string): number {
+  if (status === 'Unqualified') return -1;
+  const at = LEAD_STAGES.indexOf(status);
+  return at >= 0 ? at : 1;
+}
 
 export function LeadDetail() {
   const { id } = useParams();
@@ -72,6 +86,30 @@ export function LeadDetail() {
   const ownerName = users.find((u) => u.id === lead.ownerId)?.name ?? '—';
   const product = products.find((p) => p.id === lead.productId);
   const campaign = campaigns.find((c) => c.id === lead.campaignId);
+
+  const allLeads = getAllSync<Lead>('leads');
+  const position = allLeads.findIndex((l) => l.id === lead.id);
+  const previous = position > 0 ? allLeads[position - 1] : undefined;
+  const next = position >= 0 ? allLeads[position + 1] : undefined;
+  const stage = leadStage(lead.status);
+
+  // The status tag in the header changes the status on its own, without opening Edit.
+  // Converted is not offered: that happens through Convert lead.
+  const changeStatus = async (status: string) => {
+    if (status === lead.status || !beginOnce(savingRef)) return;
+    try {
+      const updated = { ...lead, status: status as LeadStatus };
+      const assignedTo = applyAssignmentRule('leads', updated);
+      const toSave = assignedTo ? { ...updated, ownerId: assignedTo } : updated;
+      await upsert('leads', toSave);
+      setLead(toSave);
+      toast.push('success', `Status changed to ${status}.`);
+    } catch {
+      toast.push('error', 'The status was not changed. Try again.');
+    } finally {
+      savingRef.current = false;
+    }
+  };
 
   const closeEditor = () => {
     setEditing(false);
@@ -138,9 +176,8 @@ export function LeadDetail() {
         }),
       });
       setLead(converted);
-      setWizard(null);
+      setWizard({ ...wizard, done: true });
       toast.push('success', `Lead "${lead.name}" converted successfully.`);
-      navigate('/leads');
     } catch (error) {
       setConversionError(error instanceof Error ? error.message : 'Lead was not converted. Try Finish conversion again.');
     } finally {
@@ -167,6 +204,8 @@ export function LeadDetail() {
       <dd data-testid="lead-product">{product ? <Link to={`/products/${product.id}`}>{product.name}</Link> : '—'}</dd>
       <dt>Campaign</dt>
       <dd data-testid="lead-campaign">{campaign ? <Link to={`/campaigns/${campaign.id}`}>{campaign.name}</Link> : '—'}</dd>
+      <dt>Page layout</dt>
+      <dd>{lead.layoutName || '—'}</dd>
       <dt>Created</dt>
       <dd>{formatDate(lead.createdAt)}</dd>
       <CustomFieldsSection module="leads" target="detail" mode="view" values={lead.customFields ?? {}} />
@@ -276,55 +315,118 @@ export function LeadDetail() {
     )
   );
 
+  const statusPill = (
+    <span className={`pill status-${lead.status.toLowerCase()}`} data-testid="lead-detail-status">{lead.status}</span>
+  );
+  const actions = !canChange ? (
+    <span className="muted">You have view-only access.</span>
+  ) : !editing ? (
+    <>
+      <button
+        className="btn"
+        data-testid="edit-lead-btn"
+        onClick={() => {
+          setDraft({ ...lead });
+          setEditing(true);
+        }}
+      >
+        <Pencil size={14} /> Edit
+      </button>
+      <button className="btn btn-danger" data-testid="delete-lead-btn" onClick={() => setDeleting(true)}>
+        <Trash2 size={14} /> Delete
+      </button>
+      {lead.status !== 'Converted' && (
+        <button className="btn btn-primary" onClick={openConversion}>Convert lead…</button>
+      )}
+    </>
+  ) : (
+    <>
+      <button className="btn" onClick={closeEditor}>
+        Cancel
+      </button>
+      <button className="btn btn-primary" data-testid="save-lead-btn" disabled={saving} aria-busy={saving} onClick={save}>
+        {saving ? 'Saving…' : 'Save'}
+      </button>
+    </>
+  );
+
   return (
     <>
-      <RecordShell
-        testId="lead-detail-page"
-        breadcrumbs={[{ label: 'Leads', to: '/leads' }, { label: lead.name }]}
-        title={lead.name}
-        keyInfo={[
-          { label: 'Status', value: <span className={`pill status-${lead.status.toLowerCase()}`} data-testid="lead-detail-status">{lead.status}</span> },
-          { label: 'Company', value: lead.company || '—' },
-          { label: 'Source', value: lead.source },
-          { label: 'Owner', value: ownerName },
-          { label: 'Layout', value: lead.layoutName || '—' },
-          { label: 'Created', value: formatDate(lead.createdAt) },
-        ]}
-        tabs={[{ id: 'details', label: 'Details', content: <div className="card">{detailsTab}</div> }]}
-        actions={
-          !canChange ? (
-            <span className="muted">You have view-only access.</span>
-          ) : !editing ? (
-            <>
-              {lead.status !== 'Converted' && (
-                <button className="btn btn-primary" onClick={openConversion}>Convert lead…</button>
-              )}
-              <button
-                className="btn"
-                data-testid="edit-lead-btn"
-                onClick={() => {
-                  setDraft({ ...lead });
-                  setEditing(true);
-                }}
-              >
-                <Pencil size={14} /> Edit
-              </button>
-              <button className="btn btn-danger" data-testid="delete-lead-btn" onClick={() => setDeleting(true)}>
-                <Trash2 size={14} /> Delete
-              </button>
-            </>
+      <div className="lead-record lead3" data-testid="lead-detail-page">
+        <div className="lead-record-top">
+          <Link className="lead-back" to="/leads">
+            <ChevronLeft size={15} /> All leads
+          </Link>
+          <span className="lead-nav">
+            <button className="btn" aria-label="Previous lead" disabled={!previous} onClick={() => previous && navigate(`/leads/${previous.id}`)}>
+              <ChevronLeft size={15} />
+            </button>
+            <button className="btn" aria-label="Next lead" disabled={!next} onClick={() => next && navigate(`/leads/${next.id}`)}>
+              <ChevronRight size={15} />
+            </button>
+          </span>
+        </div>
+
+        <div className="card lead-hero">
+          <span className="lead-avatar large" aria-hidden="true">{initials(lead.name)}</span>
+          <div className="lead-hero-text">
+            <h1>{lead.name}</h1>
+            <p className="muted">{[lead.company, lead.source].filter(Boolean).join(' · ')}</p>
+          </div>
+          {canChange && !editing && lead.status !== 'Converted' ? (
+            <StatusPicker
+              options={getStatusOptions('leads', 'status', LEAD_STATUSES).filter((status) => status !== 'Converted')}
+              selected={[lead.status]}
+              label="Change status"
+              className="lead-status-btn"
+              testId="lead-status-change"
+              onPick={changeStatus}
+            >
+              {statusPill}
+            </StatusPicker>
           ) : (
-            <>
-              <button className="btn" onClick={closeEditor}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" data-testid="save-lead-btn" disabled={saving} aria-busy={saving} onClick={save}>
-                {saving ? 'Saving…' : 'Save'}
-              </button>
-            </>
-          )
-        }
-      />
+            statusPill
+          )}
+          <div className="page-actions">{actions}</div>
+        </div>
+
+        <ol className={`card lead-steps${stage < 0 ? ' stopped' : ''}`} aria-label="Progress" data-testid="lead-progress">
+          {LEAD_STAGES.map((label, i) => (
+            <li key={label} className={stage > i ? 'done' : stage === i ? 'now' : undefined} aria-current={stage === i ? 'step' : undefined}>
+              {label}
+            </li>
+          ))}
+        </ol>
+
+        <div className="lead-cols">
+          <div className="card lead-box">
+            <h2>Details</h2>
+            {detailsTab}
+          </div>
+          <div className="lead-side">
+            <div className="card lead-box">
+              <span className="lead-eyebrow">Estimated value</span>
+              <div className="lead-big">{formatCurrency(lead.value)}</div>
+              <p className="muted">{product ? product.name : 'No product chosen'} · owner {ownerName}</p>
+            </div>
+            <div className="card lead-box">
+              <h2>Reach out</h2>
+              <div className="lead-reach">
+                {lead.phone ? (
+                  <a className="btn" href={`tel:${lead.phone}`}>
+                    <Phone size={16} /> Call <small>{lead.phone}</small>
+                  </a>
+                ) : (
+                  <span className="muted">No phone number on this lead.</span>
+                )}
+                <a className="btn" href={`mailto:${lead.email}`}>
+                  <Mail size={16} /> Email <small>{lead.email}</small>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {wizard && (
         <LeadConvertWizard
@@ -334,6 +436,12 @@ export function LeadDetail() {
           onFinish={finishConversion}
           isFinishing={converting}
           error={conversionError}
+          doneActions={
+            <>
+              <button className="btn" onClick={() => navigate('/leads')}>Back to leads</button>
+              <button className="btn btn-primary" onClick={() => setWizard(null)}>View the lead</button>
+            </>
+          }
         />
       )}
 

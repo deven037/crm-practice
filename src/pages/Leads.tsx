@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Download, Search, SlidersHorizontal } from 'lucide-react';
+import { Download, Plus, Search } from 'lucide-react';
 import { getAll, getAllSync, newId, removeMany, saveAll, upsert } from '../data/store';
 import { Account, Contact, Deal, Lead, LeadStatus, LEAD_SOURCES, LEAD_STATUSES, Role, User } from '../types';
 import { Modal } from '../components/Modal';
@@ -9,19 +9,34 @@ import { ContextMenu } from '../components/ContextMenu';
 import { LeadTriageMode } from '../components/LeadTriageMode';
 import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
 import { MassUpdateModal } from '../components/MassUpdateModal';
-import { ToolBoxPanel } from '../components/ToolBoxPanel';
+import { ToolBoxMenu } from '../components/ToolBoxMenu';
 import { SkeletonRows } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
-import { classNames, downloadCsv, formatDate } from '../utils';
+import { downloadCsv, formatDate } from '../utils';
 import { applyAssignmentRule, getStatusOptions } from '../utils/rules';
 import { LeadConvertWizard, WizardState } from './leads/LeadConvertWizard';
-import { LeadFilterPanel } from './leads/LeadFilterPanel';
+import { StatusPicker, statusClass, toggleStatus } from './leads/StatusPicker';
 import { LeadsPagination } from './leads/LeadsPagination';
 import { LeadsTable, SortKey } from './leads/LeadsTable';
 import { beginOnce, canCreateLeads, canExportLeads, clearSelection } from './leads/leadsGuards';
 
 type SortDir = 'asc' | 'desc';
+
+/** The module's set-up shortcuts, shown under the ToolBox button. */
+export const LEAD_TOOLBOX_LINKS = [
+  { label: 'Assignment Rules', to: '/setup/assignment-rules' },
+  { label: 'Dedupe Rule', to: '/setup/dedupe-rules' },
+  { label: 'Status Codes', to: '/setup/status-codes' },
+  { label: 'Import Data', to: '/setup/import' },
+  { label: 'Custom Fields', to: '/admin/objects/leads' },
+  { label: 'Customise Page Layout', to: '/setup/layouts/leads' },
+];
+
+/** How many leads sit in each of the standard statuses, for the bar above the list. */
+export function leadFlow(leads: Pick<Lead, 'status'>[]) {
+  return LEAD_STATUSES.map((status) => ({ status, count: leads.filter((l) => l.status === status).length }));
+}
 
 export function filterLeads(leads: Lead[], query: string, role: Role | undefined) {
   const q = query.trim().toLowerCase();
@@ -56,7 +71,6 @@ export function Leads() {
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [sourceFilter, setSourceFilter] = useState('');
   const [ownerFilter, setOwnerFilter] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [page, setPage] = useState(1);
@@ -134,8 +148,6 @@ export function Leads() {
       setSortDir('asc');
     }
   };
-
-  const sortIndicator = (key: SortKey) => (sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '');
 
   const allPageSelected = pageRows.length > 0 && pageRows.every((r) => selected.includes(r.id));
   const toggleSelectAll = () => {
@@ -273,7 +285,7 @@ export function Leads() {
     const leadAssignedTo = applyAssignmentRule('leads', convertedLead);
     await upsert('leads', leadAssignedTo ? { ...convertedLead, ownerId: leadAssignedTo } : convertedLead);
     toast.push('success', `Lead "${wizard.lead.name}" converted successfully.`);
-    setWizard(null);
+    setWizard({ ...wizard, done: true });
     load();
     } finally {
       convertingRef.current = false;
@@ -284,8 +296,16 @@ export function Leads() {
   const ownerOptions = users.map((u) => ({ value: u.id, label: u.name }));
   const accounts = getAllSync<Account>('accounts');
 
+  const statusOptions = getStatusOptions('leads', 'status', LEAD_STATUSES);
+  const filtersOn = statusFilter.length > 0 || Boolean(sourceFilter) || Boolean(ownerFilter);
+  const resetPaging = () => {
+    setSelected([]);
+    setPage(1);
+  };
+  const onlyStatus = statusFilter.length === 1 ? statusFilter[0] : null;
+
   return (
-    <div className="leads-screen" data-testid="leads-page">
+    <div className="leads-screen lead3" data-testid="leads-page">
       <div className="page-header">
         <div>
           <h1>Leads</h1>
@@ -299,50 +319,115 @@ export function Leads() {
               Created in the last {createdDays} days · Show all
             </button>
           )}
+          <ToolBoxMenu links={LEAD_TOOLBOX_LINKS} />
           {canExportLeads(user?.role) && (
             <button className="btn" onClick={exportCsv} data-testid="export-csv-btn">
               <Download size={16} /> Export CSV
             </button>
           )}
-          <div className="seg" role="group" aria-label="View mode">
-            <button
-              type="button"
-              aria-pressed={mode === 'table'}
-              aria-label="Table view"
-              data-testid="view-table"
-              onClick={() => setMode('table')}
-            >
-              Table
-            </button>
-            <button
-              type="button"
-              aria-pressed={mode === 'triage'}
-              aria-label="Triage view"
-              data-testid="view-triage"
-              onClick={() => setMode('triage')}
-            >
-              Triage
-            </button>
-          </div>
           {canCreateLeads(user?.role) && (
-            <button className="btn leads-primary" onClick={() => setLayoutPickerOpen(true)}>
-              + New Lead
+            <button className="btn btn-primary leads-primary" data-testid="new-lead-btn" onClick={() => setLayoutPickerOpen(true)}>
+              <Plus size={16} /> New lead
             </button>
           )}
         </div>
       </div>
 
-      <ToolBoxPanel
-        module="leads"
-        links={[
-          { label: 'Assignment Rules', to: '/setup/assignment-rules' },
-          { label: 'Dedupe Rule', to: '/setup/dedupe-rules' },
-          { label: 'Status Codes', to: '/setup/status-codes' },
-          { label: 'Import Data', to: '/setup/import' },
-          { label: 'Custom Fields', to: '/admin/objects/leads' },
-          { label: 'Customise Page Layout', to: '/setup/layouts/leads' },
-        ]}
-      />
+      {!loading && !loadError && (
+        <div className="card lead-flow" role="group" aria-label="Leads by status" data-testid="lead-flow">
+          {leadFlow(leads).map(({ status, count }, i) => (
+            <button
+              type="button"
+              key={status}
+              className={`lead-flow-step ${statusClass(status)}`}
+              aria-pressed={onlyStatus === status}
+              style={{ flexGrow: Math.min(Math.max(count, 1), 6), animationDelay: `${i * 70}ms` }}
+              onClick={() => {
+                setStatusFilter(onlyStatus === status ? [] : [status]);
+                resetPaging();
+              }}
+            >
+              <b>{count}</b>
+              <span>{status}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="toolbar lead-tools">
+        <div className="leads-find">
+          <Search size={17} aria-hidden="true" />
+          <input
+            type="search"
+            className="input search-input"
+            aria-label="Search leads"
+            placeholder="Search name, company, email…"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelected([]);
+            }}
+          />
+        </div>
+        <StatusPicker
+          options={statusOptions}
+          selected={statusFilter}
+          multi
+          label="Filter by status"
+          testId="status-filter"
+          className={`lead-chip${statusFilter.length > 0 ? ' set' : ''}`}
+          onPick={(status) => {
+            setStatusFilter(toggleStatus(statusFilter, status));
+            resetPaging();
+          }}
+        >
+          Status{statusFilter.length > 0 && ` · ${statusFilter.length}`}
+        </StatusPicker>
+        <div className={`lead-filter${ownerFilter ? ' set' : ''}`}>
+          <Select
+            value={ownerFilter}
+            options={[{ value: '', label: 'Any owner' }, ...ownerOptions]}
+            onChange={(v) => {
+              setOwnerFilter(v);
+              resetPaging();
+            }}
+            testId="owner-filter"
+          />
+        </div>
+        <div className={`lead-filter${sourceFilter ? ' set' : ''}`}>
+          <Select
+            value={sourceFilter}
+            options={[{ value: '', label: 'Any source' }, ...LEAD_SOURCES.map((source) => ({ value: source, label: source }))]}
+            onChange={(v) => {
+              setSourceFilter(v);
+              resetPaging();
+            }}
+            testId="source-filter"
+          />
+        </div>
+        {filtersOn && (
+          <button
+            className="btn btn-ghost"
+            data-testid="clear-filters"
+            onClick={() => {
+              setStatusFilter([]);
+              setSourceFilter('');
+              setOwnerFilter('');
+              resetPaging();
+            }}
+          >
+            Clear filters
+          </button>
+        )}
+        <div className="seg lead-view" role="group" aria-label="View mode">
+          <button type="button" aria-pressed={mode === 'table'} aria-label="Table view" data-testid="view-table" onClick={() => setMode('table')}>
+            Table
+          </button>
+          <button type="button" aria-pressed={mode === 'triage'} aria-label="Triage view" data-testid="view-triage" onClick={() => setMode('triage')}>
+            Triage
+          </button>
+        </div>
+      </div>
 
       {mode === 'triage' ? (
         loading ? (
@@ -356,84 +441,10 @@ export function Leads() {
             onExit={() => setMode('table')}
           />
         )
-      ) : (
-        <>
-      <div className="toolbar">
-        <div className="leads-find">
-          <Search size={18} aria-hidden="true" />
-          <input
-            type="search"
-            className="input search-input"
-            aria-label="Search leads"
-            placeholder="Search name, company, email…"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setSelected([]);
-            }}
-          />
-        </div>
-        <button
-          className={classNames('btn', showFilters && 'btn-active')}
-          data-testid="filters-toggle"
-          aria-expanded={showFilters}
-          onClick={() => setShowFilters((s) => !s)}
-        >
-          <SlidersHorizontal size={16} /> Filters{(statusFilter.length > 0 || sourceFilter || ownerFilter) && ' •'}
-        </button>
-      </div>
-
-      {selected.length > 0 && (
-        <div className="bulk-bar" data-testid="bulk-bar" role="status" aria-live="polite">
-          <span>{selected.length} selected</span>
-          <button className="btn" onClick={() => setAssignOpen(true)}>
-            Assign owner
-          </button>
-          <button className="btn" data-testid="mass-update-btn" onClick={() => setMassUpdateOpen(true)}>
-            Mass update
-          </button>
-          <button className="btn btn-danger" onClick={bulkDelete}>
-            Delete
-          </button>
-        </div>
-      )}
-
-      {showFilters && (
-        <LeadFilterPanel
-          statusFilter={statusFilter}
-          statusOptions={getStatusOptions('leads', 'status', LEAD_STATUSES)}
-          sourceFilter={sourceFilter}
-          ownerFilter={ownerFilter}
-          ownerOptions={ownerOptions}
-          onStatusChange={(v) => {
-            setStatusFilter(v);
-            setSelected([]);
-            setPage(1);
-          }}
-          onSourceChange={(v) => {
-            setSourceFilter(v);
-            setSelected([]);
-            setPage(1);
-          }}
-          onOwnerChange={(v) => {
-            setOwnerFilter(v);
-            setSelected([]);
-            setPage(1);
-          }}
-          onClear={() => {
-            setStatusFilter([]);
-            setSourceFilter('');
-            setOwnerFilter('');
-            setSelected([]);
-            setPage(1);
-          }}
-        />
-      )}
-
-      {loading ? (
+      ) : loading ? (
         <SkeletonRows rows={8} />
       ) : loadError ? (
-        <div role="alert" data-testid="leads-load-error">
+        <div className="card lead-load-error" role="alert" data-testid="leads-load-error">
           <p>Leads could not be loaded.</p>
           <button type="button" className="btn btn-primary" onClick={load}>
             Retry
@@ -449,7 +460,6 @@ export function Leads() {
             sortKey={sortKey}
             sortDir={sortDir}
             ownerName={ownerName}
-            sortIndicator={sortIndicator}
             onToggleSort={toggleSort}
             onToggleSelectAll={toggleSelectAll}
             onToggleSelect={(id) => setSelected((sel) => (sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]))}
@@ -486,7 +496,23 @@ export function Leads() {
           />
         </>
       )}
-        </>
+
+      {mode === 'table' && selected.length > 0 && (
+        <div className="bulk-bar lead-bulk" data-testid="bulk-bar" role="status" aria-live="polite">
+          <span>{selected.length} selected</span>
+          <button className="btn" onClick={() => setAssignOpen(true)}>
+            Assign owner
+          </button>
+          <button className="btn" data-testid="mass-update-btn" onClick={() => setMassUpdateOpen(true)}>
+            Mass update
+          </button>
+          <button className="btn btn-danger" onClick={bulkDelete}>
+            Delete
+          </button>
+          <button className="btn lead-bulk-clear" aria-label="Clear selection" onClick={() => setSelected([])}>
+            ✕
+          </button>
+        </div>
       )}
 
       {layoutPickerOpen && (
@@ -542,7 +568,21 @@ export function Leads() {
         />
       )}
 
-      {wizard && <LeadConvertWizard wizard={wizard} setWizard={setWizard} accounts={accounts} onFinish={finishWizard} isFinishing={converting} />}
+      {wizard && (
+        <LeadConvertWizard
+          wizard={wizard}
+          setWizard={setWizard}
+          accounts={accounts}
+          onFinish={finishWizard}
+          isFinishing={converting}
+          doneActions={
+            <>
+              <button className="btn" onClick={() => setWizard(null)}>Back to leads</button>
+              <button className="btn btn-primary" onClick={() => navigate(`/leads/${wizard.lead.id}`)}>Open the lead</button>
+            </>
+          }
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { isValidElement, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LeadDetail } from './LeadDetail';
+import { LeadDetail, leadStage } from './LeadDetail';
 import { Lead, Role } from '../types';
 import { LeadConvertWizard, WizardState } from './leads/LeadConvertWizard';
 
@@ -146,8 +146,20 @@ describe('lead record conversion entry (AC21, approved Brain #148)', () => {
       }),
     });
     expect(action('Convert lead…')).toBeUndefined();
-    expect(render().some((node) => node.type === LeadConvertWizard)).toBe(false);
+    // The wizard stays open on its closing screen, showing what was made.
+    expect(conversion()?.wizard?.done).toBe(true);
     expect(harness.toast).toHaveBeenCalledWith('success', 'Lead "Tara Iyer" converted successfully.');
-    expect(harness.navigate).toHaveBeenCalledWith('/leads');
+    expect(harness.navigate).not.toHaveBeenCalled();
+  });
+});
+
+describe('lead progress line', () => {
+  it('places the standard statuses in order and stops for Unqualified', () => {
+    expect(['New', 'Contacted', 'Qualified', 'Converted'].map(leadStage)).toEqual([0, 1, 2, 3]);
+    expect(leadStage('Unqualified')).toBe(-1);
+  });
+
+  it('shows a status the bank added as in progress', () => {
+    expect(leadStage('KYC pending')).toBe(1);
   });
 });

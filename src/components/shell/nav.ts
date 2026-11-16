@@ -2,7 +2,6 @@ import {
   Activity as ActivityIcon, Building2, CheckSquare, Database, LayoutDashboard, Megaphone, Package, Receipt, Target, Ticket, TrendingUp, User,
   type LucideIcon,
 } from 'lucide-react';
-import type { Lead, TaskItem, Ticket as TicketRecord } from '../../types';
 
 export interface NavItem {
   to: string;
@@ -76,30 +75,5 @@ export function placeForPath(pathname: string): PagePlace {
   return { group: null, label: OTHER_PAGES[section] ?? 'Page not found', recordId: null, to: `/${section}` };
 }
 
-export interface NavCount {
-  count: number;
-  /** Something in the count is urgent or late. */
-  hot: boolean;
-}
-
-const dayOf = (iso: string) => iso.slice(0, 10);
-
-/** The small counts beside Leads, Tasks and Tickets: work that is waiting right now. */
-export function navCounts(
-  leads: Pick<Lead, 'status'>[],
-  tasks: Pick<TaskItem, 'completed' | 'dueDate'>[],
-  tickets: Pick<TicketRecord, 'status' | 'priority'>[],
-  today = new Date().toISOString(),
-): Record<string, NavCount> {
-  const newLeads = leads.filter((l) => l.status === 'New').length;
-  const due = tasks.filter((t) => !t.completed && !!t.dueDate && dayOf(t.dueDate) <= dayOf(today));
-  const openTickets = tickets.filter((t) => t.status === 'Open' || t.status === 'In Progress');
-  return {
-    '/leads': { count: newLeads, hot: false },
-    '/tasks': { count: due.length, hot: due.some((t) => dayOf(t.dueDate) < dayOf(today)) },
-    '/tickets': { count: openTickets.length, hot: openTickets.some((t) => t.priority === 'Urgent') },
-  };
-}
-
-/** Counts stay readable in a narrow badge. */
+/** A count stays readable in a narrow badge (the unread count on the bell). The side menu itself shows no counts. */
 export const badgeText = (count: number) => (count > 99 ? '99+' : String(count));

@@ -8,7 +8,7 @@ import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { applyAssignmentRule, findDuplicate, getStatusOptions, matchesCondition } from '../utils/rules';
 import { getCustomFieldsAsModuleFields } from '../utils/moduleFields';
-import { classNames } from '../utils';
+import { classNames, formatCurrency, initials } from '../utils';
 import { canCreateLeads } from './leads/leadsGuards';
 
 /** First outgoing edge from `nodeId` whose condition matches `record`, falling back to the
@@ -196,56 +196,70 @@ export function LeadForm() {
     );
   }
 
-  return (
-    <div data-testid="lead-form-page">
-      <nav className="breadcrumbs">
-        <Link to="/leads">Leads</Link> <span>/</span> <span>New lead</span>
-      </nav>
-      <div className="page-header">
-        <h1>New lead</h1>
-      </div>
-      <p className="lead-form-subtitle">Only name and email are required.</p>
-      {autoflowProcess ? (
-        <p className="muted" style={{ marginTop: -8 }} data-testid="autoflow-wizard-subtitle">
-          AutoFlow: {autoflowProcess.name}
-          {currentNode && ` — ${currentNode.data.label}`}
-        </p>
-      ) : (
-        layout && <p className="muted" style={{ marginTop: -8 }}>Layout: {layout.name}</p>
-      )}
+  const showWho = ['name', 'company', 'email', 'phone'].some(isVisible);
+  const showAbout = ['status', 'source', 'ownerId', 'value'].some(isVisible);
 
-      <form className="card form-card" noValidate onSubmit={(event) => {
+  return (
+    <div className="lead-form lead3" data-testid="lead-form-page">
+      <Link className="lead-back" to="/leads">
+        ‹ All leads
+      </Link>
+      <div className="page-header">
+        <div>
+          <h1>New lead</h1>
+          <p className="page-subtitle">Only name and email are required.</p>
+          {autoflowProcess ? (
+            <p className="muted" data-testid="autoflow-wizard-subtitle">
+              AutoFlow: {autoflowProcess.name}
+              {currentNode && ` — ${currentNode.data.label}`}
+            </p>
+          ) : (
+            layout && <p className="muted">Layout: {layout.name}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="lead-form-grid">
+      <form className="card lead-form-card" noValidate onSubmit={(event) => {
         event.preventDefault();
         if (!busy) void (autoflowProcess ? advance() : submit());
       }}>
-        {saveError && <div className="banner banner-error" role="alert">{saveError}</div>}
-        {autoflowProcess && step?.kind === 'blocked' && (
-          <div className="banner banner-error" role="alert" data-testid="autoflow-blocked-banner">
-            {step.message}
+        {(saveError || duplicate || (autoflowProcess && step?.kind === 'blocked') || (!autoflowProcess && layout && layout.tabs.length > 1)) && (
+          <div className="lead-form-notes">
+            {saveError && <div className="banner banner-error" role="alert">{saveError}</div>}
+            {autoflowProcess && step?.kind === 'blocked' && (
+              <div className="banner banner-error" role="alert" data-testid="autoflow-blocked-banner">
+                {step.message}
+              </div>
+            )}
+            {duplicate && (
+              <div className="banner banner-info" role="alert" data-testid="duplicate-warning">
+                A lead with matching details already exists —{' '}
+                <Link to={`/leads/${duplicate.id}`}>View "{duplicate.name}"</Link>. You can still save this one.
+              </div>
+            )}
+            {!autoflowProcess && layout && layout.tabs.length > 1 && (
+              <div className="chip-filters" data-testid="lead-form-layout-tabs">
+                {layout.tabs.map((tab) => (
+                  <button
+                    type="button"
+                    key={tab.id}
+                    className={classNames('chip-filter', tab.id === activeTabId && 'active')}
+                    aria-pressed={tab.id === activeTabId}
+                    onClick={() => setActiveTabId(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
-        {duplicate && (
-          <div className="banner banner-info" role="alert" data-testid="duplicate-warning">
-            A lead with matching details already exists —{' '}
-            <Link to={`/leads/${duplicate.id}`}>View "{duplicate.name}"</Link>. You can still save this one.
-          </div>
-        )}
-        {!autoflowProcess && layout && layout.tabs.length > 1 && (
-          <div className="chip-filters" data-testid="lead-form-layout-tabs" style={{ marginBottom: 16 }}>
-            {layout.tabs.map((tab) => (
-              <button
-                type="button"
-                key={tab.id}
-                className={classNames('chip-filter', tab.id === activeTabId && 'active')}
-                aria-pressed={tab.id === activeTabId}
-                onClick={() => setActiveTabId(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="form-grid">
+
+        {showWho && (
+        <section className="lead-form-part">
+          <h2>Who is it</h2>
+          <div className="form-grid">
           {isVisible('name') && (
             <div className="field">
               <label className="field-label" htmlFor="lead-name-input">Full name *</label>
@@ -288,14 +302,23 @@ export function LeadForm() {
               <input id="lead-phone-input" className="input" data-testid="lead-phone" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
             </div>
           )}
+          </div>
+        </section>
+        )}
+
+        {showAbout && (
+        <section className="lead-form-part">
+          <h2>About the lead</h2>
+          <div className="form-grid">
           {isVisible('status') && (
             <div className="field">
               <label className="field-label" htmlFor="lead-status-input">Status</label>
-              <Select
+              <SearchableSelect
                 id="lead-status-input"
                 value={draft.status}
                 options={getStatusOptions('leads', 'status', LEAD_STATUSES).map((s) => ({ value: s, label: s }))}
-                onChange={(v) => setDraft({ ...draft, status: v as LeadStatus })}
+                onChange={(v) => setDraft({ ...draft, status: (v || 'New') as LeadStatus })}
+                placeholder="Search statuses…"
                 testId="lead-status"
               />
             </div>
@@ -335,7 +358,13 @@ export function LeadForm() {
               />
             </div>
           )}
-          <h2 className="lead-form-section">Related records</h2>
+          </div>
+        </section>
+        )}
+
+        <section className="lead-form-part">
+          <h2>What they want</h2>
+          <div className="form-grid">
           <div className="field">
             <label className="field-label" htmlFor="lead-product-input">Interested product</label>
             <SearchableSelect
@@ -367,9 +396,10 @@ export function LeadForm() {
             errors={customErrors}
             includeIds={currentNode ? currentNodeCustomIds : layout ? activeTabCustomIds : undefined}
           />
-        </div>
+          </div>
+        </section>
 
-        <div className="form-actions">
+        <div className="form-actions lead-form-actions">
           <button type="button" className="btn" onClick={() => navigate('/leads')}>
             Cancel
           </button>
@@ -384,6 +414,19 @@ export function LeadForm() {
           )}
         </div>
       </form>
+
+      <aside className="card lead-preview" aria-label="Preview" data-testid="lead-preview">
+        <span className="lead-eyebrow">Preview</span>
+        <span className="lead-avatar large" aria-hidden="true">{draft.name.trim() ? initials(draft.name) : '?'}</span>
+        <h2>{draft.name.trim() || 'New lead'}</h2>
+        <p className="muted">{draft.company.trim() || 'Company'}</p>
+        <div className="lead-preview-tags">
+          <span className={`pill status-${draft.status.toLowerCase()}`}>{draft.status}</span>
+          <span className="pill lead-plain-pill">{draft.source}</span>
+        </div>
+        <div className="lead-big">{formatCurrency(draft.value || 0)}</div>
+      </aside>
+      </div>
     </div>
   );
 }
