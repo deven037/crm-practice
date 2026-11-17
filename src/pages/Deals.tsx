@@ -1,57 +1,86 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { getAll, upsert, removeMany } from '../data/store';
-import { Account, Deal, DealStage, DEAL_STAGES, User } from '../types';
-import { Modal } from '../components/Modal';
-import { SearchableSelect, Select } from '../components/Select';
-import { DatePicker } from '../components/DatePicker';
-import { Kanban } from '../components/Kanban';
-import { ToolBoxPanel } from '../components/ToolBoxPanel';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { AlertTriangle, ChevronDown, Columns3, List, Plus, Search, Sparkles } from 'lucide-react';
+import { getAll, upsert } from '../data/store';
+import { Account, Deal, User } from '../types';
 import { SkeletonRows } from '../components/Spinner';
+import { LayoutPickerPanel } from '../components/LayoutPickerPanel';
+import { ToolBoxMenu } from '../components/ToolBoxMenu';
+import { Select } from '../components/Select';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
-import { autoCloseDate, formatCurrency, formatDate } from '../utils';
-import { applyAssignmentRule, getStatusOptions } from '../utils/rules';
-import { DealSort, DealSortKey, filterDeals, moveDealOptimistic, sortDeals } from './dealsList';
+import { classNames, formatCurrency } from '../utils';
+import { TagPicker } from './contacts/contactBits';
+import { shortMoney, useNarrow } from './accounts/accountBits';
+import { DealSort, DealSortKey, moveDealOptimistic, sortDeals } from './dealsList';
+import { CloseFilter, CLOSE_FILTERS, daysUntil, dueInfo, filterPipeline, isOpenStage, StageInfo, stageOf, total, weighted } from './deals/dealLogic';
+import {
+  bankStages, celebrate, ChanceRing, DealRow, ForecastCards, hueStyle, LostReasonDialog, MiniCrest, movedDeal, PhoneBoard, Runway, RunwayList, StageBoard,
+} from './deals/dealBits';
+
+/** The module's set-up shortcuts, shown under the ToolBox button. */
+export const DEAL_TOOLBOX_LINKS = [
+  { label: 'Import Data', to: '/setup/import' },
+  { label: 'Status Codes', to: '/setup/status-codes' },
+  { label: 'Assignment Rules', to: '/setup/assignment-rules' },
+  { label: 'Custom Fields', to: '/admin/objects/deals' },
+  { label: 'Customise Page Layout', to: '/setup/layouts/deals' },
+];
+
+type View = 'board' | 'runway' | 'list';
 
 const LIST_COLUMNS: { key: DealSortKey; label: string; num?: boolean }[] = [
   { key: 'name', label: 'Deal' },
-  { key: 'account', label: 'Account' },
   { key: 'stage', label: 'Stage' },
   { key: 'amount', label: 'Amount', num: true },
-  { key: 'probability', label: 'Probability', num: true },
+  { key: 'probability', label: 'Chance', num: true },
   { key: 'closeDate', label: 'Expected close' },
   { key: 'owner', label: 'Owner' },
 ];
 
+export const canWriteDeals = (role: string | undefined) => role === 'admin' || role === 'rep';
+
+/** The pipeline: a board of stage gates, a forecast runway and a sortable list, with one shared set of filters. */
 export function Deals() {
   const toast = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [params, setParams] = useSearchParams();
-  // Dashboard tile link: /deals?stage=open hides the Closed columns.
-  const openOnly = params.get('stage') === 'open';
-  // Header search "See all": /deals?q=term shows only deals whose name matches.
-  const searchTerm = (params.get('q') ?? '').trim().toLowerCase();
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [editing, setEditing] = useState<Deal | null>(null);
-  const [failed, setFailed] = useState(false);
-  const [sort, setSort] = useState<DealSort>({ key: 'createdAt', dir: 'desc' });
-  const [stageFilter, setStageFilter] = useState(openOnly ? 'open' : '');
-  const [listQuery, setListQuery] = useState(searchTerm);
-  const isList = params.get('view') === 'list';
-  const canWrite = user?.role !== 'viewer';
+  // Header search "See all": /deals?q=term opens the pipeline already filtered.
+  const [query, setQuery] = useState(params.get('q') ?? '');
+  const [owners, setOwners] = useState<string[]>([]);
+  const [close, setClose] = useState<CloseFilter>('any');
+  const [sort, setSort] = useState<DealSort>({ key: 'closeDate', dir: 'asc' });
+  const [layoutPickerOpen, setLayoutPickerOpen] = useState(false);
+  const [losing, setLosing] = useState<Deal | null>(null);
+  const [landedId, setLandedId] = useState<string | null>(null);
+  const [fresh, setFresh] = useState(true);
+  const narrow = useNarrow();
+  const canWrite = canWriteDeals(user?.role);
+  const view: View = params.get('view') === 'list' ? 'list' : params.get('view') === 'runway' ? 'runway' : 'board';
+  // Dashboard tile link: /deals?stage=open shows open deals only.
+  const openOnly = params.get('stage') === 'open';
+  const stages = useMemo(() => bankStages(), [deals]);
+
+  const urlQuery = params.get('q') ?? '';
+  useEffect(() => {
+    setQuery(urlQuery);
+  }, [urlQuery, location.state]);
 
   const load = async () => {
+    setLoading(true);
     setFailed(false);
     try {
-      // A Viewer gets 403 on /users; fall back to an empty list so the board still renders.
+      // Owner names and account names are extras: a Viewer has no Users access, and the pipeline still opens.
       const [d, a, u] = await Promise.all([
         getAll<Deal>('deals'),
-        getAll<Account>('accounts'),
+        getAll<Account>('accounts').catch((): Account[] => []),
         getAll<User>('users').catch((): User[] => []),
       ]);
       setDeals(d);
@@ -63,397 +92,240 @@ export function Deals() {
     setLoading(false);
   };
 
-  const setView = (view: 'board' | 'list') => {
-    const next = new URLSearchParams(params);
-    if (view === 'list') next.set('view', 'list');
-    else next.delete('view');
-    setParams(next);
-  };
-
   useEffect(() => {
     load();
   }, []);
 
+  // Cards, gates and bubbles animate in on arrival only, not on every filter change or move.
+  useEffect(() => {
+    if (loading) return;
+    const t = window.setTimeout(() => setFresh(false), 900);
+    return () => window.clearTimeout(t);
+  }, [loading]);
+
+  const setView = (next: View) => {
+    const p = new URLSearchParams(params);
+    if (next === 'board') p.delete('view');
+    else p.set('view', next);
+    setParams(p);
+  };
+
   const accountName = (id: string | null) => accounts.find((a) => a.id === id)?.name ?? 'No account';
+  const ownerName = (id: string) => users.find((u) => u.id === id)?.name ?? '—';
+  const shown = filterPipeline(deals, { query, owners, close }, accountName).filter((d) => !openOnly || isOpenStage(d.stage));
+  const open = shown.filter((d) => isOpenStage(d.stage));
+  const late = open.filter((d) => daysUntil(d.closeDate) < 0);
+  const won90 = shown.filter((d) => stageOf(stages, d.stage).kind === 'won' && daysUntil(d.closeDate) >= -90);
+  const filtering = query.trim() !== '' || owners.length > 0 || close !== 'any';
+  const ownerChoices = [...new Set(deals.map((d) => d.ownerId))].map((id) => ({ id, name: ownerName(id) })).sort((a, b) => a.name.localeCompare(b.name));
 
-  const onDrop = async (dealId: string, stage: string) => {
-    const deal = deals.find((d) => d.id === dealId);
-    if (!deal || deal.stage === stage) return;
-    const stamped = autoCloseDate(deal.stage, { ...deal, stage: stage as DealStage });
-    // Setup → Assignment Rules: a stage change (e.g. into Closed Won) can itself be a rule condition.
-    const assignedTo = applyAssignmentRule('deals', stamped);
-    const updated = assignedTo ? { ...stamped, ownerId: assignedTo } : stamped;
-    // Optimistic UI so the card moves instantly, then persist.
-    const saved = await moveDealOptimistic(deal, updated, (d) => upsert('deals', d), setDeals);
-    if (saved) {
-      toast.push('success', `"${deal.name}" moved to ${stage}.`);
-    } else {
-      toast.push('error', `Couldn't move "${deal.name}" to ${stage}. It is back in ${deal.stage}.`);
-    }
+  const save = async (original: Deal, updated: Deal) => {
+    const saved = await moveDealOptimistic(original, updated, async (d) => {
+      const stored = await upsert('deals', d);
+      // The server adds the stage history; keep its copy.
+      setDeals((prev) => prev.map((x) => (x.id === stored.id ? stored : x)));
+    }, setDeals);
+    if (!saved) toast.push('error', `Couldn't move "${original.name}". It is back in ${original.stage}.`);
+    return saved;
   };
 
-  const saveDeal = async (deal: Deal) => {
-    const stamped = editing ? autoCloseDate(editing.stage, deal) : deal;
-    const assignedTo = applyAssignmentRule('deals', stamped);
-    const toSave = assignedTo ? { ...stamped, ownerId: assignedTo } : stamped;
-    await upsert('deals', toSave);
-    toast.push('success', `Deal "${deal.name}" saved.`);
-    setEditing(null);
-    load();
-  };
-
-  const deleteDeal = async (deal: Deal) => {
-    if (deal.stage === 'Closed Won') {
-      toast.push('error', 'Closed Won deals can only be deleted from their detail page.');
+  const onMove = async (deal: Deal, target: StageInfo, point: { x: number; y: number }) => {
+    if (target.kind === 'lost') {
+      setLosing(deal);
       return;
     }
-    if (!window.confirm(`Delete deal "${deal.name}"?`)) return;
-    await removeMany('deals', [deal.id]);
-    toast.push('success', `Deal "${deal.name}" deleted.`);
-    setEditing(null);
-    load();
+    if (target.kind === 'won') celebrate(point.x, point.y);
+    const updated = movedDeal(deal, target, stages);
+    setLandedId(deal.id);
+    if (await save(deal, updated)) {
+      toast.push('success', target.kind === 'won' ? `"${deal.name}" won. Nice work.` : `"${deal.name}" moved to ${target.name} · ${updated.probability}% chance.`);
+    }
   };
 
+  const confirmLost = async (reason: string) => {
+    const deal = losing;
+    const lostStage = stages.find((s) => s.kind === 'lost');
+    setLosing(null);
+    if (!deal || !lostStage) return;
+    setLandedId(deal.id);
+    if (await save(deal, movedDeal(deal, lostStage, stages, reason))) toast.push('success', `"${deal.name}" marked as lost.`);
+  };
+
+  const clear = () => {
+    setQuery('');
+    setOwners([]);
+    setClose('any');
+  };
+
+  const boardProps = { deals: shown, stages, accounts, users, fresh };
+  // By close date, open deals come first: a list led by deals closed months ago helps nobody.
+  const sorted = sortDeals(shown, sort, accountName, ownerName);
+  const listed = sort.key === 'closeDate' ? [...sorted.filter((d) => isOpenStage(d.stage)), ...sorted.filter((d) => !isOpenStage(d.stage))] : sorted;
+
   return (
-    <div data-testid="deals-page">
+    <div className="deal3 deal-list-page" data-testid="deals-page">
       <div className="page-header">
-        <h1>Deals</h1>
+        <div>
+          <h1>Deals</h1>
+          <p className="page-subtitle">Every opportunity, from first conversation to signed facility.</p>
+        </div>
         <div className="page-actions">
-          {openOnly && (
-            <button className="btn" onClick={() => setParams({})}>
-              Showing open deals · Show all
-            </button>
-          )}
-          {searchTerm && (
-            <button className="btn" onClick={() => setParams({})}>
-              Filtered by "{searchTerm}" · Clear
-            </button>
-          )}
-          <div className="segmented" role="group" aria-label="View">
-            <button type="button" className={`segmented-option${isList ? '' : ' active'}`} aria-pressed={!isList} onClick={() => setView('board')}>
-              Board
-            </button>
-            <button type="button" className={`segmented-option${isList ? ' active' : ''}`} aria-pressed={isList} onClick={() => setView('list')}>
-              List
-            </button>
-          </div>
+          <ToolBoxMenu links={DEAL_TOOLBOX_LINKS} />
           {canWrite && (
-            <button className="btn btn-create" onClick={() => navigate('/deals/new')}>
-              + New Deal
+            <button className="btn btn-primary contacts-primary" data-testid="new-deal" onClick={() => setLayoutPickerOpen(true)}>
+              <Plus size={16} /> New deal
             </button>
           )}
         </div>
       </div>
 
-      <ToolBoxPanel
-        module="deals"
-        links={[
-          { label: 'Assignment Rules', to: '/setup/assignment-rules' },
-          { label: 'Status Codes', to: '/setup/status-codes' },
-          { label: 'Custom Fields', to: '/admin/objects/deals' },
-          { label: 'Customise Page Layout', to: '/setup/layouts/deals' },
-        ]}
-      />
+      {!loading && !failed && (
+        <div className="deal-sum" role="status">
+          <span><b>{shortMoney(total(open))}</b>open pipeline</span>
+          <span><b>{shortMoney(weighted(open))}</b>weighted forecast</span>
+          <span><b>{shortMoney(total(won90))}</b>won in the last 90 days</span>
+          {late.length > 0 && close !== 'late' && (
+            <button type="button" className="deal-late-chip" data-testid="overdue-chip" onClick={() => setClose('late')}>
+              <AlertTriangle size={14} aria-hidden="true" /> {late.length} past close date
+            </button>
+          )}
+          {openOnly && (
+            <button type="button" className="btn btn-ghost" onClick={() => { const p = new URLSearchParams(params); p.delete('stage'); setParams(p); }}>
+              Showing open deals · Show all
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="toolbar contact-tools">
+        <div className="contact-find">
+          <Search size={17} aria-hidden="true" />
+          <input
+            type="search"
+            className="input search-input"
+            aria-label="Search deals"
+            placeholder="Search deals or accounts…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <TagPicker
+          testId="owner-filter"
+          label={<>Owner{owners.length ? ` · ${owners.length}` : ''} <ChevronDown size={14} aria-hidden="true" /></>}
+          tags={ownerChoices.map((o) => o.name)}
+          selected={ownerChoices.filter((o) => owners.includes(o.id)).map((o) => o.name)}
+          onToggle={(name) => {
+            const id = ownerChoices.find((o) => o.name === name)?.id;
+            if (id) setOwners((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
+          }}
+        />
+        <div className="deal-close-filter">
+          <Select value={close} options={CLOSE_FILTERS} onChange={(v) => setClose(v as CloseFilter)} testId="close-filter" />
+        </div>
+        {filtering && (
+          <button type="button" className="btn btn-ghost" data-testid="clear-filters" onClick={clear}>
+            Clear
+          </button>
+        )}
+        <span className="contact-tools-gap" />
+        <div className="seg contact-seg" role="group" aria-label="View mode">
+          <button type="button" aria-pressed={view === 'board'} data-testid="view-board" onClick={() => setView('board')}>
+            <Columns3 size={14} /> Board
+          </button>
+          <button type="button" aria-pressed={view === 'runway'} data-testid="view-runway" onClick={() => setView('runway')}>
+            <Sparkles size={14} /> Runway
+          </button>
+          <button type="button" aria-pressed={view === 'list'} data-testid="view-list" onClick={() => setView('list')}>
+            <List size={14} /> List
+          </button>
+        </div>
+      </div>
 
       {loading ? (
         <div role="status" aria-label="Loading deals">
           <SkeletonRows rows={6} />
         </div>
       ) : failed ? (
-        <div className="banner banner-error" role="alert">
-          Deals could not be loaded. Check your connection, then try again.{' '}
-          <button className="btn" onClick={load}>
-            Retry
-          </button>
+        <div className="banner banner-error contacts-error" role="alert" data-testid="deals-load-error">
+          <p>Deals couldn’t load. Check your connection and try again.</p>
+          <button type="button" className="btn" onClick={load}>Retry</button>
         </div>
       ) : deals.length === 0 ? (
         <div className="empty-cell" data-testid="deals-empty">
-          <p>
-            <strong>No deals yet.</strong>
-          </p>
+          <strong>No deals yet</strong>
           <p>{canWrite ? 'Create your first deal to start the pipeline.' : 'Deals will appear here once a rep or admin adds them.'}</p>
           {canWrite && (
-            <button className="btn btn-create" onClick={() => navigate('/deals/new')}>
-              + New Deal
+            <button className="btn btn-primary contacts-primary" onClick={() => setLayoutPickerOpen(true)}>
+              <Plus size={16} /> New deal
             </button>
           )}
         </div>
-      ) : isList ? (
-        <DealsTable
-          deals={deals}
-          sort={sort}
-          onSort={(key) => setSort((s) => ({ key, dir: s.key === key && s.dir === 'desc' ? 'asc' : 'desc' }))}
-          query={listQuery}
-          onQuery={setListQuery}
-          stage={stageFilter}
-          onStage={setStageFilter}
-          accountName={accountName}
-          ownerName={(id) => users.find((u) => u.id === id)?.name ?? '—'}
-        />
-      ) : (
-        <Kanban
-          testId="kanban-board"
-          emptyLabel={canWrite ? 'No deals in this stage. Use “Move to…” on a deal or drag one here.' : 'No deals in this stage.'}
-          getLabel={(deal) => deal.name}
-          readOnly={!canWrite}
-          columns={DEAL_STAGES.filter((stage) => !openOnly || !stage.startsWith('Closed')).map((stage) => {
-            const stageDeals = deals.filter((d) => d.stage === stage && d.name.toLowerCase().includes(searchTerm));
-            const total = stageDeals.reduce((sum, d) => sum + d.amount, 0);
-            return { key: stage, label: stage, items: stageDeals, headerMeta: `${stageDeals.length} · ${formatCurrency(total)}` };
-          })}
-          getId={(deal) => deal.id}
-          onCardClick={(deal) => (canWrite ? setEditing(deal) : navigate(`/deals/${deal.id}`))}
-          onDrop={onDrop}
-          cardRenderer={(deal) => (
-            <>
-              <div className="kanban-card-title">{deal.name}</div>
-              <div className="kanban-card-account">{accountName(deal.accountId)}</div>
-              <div className="kanban-card-foot">
-                <span className="kanban-amount">{formatCurrency(deal.amount)}</span>
-                <span className="kanban-prob">{deal.probability}%</span>
-              </div>
-              <div className="kanban-card-date">Close: {formatDate(deal.closeDate)}</div>
-            </>
-          )}
-        />
-      )}
-
-      {editing && (
-        <DealModal
-          deal={editing}
-          accounts={accounts}
-          users={users}
-          onCancel={() => setEditing(null)}
-          onSave={saveDeal}
-          onDelete={deleteDeal}
-        />
-      )}
-    </div>
-  );
-}
-
-function DealsTable({
-  deals,
-  sort,
-  onSort,
-  query,
-  onQuery,
-  stage,
-  onStage,
-  accountName,
-  ownerName,
-}: {
-  deals: Deal[];
-  sort: DealSort;
-  onSort: (key: DealSortKey) => void;
-  query: string;
-  onQuery: (q: string) => void;
-  stage: string;
-  onStage: (s: string) => void;
-  accountName: (id: string | null) => string;
-  ownerName: (id: string) => string;
-}) {
-  const rows = sortDeals(filterDeals(deals, { query, stage }, accountName), sort, accountName, ownerName);
-  const total = rows.reduce((sum, d) => sum + d.amount, 0);
-  const clear = () => {
-    onQuery('');
-    onStage('');
-  };
-  return (
-    <div data-testid="deals-list">
-      <div className="toolbar deals-list-toolbar">
-        <input
-          className="input"
-          type="search"
-          aria-label="Search deals"
-          placeholder="Search by deal or account…"
-          value={query}
-          onChange={(e) => onQuery(e.target.value)}
-        />
-        <select className="input" aria-label="Filter by stage" value={stage} onChange={(e) => onStage(e.target.value)}>
-          <option value="">All stages</option>
-          <option value="open">Open deals</option>
-          {DEAL_STAGES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <span className="muted" role="status">
-          {rows.length} {rows.length === 1 ? 'deal' : 'deals'} · {formatCurrency(total)}
-        </span>
-      </div>
-      {rows.length === 0 ? (
-        <div className="empty-cell">
-          <p>
-            <strong>No deals match{query.trim() ? ` “${query.trim()}”` : ' these filters'}.</strong>
-          </p>
-          <p>Check the spelling or clear the filters to see all {deals.length} deals.</p>
-          <button className="btn" onClick={clear}>
-            Clear filters
-          </button>
+      ) : shown.length === 0 ? (
+        <div className="empty-cell" data-testid="deals-no-match">
+          <strong>{query.trim() ? `No deals match “${query.trim()}”` : 'No deals match these filters'}</strong>
+          <p>Check the spelling, or clear the filters to see all {deals.length} deals.</p>
+          <button type="button" className="btn" onClick={clear}>Clear filters</button>
         </div>
-      ) : (
-        <div className="table-wrap deals-table">
-          <table className="table">
-            <thead>
-              <tr>
-                {LIST_COLUMNS.map((c) => (
-                  <th
-                    key={c.key}
-                    scope="col"
-                    className={c.num ? 'num' : undefined}
-                    aria-sort={sort.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
-                  >
-                    <button type="button" className="th-sort" onClick={() => onSort(c.key)}>
-                      {c.label}
-                      {sort.key === c.key ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : ''}
-                    </button>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((d) => (
-                <tr key={d.id}>
-                  <td data-label="Deal">
-                    <Link to={`/deals/${d.id}`}>{d.name}</Link>
-                  </td>
-                  <td data-label="Account">{accountName(d.accountId)}</td>
-                  <td data-label="Stage">{d.stage}</td>
-                  <td className="num" data-label="Amount">
-                    {formatCurrency(d.amount)}
-                  </td>
-                  <td className="num" data-label="Probability">
-                    {d.probability}%
-                  </td>
-                  <td data-label="Expected close">{formatDate(d.closeDate)}</td>
-                  <td data-label="Owner">{ownerName(d.ownerId)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DealModal({
-  deal,
-  accounts,
-  users,
-  onCancel,
-  onSave,
-  onDelete,
-}: {
-  deal: Deal;
-  accounts: Account[];
-  users: User[];
-  onCancel: () => void;
-  onSave: (deal: Deal) => void;
-  onDelete: (deal: Deal) => void;
-}) {
-  const [draft, setDraft] = useState<Deal>({ ...deal });
-  const [amountText, setAmountText] = useState(deal.amount ? deal.amount.toLocaleString('en-US') : '');
-  const [error, setError] = useState<string | null>(null);
-  const isNew = !deal.name;
-
-  const commitAmount = () => {
-    const parsed = Number(amountText.replace(/[^0-9.]/g, ''));
-    const amount = Number.isFinite(parsed) ? Math.round(parsed) : 0;
-    setDraft((d) => ({ ...d, amount }));
-    setAmountText(amount ? amount.toLocaleString('en-US') : '');
-  };
-
-  const submit = () => {
-    if (!draft.name.trim()) {
-      setError('Deal name is required.');
-      return;
-    }
-    onSave(draft);
-  };
-
-  return (
-    <Modal
-      title={isNew ? 'New deal' : `Edit deal — ${deal.name}`}
-      onClose={onCancel}
-      footer={
+      ) : view === 'runway' ? (
         <>
-          {!isNew && (
-            <button className="btn btn-danger" onClick={() => onDelete(deal)}>
-              Delete
-            </button>
-          )}
-          <button className="btn" onClick={onCancel}>
-            Cancel
-          </button>
-          <button className="btn btn-primary" data-testid="deal-save-btn" onClick={submit}>
-            Save deal
-          </button>
+          {narrow ? <RunwayList deals={shown} stages={stages} accounts={accounts} /> : <Runway {...boardProps} />}
+          {!narrow && <ForecastCards deals={shown} fresh={fresh} />}
         </>
-      }
-    >
-      {error && <div className="banner banner-error" role="alert">{error}</div>}
-      <div className="form-grid">
-        <div className="field">
-          <span className="field-label">Deal name *</span>
-          <input className="input" data-testid="deal-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-        </div>
-        <div className="field">
-          <span className="field-label">Account</span>
-          <SearchableSelect
-            value={draft.accountId ?? ''}
-            options={accounts.map((a) => ({ value: a.id, label: a.name }))}
-            onChange={(v) => setDraft({ ...draft, accountId: v })}
-            placeholder="Search accounts…"
-            testId="deal-account"
-          />
-        </div>
-        <div className="field">
-          <span className="field-label">Amount</span>
-          <input
-            className="input"
-            data-testid="deal-amount"
-            placeholder="e.g. 25,000"
-            value={amountText}
-            onChange={(e) => setAmountText(e.target.value)}
-            onBlur={commitAmount}
-          />
-        </div>
-        <div className="field">
-          <span className="field-label">Stage</span>
-          <Select
-            value={draft.stage}
-            options={getStatusOptions('deals', 'stage', DEAL_STAGES).map((s) => ({ value: s, label: s }))}
-            onChange={(v) => setDraft({ ...draft, stage: v as DealStage })}
-            testId="deal-stage"
-          />
-        </div>
-        <div className="field">
-          <span className="field-label">Expected close date</span>
-          <DatePicker value={draft.closeDate} onChange={(iso) => setDraft({ ...draft, closeDate: iso })} testId="deal-close-date" />
-        </div>
-        <div className="field">
-          <span className="field-label">Owner</span>
-          <Select
-            value={draft.ownerId}
-            options={users.map((u) => ({ value: u.id, label: u.name }))}
-            onChange={(v) => setDraft({ ...draft, ownerId: v })}
-          />
-        </div>
-        <div className="field field-span">
-          <span className="field-label">Win probability: {draft.probability}%</span>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            step={5}
-            value={draft.probability}
-            onChange={(e) => setDraft({ ...draft, probability: Number(e.target.value) })}
-          />
-        </div>
-      </div>
-    </Modal>
+      ) : view === 'list' ? (
+        narrow ? (
+          <div className="card deal-grp" data-testid="deals-list">
+            {listed.map((d) => <DealRow key={d.id} deal={d} stages={stages} accounts={accounts} />)}
+          </div>
+        ) : (
+          <div className="card deal-table" data-testid="deals-list">
+            <table className="table">
+              <thead>
+                <tr>
+                  {LIST_COLUMNS.map((c) => (
+                    <th key={c.key} scope="col" className={c.num ? 'num' : undefined} aria-sort={sort.key === c.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                      <button type="button" className="th-sort" onClick={() => setSort((s) => ({ key: c.key, dir: s.key === c.key && s.dir === 'asc' ? 'desc' : 'asc' }))}>
+                        {c.label}{sort.key === c.key ? (sort.dir === 'asc' ? ' ↑' : ' ↓') : ''}
+                      </button>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {listed.map((d, i) => {
+                  const stage = stageOf(stages, d.stage);
+                  const due = dueInfo(d);
+                  const account = accounts.find((a) => a.id === d.accountId);
+                  return (
+                    <tr key={d.id} className="deal-tr" style={{ animationDelay: `${fresh ? Math.min(i, 14) * 22 : 0}ms` }} onClick={() => navigate(`/deals/${d.id}`)}>
+                      <td data-label="Deal">
+                        <div className="deal-nm">
+                          <MiniCrest account={account} />
+                          <div>
+                            <Link to={`/deals/${d.id}`} onClick={(e) => e.stopPropagation()}>{d.name}</Link>
+                            <small>{account?.name ?? 'No account'}</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td data-label="Stage"><span className="deal-pill" style={hueStyle(stage.hue)}><i />{d.stage}</span></td>
+                      <td className="num" data-label="Amount" title={formatCurrency(d.amount)}>{shortMoney(d.amount)}</td>
+                      <td className="num" data-label="Chance"><span className="deal-chance"><ChanceRing value={d.probability} size={22} stroke={3} hue={stage.hue} delay={0} />{d.probability}%</span></td>
+                      <td data-label="Expected close"><span className={classNames('deal-due', due.tone)}>{due.text}</span></td>
+                      <td data-label="Owner">{ownerName(d.ownerId)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : narrow ? (
+        <PhoneBoard {...boardProps} />
+      ) : (
+        <StageBoard {...boardProps} canWrite={canWrite} landedId={landedId} onMove={onMove} />
+      )}
+
+      {losing && <LostReasonDialog deal={losing} onCancel={() => setLosing(null)} onConfirm={confirmLost} />}
+      {layoutPickerOpen && <LayoutPickerPanel module="deals" basePath="/deals" onClose={() => setLayoutPickerOpen(false)} />}
+    </div>
   );
 }

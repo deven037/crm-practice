@@ -613,7 +613,7 @@ function formView() {
       <div class="f full"><label for="in-tag">Tags</label><div class="tagbox" id="tagbox"></div><div class="sugg" id="sugg"></div></div>
     </div></div>
     ${layout.tabs.slice(1).map((t, k) => `<div class="sect" data-tab="${k + 1}" hidden><div class="fg">
-      ${(t === 'KYC' ? ['PAN', 'Address proof type', 'KYC renewal date'] : t === 'Signing authority' ? ['Signing limit (₹)', 'Signs jointly with', 'Mandate valid until'] : ['Preferred contact time', 'Language', 'Date of birth']).map((lab, i) => `<div class="f"><label for="cf-${k}-${i}">${lab}<span class="tg">your bank</span></label><input id="cf-${k}-${i}" autocomplete="off"></div>`).join('')}
+      ${(t === 'KYC' ? ['PAN', 'Address proof type', 'KYC renewal date'] : t === 'Signing authority' ? ['Signing limit (₹)', 'Signs jointly with', 'Mandate valid until'] : ['Preferred contact time', 'Language', 'Date of birth']).map((lab, i) => `<div class="f"><label for="cf-${k}-${i}">${lab}</label><input id="cf-${k}-${i}" autocomplete="off"></div>`).join('')}
     </div></div>`).join('')}
     <div class="savebar"><button type="button" class="btn" data-cancel>Cancel</button><button class="btn pri">${e ? 'Save changes' : 'Save contact'}</button></div>
   </form>`;

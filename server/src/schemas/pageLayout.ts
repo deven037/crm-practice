@@ -13,4 +13,6 @@ export const pageLayoutSchema = z.object({
   name: z.string().min(1, 'Name is required.'),
   isDefault: z.boolean().default(false),
   tabs: z.array(layoutTabSchema).min(1, 'Add at least one tab.'),
+  // The cards on the record page, in order, and the column each sits in. Missing = the module's standard cards.
+  cards: z.array(z.object({ id: z.string().min(1).max(60), zone: z.enum(['main', 'side']) })).max(30).optional(),
 });

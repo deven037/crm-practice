@@ -35,6 +35,7 @@ import { QuoteDetail } from './pages/QuoteDetail';
 import { Deals } from './pages/Deals';
 import { DealForm } from './pages/DealForm';
 import { DealDetail } from './pages/DealDetail';
+import { DealEdit } from './pages/DealEdit';
 import { Tasks } from './pages/Tasks';
 import { Tickets } from './pages/Tickets';
 import { TicketForm } from './pages/TicketForm';
@@ -135,8 +136,9 @@ export function App() {
             <Route path="/quotes/new" element={<Protected><QuoteForm /></Protected>} />
             <Route path="/quotes/:id" element={<Protected><QuoteDetail /></Protected>} />
             <Route path="/deals" element={<Protected><Deals /></Protected>} />
-            <Route path="/deals/new" element={<Protected><DealForm /></Protected>} />
+            <Route path="/deals/new" element={<Protected roles={['admin', 'rep']}><DealForm /></Protected>} />
             <Route path="/deals/:id" element={<Protected><DealDetail /></Protected>} />
+            <Route path="/deals/:id/edit" element={<Protected roles={['admin', 'rep']}><DealEdit /></Protected>} />
             <Route path="/tasks" element={<Protected><Tasks /></Protected>} />
             <Route path="/tickets" element={<Protected><Tickets /></Protected>} />
             <Route path="/tickets/new" element={<Protected><TicketForm /></Protected>} />

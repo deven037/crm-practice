@@ -180,11 +180,30 @@ function seedContacts(accounts: Account[]): Contact[] {
   return contacts;
 }
 
+export const DEAL_LOST_REASONS = ['Price or rate too high', 'Chose another bank', 'Credit not approved', 'Customer stopped responding', 'Project cancelled', 'Timing, revisit next year', 'Missing documents'];
+const DEAL_NEXT_STEPS = ['Send revised pricing', 'Collect audited financials', 'Book a site visit', 'Legal review of the agreement', 'Share the term sheet', 'Intro call with the finance head', 'Draft the credit memo'];
+
+/** The stages a seeded deal walked through to reach where it is, ending at its current stage. */
+function seedStageHistory(stage: string, createdAt: string, closeDate: string, by: string, lostReason: string): Deal['stageHistory'] {
+  const open = ['Qualification', 'Proposal', 'Negotiation'];
+  const reached = stage === 'Closed Won' ? 3 : stage === 'Closed Lost' ? 2 : Math.max(1, open.indexOf(stage) + 1);
+  const start = new Date(createdAt).getTime();
+  // Some seeded deals close before they were created; their history then runs from creation up to today.
+  const close = new Date(closeDate).getTime();
+  const end = stage.startsWith('Closed') && close > start ? close : Math.max(start + 1, Date.now() - 24 * 60 * 60 * 1000);
+  const step = (end - start) / (reached + 1);
+  const events: NonNullable<Deal['stageHistory']> = open.slice(0, reached).map((s, k) => ({ stage: s, at: new Date(start + k * step).toISOString(), by }));
+  if (stage.startsWith('Closed')) events.push({ stage, at: new Date(end).toISOString(), by, ...(lostReason ? { note: lostReason } : {}) });
+  return events;
+}
+
 function seedDeals(accounts: Account[]): Deal[] {
   const deals: Deal[] = [];
   for (let i = 0; i < 25; i++) {
     const stage = DEAL_STAGES[i % DEAL_STAGES.length];
-    deals.push({
+    // The random calls stay in their original order so every seeded record after the deals is unchanged;
+    // the new fields come from the row number instead.
+    const deal: Deal = {
       id: `deal-${i + 1}`,
       name: `${pick(COMPANIES).split(' ')[0]} ${pick(['Renewal', 'Expansion', 'New Business', 'Upgrade', 'Pilot'])}`,
       accountId: pick(accounts).id,
@@ -194,7 +213,12 @@ function seedDeals(accounts: Account[]): Deal[] {
       probability: stage === 'Closed Won' ? 100 : stage === 'Closed Lost' ? 0 : between(2, 18) * 5,
       ownerId: pick(OWNER_IDS),
       createdAt: daysAgo(between(10, 200)),
-    });
+    };
+    deal.layoutName = 'Default';
+    deal.nextStep = stage.startsWith('Closed') ? '' : DEAL_NEXT_STEPS[i % DEAL_NEXT_STEPS.length];
+    deal.lostReason = stage === 'Closed Lost' ? DEAL_LOST_REASONS[i % DEAL_LOST_REASONS.length] : '';
+    deal.stageHistory = seedStageHistory(stage, deal.createdAt, deal.closeDate, SEED_USERS.find((u) => u.id === deal.ownerId)?.name ?? 'Alex Admin', deal.lostReason);
+    deals.push(deal);
   }
   return deals;
 }
@@ -429,6 +453,7 @@ function seedStatusCodeSets(): StatusCodeSet[] {
   return [
     { id: 'status-lead-status', module: 'leads', field: 'status', name: 'Lead Status', options: [...LEAD_STATUSES], isSystem: true },
     { id: 'status-deal-stage', module: 'deals', field: 'stage', name: 'Deal Stage', options: [...DEAL_STAGES], isSystem: true },
+    { id: 'status-deal-lost-reason', module: 'deals', field: 'lostReason', name: 'Deal Lost Reason', options: [...DEAL_LOST_REASONS], isSystem: true },
     {
       id: 'status-campaign-status',
       module: 'campaigns',
@@ -475,7 +500,7 @@ const DEFAULT_LAYOUT_FIELDS: Record<CustomFieldModule, string[]> = {
   leads: ['name', 'company', 'email', 'phone', 'status', 'source', 'value', 'ownerId'],
   contacts: ['name', 'email', 'phone', 'title', 'accountId'],
   accounts: ['name', 'industry', 'employees', 'revenue', 'website', 'phone', 'ownerId'],
-  deals: ['name', 'accountId', 'amount', 'stage', 'probability', 'closeDate', 'ownerId'],
+  deals: ['name', 'accountId', 'amount', 'stage', 'probability', 'closeDate', 'ownerId', 'campaignId', 'nextStep'],
   products: ['name', 'sku', 'category', 'price', 'description', 'active'],
   tickets: ['subject', 'requester', 'priority', 'description'],
   campaigns: ['name', 'channel', 'budget', 'status', 'startDate', 'endDate'],

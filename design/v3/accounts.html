@@ -561,7 +561,7 @@ function acctView(fresh) {
         <div><dt>Website</dt><dd>${a.web ? `<button class="link" data-site>${esc(a.web.replace('https://', ''))} ↗</button>` : '<span class="muted">None</span>'}</dd></div>
         <div><dt>Page layout</dt><dd>${a.layout || 'Standard account'}</dd></div>
         <div><dt>Added</dt><dd>${a.added}</dd></div>
-        <div><dt>Contract type</dt><dd>Annual <span class="tg">your bank</span></dd></div>
+        <div><dt>Contract type</dt><dd>Annual </dd></div>
       </dl></section>
     </div>
   </div>`;
@@ -622,7 +622,7 @@ function formView() {
         <div class="f" id="f-web"><label for="in-web">Website</label><input id="in-web" value="${v('web')}" placeholder="https://" autocomplete="off"></div>
         <div class="f"><label for="in-phone">Phone</label><input id="in-phone" value="${v('phone')}" autocomplete="off"></div>
       </div></div>
-      ${layout.tabs.slice(1).map((t, k) => `<div class="sect" data-tab="${k + 1}" hidden><div class="fg">${extra(t).map((lab, i) => `<div class="f"><label for="cf-${k}-${i}">${lab}<span class="tg">your bank</span></label><input id="cf-${k}-${i}" autocomplete="off"></div>`).join('')}</div></div>`).join('')}
+      ${layout.tabs.slice(1).map((t, k) => `<div class="sect" data-tab="${k + 1}" hidden><div class="fg">${extra(t).map((lab, i) => `<div class="f"><label for="cf-${k}-${i}">${lab}</label><input id="cf-${k}-${i}" autocomplete="off"></div>`).join('')}</div></div>`).join('')}
       <div class="savebar"><button type="button" class="btn" data-cancel>Cancel</button><button class="btn pri">${e ? 'Save changes' : 'Create account'}</button></div>
     </form>
     <aside class="card prev" aria-label="Preview"><span class="lab">On the portfolio map</span>

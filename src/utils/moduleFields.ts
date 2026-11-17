@@ -65,6 +65,8 @@ function systemFieldsFor(module: CustomFieldModule): ModuleFieldDef[] {
         { key: 'probability', label: 'Win probability', kind: 'number' },
         { key: 'closeDate', label: 'Expected close', kind: 'text' },
         { key: 'ownerId', label: 'Owner', kind: 'text' },
+        { key: 'campaignId', label: 'Campaign', kind: 'text' },
+        { key: 'nextStep', label: 'Next step', kind: 'text' },
       ];
     case 'products':
       return [

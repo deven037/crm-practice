@@ -23,6 +23,7 @@ export const pageLayoutsRouter: Router = crudRouter<PageLayout>({
       label: t.label.trim(),
       fieldKeys: t.fieldKeys,
     })),
+    ...(body.cards ? { cards: body.cards } : {}),
   }),
   buildUpdate: (body, id) => {
     const existing = store.pageLayouts.get(id);
@@ -37,6 +38,8 @@ export const pageLayoutsRouter: Router = crudRouter<PageLayout>({
         label: t.label.trim(),
         fieldKeys: t.fieldKeys,
       })),
+      // Screens that only edit the form tabs leave the record page cards as they were.
+      ...((body.cards ?? existing?.cards) ? { cards: body.cards ?? existing?.cards } : {}),
     };
   },
 });

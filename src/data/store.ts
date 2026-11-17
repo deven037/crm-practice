@@ -83,8 +83,10 @@ export async function upsert<T extends { id: string }>(key: string, item: T): Pr
   return saved;
 }
 
-export async function removeMany(key: string, ids: string[]): Promise<void> {
-  await Promise.all(ids.map((id) => apiFetch(`/${key}/${id}`, { method: 'DELETE' })));
+/** `confirm` is sent as ?confirm=… for deletes the server guards (for example a Closed Won deal). */
+export async function removeMany(key: string, ids: string[], confirm?: string): Promise<void> {
+  const query = confirm ? `?confirm=${encodeURIComponent(confirm)}` : '';
+  await Promise.all(ids.map((id) => apiFetch(`/${key}/${id}${query}`, { method: 'DELETE' })));
   cache[key] = (cache[key] ?? []).filter((i) => !ids.includes(i.id));
 }
 

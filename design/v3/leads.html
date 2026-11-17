@@ -442,7 +442,7 @@ function rowsNow() {
 function statusPop(multi) {
   const opts = STATUS.filter((s) => s[0].toLowerCase().includes(popQ.toLowerCase()));
   return `<div class="pop" id="pop"><input id="popQ" placeholder="Find a status" value="${esc(popQ)}" aria-label="Find a status">` +
-    (opts.length ? opts.map((s) => `<button class="opt" role="${multi ? 'menuitemcheckbox' : 'menuitemradio'}" aria-checked="${multi ? fStatus.has(s[0]) : LEADS[cur].status === s[0]}" data-st="${s[0]}" style="--c:var(${s[1]})"><i></i>${s[0]}${s[2] ? '<span class="tag">your bank</span>' : ''}<span class="tick">${ic('check', 15)}</span></button>`).join('')
+    (opts.length ? opts.map((s) => `<button class="opt" role="${multi ? 'menuitemcheckbox' : 'menuitemradio'}" aria-checked="${multi ? fStatus.has(s[0]) : LEADS[cur].status === s[0]}" data-st="${s[0]}" style="--c:var(${s[1]})"><i></i>${s[0]}<span class="tick">${ic('check', 15)}</span></button>`).join('')
       : '<div class="none">No status matches. Add one in Setup, Status codes.</div>') + '</div>';
 }
 function listView() {
