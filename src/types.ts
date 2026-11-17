@@ -96,8 +96,17 @@ export interface Account {
   customFields?: Record<string, string | number | boolean | null>;
 }
 
-export type DealStage = 'Qualification' | 'Proposal' | 'Negotiation' | 'Closed Won' | 'Closed Lost';
+/** The built-in stages. A bank renames them or adds its own in Setup (status codes), so any stage name is allowed. */
+export type DealStage = 'Qualification' | 'Proposal' | 'Negotiation' | 'Closed Won' | 'Closed Lost' | (string & {});
 export const DEAL_STAGES: DealStage[] = ['Qualification', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost'];
+
+export interface DealStageEvent {
+  stage: string;
+  at: string;
+  by: string;
+  /** The lost reason, when the deal entered a lost stage. */
+  note?: string;
+}
 
 export interface Deal {
   id: string;
@@ -109,6 +118,14 @@ export interface Deal {
   probability: number;
   ownerId: string;
   campaignId?: string | null;
+  /** Name of the page layout the deal was created with. */
+  layoutName?: string | null;
+  /** What happens next, and who does it. */
+  nextStep?: string;
+  /** Why the deal was lost; set only while it is in a lost stage. */
+  lostReason?: string;
+  /** Every stage the deal entered, oldest first. Written by the server, never by the browser. */
+  stageHistory?: DealStageEvent[];
   createdAt: string;
   customFields?: Record<string, string | number | boolean | null>;
 }
@@ -288,12 +305,19 @@ export interface LayoutTab {
  * runtime) — this is a newer, richer, multi-layout/multi-tab config surface. Selectable
  * at record-creation time via the `?layout=` query param (see LayoutPickerPanel.tsx).
  */
+export interface RecordCard {
+  id: string;
+  zone: 'main' | 'side';
+}
+
 export interface PageLayout {
   id: string;
   module: CustomFieldModule;
   name: string;
   isDefault: boolean;
   tabs: LayoutTab[];
+  /** The cards on the record page and the column each sits in. Missing = the module's standard cards. */
+  cards?: RecordCard[];
 }
 
 export type RoleOperation = 'view' | 'create' | 'edit' | 'delete';

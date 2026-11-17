@@ -12,6 +12,7 @@ import './styles/shell.css';
 import './styles/leads.css';
 import './styles/contacts.css';
 import './styles/accounts.css';
+import './styles/deals.css';
 import './styles/front-door.css';
 import './styles/front-door-pages.css';
 import { applyBankTheme, rememberedBankColor } from './theme/bankTheme';
