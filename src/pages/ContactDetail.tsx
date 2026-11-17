@@ -1,23 +1,17 @@
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Calendar, FileText, Paperclip, Pencil, StickyNote, Trash2 } from 'lucide-react';
+import { Building2, Camera, ChevronLeft, ChevronRight, Copy, Mail, Paperclip, Pencil, Phone, Plus, Trash2, X } from 'lucide-react';
 import { getAllSync, getById, newId, removeMany, upsert } from '../data/store';
 import { Modal } from '../components/Modal';
 import { useAuth } from '../auth/AuthContext';
 import { Account, Contact } from '../types';
-import { Tabs } from '../components/Tabs';
-import { MultiSelect } from '../components/Select';
 import { SearchableSelect } from '../components/Select';
 import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
-import { formatDate, formatDateTime, initials } from '../utils';
-
-const TAG_OPTIONS = ['vip', 'newsletter', 'partner', 'decision-maker', 'follow-up', 'imported'].map((t) => ({
-  value: t,
-  label: t,
-}));
+import { formatDate, formatDateTime } from '../utils';
+import { allContactTags, ContactFace, hueStyle, TagInput, TagPicker } from './contacts/contactBits';
 
 export function ContactDetail() {
   const { id } = useParams();
@@ -102,6 +96,12 @@ export function ContactDetail() {
 
   const accounts = getAllSync<Account>('accounts');
   const accountName = accounts.find((a) => a.id === contact.accountId)?.name;
+  const everyone = [...getAllSync<Contact>('contacts')].sort((a, b) => a.name.localeCompare(b.name));
+  const colleagues = contact.accountId ? everyone.filter((c) => c.accountId === contact.accountId && c.id !== contact.id) : [];
+  const place = everyone.findIndex((c) => c.id === contact.id);
+  const step = (by: number) => navigate(`/contacts/${everyone[(place + by + everyone.length) % everyone.length].id}`);
+  const tagChoices = allContactTags(everyone);
+  const firstName = contact.name.trim().split(/\s+/)[0] || 'this contact';
 
   const persist = async (next: Contact, message: string) => {
     if (busy || !canWrite) return false;
@@ -147,55 +147,289 @@ export function ContactDetail() {
     if (saved) setNoteText('');
   };
 
+  const copy = (text: string, what: string) => {
+    navigator.clipboard?.writeText(text).then(
+      () => toast.push('success', `${what} copied.`),
+      () => toast.push('error', `${what} could not be copied.`),
+    );
+  };
+
+  const stopEditing = () => { setSaveError(false); setEditing(false); };
+  const formOpen = editing && canWrite && draft;
+
   return (
-    <div className="contact-screen contact-record" data-testid="contact-detail-page">
-      <nav className="breadcrumbs">
-        <Link to="/contacts">Contacts</Link> <span>/</span> <span>{contact.name}</span>
-      </nav>
-
-      <div className="detail-header">
-        <div className="detail-avatar-wrap">
-          <div className="contact-avatar contact-avatar-lg">
-            {contact.avatar ? <img src={contact.avatar} alt={contact.name} /> : initials(contact.name)}
+    <div className="contact3 contact-record" data-testid="contact-detail-page" style={hueStyle(contact.id)}>
+      {formOpen ? (
+        <>
+          <button type="button" className="contact-back" onClick={stopEditing}>
+            <ChevronLeft size={16} aria-hidden="true" /> {contact.name}
+          </button>
+          <form className="card contact-formcard" ref={editForm} noValidate onSubmit={async (event) => {
+            event.preventDefault();
+            if (busy || !canWrite) return;
+            const nextErrors = validateCustomFields('contacts', 'detail', draft.customFields ?? {});
+            if (!draft.name.trim()) nextErrors.name = 'Name is required.';
+            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(draft.email.trim())) nextErrors.email = 'Enter a valid email.';
+            setErrors(nextErrors);
+            if (Object.keys(nextErrors).length) return;
+            if (await persist(draft, 'Contact updated.')) setEditing(false);
+          }}>
+            <div className="contact-band" />
+            <div className="contact-cover-top">
+              <ContactFace contact={{ ...contact, name: draft.name }} size="large" />
+              <div className="contact-ident">
+                <h1>{draft.name.trim() || contact.name}</h1>
+                <p>Editing this contact{contact.layoutName ? ` · Layout: ${contact.layoutName}` : ''}</p>
+              </div>
+            </div>
+            {saveError && !deleting && <div className="banner banner-error contact-form-note" role="alert">Changes couldn’t be saved. Your details are still here.</div>}
+            <fieldset className="form-grid contact-fields" disabled={busy} aria-live="polite">
+              <div className="field">
+                <label className="field-label" htmlFor="edit-contact-name">Full name *</label>
+                <input id="edit-contact-name" className="input" aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? 'edit-contact-name-error' : undefined} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+                {errors.name && <span className="field-error" id="edit-contact-name-error">{errors.name}</span>}
+              </div>
+              <div className="field">
+                <label className="field-label" htmlFor="edit-contact-email">Email *</label>
+                <input id="edit-contact-email" className="input" aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'edit-contact-email-error' : undefined} value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
+                {errors.email && <span className="field-error" id="edit-contact-email-error">{errors.email}</span>}
+              </div>
+              <div className="field">
+                <label className="field-label" htmlFor="edit-contact-phone">Phone</label>
+                <input id="edit-contact-phone" className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
+              </div>
+              <div className="field">
+                <label className="field-label" htmlFor="edit-contact-title">Job title</label>
+                <input id="edit-contact-title" className="input" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+              </div>
+              <div className="field field-span">
+                <label className="field-label" htmlFor="edit-contact-account">Account</label>
+                <SearchableSelect
+                  id="edit-contact-account"
+                  value={draft.accountId ?? ''}
+                  options={accounts.map((a) => ({ value: a.id, label: a.name }))}
+                  onChange={(v) => setDraft({ ...draft, accountId: v })}
+                  placeholder="Search accounts…"
+                />
+              </div>
+              <div className="field field-span">
+                <label className="field-label" htmlFor="edit-contact-tags">Tags</label>
+                <TagInput id="edit-contact-tags" tags={draft.tags} suggestions={tagChoices} onChange={(tags) => setDraft({ ...draft, tags })} />
+              </div>
+              <CustomFieldsSection
+                module="contacts"
+                target="detail"
+                mode="edit"
+                errors={errors}
+                values={draft.customFields ?? {}}
+                onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
+              />
+            </fieldset>
+            <div className="form-actions contact-form-actions">
+              <button type="button" className="btn" onClick={stopEditing}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary contacts-primary" data-testid="save-contact-btn">
+                {busy ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </form>
+        </>
+      ) : (
+        <>
+          <div className="contact-record-top">
+            <Link to="/contacts" className="contact-back"><ChevronLeft size={16} aria-hidden="true" /> Contacts</Link>
+            {everyone.length > 1 && place >= 0 && (
+              <div className="contact-nav">
+                <button type="button" className="btn" aria-label="Previous contact" onClick={() => step(-1)}><ChevronLeft size={16} /></button>
+                <button type="button" className="btn" aria-label="Next contact" onClick={() => step(1)}><ChevronRight size={16} /></button>
+              </div>
+            )}
           </div>
-          {canWrite && <button disabled={busy} className="btn" data-testid="upload-avatar-btn" onClick={() => avatarInput.current?.click()}>
-            Upload photo
-          </button>}
-          <input ref={avatarInput} type="file" accept="image/*" hidden data-testid="avatar-input" onChange={onAvatarChange} />
-        </div>
-        <div>
-          <h1>{contact.name}</h1>
-          <p className="muted">
-            {contact.title || 'No title'} {accountName ? `· ${accountName}` : ''}
-          </p>
-        </div>
-        <div className="page-actions">
-          {canWrite && <button disabled={busy} className="btn contact-delete" data-testid="delete-contact-btn" onClick={() => { setSaveError(false); setDeleting(true); }}>
-            <Trash2 size={14} /> Delete contact
-          </button>}
-        </div>
-      </div>
 
-      <div className="key-info-strip">
-        <div className="key-info-item">
-          <span className="key-info-label">Email</span>
-          <span className="key-info-value">{contact.email}</span>
-        </div>
-        <div className="key-info-item">
-          <span className="key-info-label">Phone</span>
-          <span className="key-info-value">{contact.phone || '—'}</span>
-        </div>
-        <div className="key-info-item">
-          <span className="key-info-label">Account</span>
-          <span className="key-info-value">{accountName ?? '—'}</span>
-        </div>
-        <div className="key-info-item">
-          <span className="key-info-label">Created</span>
-          <span className="key-info-value">{formatDate(contact.createdAt)}</span>
-        </div>
-      </div>
+          <section className="card contact-cover">
+            <div className="contact-band" />
+            <div className="contact-cover-top">
+              <span className="contact-photo">
+                <ContactFace contact={contact} size="large" />
+                {canWrite && <button type="button" disabled={busy} className="contact-cam" aria-label="Upload photo" title="Upload photo" data-testid="upload-avatar-btn" onClick={() => avatarInput.current?.click()}>
+                  <Camera size={15} />
+                </button>}
+                <input ref={avatarInput} type="file" accept="image/*" hidden data-testid="avatar-input" onChange={onAvatarChange} />
+              </span>
+              <div className="contact-ident">
+                <h1>{contact.name}</h1>
+                <p>
+                  {contact.title || 'No title'}
+                  {contact.accountId && accountName ? <> at <Link to={`/accounts/${contact.accountId}`}>{accountName}</Link></> : ''}
+                </p>
+                <div className="contact-tags">
+                  {contact.tags.map((t) => (
+                    <span key={t} className="contact-tag">
+                      {t}
+                      {canWrite && <button type="button" disabled={busy} aria-label={`Remove tag ${t}`} onClick={() => persist({ ...contact, tags: contact.tags.filter((x) => x !== t) }, 'Tag removed.')}><X size={11} aria-hidden="true" /></button>}
+                    </span>
+                  ))}
+                  {!canWrite && contact.tags.length === 0 && <span className="muted">No tags</span>}
+                  {canWrite && (
+                    <TagPicker
+                      testId="add-tag"
+                      allowNew
+                      label={<><Plus size={11} aria-hidden="true" /> Tag</>}
+                      tags={tagChoices}
+                      selected={contact.tags}
+                      onToggle={(t) => persist(
+                        { ...contact, tags: contact.tags.includes(t) ? contact.tags.filter((x) => x !== t) : [...contact.tags, t] },
+                        contact.tags.includes(t) ? 'Tag removed.' : 'Tag added.',
+                      )}
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="page-actions">
+                {canWrite && <button
+                  disabled={busy}
+                  className="btn contact-edit"
+                  data-testid="edit-contact-btn"
+                  onClick={() => {
+                    setSaveError(false);
+                    setErrors({});
+                    setDraft({ ...contact });
+                    setEditing(true);
+                  }}
+                >
+                  <Pencil size={14} /> Edit
+                </button>}
+                {canWrite && <button disabled={busy} className="btn contact-delete" data-testid="delete-contact-btn" onClick={() => { setSaveError(false); setDeleting(true); }}>
+                  <Trash2 size={14} /> Delete
+                </button>}
+              </div>
+            </div>
+          </section>
 
-      {saveError && !deleting && <div className="banner banner-error" role="alert">Changes couldn’t be saved. Your details are still here.</div>}
+          {saveError && !deleting && <div className="banner banner-error" role="alert">Changes couldn’t be saved. Your details are still here.</div>}
+
+          <div className="contact-cols">
+            <div className="contact-side">
+              <section className="card contact-box">
+                <div className="contact-box-head"><h2>Notes</h2><span className="muted">{contact.notes.length}</span></div>
+                {canWrite && <div className="contact-composer">
+                  <label className="sr-only" htmlFor="contact-note">Note</label>
+                  <textarea
+                    id="contact-note"
+                    disabled={busy}
+                    className="input"
+                    rows={1}
+                    placeholder={`Write a note about ${firstName}…`}
+                    data-testid="note-input"
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                  />
+                  <button disabled={busy || !noteText.trim()} className="btn btn-primary contacts-primary" data-testid="add-note-btn" onClick={addNote}>
+                    Add note
+                  </button>
+                </div>}
+                {contact.notes.length === 0 && <p className="muted contact-none">No notes yet. Add a note to keep context with this contact.</p>}
+                <div className="contact-timeline">
+                  {contact.notes.map((note, i) => (
+                    <div key={note.id} className="contact-note" style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}>
+                      <p>{note.text}</p>
+                      <small>
+                        {formatDateTime(note.createdAt)}
+                        {canWrite && <button
+                          disabled={busy}
+                          className="link-btn"
+                          onClick={() =>
+                            persist({ ...contact, notes: contact.notes.filter((n) => n.id !== note.id) }, 'Note deleted.')
+                          }
+                        >
+                          Delete
+                        </button>}
+                      </small>
+                    </div>
+                  ))}
+                  <div className="contact-note start">
+                    <p>Contact created</p>
+                    <small>{formatDateTime(contact.createdAt)}</small>
+                  </div>
+                </div>
+              </section>
+
+              <section className="card contact-box">
+                <div className="contact-box-head">
+                  <h2>Files</h2>
+                  {canWrite && <button disabled={busy} className="btn" data-testid="attach-file-btn" onClick={() => fileInput.current?.click()}>
+                    <Paperclip size={14} /> Attach file
+                  </button>}
+                  <input ref={fileInput} type="file" hidden data-testid="file-input" onChange={onFileAttach} />
+                </div>
+                {contact.files.length === 0 && <p className="muted contact-none">No files attached yet.</p>}
+                <ul className="contact-files">
+                  {contact.files.map((file) => (
+                    <li key={file.id}>
+                      <span className="contact-file-ext">{(file.name.includes('.') ? file.name.split('.').pop() ?? '' : 'file').slice(0, 4).toUpperCase()}</span>
+                      <div><b>{file.name}</b><small>{Math.max(1, Math.round(file.size / 1024))} KB</small></div>
+                      {canWrite && <button
+                        disabled={busy}
+                        className="contact-file-remove"
+                        aria-label={`Remove ${file.name}`}
+                        onClick={() =>
+                          persist({ ...contact, files: contact.files.filter((f) => f.id !== file.id) }, 'File removed.')
+                        }
+                      >
+                        <X size={14} />
+                      </button>}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+
+            <div className="contact-side">
+              <section className="card contact-box">
+                <h2>Reach {firstName}</h2>
+                <div className="contact-reach">
+                  <div><Mail size={16} aria-hidden="true" /><span>{contact.email}</span><button type="button" className="btn" onClick={() => copy(contact.email, 'Email')}><Copy size={13} /> Copy</button></div>
+                  <div><Phone size={16} aria-hidden="true" /><span>{contact.phone || '—'}</span>{contact.phone && <button type="button" className="btn" onClick={() => copy(contact.phone, 'Phone number')}><Copy size={13} /> Copy</button>}</div>
+                </div>
+              </section>
+
+              <section className="card contact-box">
+                <h2>Details</h2>
+                <dl className="detail-list contact-details">
+                  <dt>Job title</dt>
+                  <dd>{contact.title || '—'}</dd>
+                  <dt>Account</dt>
+                  <dd>{accountName ?? '—'}</dd>
+                  <dt>Created</dt>
+                  <dd>{formatDate(contact.createdAt)}</dd>
+                  {contact.layoutName && <><dt>Page layout</dt><dd>{contact.layoutName}</dd></>}
+                  <CustomFieldsSection module="contacts" target="detail" mode="view" values={contact.customFields ?? {}} />
+                </dl>
+              </section>
+
+              <section className="card contact-box">
+                <h2>Works at</h2>
+                {contact.accountId && accountName ? (
+                  <Link className="contact-account" to={`/accounts/${contact.accountId}`}><Building2 size={14} aria-hidden="true" /> {accountName}</Link>
+                ) : <p className="muted contact-none">Not linked to an account.</p>}
+                {colleagues.length > 0 && (
+                  <div className="contact-mates">
+                    {colleagues.map((mate) => (
+                      <Link key={mate.id} to={`/contacts/${mate.id}`} className="contact-mate">
+                        <ContactFace contact={mate} size="small" />
+                        <span><b>{mate.name}</b><small>{mate.title || 'No title'}</small></span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+                {contact.accountId && accountName && colleagues.length === 0 && <p className="muted contact-none">No one else from this account yet.</p>}
+              </section>
+            </div>
+          </div>
+        </>
+      )}
+
       {canWrite && deleting && (
         <Modal
           title={`Delete contact — ${contact.name}`}
@@ -234,220 +468,6 @@ export function ContactDetail() {
           </p>
         </Modal>
       )}
-
-      <Tabs
-        testId="contact-tabs"
-        tabs={[
-          {
-            id: 'overview',
-            label: 'Overview',
-            content: (
-              <div className="contact-section">
-                {!editing ? (
-                  <>
-                    <h2>Contact details</h2>
-                    <dl className="detail-list">
-                      <dt>Email</dt>
-                      <dd>{contact.email}</dd>
-                      <dt>Phone</dt>
-                      <dd>{contact.phone || '—'}</dd>
-                      <dt>Title</dt>
-                      <dd>{contact.title || '—'}</dd>
-                      <dt>Account</dt>
-                      <dd>{accountName ?? '—'}</dd>
-                      <dt>Tags</dt>
-                      <dd>
-                        {contact.tags.length === 0
-                          ? '—'
-                          : contact.tags.map((t) => (
-                              <span key={t} className="chip chip-tag">
-                                {t}
-                              </span>
-                            ))}
-                      </dd>
-                      <CustomFieldsSection module="contacts" target="detail" mode="view" values={contact.customFields ?? {}} />
-                    </dl>
-                    {canWrite && <button
-                      disabled={busy}
-                      className="btn contact-edit"
-                      data-testid="edit-contact-btn"
-                      onClick={() => {
-                        setSaveError(false);
-                        setErrors({});
-                        setDraft({ ...contact });
-                        setEditing(true);
-                      }}
-                    >
-                      <Pencil size={14} /> Edit
-                    </button>}
-                  </>
-                ) : (
-                  draft && (
-                    <form ref={editForm} noValidate onSubmit={async (event) => {
-                      event.preventDefault();
-                      if (busy || !canWrite) return;
-                      const nextErrors = validateCustomFields('contacts', 'detail', draft.customFields ?? {});
-                      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(draft.email.trim())) nextErrors.email = 'Enter a valid email.';
-                      setErrors(nextErrors);
-                      if (Object.keys(nextErrors).length) return;
-                      if (await persist(draft, 'Contact updated.')) setEditing(false);
-                    }}>
-                    <fieldset className="form-grid" disabled={busy} aria-live="polite">
-                      <div className="field">
-                        <label className="field-label" htmlFor="edit-contact-email">Email</label>
-                        <input id="edit-contact-email" className="input" aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? 'edit-contact-email-error' : undefined} value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
-                        {errors.email && <span className="field-error" id="edit-contact-email-error">{errors.email}</span>}
-                      </div>
-                      <div className="field">
-                        <label className="field-label" htmlFor="edit-contact-phone">Phone</label>
-                        <input id="edit-contact-phone" className="input" value={draft.phone} onChange={(e) => setDraft({ ...draft, phone: e.target.value })} />
-                      </div>
-                      <div className="field">
-                        <label className="field-label" htmlFor="edit-contact-title">Title</label>
-                        <input id="edit-contact-title" className="input" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
-                      </div>
-                      <div className="field">
-                        <label className="field-label" htmlFor="edit-contact-account">Account</label>
-                        <SearchableSelect
-                          id="edit-contact-account"
-                          value={draft.accountId ?? ''}
-                          options={accounts.map((a) => ({ value: a.id, label: a.name }))}
-                          onChange={(v) => setDraft({ ...draft, accountId: v })}
-                          placeholder="Search accounts…"
-                        />
-                      </div>
-                      <div className="field field-span">
-                        <label className="field-label" htmlFor="edit-contact-tags">Tags</label>
-                        <MultiSelect
-                          id="edit-contact-tags"
-                          values={draft.tags}
-                          options={TAG_OPTIONS}
-                          onChange={(tags) => setDraft({ ...draft, tags })}
-                          placeholder="Add tags…"
-                        />
-                      </div>
-                      <CustomFieldsSection
-                        module="contacts"
-                        target="detail"
-                        mode="edit"
-                        errors={errors}
-                        values={draft.customFields ?? {}}
-                        onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
-                      />
-                      <div className="field-span">
-                        <button
-                          type="submit"
-                          className="btn contacts-primary"
-                          data-testid="save-contact-btn"
-                        >
-                          {busy ? 'Saving…' : 'Save'}
-                        </button>{' '}
-                        <button type="button" className="btn" onClick={() => { setSaveError(false); setEditing(false); }}>
-                          Cancel
-                        </button>
-                      </div>
-                    </fieldset>
-                    </form>
-                  )
-                )}
-              </div>
-            ),
-          },
-          {
-            id: 'activity',
-            label: 'Activity',
-            content: (
-              <div className="contact-section">
-                <div className="activity-item">
-                  <span className="activity-icon"><Calendar size={14} /></span>
-                  <span className="activity-text">Contact created</span>
-                  <span className="activity-time">{formatDateTime(contact.createdAt)}</span>
-                </div>
-                {contact.notes.map((n) => (
-                  <div key={n.id} className="activity-item">
-                    <span className="activity-icon"><StickyNote size={14} /></span>
-                    <span className="activity-text">Note added: “{n.text.slice(0, 60)}”</span>
-                    <span className="activity-time">{formatDateTime(n.createdAt)}</span>
-                  </div>
-                ))}
-              </div>
-            ),
-          },
-          {
-            id: 'notes',
-            label: `Notes (${contact.notes.length})`,
-            content: (
-              <div className="contact-section">
-                {canWrite && <div className="note-composer">
-                  <label className="field-label" htmlFor="contact-note">Note</label>
-                  <textarea
-                    id="contact-note"
-                    disabled={busy}
-                    className="input"
-                    rows={3}
-                    placeholder="Write a note…"
-                    data-testid="note-input"
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                  />
-                  <button disabled={busy || !noteText.trim()} className="btn contacts-primary" data-testid="add-note-btn" onClick={addNote}>
-                    Add note
-                  </button>
-                </div>}
-                {contact.notes.length === 0 && <p className="muted">No notes yet. Add a note to keep context with this contact.</p>}
-                {contact.notes.map((note) => (
-                  <div key={note.id} className="note-item">
-                    <p>{note.text}</p>
-                    <div className="note-foot">
-                      <span className="muted">{formatDateTime(note.createdAt)}</span>
-                      <button
-                        hidden={!canWrite}
-                        disabled={busy}
-                        className="link-btn"
-                        onClick={() =>
-                          persist({ ...contact, notes: contact.notes.filter((n) => n.id !== note.id) }, 'Note deleted.')
-                        }
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ),
-          },
-          {
-            id: 'files',
-            label: `Files (${contact.files.length})`,
-            content: (
-              <div className="contact-section">
-                <button hidden={!canWrite} disabled={busy} className="btn" data-testid="attach-file-btn" onClick={() => fileInput.current?.click()}>
-                  <Paperclip size={14} /> Attach file
-                </button>
-                <input ref={fileInput} type="file" hidden data-testid="file-input" onChange={onFileAttach} />
-                <ul className="file-list">
-                  {contact.files.length === 0 && <li className="muted">No files attached yet.</li>}
-                  {contact.files.map((file) => (
-                    <li key={file.id}>
-                      <FileText size={14} /> {file.name} <span className="muted">({Math.max(1, Math.round(file.size / 1024))} KB)</span>
-                      <button
-                        hidden={!canWrite}
-                        disabled={busy}
-                        className="link-btn"
-                        onClick={() =>
-                          persist({ ...contact, files: contact.files.filter((f) => f.id !== file.id) }, 'File removed.')
-                        }
-                      >
-                        Remove
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ),
-          },
-        ]}
-      />
     </div>
   );
 }

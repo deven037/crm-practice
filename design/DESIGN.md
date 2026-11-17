@@ -83,6 +83,16 @@ Every metric states its time basis. Solid chip = follows the page range ("Last 3
 - Triage: one lead at a time as a stack of cards. Q qualifies, D disqualifies, the right arrow skips, the left arrow goes back, Escape leaves.
 - Test ids kept: `leads-page`, `export-csv-btn`, `view-table`, `view-triage`, `bulk-bar`, `mass-update-btn`, `clear-created-filter`, `leads-load-error`, `lead-status`, `pagination`, `lead-detail-page`, `lead-detail-status`, `edit-lead-btn`, `delete-lead-btn`, `save-lead-btn`, `confirm-delete-btn`, `lead-form-page` and its field ids, `wizard-finish`, `lead-triage-mode`, `triage-qualify`, `triage-skip`, `triage-disqualify`. Removed: `filters-toggle`, `filter-panel`, `toolbox-panel` (on Leads), `lead-detail-page-tabs`. New: `new-lead-btn`, `toolbox-menu`, `lead-flow`, `status-filter`, `owner-filter`, `source-filter`, `clear-filters`, `lead-status-change`, `lead-progress`, `lead-preview`, `convert-summary`, `convert-done`.
 
+### Contacts (`src/pages/Contacts.tsx`, `ContactDetail.tsx`, `ContactForm.tsx`, `src/pages/contacts/`, `src/styles/contacts.css`)
+- Design: `design/v3/contacts.html` (clickable, four screens). Every Contacts screen carries the class `contact3`.
+- Each module gets its own page idea. Leads is a status bar over a table; Contacts is a people directory.
+- Directory: cards grouped A to Z or by account, a letter rail to jump, and a quick look beside the list that opens on the first person and follows the card you click. Under 1020 px the quick look and rail are hidden and a click opens the profile. List view keeps the tick boxes and the bulk bar.
+- Every person keeps one colour (`contactHue`) on the card, the quick look and the profile.
+- Profile: cover with photo, tags you add or remove in place, notes as a timeline, files as tiles, and a "Works at" card with colleagues from the same account. Recently Accessed is not on Contacts; ToolBox is a header button.
+- Forms are full pages. The slide window is only for choosing a layout. New contact and Edit share one look: the profile, being filled in. Edit stays inside `ContactDetail` (no separate route).
+- Tags are free text: a searchable picker (`TagPicker`) and a chip box (`TagInput`), never a fixed row.
+- Test ids kept: `contacts-page`, `view-grid`, `view-list`, `contacts-load-error`, `contacts-empty`, `contact-detail-page`, `upload-avatar-btn`, `avatar-input`, `edit-contact-btn`, `save-contact-btn`, `delete-contact-btn`, `confirm-delete-btn`, `note-input`, `add-note-btn`, `attach-file-btn`, `file-input`, `contact-form-page` and its field ids, `contact-form-layout-tabs`, `duplicate-warning`, `contact-account`, `contact-tags`. Removed: `toolbox-panel` (on Contacts), `contact-tabs`. New: `new-contact`, `toolbox-menu`, `tag-filter`, `clear-filters`, `group-letter`, `group-account`, `contact-peek`, `contacts-no-match`, `add-tag`, `contact-photo-input`.
+
 ### 3.0 screens
 - The front door has no HTML mockups in `design/`; the built pages are the reference.
 - The old sign-in design `design/AIO-101/login.html` and its `.lg-` styles are retired.
