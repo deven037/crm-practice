@@ -93,6 +93,16 @@ Every metric states its time basis. Solid chip = follows the page range ("Last 3
 - Tags are free text: a searchable picker (`TagPicker`) and a chip box (`TagInput`), never a fixed row.
 - Test ids kept: `contacts-page`, `view-grid`, `view-list`, `contacts-load-error`, `contacts-empty`, `contact-detail-page`, `upload-avatar-btn`, `avatar-input`, `edit-contact-btn`, `save-contact-btn`, `delete-contact-btn`, `confirm-delete-btn`, `note-input`, `add-note-btn`, `attach-file-btn`, `file-input`, `contact-form-page` and its field ids, `contact-form-layout-tabs`, `duplicate-warning`, `contact-account`, `contact-tags`. Removed: `toolbox-panel` (on Contacts), `contact-tabs`. New: `new-contact`, `toolbox-menu`, `tag-filter`, `clear-filters`, `group-letter`, `group-account`, `contact-peek`, `contacts-no-match`, `add-tag`, `contact-photo-input`.
 
+### Accounts (`src/pages/Accounts.tsx`, `AccountDetail.tsx`, `AccountForm.tsx`, `AccountEdit.tsx`, `src/pages/accounts/`, `src/styles/accounts.css`)
+- Design: `design/v3/accounts.html` (clickable, five screens). Every Accounts screen carries the class `acct3`.
+- Accounts is a portfolio. The map shows one tile per account, sized by annual revenue and coloured by industry (`industryHue`); a click opens the account. Accounts under 5% of the largest get a minimum tile so they stay clickable.
+- Ledger: one line per account with a revenue bar and a sort. The arrow opens the numbers below the line; nothing opens by itself. Under 760 px the map is hidden and the ledger is the only view.
+- Account page: crest and industry, four figures that count up once, deals laid out by stage across the full width, then quotes, people and details. Recently Accessed is not on Accounts; ToolBox is a header button.
+- Forms are full pages with a live tile beside them. The slide window is only for choosing a layout. Edit has its own route, `/accounts/:id/edit` (`AccountEdit` loads the account and renders `AccountForm` with it). The account page no longer edits in place.
+- Industry filter is a searchable picker (`TagPicker`), never a fixed row.
+- The page tests call `AccountForm` and `AccountDetail` as plain functions and set state by position: keep the order of the `useState` calls and add new ones at the end.
+- Test ids kept: `accounts-page`, `accounts-load-error`, `accounts-empty`, `account-detail-page`, `edit-account-btn` (now a link), `delete-account-btn`, `confirm-delete-btn`, `delete-blocked-banner`, `account-form-page` and its field ids, `account-form-layout-tabs`, `save-account-btn` and `save-account-error` (now on the form). Removed: `toolbox-panel` (on Accounts), the account page tabs. New: `new-account`, `toolbox-menu`, `industry-filter`, `clear-filters`, `account-sort`, `view-map`, `view-ledger`, `accounts-map`, `account-tile`, `accounts-ledger`, `account-row`, `account-expand`, `account-expand-panel`, `accounts-no-match`, `account-deals`, `account-quotes`, `account-people`, `account-preview`, `account-load-error`.
+
 ### 3.0 screens
 - The front door has no HTML mockups in `design/`; the built pages are the reference.
 - The old sign-in design `design/AIO-101/login.html` and its `.lg-` styles are retired.

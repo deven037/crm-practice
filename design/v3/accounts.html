@@ -1,0 +1,714 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Harbor Accounts 3.0</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: Accounts is a portfolio. A map of tiles sized by annual revenue, a ledger that opens downwards, an account page built on figures and a deal track, and a full page form with a live tile. Tokens mirror src/styles/v3.css. */
+:root {
+  --bank-primary: #1d3a6e; --bank-on: #ffffff; --bank-ink-light: #1d3a6e; --bank-ink-dark: #9db8ee;
+  --bank-ink: var(--bank-ink-light);
+  --bg: color-mix(in srgb, var(--bank-primary) 4%, #f5f6f8);
+  --surface: #ffffff;
+  --surface-2: color-mix(in srgb, var(--bank-primary) 4%, #f3f4f6);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 7%, #e8eaee);
+  --border: color-mix(in srgb, var(--bank-primary) 8%, #e2e5ea);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 10%, #cfd4dc);
+  --text: #171b26; --text-muted: #5a6272;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 10%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 26%, var(--surface));
+  --bank-accent: color-mix(in srgb, var(--bank-primary) 45%, #fff);
+  --chrome-bg: color-mix(in srgb, var(--bank-primary) 26%, #0a0d15);
+  --chrome-hover: color-mix(in srgb, var(--bank-primary) 34%, #151a26);
+  --chrome-line: color-mix(in srgb, var(--bank-primary) 30%, #1c2331);
+  --chrome-active: color-mix(in srgb, var(--bank-primary) 55%, #1a2030);
+  --chrome-text: #cfd5e3; --chrome-muted: #98a1b6; --chrome-strong: #ffffff;
+  --glass: color-mix(in srgb, var(--surface) 72%, transparent);
+  --glass-strong: color-mix(in srgb, var(--surface) 90%, transparent);
+  --glass-line: color-mix(in srgb, var(--text) 9%, transparent);
+  --scrim: color-mix(in srgb, var(--bank-primary) 18%, rgba(9, 12, 20, 0.5));
+  --warn-bg: #fdf0d5; --warn-text: #8a5300; --danger-bg: #fde7e7; --danger-text: #a12626; --ok-bg: #dcf5ea; --ok-text: #0c6b47;
+  --shadow: 0 1px 2px rgba(16, 22, 38, 0.05), 0 4px 12px -2px rgba(16, 22, 38, 0.07);
+  --shadow-lg: 0 4px 8px rgba(16, 22, 38, 0.05), 0 24px 48px -12px rgba(16, 22, 38, 0.24);
+  --shadow-dock: 0 18px 40px -16px color-mix(in srgb, var(--bank-primary) 70%, rgba(0, 0, 0, 0.6));
+  --shadow-bank: 0 6px 18px -6px color-mix(in srgb, var(--bank-primary) 60%, transparent);
+  --font-sans: 'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --fast: 150ms; --base: 220ms; --slow: 350ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bank-ink: var(--bank-ink-dark);
+  --bg: color-mix(in srgb, var(--bank-primary) 7%, #0d1119);
+  --surface: color-mix(in srgb, var(--bank-primary) 5%, #171c28);
+  --surface-2: color-mix(in srgb, var(--bank-primary) 7%, #1f2533);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 9%, #293041);
+  --border: color-mix(in srgb, var(--bank-primary) 10%, #2c3445);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 12%, #3a4358);
+  --text: #e9ecf3; --text-muted: #9aa3b6;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 22%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 42%, var(--surface));
+  --glass: color-mix(in srgb, var(--surface) 68%, transparent);
+  --glass-line: color-mix(in srgb, #fff 9%, transparent);
+  --warn-bg: #3d2c0b; --warn-text: #f7cf7d; --danger-bg: #431417; --danger-text: #ffb1b1; --ok-bg: #0f3327; --ok-text: #86e3b9;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bank-ink: var(--bank-ink-dark);
+  --bg: color-mix(in srgb, var(--bank-primary) 7%, #0d1119);
+  --surface: color-mix(in srgb, var(--bank-primary) 5%, #171c28);
+  --surface-2: color-mix(in srgb, var(--bank-primary) 7%, #1f2533);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 9%, #293041);
+  --border: color-mix(in srgb, var(--bank-primary) 10%, #2c3445);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 12%, #3a4358);
+  --text: #e9ecf3; --text-muted: #9aa3b6;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 22%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 42%, var(--surface));
+  --glass: color-mix(in srgb, var(--surface) 68%, transparent);
+  --glass-line: color-mix(in srgb, #fff 9%, transparent);
+  --warn-bg: #3d2c0b; --warn-text: #f7cf7d; --danger-bg: #431417; --danger-text: #ffb1b1; --ok-bg: #0f3327; --ok-text: #86e3b9;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+}
+:root { --violet: #6d4fd6; --s-new: #2f6fe0; --s-contacted: #c98a12; --s-qualified: #17936a; --s-unqualified: #8a93a6; --s-converted: #6d4fd6; --s-kyc: #0f97a8; --s-callback: #d1478d; }
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.45;
+  padding-block: 16px 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--bank-ink); outline-offset: 2px; border-radius: 6px; }
+svg { flex: none; display: block; }
+h2, h3 { font-family: var(--font-display); margin: 0; letter-spacing: -0.01em; }
+
+.deck { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; max-width: 1280px; margin: 0 auto 14px; }
+.deck h1 { font-family: var(--font-display); font-size: 20px; font-weight: 650; margin: 0; flex: 1 1 200px; }
+.deck h1 small { display: block; font-family: var(--font-sans); font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.pick { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); }
+.seg { display: flex; flex-wrap: wrap; padding: 3px; gap: 2px; background: var(--surface-3); border-radius: 999px; }
+.seg button { padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--text-muted); display: flex; align-items: center; gap: 6px; transition: background var(--fast), color var(--fast); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.sw { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
+
+.stage { container-type: inline-size; max-width: 1280px; margin: 0 auto; }
+.app { position: relative; overflow: hidden; display: grid; grid-template-columns: auto minmax(0, 1fr); height: clamp(640px, 86vh, 840px); border-radius: 20px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg);
+  background: radial-gradient(60% 50% at 100% 0%, color-mix(in srgb, var(--bank-primary) 13%, transparent), transparent 70%), radial-gradient(50% 50% at 0% 100%, color-mix(in srgb, var(--bank-primary) 8%, transparent), transparent 70%), var(--bg); }
+.rail { width: 60px; margin: 10px 0 10px 10px; border-radius: 18px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; color: var(--chrome-muted); border: 1px solid var(--chrome-line); box-shadow: var(--shadow-dock);
+  background: radial-gradient(130% 42% at 0% 0%, color-mix(in srgb, var(--bank-primary) 62%, transparent), transparent 72%), var(--chrome-bg); }
+.rail .logo { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 8px; background: var(--bank-primary); color: var(--bank-on); font-family: var(--font-display); font-weight: 700; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+.rail span { width: 40px; height: 36px; border-radius: 10px; display: grid; place-items: center; }
+.rail span.on { color: var(--chrome-strong); background: var(--chrome-active); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+.main { position: relative; min-width: 0; overflow-y: auto; display: flex; flex-direction: column; }
+.tb { position: sticky; top: 0; z-index: 4; display: flex; align-items: center; gap: 10px; margin: 10px 12px 0; padding: 8px 10px 8px 16px; border-radius: 16px; background: var(--glass); -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px); border: 1px solid var(--glass-line); box-shadow: var(--shadow); }
+.crumb { display: flex; gap: 7px; color: var(--text-muted); font-size: 13px; white-space: nowrap; min-width: 0; overflow: hidden; }
+.crumb b { color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.chip-me { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 5px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-weight: 600; font-size: 13px; white-space: nowrap; }
+.av { width: 30px; height: 30px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 11.5px; font-weight: 600; background: var(--bank-primary); color: var(--bank-on); }
+i { font-style: normal; }
+.av.soft { background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.av.lg { width: 60px; height: 60px; font-size: 20px; font-family: var(--font-display); box-shadow: 0 0 0 4px var(--surface), 0 0 0 5px var(--bank-soft-line), var(--shadow-bank); }
+.av.sm { width: 22px; height: 22px; font-size: 9.5px; }
+.page { flex: 1; padding: 22px 24px 90px; animation: enter var(--slow) var(--ease-out); }
+@keyframes enter { from { opacity: 0; transform: translateY(10px); } }
+@keyframes pop { from { opacity: 0; transform: scale(.9) translateY(8px); } }
+
+/* shared pieces */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 14px; border-radius: 12px; font-weight: 550; white-space: nowrap; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow);
+  transition: transform var(--fast) var(--ease-spring), border-color var(--fast), filter var(--fast), background var(--fast); }
+.btn:hover { transform: translateY(-1px); border-color: var(--bank-soft-line); }
+.btn:active { transform: scale(.97); }
+.btn.pri { color: var(--bank-on); border-color: transparent; background: linear-gradient(180deg, color-mix(in srgb, var(--bank-primary) 90%, #fff), var(--bank-primary)); box-shadow: inset 0 1px 0 rgba(255,255,255,.22), var(--shadow-bank); }
+.btn.pri:hover { filter: brightness(1.08); }
+.btn.ghost { background: none; border-color: transparent; box-shadow: none; color: var(--text-muted); }
+.btn.ghost:hover { background: var(--surface-2); color: var(--text); }
+.btn.danger { color: var(--danger-text); }
+.btn.sq { width: 38px; padding: 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap;
+  background: color-mix(in srgb, var(--c) 14%, var(--surface)); color: color-mix(in srgb, var(--c) 62%, var(--text)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 26%, transparent); }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.ph { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 18px; }
+.ph h2 { font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.02em; }
+.ph p { margin: 2px 0 0; color: var(--text-muted); }
+.ph .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+.lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.muted { color: var(--text-muted); }
+.num { font-variant-numeric: tabular-nums; }
+
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.search { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; flex: 1 1 220px; max-width: 320px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-muted); transition: box-shadow var(--fast), border-color var(--fast); }
+.search:focus-within { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--text); }
+.fchip { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border-radius: 12px; border: 1px dashed var(--border-strong); color: var(--text-muted); font-weight: 500; white-space: nowrap; transition: background var(--fast), border-color var(--fast), color var(--fast); }
+.fchip:hover { background: var(--surface); color: var(--text); }
+.fchip.set { border-style: solid; border-color: var(--bank-soft-line); background: var(--bank-soft); color: var(--bank-ink); }
+.pop-wrap { position: relative; }
+.pop { position: absolute; z-index: 9; top: 44px; left: 0; width: 250px; padding: 6px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg); transform-origin: top left; animation: pop var(--base) var(--ease-spring); }
+.pop.right { left: auto; right: 0; transform-origin: top right; }
+.pop input { width: 100%; height: 34px; padding: 0 10px; margin-bottom: 4px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); outline: 0; }
+.pop input:focus { border-color: var(--bank-ink); }
+.pop .opt { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 10px; border-radius: 10px; text-align: left; font-weight: 500; }
+.pop .opt:hover { background: var(--bank-soft); }
+.pop .opt i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.pop .opt .tick { margin-left: auto; color: var(--bank-ink); opacity: 0; }
+.pop .opt[aria-checked="true"] .tick { opacity: 1; }
+.pop .none { padding: 12px 10px; color: var(--text-muted); font-size: 13px; }
+.pop .tag { margin-left: auto; font-size: 10.5px; color: var(--text-muted); border: 1px solid var(--border); border-radius: 6px; padding: 0 5px; }
+.pop .opt[aria-checked="true"] .tag { display: none; }
+.cb { width: 18px; height: 18px; border-radius: 6px; border: 1.5px solid var(--border-strong); display: grid; place-items: center; background: var(--surface); color: var(--bank-on); transition: background var(--fast), border-color var(--fast), transform var(--fast) var(--ease-spring); }
+.cb svg { opacity: 0; }
+.cb[aria-checked="true"] { background: var(--bank-primary); border-color: var(--bank-primary); transform: scale(1.06); }
+.cb[aria-checked="true"] svg { opacity: 1; }
+.foot { display: flex; align-items: center; gap: 10px; padding: 10px 14px; color: var(--text-muted); font-size: 13px; }
+.foot .acts { margin-left: auto; display: flex; gap: 6px; }
+.empty { padding: 44px 20px; text-align: center; color: var(--text-muted); }
+.empty b { display: block; font-family: var(--font-display); font-size: 17px; color: var(--text); }
+.bulk { position: absolute; z-index: 8; left: 50%; bottom: 16px; transform: translate(-50%, 90px); display: flex; align-items: center; gap: 6px; padding: 8px 8px 8px 16px; border-radius: 18px; color: var(--chrome-strong); background: var(--chrome-bg); border: 1px solid var(--chrome-line); box-shadow: var(--shadow-lg); white-space: nowrap; transition: transform var(--slow) var(--ease-spring); max-width: calc(100% - 24px); }
+.bulk.on { transform: translate(-50%, 0); }
+.bulk b { margin-right: 8px; }
+.bulk button { height: 34px; padding: 0 12px; border-radius: 10px; font-weight: 500; color: var(--chrome-text); display: inline-flex; align-items: center; gap: 6px; }
+.bulk button:hover { background: var(--chrome-hover); color: var(--chrome-strong); }
+
+.back { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-weight: 500; margin-bottom: 12px; }
+.back:hover { color: var(--bank-ink); }
+.cols { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.box { padding: 18px 20px; }
+.box h3 { font-size: 16px; font-weight: 650; margin-bottom: 12px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px 20px; }
+.fields div span { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 2px; }
+.fields div b { font-weight: 500; overflow-wrap: anywhere; }
+.side { display: grid; gap: 14px; }
+.f label { display: block; font-size: 12.5px; font-weight: 500; margin-bottom: 5px; }
+.f input, .f select, .f .fake { width: 100%; height: 40px; padding: 0 12px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); outline: 0; transition: border-color var(--fast), box-shadow var(--fast); display: flex; align-items: center; gap: 8px; text-align: left; }
+.f input:focus, .f select:focus, .f .fake:focus-visible { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.f.bad input { border-color: var(--danger-text); }
+.f .err { color: var(--danger-text); font-size: 12px; margin-top: 4px; }
+.dup { display: flex; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--warn-bg); color: var(--warn-text); font-size: 13px; animation: pop var(--base) var(--ease-spring); }
+.savebar { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; background: var(--surface-2); border-top: 1px solid var(--border); border-radius: 0 0 18px 18px; }
+.scrim { position: absolute; inset: 0; z-index: 10; background: var(--scrim); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); display: grid; place-items: center; padding: 14px; animation: fade var(--base); }
+@keyframes fade { from { opacity: 0; } }
+.dlg { width: min(640px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 22px; background: var(--surface); border: 1px solid var(--glass-line); box-shadow: var(--shadow-lg); animation: pop var(--slow) var(--ease-spring); overflow: hidden; }
+.dlg-head { padding: 18px 22px 0; display: flex; align-items: center; gap: 10px; }
+.dlg-head h3 { font-size: 19px; font-weight: 650; flex: 1; }
+.dlg-body { padding: 18px 22px; overflow-y: auto; min-height: 232px; }
+.dlg-body > div { animation: enter var(--base) var(--ease-out); }
+.dlg-foot { display: flex; gap: 8px; padding: 14px 22px; background: var(--surface-2); border-top: 1px solid var(--border); }
+.dlg-foot .sp { flex: 1; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; } }
+
+/* ---- shared with Contacts: tags, sheet, layout tabs, toast ---- */
+.tg { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 500; white-space: nowrap; background: var(--surface-2); color: var(--text-muted); box-shadow: inset 0 0 0 1px var(--border); }
+.tg.add { border: 1px dashed var(--border-strong); background: none; box-shadow: none; }
+.tg.add:hover { color: var(--bank-ink); border-color: var(--bank-soft-line); background: var(--bank-soft); }
+.face { --h: var(--bank-primary); width: 30px; height: 30px; border-radius: 10px; flex: none; display: grid; place-items: center; font-family: var(--font-display); font-weight: 650; font-size: 11.5px;
+  background: color-mix(in srgb, var(--h) 20%, var(--surface)); color: color-mix(in srgb, var(--h) 66%, var(--text)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--h) 30%, transparent); }
+.scrim.edge { place-items: stretch end; padding: 10px; }
+.sheet { width: min(400px, 100%); display: flex; flex-direction: column; border-radius: 20px; background: var(--surface); border: 1px solid var(--glass-line); box-shadow: var(--shadow-lg); overflow: hidden; animation: slide var(--slow) var(--ease-out); }
+@keyframes slide { from { transform: translateX(40px); opacity: 0; } }
+.sheet-body { flex: 1; overflow-y: auto; padding: 16px 22px 20px; display: grid; gap: 14px; align-content: start; }
+.pick-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border-radius: 14px; text-align: left; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); transition: transform var(--fast) var(--ease-spring), border-color var(--fast), background var(--fast), box-shadow var(--fast); }
+.pick-item:hover { transform: translateX(-3px); border-color: var(--bank-ink); background: var(--bank-soft); box-shadow: 0 0 0 3px var(--bank-soft); color: var(--bank-ink); }
+.pick-item .ext { width: 38px; height: 38px; flex: none; border-radius: 11px; display: grid; place-items: center; background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.pick-item div { flex: 1; min-width: 0; } .pick-item b { display: block; font-weight: 600; color: var(--text); } .pick-item small { font-size: 12.5px; }
+.ltabs { display: flex; gap: 4px; padding: 0 16px; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; }
+.ltabs button { position: relative; padding: 10px 12px 12px; font-weight: 550; color: var(--text-muted); white-space: nowrap; transition: color var(--fast); }
+.ltabs button:hover { color: var(--text); }
+.ltabs button::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--bank-primary); transform: scaleX(0); transition: transform var(--base) var(--ease-out); }
+.ltabs button[aria-selected="true"] { color: var(--bank-ink); } .ltabs button[aria-selected="true"]::after { transform: scaleX(1); }
+.sect { padding: 20px 22px; animation: enter var(--base) var(--ease-out); }
+.fg { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.fg .full { grid-column: 1 / -1; }
+.f label .tg { margin-left: 6px; font-size: 10.5px; padding: 0 6px; }
+.dlg.small { width: min(460px, 100%); } .dlg.small .dlg-body { min-height: 0; color: var(--text-muted); }
+.toast { position: absolute; z-index: 12; left: 50%; bottom: 18px; transform: translate(-50%, 80px); padding: 10px 16px; border-radius: 14px; display: flex; align-items: center; gap: 8px; font-weight: 500; white-space: nowrap; color: var(--chrome-strong); background: var(--chrome-bg); border: 1px solid var(--chrome-line); box-shadow: var(--shadow-lg); transition: transform var(--slow) var(--ease-spring); }
+.toast.on { transform: translate(-50%, 0); }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* ---- crest: every organisation carries its industry colour ---- */
+.crest { --h: var(--bank-primary); position: relative; width: 38px; height: 38px; flex: none; display: grid; place-items: center; border-radius: 11px 11px 4px 4px; font-family: var(--font-display); font-weight: 700; font-size: 13px; letter-spacing: .02em;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--h) 34%, var(--surface)), color-mix(in srgb, var(--h) 14%, var(--surface))); color: color-mix(in srgb, var(--h) 68%, var(--text)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--h) 32%, transparent), inset 0 -4px 0 color-mix(in srgb, var(--h) 40%, transparent); }
+.crest.xl { width: 76px; height: 76px; border-radius: 22px 22px 8px 8px; font-size: 26px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--h) 32%, transparent), inset 0 -7px 0 color-mix(in srgb, var(--h) 40%, transparent), 0 12px 26px -12px color-mix(in srgb, var(--h) 80%, transparent); }
+.ind { --c: var(--h); }
+
+/* ---- portfolio map: each account is a tile sized by annual revenue ---- */
+.sum { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: -6px 0 16px; color: var(--text-muted); }
+.sum b { color: var(--text); font-family: var(--font-display); font-size: 17px; font-weight: 650; margin-right: 5px; }
+.mapcard { padding: 10px; }
+.map { position: relative; height: 430px; }
+.tile { position: absolute; display: flex; flex-direction: column; gap: 1px; padding: 12px 13px; text-align: left; overflow: hidden; border-radius: 14px;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--h) 30%, var(--surface)), color-mix(in srgb, var(--h) 12%, var(--surface))); color: color-mix(in srgb, var(--h) 62%, var(--text));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--h) 30%, transparent); animation: tile var(--slow) var(--ease-spring) backwards; animation-delay: var(--d);
+  transition: transform var(--base) var(--ease-spring), box-shadow var(--base), filter var(--fast); }
+@keyframes tile { from { opacity: 0; transform: scale(.82); } }
+.tile::after { content: ''; position: absolute; right: -30px; bottom: -30px; width: 110px; height: 110px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--h) 30%, transparent), transparent 70%); pointer-events: none; }
+.tile:hover, .tile:focus-visible { z-index: 2; transform: scale(1.025); filter: brightness(1.04); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--h) 60%, transparent), var(--shadow-lg); }
+.tile small { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+.tile b { font-family: var(--font-display); font-size: 17px; line-height: 1.2; font-weight: 650; color: var(--text); overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.tile .rev { font-family: var(--font-display); font-size: 22px; font-weight: 700; margin-top: auto; font-variant-numeric: tabular-nums; }
+.tile .meta { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile.mid { padding: 9px 10px; } .tile.mid b { font-size: 13.5px; -webkit-line-clamp: 1; } .tile.mid .rev { font-size: 14px; }
+.tile.tiny { padding: 0; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 12px; border-radius: 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 6px 2px; font-size: 12.5px; color: var(--text-muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; } .legend i { width: 9px; height: 9px; border-radius: 3px; background: var(--c); }
+.legend em { margin-left: auto; font-style: normal; }
+
+/* ---- ledger: one line per account, opens downwards ---- */
+.lg { overflow: hidden; }
+.lr { display: grid; grid-template-columns: 30px minmax(170px, 1.6fr) 92px minmax(150px, 1.2fr) minmax(100px, .9fr) 86px; align-items: center; gap: 12px; padding: 0 14px; min-height: 60px; }
+.lr.head { min-height: 38px; background: var(--surface-2); font-size: 12px; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.lrw { border-bottom: 1px solid var(--border); animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); }
+.lrw:last-child { border-bottom: 0; }
+.lr.row { cursor: pointer; transition: background var(--fast); }
+.lr.row:hover { background: color-mix(in srgb, var(--bank-primary) 4%, var(--surface)); }
+.lrw.open .lr.row { background: var(--bank-soft); box-shadow: inset 3px 0 0 var(--bank-primary); }
+.lr > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lr .r { text-align: right; }
+.org { display: flex; align-items: center; gap: 11px; min-width: 0; } .org div { min-width: 0; }
+.org b, .org small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .org b { font-weight: 600; } .org small { color: var(--text-muted); font-size: 12.5px; }
+.chev { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; color: var(--text-muted); transition: transform var(--base) var(--ease-spring), background var(--fast), color var(--fast); }
+.chev:hover { background: var(--surface-3); color: var(--text); } .lrw.open .chev { transform: rotate(90deg); color: var(--bank-ink); }
+.bar { display: flex; align-items: center; gap: 10px; } .bar b { width: 62px; flex: none; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bar i { flex: 1; height: 7px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
+.bar i::before { content: ''; display: block; height: 100%; width: var(--w); border-radius: 4px; background: linear-gradient(90deg, color-mix(in srgb, var(--h) 55%, var(--surface)), var(--h)); animation: grow var(--slow) var(--ease-out) backwards; animation-delay: var(--d); transform-origin: left; }
+@keyframes grow { from { transform: scaleX(0); } }
+.link { color: var(--bank-ink); font-weight: 550; } .link:hover { text-decoration: underline; }
+.more { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px 18px; align-items: center; padding: 14px 18px 16px 56px; background: color-mix(in srgb, var(--bank-primary) 3%, var(--surface)); border-top: 1px dashed var(--border-strong); animation: enter var(--base) var(--ease-out); }
+.more div span { display: block; font-size: 12px; color: var(--text-muted); } .more div b { font-weight: 600; }
+
+/* ---- account page ---- */
+.side { grid-template-columns: minmax(0, 1fr); }
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
+.fit { display: flex; flex-direction: column; contain: size; }
+.scroll { flex: 1; min-height: 0; overflow-y: auto; margin-right: -8px; padding-right: 8px; scrollbar-width: thin; }
+@container (max-width: 900px) { .trio { grid-template-columns: minmax(0, 1fr); } .fit { contain: none; } .scroll { flex: none; max-height: 300px; } }
+.hero { position: relative; overflow: hidden; padding: 22px; margin-bottom: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px 18px; }
+.hero::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--h) 9%, transparent) 0 1px, transparent 1px 44px), radial-gradient(70% 140% at 100% 0%, color-mix(in srgb, var(--h) 20%, transparent), transparent 70%); -webkit-mask-image: linear-gradient(90deg, transparent, #000 60%); mask-image: linear-gradient(90deg, transparent, #000 60%); }
+.hero > * { position: relative; }
+.hid { flex: 1 1 280px; min-width: 0; }
+.hid h2 { font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; overflow-wrap: anywhere; margin-bottom: 8px; }
+.hid p { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; color: var(--text-muted); }
+.hero .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.figs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin-bottom: 14px; }
+.fig { padding: 16px 20px; border-right: 1px solid var(--border); min-width: 0; } .fig:last-child { border-right: 0; }
+.fig b { display: block; font-family: var(--font-display); font-size: 26px; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.fig small { display: block; color: var(--text-muted); font-size: 12.5px; }
+.track { display: grid; grid-template-columns: repeat(5, minmax(150px, 1fr)); gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.lane { min-width: 0; padding: 8px; border-radius: 13px; background: var(--surface-2); display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; align-content: start; }
+.lane-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; white-space: nowrap; padding: 2px 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.lane-h i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); align-self: center; } .lane-h span { margin-left: auto; font-weight: 500; font-variant-numeric: tabular-nums; }
+.dealc { padding: 9px 10px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); text-align: left; min-width: 0; animation: pop var(--base) var(--ease-spring) backwards; animation-delay: var(--d); transition: transform var(--fast) var(--ease-spring), border-color var(--fast); }
+.dealc:hover { transform: translateY(-2px); border-color: var(--bank-soft-line); }
+.dealc b { display: block; font-weight: 600; font-size: 13px; overflow-wrap: anywhere; } .dealc span { display: block; font-weight: 600; color: var(--bank-ink); font-variant-numeric: tabular-nums; } .dealc small { color: var(--text-muted); font-size: 12px; }
+.lane .none { padding: 12px 4px; text-align: center; border-radius: 10px; border: 1px dashed var(--border-strong); color: var(--text-muted); font-size: 12px; }
+.qrow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); } .qrow:last-child { border-bottom: 0; padding-bottom: 0; } .qrow:first-child { padding-top: 0; }
+.qrow b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.mates { display: grid; gap: 4px; align-content: start; }
+.mate { display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: 12px; text-align: left; min-width: 0; transition: background var(--fast); }
+.mate:hover { background: var(--bank-soft); }
+.mate div { min-width: 0; } .mate b, .mate small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .mate b { font-weight: 550; } .mate small { color: var(--text-muted); font-size: 12.5px; }
+.kv { display: grid; gap: 10px; margin: 0; }
+.kv div { display: flex; gap: 10px; align-items: center; }
+.kv dt { width: 96px; flex: none; font-size: 12.5px; color: var(--text-muted); } .kv dd { margin: 0; min-width: 0; flex: 1; overflow-wrap: anywhere; font-weight: 500; }
+.kv .btn { height: 28px; padding: 0 9px; border-radius: 9px; font-size: 12px; }
+.box-h { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; } .box-h h3 { margin: 0; flex: 1; }
+.choice { display: flex; gap: 10px; align-items: flex-start; padding: 11px 12px; margin-top: 8px; border-radius: 12px; border: 1px solid var(--border-strong); color: var(--text); cursor: pointer; transition: border-color var(--fast), background var(--fast); }
+.choice:has(input:checked) { border-color: var(--bank-ink); background: var(--bank-soft); }
+.choice input { margin: 3px 0 0; accent-color: var(--bank-primary); }
+.blocked { display: flex; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--danger-bg); color: var(--danger-text); font-size: 13px; margin-bottom: 10px; }
+
+/* ---- full page form with a live tile ---- */
+.fcols { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 14px; align-items: start; max-width: 1040px; }
+.fhead { padding: 20px 22px 14px; } .fhead h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; } .fhead p { margin: 4px 0 0; color: var(--text-muted); }
+.prev { position: sticky; top: 74px; padding: 16px; }
+.prev .tile { position: relative; width: 100%; height: 170px; animation: none; margin: 10px 0 12px; transition: background var(--slow), color var(--slow), box-shadow var(--slow); }
+.prev .tile:hover { transform: none; filter: none; }
+.share { height: 8px; border-radius: 4px; background: var(--surface-3); overflow: hidden; margin: 6px 0 4px; }
+.share i { display: block; height: 100%; width: var(--w, 0%); min-width: 3px; border-radius: 4px; background: var(--bank-primary); transition: width var(--slow) var(--ease-out); }
+
+@container (max-width: 980px) { .figs { grid-template-columns: repeat(2, minmax(0, 1fr)); } .fig:nth-child(2) { border-right: 0; } .fig:nth-child(-n+2) { border-bottom: 1px solid var(--border); } .lr { grid-template-columns: 30px minmax(150px, 1.6fr) minmax(140px, 1.2fr) minmax(90px, .9fr); } .lr > :nth-child(3), .lr > :nth-child(6) { display: none; } }
+@container (max-width: 760px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .rail, .chip-me span, .viewseg { display: none; }
+  .page { padding: 18px 14px 90px; }
+  .cols, .fcols { grid-template-columns: minmax(0, 1fr); }
+  .ph h2 { font-size: 24px; }
+  .lr { grid-template-columns: 30px minmax(0, 1fr) 70px; } .lr > :nth-child(5) { display: none; } .bar i { display: none; } .bar b { width: auto; margin-left: auto; }
+  .more { padding-left: 18px; }
+  .hero { padding: 16px; } .hid h2 { font-size: 23px; } .fig { padding: 12px 14px; } .fig b { font-size: 21px; }
+  .scrim.edge { padding: 0; place-items: end stretch; } .sheet { width: 100%; max-height: 94%; border-radius: 20px 20px 0 0; }
+  .prev { position: static; order: -1; } .prev .tile { height: 110px; } .sect { padding: 16px 14px; } .fhead { padding: 16px 14px 10px; }
+}
+</style>
+
+<div class="deck">
+  <h1>Accounts <small>Harbor CRM 3.0, design for your review. Five screens, all clickable.</small></h1>
+  <div class="pick">Screen
+    <div class="seg" id="screens">
+      <button aria-pressed="true" data-s="map">Portfolio map</button>
+      <button aria-pressed="false" data-s="ledger">Ledger</button>
+      <button aria-pressed="false" data-s="acct">Account</button>
+      <button aria-pressed="false" data-s="new">Choose layout</button>
+      <button aria-pressed="false" data-s="form">New account</button>
+    </div>
+  </div>
+  <div class="pick">Bank
+    <div class="seg" id="banks">
+      <button aria-pressed="true" data-bank="0"><i class="sw" style="--c:#1d3a6e"></i>Harbor</button>
+      <button aria-pressed="false" data-bank="1"><i class="sw" style="--c:#9b1c3a"></i>Meridian</button>
+      <button aria-pressed="false" data-bank="2"><i class="sw" style="--c:#0f6b52"></i>Cedar</button>
+    </div>
+  </div>
+  <div class="pick"><div class="seg"><button id="themeBtn" aria-pressed="false">Light / dark</button></div></div>
+</div>
+
+<div class="stage">
+  <div class="app" id="app">
+    <aside class="rail" aria-hidden="true" id="rail"></aside>
+    <div class="main" id="main">
+      <header class="tb">
+        <div class="crumb"><span>Customers</span><span>/</span><b id="crumb">Accounts</b></div>
+        <div class="chip-me"><i class="av">PN</i><span>Priya Nair</span></div>
+      </header>
+      <main class="page" id="page"></main>
+    </div>
+    <div id="overlay"></div>
+    <div class="toast" id="toast" role="status"></div>
+  </div>
+</div>
+
+<script>
+const I = {
+  dashboard: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/>',
+  deal: '<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>',
+  plus: '<path d="M5 12h14M12 5v14"/>',
+  x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  down: '<path d="M6 9l6 6 6-6"/>',
+  left: '<path d="M15 18l-6-6 6-6"/>',
+  right: '<path d="M9 18l6-6-6-6"/>',
+  tool: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.900 7.900l-6.900 6.900a2.100 2.100 0 0 1-3-3l6.900-6.900a6 6 0 0 1 7.900-7.900z"/>',
+  edit: '<path d="M12 20h9M16.500 3.500a2.100 2.100 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  trash: '<path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+  swap: '<path d="M16 3l4 4-4 4M20 7H4M8 21l-4-4 4-4M4 17h16"/>',
+  alert: '<path d="M10.300 3.900L1.800 18a2 2 0 0 0 1.700 3h17a2 2 0 0 0 1.700-3L13.700 3.900a2 2 0 0 0-3.400 0zM12 9v4M12 17h.01"/>',
+  rows: '<path d="M3 6h18M3 12h18M3 18h18"/>',
+  grid: '<rect x="3" y="3" width="11" height="18" rx="1"/><rect x="17" y="3" width="4" height="8" rx="1"/><rect x="17" y="14" width="4" height="7" rx="1"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  out: '<path d="M7 17L17 7M8 7h9v9"/>'
+};
+const ic = (n, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const money = (n) => '$' + Math.round(n).toLocaleString('en-US');
+const short = (n) => (n >= 1e9 ? '$' + (n / 1e9).toFixed(1) + 'B' : n >= 1e6 ? '$' + (n / 1e6).toFixed(1).replace('.0', '') + 'M' : n >= 1e3 ? '$' + Math.round(n / 1e3) + 'K' : '$' + Math.round(n));
+const init = (n) => n.split(' ').filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+const IND = { Technology: '#2f6fe0', Finance: '#17936a', Healthcare: '#0f97a8', Retail: '#d1478d', Manufacturing: '#c98a12', Energy: '#d9642b', Logistics: '#6d4fd6', Media: '#7c869b' };
+const STAGES = [['Qualification', '#2f6fe0'], ['Proposal', '#c98a12'], ['Negotiation', '#6d4fd6'], ['Closed Won', '#17936a'], ['Closed Lost', '#8a93a6']];
+const QS = { Draft: '#8a93a6', Sent: '#2f6fe0', Accepted: '#17936a', Declined: '#a12626' };
+let seq = 0;
+const A = [
+  ['Anand Motors', 'Manufacturing', 1850, 96000000, 'https://anandmotors.example', '+91 98990 55 0150', 'Arjun Das', '30 Apr 2026', [['Kabir Anand', 'Managing Director'], ['Kavya Anand', 'Chief Financial Officer']], [['Dealer floor-plan finance', 4200000, 'Negotiation', '28 Nov 2026', 70], ['Fleet leasing line', 1300000, 'Proposal', '15 Dec 2026', 45], ['Plant term loan 2025', 6500000, 'Closed Won', '12 Feb 2026', 100]], [['Q-1042', 'Sent', 4200000], ['Q-1017', 'Accepted', 6500000]]],
+  ['Verma Textiles Pvt Ltd', 'Manufacturing', 920, 61000000, 'https://vermatex.example', '+91 98111 55 0100', 'Sana Iyer', '6 Mar 2026', [['Sunita Verma', 'Chairperson'], ['Rohan Mehta', 'Head of Finance']], [['Working capital renewal', 2800000, 'Proposal', '10 Dec 2026', 50], ['Export packing credit', 900000, 'Qualification', '20 Jan 2027', 20]], [['Q-1049', 'Draft', 2800000]]],
+  ['Rao Exports Pvt Ltd', 'Logistics', 340, 44000000, 'https://raoexports.example', '+91 98201 55 0140', 'Priya Nair', '12 Mar 2026', [['Aditi Rao', 'Director'], ['Anil Rao', 'Finance Manager']], [['Export credit limit review', 1500000, 'Negotiation', '30 Nov 2026', 65], ['Forex forward cover', 400000, 'Closed Won', '4 Aug 2026', 100]], [['Q-1038', 'Sent', 1500000]]],
+  ['Northwind Power', 'Energy', 2600, 88000000, 'https://northwindpower.example', '+91 80 5550 0118', 'Arjun Das', '18 Jan 2026', [['Leela Thomas', 'Treasury Head']], [['Solar park project loan', 9000000, 'Qualification', '15 Mar 2027', 25]], []],
+  ['Joshi Clinics LLP', 'Healthcare', 210, 18000000, 'https://joshiclinics.example', '+91 98220 55 0160', 'Priya Nair', '19 Feb 2026', [['Neha Joshi', 'Managing Partner']], [['Baner clinic equipment finance', 650000, 'Proposal', '20 Jan 2027', 55], ['Clinic overdraft', 150000, 'Closed Won', '2 Jun 2026', 100]], [['Q-1051', 'Sent', 650000]]],
+  ['Khan Logistics', 'Logistics', 480, 27000000, 'https://khanlogistics.example', '+91 99670 55 0110', 'Priya Nair', '20 May 2026', [['Farah Khan', 'Proprietor'], ['Zoya Khan', 'Operations Lead']], [['Fleet cards programme', 300000, 'Closed Won', '1 Jul 2026', 100], ['Truck loan, 12 vehicles', 1100000, 'Closed Lost', '9 Sep 2026', 0]], [['Q-1029', 'Declined', 1100000]]],
+  ['Lumen Cloud Systems', 'Technology', 640, 52000000, 'https://lumencloud.example', '+91 80 5550 0142', 'Sana Iyer', '3 Apr 2026', [['Ishaan Kapoor', 'Chief Financial Officer']], [['Payroll and escrow accounts', 500000, 'Negotiation', '5 Dec 2026', 80]], [['Q-1046', 'Sent', 500000]]],
+  ['Shetty Foods', 'Retail', 150, 12000000, 'https://shettyfoods.example', '+91 98450 55 0190', 'Arjun Das', '15 Apr 2026', [['Vikram Shetty', 'Founder']], [['Oven equipment loan', 220000, 'Closed Won', '22 Oct 2026', 100]], [['Q-1033', 'Accepted', 220000]]],
+  ['Brightline Media', 'Media', 95, 8500000, 'https://brightline.example', '+91 22 5550 0177', 'Sana Iyer', '9 Jun 2026', [['Tara Bose', 'Finance Lead']], [], []],
+  ['Meridian Capital Advisors', 'Finance', 120, 34000000, 'https://meridiancap.example', '+91 22 5550 0131', 'Arjun Das', '27 Feb 2026', [['Dev Malhotra', 'Partner']], [['Custody and escrow mandate', 750000, 'Proposal', '18 Dec 2026', 40]], []],
+  ['Patil Agro', 'Retail', 60, 4200000, '', '+91 98600 55 0100', 'Priya Nair', '27 Jun 2026', [['Suresh Patil', 'Owner']], [], []],
+  ['Menon Architects', 'Technology', 45, 6800000, 'https://menonarch.example', '+91 98470 55 0130', 'Arjun Das', '2 Feb 2026', [['Divya Menon', 'Principal Architect']], [], []],
+  ['Sheikh Traders', 'Retail', 85, 9800000, '', '+91 97690 55 0180', 'Sana Iyer', '8 Jan 2026', [['Imran Sheikh', 'Partner']], [['Cash credit limit', 350000, 'Qualification', '30 Jan 2027', 30]], []],
+  ['Coastal Health Network', 'Healthcare', 1400, 39000000, 'https://coastalhealth.example', '+91 484 555 0125', 'Priya Nair', '14 May 2026', [['Dr Asha Kurian', 'Director, Finance']], [['Hospital wing term loan', 3200000, 'Qualification', '28 Feb 2027', 30]], []]
+].map((a) => ({ id: seq++, name: a[0], ind: a[1], emp: a[2], rev: a[3], web: a[4], phone: a[5], owner: a[6], added: a[7], people: a[8].map((p) => ({ name: p[0], title: p[1] })), deals: a[9].map((d) => ({ name: d[0], amt: d[1], stage: d[2], close: d[3], prob: d[4] })), quotes: a[10].map((q) => ({ no: q[0], status: q[1], total: q[2] })) }));
+const OWNERS = ['Priya Nair', 'Arjun Das', 'Sana Iyer'];
+const LAYOUTS = [{ name: 'Standard account', tabs: ['Basics', 'More details'], def: true }, { name: 'Corporate borrower', tabs: ['Basics', 'Facilities', 'KYC'] }];
+const SORTS = { rev: 'Largest revenue', emp: 'Most employees', name: 'Name A to Z' };
+
+let screen = 'port', view = 'map', cur = 0, q = '', fInd = new Set(), sort = 'rev', openRow = null, pop = null, popQ = '', sheet = null, del = false, delMode = 'unlink', formMode = 'new', layout = LAYOUTS[0], toastT;
+const page = $('page'), app = $('app');
+const byId = (id) => A.find((a) => a.id === id) || A[0];
+const isOpen = (d) => !d.stage.startsWith('Closed');
+const openDeals = (a) => a.deals.filter(isOpen);
+const pipe = (a) => openDeals(a).reduce((s, d) => s + d.amt, 0);
+const crest = (a, cls = '') => `<i class="crest ${cls}" style="--h:${IND[a.ind]}">${init(a.name)}</i>`;
+const narrow = () => app.clientWidth < 760;
+function toast(msg) { const t = $('toast'); t.innerHTML = ic('check', 15) + esc(msg); t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 1800); }
+
+$('rail').innerHTML = '<i class="logo" id="logo">H</i>' + ['dashboard', 'target', 'user', 'building', 'deal', 'ticket'].map((n) => `<span class="${n === 'building' ? 'on' : ''}">${ic(n, 18)}</span>`).join('');
+
+function show(s, id, keep) {
+  if (id != null) cur = id;
+  sheet = null; del = false; pop = null; popQ = '';
+  if (s === 'map' || s === 'ledger') { view = s; s = 'port'; }
+  if (s === 'new') { s = 'port'; sheet = 'layout'; }
+  if (s === 'form' && !keep) { formMode = 'new'; layout = LAYOUTS[0]; }
+  screen = s;
+  render(true);
+}
+function render(fresh) {
+  const a = byId(cur), tab = sheet === 'layout' && screen === 'port' ? 'new' : screen === 'port' ? (narrow() ? 'ledger' : view) : screen;
+  document.querySelectorAll('#screens button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.s === tab));
+  $('crumb').textContent = screen === 'port' ? 'Accounts' : screen === 'form' ? (formMode === 'edit' ? 'Accounts / ' + a.name + ' / Edit' : 'Accounts / New account') : 'Accounts / ' + a.name;
+  if (screen === 'port') portView(fresh); else if (screen === 'form') formView(); else acctView(fresh);
+  if (fresh) { page.style.animation = 'none'; void page.offsetWidth; page.style.animation = ''; $('main').scrollTop = 0; }
+  overlay();
+}
+
+/* ---------- portfolio ---------- */
+function rowsNow() {
+  const s = q.trim().toLowerCase();
+  const rows = A.filter((a) => (!s || (a.name + ' ' + a.ind).toLowerCase().includes(s)) && (!fInd.size || fInd.has(a.ind)));
+  return rows.sort((x, y) => (sort === 'name' ? x.name.localeCompare(y.name) : sort === 'emp' ? y.emp - x.emp : y.rev - x.rev));
+}
+function squarify(items, W, H) {
+  const tot = items.reduce((s, i) => s + i.v, 0), k = (W * H) / tot, out = [];
+  let rest = items.map((i) => ({ a: i.a, ar: i.v * k })), x = 0, y = 0, w = W, h = H;
+  const sum = (r) => r.reduce((t, i) => t + i.ar, 0);
+  const worst = (r, side) => { const s = sum(r), ars = r.map((i) => i.ar); return Math.max((side * side * Math.max(...ars)) / (s * s), (s * s) / (side * side * Math.min(...ars))); };
+  while (rest.length) {
+    const side = Math.min(w, h), row = [rest.shift()];
+    while (rest.length && worst([...row, rest[0]], side) <= worst(row, side)) row.push(rest.shift());
+    const s = sum(row);
+    if (w >= h) { const cw = s / h; let cy = y; row.forEach((i) => { const ch = i.ar / cw; out.push({ a: i.a, x, y: cy, w: cw, h: ch }); cy += ch; }); x += cw; w -= cw; }
+    else { const ch = s / w; let cx = x; row.forEach((i) => { const cw = i.ar / ch; out.push({ a: i.a, x: cx, y, w: cw, h: ch }); cx += cw; }); y += ch; h -= ch; }
+  }
+  return out;
+}
+function drawMap(rows, still) {
+  const el = $('map'); if (!el || !rows.length) return;
+  const list = [...rows].sort((x, y) => y.rev - x.rev), mx = list[0].rev;
+  el.innerHTML = squarify(list.map((a) => ({ a, v: Math.max(a.rev, mx * 0.05) })), el.clientWidth, el.clientHeight).map((r, k) => {
+    const a = r.a, size = r.w >= 132 && r.h >= 96 ? 'big' : r.w >= 84 && r.h >= 50 ? 'mid' : 'tiny', od = openDeals(a).length;
+    const inner = size === 'big' ? `<small>${a.ind}</small><b>${esc(a.name)}</b><span class="rev">${short(a.rev)}</span><span class="meta">${od ? od + ' open ' + (od === 1 ? 'deal' : 'deals') + ' · ' + short(pipe(a)) : 'No open deals'}</span>`
+      : size === 'mid' ? `<b>${esc(a.name)}</b><span class="rev">${short(a.rev)}</span>` : init(a.name);
+    return `<button class="tile ${size}" data-open="${a.id}" title="${esc(a.name)} · ${a.ind} · ${money(a.rev)}" aria-label="${esc(a.name)}, ${a.ind}, annual revenue ${money(a.rev)}" style="--h:${IND[a.ind]};--d:${still ? 0 : k * 35}ms;${still ? 'animation:none;' : ''}left:${r.x + 3}px;top:${r.y + 3}px;width:${r.w - 6}px;height:${r.h - 6}px">${inner}</button>`;
+  }).join('');
+}
+function indPop() {
+  const opts = Object.keys(IND).filter((t) => t.toLowerCase().includes(popQ.toLowerCase()));
+  return `<div class="pop" id="pop"><input id="popQ" placeholder="Find an industry" value="${esc(popQ)}" aria-label="Find an industry">` +
+    opts.map((t) => `<button class="opt" role="menuitemcheckbox" aria-checked="${fInd.has(t)}" data-ind="${t}"><i style="--c:${IND[t]}"></i>${t}<span class="tick">${ic('check', 15)}</span></button>`).join('') + (opts.length ? '' : '<div class="none">No industry matches.</div>') + '</div>';
+}
+function portView(fresh) {
+  const rows = rowsNow(), map = view === 'map' && !narrow(), mx = Math.max(...A.map((a) => a.rev));
+  const tot = rows.reduce((s, a) => s + a.rev, 0), od = rows.reduce((s, a) => s + openDeals(a).length, 0);
+  const inds = [...new Set(rows.map((a) => a.ind))];
+  const body = !rows.length ? `<div class="card empty"><b>No accounts match</b>Try a different name or industry.<br><br><button class="btn" id="clear">Clear search</button></div>`
+    : map ? `<div class="card mapcard"><div class="map" id="map"></div><div class="legend">${inds.map((t) => `<span><i style="--c:${IND[t]}"></i>${t}</span>`).join('')}<em>Tile size shows annual revenue</em></div></div>`
+    : `<div class="card lg"><div class="lr head"><span></span><span>Account</span><span class="r">Employees</span><span>Annual revenue</span><span>Owner</span><span>Website</span></div>${rows.map((a, k) => `<div class="lrw ${openRow === a.id ? 'open' : ''}" style="--d:${fresh ? k * 24 : 0}ms;--h:${IND[a.ind]}">
+        <div class="lr row" data-open="${a.id}"><button class="chev" data-x="${a.id}" aria-expanded="${openRow === a.id}" aria-label="Show more about ${esc(a.name)}">${ic('right', 16)}</button>
+          <div class="org">${crest(a)}<div><b>${esc(a.name)}</b><small>${a.ind}</small></div></div><span class="r num">${a.emp.toLocaleString('en-US')}</span>
+          <div class="bar"><b>${short(a.rev)}</b><i style="--w:${Math.max(3, (a.rev / mx) * 100)}%"></i></div><span>${a.owner}</span><span>${a.web ? `<button class="link" data-site>Visit ${ic('out', 12).replace('<svg', '<svg style="display:inline;vertical-align:-1px"')}</button>` : '<span class="muted">None</span>'}</span></div>
+        ${openRow === a.id ? `<div class="more"><div><span>Phone</span><b class="num">${a.phone}</b></div><div><span>Contacts</span><b>${a.people.length}</b></div><div><span>Deals</span><b>${a.deals.length}</b></div><div><span>Quotes</span><b>${a.quotes.length}</b></div><div><span>Open pipeline</span><b>${short(pipe(a))}</b></div><div><button class="btn" data-open="${a.id}">Open account${ic('right', 15)}</button></div></div>` : ''}
+      </div>`).join('')}</div>`;
+  page.innerHTML = `
+  <div class="ph"><div><h2>Accounts</h2><p>Customer organisations and the people and deals tied to them.</p></div>
+    <div class="acts">
+      <span class="pop-wrap"><button class="btn" data-pop="tools">${ic('tool')}ToolBox${ic('down', 14)}</button>${pop === 'tools' ? `<div class="pop right" id="pop">${['Import data', 'Custom fields', 'Customise page layout'].map((t) => `<button class="opt">${t}</button>`).join('')}</div>` : ''}</span>
+      <button class="btn pri" data-sheet="new">${ic('plus')}New account</button>
+    </div></div>
+  <div class="sum" role="status"><span><b>${rows.length}</b>${rows.length === 1 ? 'account' : 'accounts'}</span><span><b>${short(tot)}</b>combined annual revenue</span><span><b>${od}</b>open ${od === 1 ? 'deal' : 'deals'}</span></div>
+  <div class="tools">
+    <label class="search">${ic('search', 16)}<input id="q" placeholder="Search by name or industry" value="${esc(q)}" aria-label="Search accounts"></label>
+    <span class="pop-wrap"><button class="fchip ${fInd.size ? 'set' : ''}" data-pop="filter">Industry${fInd.size ? ' · ' + fInd.size : ''}${ic('down', 14)}</button>${pop === 'filter' ? indPop() : ''}</span>
+    ${fInd.size || q ? '<button class="btn ghost" id="clear">Clear</button>' : ''}
+    <span style="margin-left:auto"></span>
+    ${map ? '' : `<span class="pop-wrap"><button class="fchip" data-pop="sort">${SORTS[sort]}${ic('down', 14)}</button>${pop === 'sort' ? `<div class="pop right" id="pop">${Object.keys(SORTS).map((k) => `<button class="opt" role="menuitemradio" aria-checked="${sort === k}" data-sort="${k}">${SORTS[k]}<span class="tick">${ic('check', 15)}</span></button>`).join('')}</div>` : ''}</span>`}
+    <div class="seg viewseg" role="group" aria-label="View"><button aria-pressed="${view === 'map'}" data-view="map">${ic('grid', 14)}Map</button><button aria-pressed="${view === 'ledger'}" data-view="ledger">${ic('rows', 14)}Ledger</button></div>
+  </div>${body}`;
+  if (map) drawMap(rows, !fresh);
+}
+
+/* ---------- account page ---------- */
+function acctView(fresh) {
+  const a = byId(cur), od = openDeals(a), won = a.deals.filter((d) => d.stage === 'Closed Won').reduce((s, d) => s + d.amt, 0);
+  page.innerHTML = `
+  <button class="back" data-go="${view}">${ic('left', 16)}Accounts</button>
+  <section class="card hero" style="--h:${IND[a.ind]}">${crest(a, 'xl')}
+    <div class="hid"><h2>${esc(a.name)}</h2><p><span class="pill" style="--c:${IND[a.ind]}"><i></i>${a.ind}</span><span>Owner: <b style="color:var(--text);font-weight:550">${a.owner}</b></span>${a.web ? `<button class="link" data-site>${esc(a.web.replace('https://', ''))} ↗</button>` : ''}</p></div>
+    <div class="acts"><button class="btn sq" data-step="-1" aria-label="Previous account">${ic('left')}</button><button class="btn sq" data-step="1" aria-label="Next account">${ic('right')}</button>
+      <button class="btn" data-edit>${ic('edit')}Edit</button><button class="btn danger" data-del>${ic('trash')}Delete</button></div>
+  </section>
+  <section class="card figs">
+    <div class="fig"><b data-n="${a.rev}" data-f="short">${short(a.rev)}</b><small>Annual revenue</small></div>
+    <div class="fig"><b data-n="${a.emp}" data-f="int">${a.emp.toLocaleString('en-US')}</b><small>Employees</small></div>
+    <div class="fig"><b data-n="${pipe(a)}" data-f="short">${short(pipe(a))}</b><small>Open pipeline · ${od.length} ${od.length === 1 ? 'deal' : 'deals'}</small></div>
+    <div class="fig"><b data-n="${won}" data-f="short">${short(won)}</b><small>Won to date</small></div>
+  </section>
+  <div class="side">
+      <section class="card box"><div class="box-h"><h3>Deals</h3><span class="muted">${a.deals.length}</span></div>
+        ${a.deals.length ? `<div class="track">${STAGES.map(([st, c]) => { const ds = a.deals.filter((d) => d.stage === st); return `<div class="lane"><div class="lane-h"><i style="--c:${c}"></i>${st}${ds.length ? `<span>${short(ds.reduce((s, d) => s + d.amt, 0))}</span>` : ''}</div>${ds.length ? ds.map((d, k) => `<button class="dealc" style="--d:${k * 70 + 120}ms" data-deal><b>${esc(d.name)}</b><span>${money(d.amt)}</span><small>${isOpen(d) ? d.prob + '% · closes ' + d.close : 'Closed ' + d.close}</small></button>`).join('') : '<div class="none">None</div>'}</div>`; }).join('')}</div>` : '<p class="muted" style="margin:0">No deals for this account.</p>'}
+      </section>
+      <div class="trio">
+      <section class="card box fit"><div class="box-h"><h3>Quotes</h3><span class="muted">${a.quotes.length}</span></div>
+        ${a.quotes.length ? '<div class="scroll">' + a.quotes.map((x) => `<div class="qrow"><button class="link" data-quote>${x.no}</button><span class="pill" style="--c:${QS[x.status]}"><i></i>${x.status}</span><b>${money(x.total)}</b></div>`).join('') + '</div>' : '<p class="muted" style="margin:0">No quotes for this account.</p>'}
+      </section>
+      <section class="card box fit"><div class="box-h"><h3>People</h3><span class="muted">${a.people.length}</span></div>
+        ${a.people.length ? `<div class="mates scroll">${a.people.map((p, k) => `<button class="mate" data-person><i class="face" style="--h:${Object.values(IND)[(a.id + k) % 8]}">${init(p.name)}</i><div><b>${esc(p.name)}</b><small>${esc(p.title)}</small></div></button>`).join('')}</div>` : '<p class="muted" style="margin:0">No contacts linked to this account.</p>'}
+      </section>
+      <section class="card box"><h3>Details</h3><dl class="kv">
+        <div><dt>Phone</dt><dd class="num">${a.phone}</dd><button class="btn" data-copy>${ic('copy', 13)}Copy</button></div>
+        <div><dt>Website</dt><dd>${a.web ? `<button class="link" data-site>${esc(a.web.replace('https://', ''))} ↗</button>` : '<span class="muted">None</span>'}</dd></div>
+        <div><dt>Page layout</dt><dd>${a.layout || 'Standard account'}</dd></div>
+        <div><dt>Added</dt><dd>${a.added}</dd></div>
+        <div><dt>Contract type</dt><dd>Annual <span class="tg">your bank</span></dd></div>
+      </dl></section>
+    </div>
+  </div>`;
+  if (fresh) countUp();
+}
+function countUp() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const els = [...page.querySelectorAll('[data-n]')], t0 = performance.now();
+  const step = (t) => { const p = Math.min(1, (t - t0) / 650), e = 1 - Math.pow(1 - p, 3);
+    els.forEach((el) => { if (!el.isConnected) return; const v = +el.dataset.n * e; el.textContent = el.dataset.f === 'int' ? Math.round(v).toLocaleString('en-US') : short(v); });
+    if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+
+/* ---------- sheet and dialogs ---------- */
+function overlay() {
+  const o = $('overlay'), a = byId(cur);
+  if (del) {
+    const od = openDeals(a), closed = a.deals.length - od.length;
+    o.innerHTML = od.length ? `<div class="scrim" id="scrim"><div class="dlg small" role="dialog" aria-label="Cannot delete account"><div class="dlg-head"><h3>Can’t delete ${esc(a.name)}</h3></div><div class="dlg-body">
+        <div class="blocked" role="alert">${ic('alert', 16)}<span>Close or reassign ${od.length === 1 ? 'this open deal' : 'these ' + od.length + ' open deals'} first. The account stays as it is.</span></div>
+        ${od.map((d) => `<div class="qrow"><button class="link" data-deal>${esc(d.name)}</button><span class="muted">${d.stage}</span><b style="color:var(--text)">${short(d.amt)}</b></div>`).join('')}
+      </div><div class="dlg-foot"><span class="sp"></span><button class="btn" data-close>Close</button></div></div></div>`
+      : `<div class="scrim" id="scrim"><div class="dlg small" role="dialog" aria-label="Delete account"><div class="dlg-head"><h3>Delete ${esc(a.name)}?</h3></div><div class="dlg-body">
+        This can’t be undone. Choose what happens to its <b style="color:var(--text)">${a.people.length} ${a.people.length === 1 ? 'contact' : 'contacts'}</b> and <b style="color:var(--text)">${closed} closed ${closed === 1 ? 'deal' : 'deals'}</b>.
+        <label class="choice"><input type="radio" name="delmode" id="del-unlink" value="unlink" ${delMode === 'unlink' ? 'checked' : ''}><span>Keep them, but unlink from this account</span></label>
+        <label class="choice"><input type="radio" name="delmode" id="del-cascade" value="cascade" ${delMode === 'cascade' ? 'checked' : ''}><span>Delete the related contacts and closed deals too</span></label>
+      </div><div class="dlg-foot"><span class="sp"></span><button class="btn" data-close>Keep account</button><button class="btn danger" id="delYes">${ic('trash')}Delete account</button></div></div></div>`;
+    return;
+  }
+  if (!sheet) { o.innerHTML = ''; return; }
+  o.innerHTML = `<div class="scrim edge" id="scrim"><div class="sheet" role="dialog" aria-label="Choose a layout">
+    <div class="dlg-head" style="padding-bottom:6px"><h3>Choose a layout</h3><button type="button" class="btn ghost sq" data-close aria-label="Close">${ic('x')}</button></div>
+    <div class="sheet-body"><p class="muted" style="margin:0">Pick the layout to use for this new account.</p>
+      ${LAYOUTS.map((l, k) => `<button class="pick-item" data-layout="${k}" style="--d:${k * 60}ms"><span class="ext">${ic('rows', 17)}</span><div><b>${l.name}</b><small>${l.tabs.length} tabs${l.def ? ' · Default' : ''}</small></div>${ic('right', 16)}</button>`).join('')}
+      <p class="muted" style="margin:8px 0 0">Or use an AutoFlow process, a guided flow with several steps instead of one form.</p>
+      <button class="pick-item" data-autoflow style="--d:150ms"><span class="ext">${ic('swap', 17)}</span><div><b>Onboard a corporate customer</b><small>5 steps · AutoFlow</small></div>${ic('right', 16)}</button>
+    </div></div></div>`;
+  o.querySelector('.pick-item').focus();
+}
+
+/* ---------- full page form ---------- */
+function formView() {
+  const e = formMode === 'edit' ? byId(cur) : null, v = (k) => (e ? esc(e[k]) : '');
+  const extra = (t) => (t === 'KYC' ? ['CIN', 'GSTIN', 'KYC renewal date'] : t === 'Facilities' ? ['Sanctioned limit ($)', 'Facility type', 'Review date'] : ['Contract type', 'Year founded', 'Head office city']);
+  page.innerHTML = `
+  <button class="back" data-cancel>${ic('left', 16)}${e ? esc(e.name) : 'Accounts'}</button>
+  <div class="fcols">
+    <form class="card" id="aform" novalidate aria-label="${e ? 'Edit account' : 'New account'}" style="overflow:hidden">
+      <div class="fhead"><h2>${e ? 'Edit account' : 'New account'}</h2><p>Layout: <b style="color:var(--text)">${e ? e.layout || 'Standard account' : layout.name}</b>${e ? '' : ` <button type="button" class="tg add" data-relayout>Change</button>`}</p></div>
+      <div class="ltabs" role="tablist" aria-label="Form sections">${layout.tabs.map((t, k) => `<button type="button" role="tab" aria-selected="${k === 0}" data-ltab="${k}">${t}</button>`).join('')}</div>
+      <div class="sect" data-tab="0"><div class="fg">
+        <div class="f full" id="f-name"><label for="in-name">Account name *</label><input id="in-name" value="${v('name')}" autocomplete="off"></div>
+        <div class="f"><label for="in-ind">Industry</label><select id="in-ind">${Object.keys(IND).map((t) => `<option ${e && e.ind === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+        <div class="f"><label for="in-owner">Owner</label><select id="in-owner">${OWNERS.map((t) => `<option ${e && e.owner === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+        <div class="f" id="f-emp"><label for="in-emp">Employees</label><input id="in-emp" type="number" inputmode="numeric" value="${e ? e.emp : ''}" placeholder="0"></div>
+        <div class="f" id="f-rev"><label for="in-rev">Annual revenue ($)</label><input id="in-rev" type="number" inputmode="numeric" value="${e ? e.rev : ''}" placeholder="0"></div>
+        <div class="f" id="f-web"><label for="in-web">Website</label><input id="in-web" value="${v('web')}" placeholder="https://" autocomplete="off"></div>
+        <div class="f"><label for="in-phone">Phone</label><input id="in-phone" value="${v('phone')}" autocomplete="off"></div>
+      </div></div>
+      ${layout.tabs.slice(1).map((t, k) => `<div class="sect" data-tab="${k + 1}" hidden><div class="fg">${extra(t).map((lab, i) => `<div class="f"><label for="cf-${k}-${i}">${lab}<span class="tg">your bank</span></label><input id="cf-${k}-${i}" autocomplete="off"></div>`).join('')}</div></div>`).join('')}
+      <div class="savebar"><button type="button" class="btn" data-cancel>Cancel</button><button class="btn pri">${e ? 'Save changes' : 'Create account'}</button></div>
+    </form>
+    <aside class="card prev" aria-label="Preview"><span class="lab">On the portfolio map</span>
+      <div class="tile big" id="pv"></div>
+      <span class="muted" id="pvNote"></span><div class="share"><i id="pvBar"></i></div>
+    </aside>
+  </div>`;
+  preview();
+}
+function preview() {
+  const nm = $('in-name').value.trim(), ind = $('in-ind').value, rev = Math.max(0, +$('in-rev').value || 0);
+  const others = A.filter((a) => !(formMode === 'edit' && a.id === cur)).reduce((s, a) => s + a.rev, 0), pct = rev ? (rev / (others + rev)) * 100 : 0;
+  const pv = $('pv'); pv.style.setProperty('--h', IND[ind]);
+  pv.innerHTML = `<small>${ind}</small><b>${esc(nm || 'Account name')}</b><span class="rev">${short(rev)}</span><span class="meta">Owner: ${$('in-owner').value}</span>`;
+  $('pvNote').textContent = rev ? `About ${pct < 1 ? 'under 1' : Math.round(pct)}% of the portfolio by revenue` : 'Add annual revenue to size the tile';
+  $('pvBar').style.setProperty('--w', pct + '%');
+}
+function setTab(k) { page.querySelectorAll('[data-tab]').forEach((x) => (x.hidden = +x.dataset.tab !== k)); page.querySelectorAll('[data-ltab]').forEach((x) => x.setAttribute('aria-selected', +x.dataset.ltab === k)); }
+function closeOver() { const wasPick = sheet === 'layout' && screen === 'port'; sheet = null; del = false; if (wasPick) render(); else overlay(); }
+
+/* ---------- events ---------- */
+app.addEventListener('click', (e) => {
+  const t = e.target, c = (sel) => t.closest(sel), a = byId(cur);
+  let el;
+  if ((el = c('[data-ind]'))) { const v = el.dataset.ind; fInd.has(v) ? fInd.delete(v) : fInd.add(v); return render(); }
+  if ((el = c('[data-sort]'))) { sort = el.dataset.sort; pop = null; return render(true); }
+  if (c('#pop')) return;
+  if ((el = c('[data-pop]'))) { pop = pop === el.dataset.pop ? null : el.dataset.pop; popQ = ''; render(); $('popQ')?.focus(); return; }
+  if (pop) { pop = null; popQ = ''; render(); }
+  if (c('[data-close]') || t.id === 'scrim') return closeOver();
+  if (c('#delYes')) { A.splice(A.indexOf(a), 1); cur = A[0].id; show(view); return toast(delMode === 'cascade' ? 'Account and related records deleted' : 'Account deleted'); }
+  if (c('[data-site]')) return toast('The website opens in a new tab');
+  if (c('[data-deal]')) return toast('Opens the deal');
+  if (c('[data-quote]')) return toast('Opens the quote');
+  if (c('[data-person]')) return toast('Opens the contact profile');
+  if (c('[data-copy]')) { try { navigator.clipboard.writeText(a.phone).catch(() => {}); } catch (err) {} return toast('Phone number copied'); }
+  if (c('#clear')) { fInd.clear(); q = ''; return render(); }
+  if ((el = c('[data-view]'))) return show(el.dataset.view);
+  if ((el = c('[data-x]'))) { const id = +el.dataset.x; openRow = openRow === id ? null : id; return render(); }
+  if (c('[data-sheet]') || c('[data-relayout]')) { sheet = 'layout'; return overlay(); }
+  if ((el = c('[data-layout]'))) { formMode = 'new'; layout = LAYOUTS[+el.dataset.layout]; return show('form', null, 1); }
+  if (c('[data-autoflow]')) return toast('The guided AutoFlow opens here');
+  if (c('[data-edit]')) { formMode = 'edit'; layout = LAYOUTS[0]; return show('form', null, 1); }
+  if (c('[data-cancel]')) return show(formMode === 'edit' ? 'acct' : view);
+  if ((el = c('[data-ltab]'))) return setTab(+el.dataset.ltab);
+  if (c('[data-del]')) { del = true; delMode = 'unlink'; return overlay(); }
+  if ((el = c('[data-open]'))) return show('acct', +el.dataset.open);
+  if ((el = c('[data-go]'))) return show(el.dataset.go);
+  if ((el = c('[data-step]'))) { const s = rowsNow().length ? rowsNow() : A, i = Math.max(0, s.indexOf(a)); return show('acct', s[(i + +el.dataset.step + s.length) % s.length].id); }
+});
+app.addEventListener('change', (e) => { if (e.target.name === 'delmode') delMode = e.target.value; });
+app.addEventListener('input', (e) => {
+  const t = e.target;
+  if (t.id === 'q') { q = t.value; const pos = t.selectionStart; portView(); const n = $('q'); n.focus(); n.setSelectionRange(pos, pos); }
+  else if (t.id === 'popQ') { popQ = t.value; const pos = t.selectionStart; render(); const n = $('popQ'); n.focus(); n.setSelectionRange(pos, pos); }
+  else if (t.closest('#aform')) { t.closest('.f')?.classList.remove('bad'); t.closest('.f')?.querySelector('.err')?.remove(); preview(); }
+});
+app.addEventListener('submit', (e) => {
+  e.preventDefault();
+  let ok = true; setTab(0);
+  const web = $('in-web').value.trim();
+  [['f-name', 'in-name', !$('in-name').value.trim(), 'Enter the account name.'], ['f-emp', 'in-emp', +$('in-emp').value < 0, 'Employees can’t be negative.'], ['f-rev', 'in-rev', +$('in-rev').value < 0, 'Annual revenue can’t be negative.'], ['f-web', 'in-web', !!web && !/^https?:\/\/.+\..+/.test(web), 'Enter a web address that starts with https://']].forEach(([f, i, bad, msg]) => {
+    $(f).classList.toggle('bad', bad); $(f).querySelector('.err')?.remove();
+    if (bad) { $(f).insertAdjacentHTML('beforeend', `<div class="err">${msg}</div>`); if (ok) $(i).focus(); ok = false; }
+  });
+  if (!ok) return;
+  const d = { name: $('in-name').value.trim(), ind: $('in-ind').value, owner: $('in-owner').value, emp: +$('in-emp').value || 0, rev: +$('in-rev').value || 0, web, phone: $('in-phone').value.trim() || 'None' };
+  const edit = formMode === 'edit';
+  if (edit) Object.assign(byId(cur), d); else { A.push({ id: seq++, added: 'Today', layout: layout.name, people: [], deals: [], quotes: [], ...d }); cur = seq - 1; q = ''; fInd.clear(); }
+  show('acct');
+  toast(edit ? 'Changes saved' : 'Account created');
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (pop) { pop = null; render(); } else if (sheet || del) closeOver(); } });
+$('screens').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) show(b.dataset.s); });
+let rz, lastW = 0;
+new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => { if (app.clientWidth !== lastW) { lastW = app.clientWidth; if (screen === 'port') render(); } }, 120); }).observe(app);
+const isDark = () => (document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
+$('themeBtn').addEventListener('click', () => { document.documentElement.dataset.theme = isDark() ? 'light' : 'dark'; });
+const BANKS = [['H', '#1d3a6e', '#1d3a6e', '#9db8ee'], ['M', '#9b1c3a', '#8a1933', '#f2a3b5'], ['C', '#0f6b52', '#0d5c47', '#7fd6b9']];
+$('banks').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  const [letter, primary, inkL, inkD] = BANKS[+b.dataset.bank], r = document.documentElement.style;
+  r.setProperty('--bank-primary', primary); r.setProperty('--bank-ink-light', inkL); r.setProperty('--bank-ink-dark', inkD);
+  $('logo').textContent = letter;
+  $('banks').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+});
+lastW = app.clientWidth;
+render(true);
+</script>

@@ -22,6 +22,7 @@ import { ContactDetail } from './pages/ContactDetail';
 import { Accounts } from './pages/Accounts';
 import { AccountForm } from './pages/AccountForm';
 import { AccountDetail } from './pages/AccountDetail';
+import { AccountEdit } from './pages/AccountEdit';
 import { Products } from './pages/Products';
 import { ProductForm } from './pages/ProductForm';
 import { ProductDetail } from './pages/ProductDetail';
@@ -122,6 +123,7 @@ export function App() {
             <Route path="/contacts/:id" element={<Protected><ContactDetail /></Protected>} />
             <Route path="/accounts" element={<Protected><Accounts /></Protected>} />
             <Route path="/accounts/new" element={<Protected roles={['admin', 'rep']}><AccountForm /></Protected>} />
+            <Route path="/accounts/:id/edit" element={<Protected roles={['admin', 'rep']}><AccountEdit /></Protected>} />
             <Route path="/accounts/:id" element={<Protected><AccountDetail /></Protected>} />
             <Route path="/products" element={<Protected><Products /></Protected>} />
             <Route path="/products/new" element={<Protected><ProductForm /></Protected>} />
