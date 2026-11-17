@@ -86,7 +86,7 @@ Every metric states its time basis. Solid chip = follows the page range ("Last 3
 ### Contacts (`src/pages/Contacts.tsx`, `ContactDetail.tsx`, `ContactForm.tsx`, `src/pages/contacts/`, `src/styles/contacts.css`)
 - Design: `design/v3/contacts.html` (clickable, four screens). Every Contacts screen carries the class `contact3`.
 - Each module gets its own page idea. Leads is a status bar over a table; Contacts is a people directory.
-- Directory: cards grouped A to Z or by account, a letter rail to jump, and a quick look beside the list that opens on the first person and follows the card you click. Under 1020 px the quick look and rail are hidden and a click opens the profile. List view keeps the tick boxes and the bulk bar.
+- Directory: cards grouped A to Z or by account, a letter rail to jump, and a quick look beside the list that stays closed until you click a card, then follows the card you click (it has a close button). Under 1020 px the quick look and rail are hidden and a click opens the profile. List view keeps the tick boxes and the bulk bar.
 - Every person keeps one colour (`contactHue`) on the card, the quick look and the profile.
 - Profile: cover with photo, tags you add or remove in place, notes as a timeline, files as tiles, and a "Works at" card with colleagues from the same account. Recently Accessed is not on Contacts; ToolBox is a header button.
 - Forms are full pages. The slide window is only for choosing a layout. New contact and Edit share one look: the profile, being filled in. Edit stays inside `ContactDetail` (no separate route).

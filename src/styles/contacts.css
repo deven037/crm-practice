@@ -99,6 +99,8 @@
 
 .contact-dir { display: grid; grid-template-columns: minmax(0, 1fr) 26px 330px; gap: 12px; align-items: start; }
 .contact-dir.no-rail { grid-template-columns: minmax(0, 1fr) 330px; }
+.contact-dir.no-peek { grid-template-columns: minmax(0, 1fr) 26px; }
+.contact-dir.no-rail.no-peek { grid-template-columns: minmax(0, 1fr); }
 .contact-dir-main { min-width: 0; }
 .contact-group { margin-bottom: 18px; scroll-margin-top: 92px; }
 .contact-group-head { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; font-size: inherit; font-weight: 400; color: var(--text-muted); }
@@ -130,6 +132,8 @@
 
 .contact-peek { position: sticky; top: 84px; overflow: hidden; padding: 0 18px 18px; animation: v3-pop var(--duration-base) var(--ease-spring); }
 .contact-peek .contact-band { height: 74px; margin: 0 -18px -42px; }
+.contact-peek-close { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: var(--glass-strong, var(--surface)); color: var(--text-muted); cursor: pointer; box-shadow: var(--shadow-sm); transition: transform var(--duration-fast) var(--ease-spring), color var(--duration-fast); }
+.contact-peek-close:hover { transform: scale(1.1); color: var(--text); }
 .contact-peek h2 { margin: 10px 0 0; font-size: 20px; font-weight: 650; overflow-wrap: anywhere; }
 .contact-peek > p { margin: 0 0 10px; }
 .contact-peek-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }

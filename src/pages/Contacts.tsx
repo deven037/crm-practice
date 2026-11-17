@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Building2, ChevronDown, ChevronRight, LayoutGrid, List, Mail, Phone, Plus, Search } from 'lucide-react';
+import { Building2, ChevronDown, ChevronRight, LayoutGrid, List, Mail, Phone, Plus, Search, X } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { getAll, getAllSync, removeMany } from '../data/store';
 import { Account, Contact, Role } from '../types';
@@ -51,11 +51,12 @@ export function EmailTooltip({ email, as: Tag, className }: { email: string; as:
 }
 
 /** The quick look that stays beside the directory: who this is and how to reach them, without leaving the list. */
-function ContactPeek({ contact, account, onCopy }: { contact: Contact; account: string | null; onCopy: (text: string, what: string) => void }) {
+function ContactPeek({ contact, account, onCopy, onClose }: { contact: Contact; account: string | null; onCopy: (text: string, what: string) => void; onClose: () => void }) {
   const note = contact.notes[0];
   return (
     <aside className="card contact-peek" aria-label={`Quick look at ${contact.name}`} data-testid="contact-peek" style={hueStyle(contact.id)}>
       <div className="contact-band" />
+      <button type="button" className="contact-peek-close" aria-label="Close quick look" data-testid="contact-peek-close" onClick={onClose}><X size={15} /></button>
       <ContactFace contact={contact} size="large" />
       <h2>{contact.name}</h2>
       <p className="muted">{contact.title || 'No title'}</p>
@@ -140,8 +141,8 @@ export function Contacts() {
   const groups = groupContacts(filtered, groupBy, accountName);
   const letters = new Set(groupBy === 'letter' ? groups.map((g) => g.key) : []);
   const showRail = view === 'grid' && groupBy === 'letter';
-  // The quick look opens on the first person in the list until someone else is picked.
-  const peek = filtered.find((c) => c.id === peekId) ?? filtered[0] ?? null;
+  // The quick look stays closed until a person is clicked (owner, 2026-11-17).
+  const peek = filtered.find((c) => c.id === peekId) ?? null;
   const ready = !loading && !loadError;
 
   /** On a wide screen a click shows the person in the quick look; on a narrow one, where it is hidden, it opens the profile. */
@@ -233,7 +234,7 @@ export function Contacts() {
           </button>
         </div>
       ) : filtered.length > 0 && (
-        <div className={classNames('contact-dir', !showRail && 'no-rail')}>
+        <div className={classNames('contact-dir', !showRail && 'no-rail', !peek && 'no-peek')}>
           <div className="contact-dir-main">
             {view === 'grid' ? (
               groups.map((group) => (
@@ -353,7 +354,7 @@ export function Contacts() {
               ))}
             </nav>
           )}
-          {peek && <ContactPeek key={peek.id} contact={peek} account={peek.accountId ? accountName(peek.accountId) : null} onCopy={copy} />}
+          {peek && <ContactPeek key={peek.id} contact={peek} account={peek.accountId ? accountName(peek.accountId) : null} onCopy={copy} onClose={() => setPeekId(null)} />}
         </div>
       )}
 
