@@ -10,6 +10,7 @@ import './styles.css';
 import './styles/v3.css';
 import './styles/shell.css';
 import './styles/leads.css';
+import './styles/contacts.css';
 import './styles/front-door.css';
 import './styles/front-door-pages.css';
 import { applyBankTheme, rememberedBankColor } from './theme/bankTheme';

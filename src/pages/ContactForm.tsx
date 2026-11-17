@@ -1,20 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Camera, ChevronLeft } from 'lucide-react';
 import { getAllSync, newId, upsert } from '../data/store';
 import { Account, Contact, CustomFieldDef, PageLayout } from '../types';
-import { MultiSelect, SearchableSelect } from '../components/Select';
+import { SearchableSelect } from '../components/Select';
 import { CustomFieldsSection, validateCustomFields } from '../components/CustomFieldsSection';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { findDuplicate } from '../utils/rules';
 import { getCustomFieldsAsModuleFields } from '../utils/moduleFields';
 import { classNames } from '../utils';
+import { allContactTags, ContactFace, hueStyle, TagInput } from './contacts/contactBits';
 
-const TAG_OPTIONS = ['vip', 'newsletter', 'partner', 'decision-maker', 'follow-up', 'imported'].map((t) => ({
-  value: t,
-  label: t,
-}));
-
+/** The new-contact page. It is laid out like the profile it will become: photo and name on top, the layout's sections as tabs. */
 export function ContactForm() {
   const navigate = useNavigate();
   const toast = useToast();
@@ -94,26 +92,51 @@ export function ContactForm() {
     }
   };
 
-  return (
-    <div className="contact-screen" data-testid="contact-form-page">
-      <nav className="breadcrumbs">
-        <Link to="/contacts">Contacts</Link> <span>/</span> <span>New contact</span>
-      </nav>
-      <div className="contact-heading">
-        <h1>New contact</h1>
-        <p className="page-subtitle">Add a person and connect them to an account.</p>
-      </div>
-      {layout && <p className="muted">Layout: {layout.name}</p>}
+  const onPhoto = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setDraft((d) => ({ ...d, avatar: String(reader.result) }));
+    reader.readAsDataURL(file);
+  };
 
-      {!canWrite ? <p className="muted">You have read-only access to contacts.</p> : (
-      <form className="contact-form" ref={formRef} noValidate onSubmit={(event) => { event.preventDefault(); void submit(); }}>
-        <fieldset disabled={busy}>
-        {duplicate && (
-          <div className="banner banner-info" role="alert" data-testid="duplicate-warning">
-            A contact with matching details already exists —{' '}
-            <Link to={`/contacts/${duplicate.id}`}>View "{duplicate.name}"</Link>. You can still save this one.
+  return (
+    <div className="contact3 contact-form-page" data-testid="contact-form-page" style={hueStyle(draft.id)}>
+      <Link to="/contacts" className="contact-back"><ChevronLeft size={16} aria-hidden="true" /> Contacts</Link>
+
+      {!canWrite ? (
+        <>
+          <div className="page-header"><h1>New contact</h1></div>
+          <p className="muted">You have read-only access to contacts.</p>
+        </>
+      ) : (
+      <form className="card contact-formcard contact-form" ref={formRef} noValidate onSubmit={(event) => { event.preventDefault(); void submit(); }}>
+        <div className="contact-band" />
+        <div className="contact-cover-top">
+          <span className="contact-photo">
+            <ContactFace contact={draft} size="large" />
+            <label
+              className="contact-cam"
+              title="Choose photo"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.currentTarget.querySelector('input')?.click();
+                }
+              }}
+            >
+              <Camera size={15} aria-hidden="true" />
+              <span className="sr-only">Choose photo</span>
+              <input type="file" accept="image/*" hidden data-testid="contact-photo-input" onChange={onPhoto} />
+            </label>
+          </span>
+          <div className="contact-ident">
+            <h1>{draft.name.trim() || 'New contact'}</h1>
+            <p>{layout ? `Layout: ${layout.name}` : 'Add a person and connect them to an account.'}</p>
           </div>
-        )}
+        </div>
+
         {layout && layout.tabs.length > 1 && (
           <div className="contact-layout-tabs" data-testid="contact-form-layout-tabs" aria-label="Form layout sections">
             {layout.tabs.map((tab) => (
@@ -121,12 +144,20 @@ export function ContactForm() {
                 type="button"
                 aria-pressed={tab.id === activeTabId}
                 key={tab.id}
-                className={classNames('tab', tab.id === activeTabId && 'active')}
+                className={classNames('contact-ltab', tab.id === activeTabId && 'active')}
                 onClick={() => setActiveTabId(tab.id)}
               >
                 {tab.label}
               </button>
             ))}
+          </div>
+        )}
+
+        <fieldset className="contact-fields" disabled={busy}>
+        {duplicate && (
+          <div className="banner banner-info" role="alert" data-testid="duplicate-warning">
+            A contact with matching details already exists —{' '}
+            <Link to={`/contacts/${duplicate.id}`}>View "{duplicate.name}"</Link>. You can still save this one.
           </div>
         )}
         <div className="form-grid" aria-live="polite">
@@ -173,7 +204,7 @@ export function ContactForm() {
             </div>
           )}
           {isVisible('accountId') && (
-            <div className="field">
+            <div className="field field-span">
               <label className="field-label" htmlFor="contact-account">Account</label>
               <SearchableSelect
                 id="contact-account"
@@ -185,15 +216,14 @@ export function ContactForm() {
               />
             </div>
           )}
-          {isVisible('tags') && <div className="field">
+          {isVisible('tags') && <div className="field field-span">
             <label className="field-label" htmlFor="contact-tags">Tags</label>
-            <MultiSelect
+            <TagInput
               id="contact-tags"
-              values={draft.tags}
-              options={TAG_OPTIONS}
-              onChange={(tags) => setDraft({ ...draft, tags })}
-              placeholder="Add tags…"
               testId="contact-tags"
+              tags={draft.tags}
+              suggestions={allContactTags(getAllSync<Contact>('contacts'))}
+              onChange={(tags) => setDraft({ ...draft, tags })}
             />
           </div>}
           <CustomFieldsSection
@@ -208,12 +238,12 @@ export function ContactForm() {
         </div>
 
         </fieldset>
-        {saveError && <div className="banner banner-error" role="alert">Contact couldn’t be saved. Your details are still here.</div>}
-        <div className="form-actions">
+        {saveError && <div className="banner banner-error contact-form-note" role="alert">Contact couldn’t be saved. Your details are still here.</div>}
+        <div className="form-actions contact-form-actions">
           <button type="button" className="btn" disabled={busy} onClick={() => navigate('/contacts')}>
             Cancel
           </button>
-          <button type="submit" className="btn contacts-primary" disabled={busy}>
+          <button type="submit" className="btn btn-primary contacts-primary" disabled={busy}>
             {busy ? 'Creating…' : 'Create contact'}
           </button>
         </div>

@@ -60,7 +60,7 @@ vi.mock('../data/store', () => ({
   removeMany: vi.fn(),
 }));
 vi.mock('../components/Toast', () => ({ useToast: () => ({ push: vi.fn() }) }));
-vi.mock('../components/ToolBoxPanel', () => ({ ToolBoxPanel: () => null }));
+vi.mock('../components/ToolBoxMenu', () => ({ ToolBoxMenu: () => null }));
 vi.mock('react-router-dom', async (original) => ({
   ...await original<typeof import('react-router-dom')>(),
   useNavigate: () => harness.navigate,
@@ -147,7 +147,7 @@ describe('Contacts rendered behavior', () => {
     for (const view of ['Grid view', 'List view']) {
       click(view);
       const { html, elements } = render();
-      expect(html.includes('+ New Contact')).toBe(role !== 'viewer');
+      expect(html.includes('data-testid="new-contact"')).toBe(role !== 'viewer');
       expect(html.includes('type="checkbox"')).toBe(view === 'List view' && role !== 'viewer');
       // A native anchor with href participates in Tab order and Enter activation.
       expect(html).toMatch(/<a[^>]*href="\/contacts\/c1"[^>]*>Mina Shah<\/a>/);
