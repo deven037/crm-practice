@@ -151,7 +151,7 @@ a.acct-tile:hover, a.acct-tile:focus-visible { z-index: 2; transform: scale(1.02
 .acct-qrow:first-of-type { padding-top: 0; }
 .acct-qrow:last-child { padding-bottom: 0; border-bottom: 0; }
 .acct-qrow b { margin-left: auto; font-variant-numeric: tabular-nums; }
-.acct-people { display: grid; gap: 4px; }
+.acct-people { display: grid; gap: 4px; align-content: start; }
 .acct-person { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 6px; border-radius: 12px; text-decoration: none; color: var(--text); transition: background var(--duration-fast); }
 .acct-person:hover { background: var(--bank-soft); }
 .acct-person div { min-width: 0; }
