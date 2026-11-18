@@ -1,0 +1,1215 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Harbor Tickets 3.0</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: Tickets is a service desk run by the clock. An SLA dial and live fuses show how much time each ticket has left; a team board to hand tickets out by dragging; a ticket room with a time track, a chat style conversation and internal notes; a full page form that shows the SLA promise; an SLA policy ladder in Setup. Tokens mirror src/styles/v3.css. */
+:root {
+  --bank-primary: #1d3a6e; --bank-on: #ffffff; --bank-ink-light: #1d3a6e; --bank-ink-dark: #9db8ee;
+  --bank-ink: var(--bank-ink-light);
+  --bg: color-mix(in srgb, var(--bank-primary) 4%, #f5f6f8);
+  --surface: #ffffff;
+  --surface-2: color-mix(in srgb, var(--bank-primary) 4%, #f3f4f6);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 7%, #e8eaee);
+  --border: color-mix(in srgb, var(--bank-primary) 8%, #e2e5ea);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 10%, #cfd4dc);
+  --text: #171b26; --text-muted: #5a6272;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 10%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 26%, var(--surface));
+  --chrome-bg: color-mix(in srgb, var(--bank-primary) 26%, #0a0d15);
+  --chrome-hover: color-mix(in srgb, var(--bank-primary) 34%, #151a26);
+  --chrome-line: color-mix(in srgb, var(--bank-primary) 30%, #1c2331);
+  --chrome-active: color-mix(in srgb, var(--bank-primary) 55%, #1a2030);
+  --chrome-text: #cfd5e3; --chrome-muted: #98a1b6; --chrome-strong: #ffffff;
+  --glass: color-mix(in srgb, var(--surface) 72%, transparent);
+  --glass-line: color-mix(in srgb, var(--text) 9%, transparent);
+  --scrim: color-mix(in srgb, var(--bank-primary) 18%, rgba(9, 12, 20, 0.5));
+  --warn-bg: #fdf0d5; --warn-text: #8a5300; --danger-bg: #fde7e7; --danger-text: #a12626; --ok-bg: #dcf5ea; --ok-text: #0c6b47;
+  --shadow: 0 1px 2px rgba(16, 22, 38, 0.05), 0 4px 12px -2px rgba(16, 22, 38, 0.07);
+  --shadow-lg: 0 4px 8px rgba(16, 22, 38, 0.05), 0 24px 48px -12px rgba(16, 22, 38, 0.24);
+  --shadow-dock: 0 18px 40px -16px color-mix(in srgb, var(--bank-primary) 70%, rgba(0, 0, 0, 0.6));
+  --shadow-bank: 0 6px 18px -6px color-mix(in srgb, var(--bank-primary) 60%, transparent);
+  --font-sans: 'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --fast: 150ms; --base: 220ms; --slow: 350ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bank-ink: var(--bank-ink-dark);
+  --bg: color-mix(in srgb, var(--bank-primary) 7%, #0d1119);
+  --surface: color-mix(in srgb, var(--bank-primary) 5%, #171c28);
+  --surface-2: color-mix(in srgb, var(--bank-primary) 7%, #1f2533);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 9%, #293041);
+  --border: color-mix(in srgb, var(--bank-primary) 10%, #2c3445);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 12%, #3a4358);
+  --text: #e9ecf3; --text-muted: #9aa3b6;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 22%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 42%, var(--surface));
+  --glass: color-mix(in srgb, var(--surface) 68%, transparent);
+  --glass-line: color-mix(in srgb, #fff 9%, transparent);
+  --warn-bg: #3d2c0b; --warn-text: #f7cf7d; --danger-bg: #431417; --danger-text: #ffb1b1; --ok-bg: #0f3327; --ok-text: #86e3b9;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bank-ink: var(--bank-ink-dark);
+  --bg: color-mix(in srgb, var(--bank-primary) 7%, #0d1119);
+  --surface: color-mix(in srgb, var(--bank-primary) 5%, #171c28);
+  --surface-2: color-mix(in srgb, var(--bank-primary) 7%, #1f2533);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 9%, #293041);
+  --border: color-mix(in srgb, var(--bank-primary) 10%, #2c3445);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 12%, #3a4358);
+  --text: #e9ecf3; --text-muted: #9aa3b6;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 22%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 42%, var(--surface));
+  --glass: color-mix(in srgb, var(--surface) 68%, transparent);
+  --glass-line: color-mix(in srgb, #fff 9%, transparent);
+  --warn-bg: #3d2c0b; --warn-text: #f7cf7d; --danger-bg: #431417; --danger-text: #ffb1b1; --ok-bg: #0f3327; --ok-text: #86e3b9;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.45;
+  padding-block: 16px 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-font-smoothing: antialiased;
+}
+body.dragging { cursor: grabbing; -webkit-user-select: none; user-select: none; }
+button, input, select { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--bank-ink); outline-offset: 2px; border-radius: 6px; }
+svg { flex: none; display: block; }
+h2, h3 { font-family: var(--font-display); margin: 0; letter-spacing: -0.01em; }
+i { font-style: normal; }
+
+.deck { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; max-width: 1280px; margin: 0 auto 14px; }
+.deck h1 { font-family: var(--font-display); font-size: 20px; font-weight: 650; margin: 0; flex: 1 1 200px; }
+.deck h1 small { display: block; font-family: var(--font-sans); font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.pick { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); }
+.seg { display: flex; flex-wrap: wrap; padding: 3px; gap: 2px; background: var(--surface-3); border-radius: 999px; }
+.seg button { padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--text-muted); display: flex; align-items: center; gap: 6px; transition: background var(--fast), color var(--fast); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.sw { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
+
+.stage { container-type: inline-size; max-width: 1280px; margin: 0 auto; }
+.app { position: relative; overflow: hidden; display: grid; grid-template-columns: auto minmax(0, 1fr); height: clamp(640px, 86vh, 840px); border-radius: 20px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg);
+  background: radial-gradient(60% 50% at 100% 0%, color-mix(in srgb, var(--bank-primary) 13%, transparent), transparent 70%), radial-gradient(50% 50% at 0% 100%, color-mix(in srgb, var(--bank-primary) 8%, transparent), transparent 70%), var(--bg); }
+.rail { width: 60px; margin: 10px 0 10px 10px; border-radius: 18px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; color: var(--chrome-muted); border: 1px solid var(--chrome-line); box-shadow: var(--shadow-dock);
+  background: radial-gradient(130% 42% at 0% 0%, color-mix(in srgb, var(--bank-primary) 62%, transparent), transparent 72%), var(--chrome-bg); }
+.rail .logo { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 8px; background: var(--bank-primary); color: var(--bank-on); font-family: var(--font-display); font-weight: 700; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+.rail span { width: 40px; height: 36px; border-radius: 10px; display: grid; place-items: center; }
+.rail span.on { color: var(--chrome-strong); background: var(--chrome-active); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+.main { position: relative; min-width: 0; overflow-y: auto; display: flex; flex-direction: column; }
+.tb { position: sticky; top: 0; z-index: 4; display: flex; align-items: center; gap: 10px; margin: 10px 12px 0; padding: 8px 10px 8px 16px; border-radius: 16px; background: var(--glass); -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px); border: 1px solid var(--glass-line); box-shadow: var(--shadow); }
+.crumb { display: flex; gap: 7px; color: var(--text-muted); font-size: 13px; white-space: nowrap; min-width: 0; overflow: hidden; }
+.crumb b { color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.chip-me { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 5px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-weight: 600; font-size: 13px; white-space: nowrap; }
+.av { width: 30px; height: 30px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 11.5px; font-weight: 600; background: var(--bank-primary); color: var(--bank-on); }
+.av.sm { width: 24px; height: 24px; font-size: 9.5px; }
+.av.soft { background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.page { flex: 1; padding: 22px 24px 90px; animation: enter var(--slow) var(--ease-out); }
+@keyframes enter { from { opacity: 0; transform: translateY(10px); } }
+@keyframes pop { from { opacity: 0; transform: scale(.9) translateY(8px); } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes grow { from { transform: scaleX(0); } }
+
+/* shared pieces */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 14px; border-radius: 12px; font-weight: 550; white-space: nowrap; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow);
+  transition: transform var(--fast) var(--ease-spring), border-color var(--fast), filter var(--fast), background var(--fast), color var(--fast); }
+.btn:hover { transform: translateY(-1px); border-color: var(--bank-soft-line); }
+.btn:active { transform: scale(.97); }
+.btn.pri { color: var(--bank-on); border-color: transparent; background: linear-gradient(180deg, color-mix(in srgb, var(--bank-primary) 90%, #fff), var(--bank-primary)); box-shadow: inset 0 1px 0 rgba(255,255,255,.22), var(--shadow-bank); }
+.btn.pri:hover { filter: brightness(1.08); }
+.btn.ghost { background: none; border-color: transparent; box-shadow: none; color: var(--text-muted); }
+.btn.ghost:hover { background: var(--surface-2); color: var(--text); }
+.btn.danger { color: var(--danger-text); }
+.btn.sq { width: 38px; padding: 0; }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap;
+  background: color-mix(in srgb, var(--c) 14%, var(--surface)); color: color-mix(in srgb, var(--c) 62%, var(--text)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 26%, transparent); }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.ph { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 18px; }
+.ph h2 { font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.02em; }
+.ph p { margin: 2px 0 0; color: var(--text-muted); }
+.ph .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+.lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.muted { color: var(--text-muted); }
+.num { font-variant-numeric: tabular-nums; }
+.link { color: var(--bank-ink); font-weight: 550; } .link:hover { text-decoration: underline; }
+.tg { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 500; white-space: nowrap; background: var(--surface-2); color: var(--text-muted); box-shadow: inset 0 0 0 1px var(--border); }
+.tg.add { border: 1px dashed var(--border-strong); background: none; box-shadow: none; }
+.tg.add:hover { color: var(--bank-ink); border-color: var(--bank-soft-line); background: var(--bank-soft); }
+
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; }
+.search { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; flex: 1 1 220px; max-width: 320px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-muted); transition: box-shadow var(--fast), border-color var(--fast); }
+.search:focus-within { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--text); }
+.fchip { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border-radius: 12px; border: 1px dashed var(--border-strong); color: var(--text-muted); font-weight: 500; white-space: nowrap; transition: background var(--fast), border-color var(--fast), color var(--fast); }
+.fchip:hover { background: var(--surface); color: var(--text); }
+.fchip.set { border-style: solid; border-color: var(--bank-soft-line); background: var(--bank-soft); color: var(--bank-ink); }
+.pop-wrap { position: relative; }
+.pop { position: absolute; z-index: 9; top: 44px; left: 0; width: 250px; padding: 6px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg); transform-origin: top left; animation: pop var(--base) var(--ease-spring); }
+.pop.right { left: auto; right: 0; transform-origin: top right; }
+.pop input { width: 100%; height: 34px; padding: 0 10px; margin-bottom: 4px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); outline: 0; }
+.pop input:focus { border-color: var(--bank-ink); }
+.pop .opt { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 10px; border-radius: 10px; text-align: left; font-weight: 500; }
+.pop .opt:hover { background: var(--bank-soft); }
+.pop .opt i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.pop .opt .tick { margin-left: auto; color: var(--bank-ink); opacity: 0; }
+.pop .opt[aria-checked="true"] .tick { opacity: 1; }
+.pop .opt small { margin-left: auto; color: var(--text-muted); font-size: 12px; }
+.pop .none { padding: 10px; color: var(--text-muted); font-size: 12.5px; }
+.empty { padding: 44px 20px; text-align: center; color: var(--text-muted); }
+.empty b { display: block; font-family: var(--font-display); font-size: 17px; color: var(--text); }
+.back { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-weight: 500; margin-bottom: 12px; }
+.back:hover { color: var(--bank-ink); }
+.box { padding: 18px 20px; }
+.box h3 { font-size: 16px; font-weight: 650; margin-bottom: 12px; }
+.box-h { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; } .box-h h3 { margin: 0; flex: 1; }
+.cols { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.stack { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.kv { display: grid; gap: 10px; margin: 0; }
+.kv div { display: flex; gap: 10px; align-items: center; }
+.kv dt { width: 96px; flex: none; font-size: 12.5px; color: var(--text-muted); } .kv dd { margin: 0; min-width: 0; flex: 1; overflow-wrap: anywhere; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+/* dialogs, sheet, form basics (shared with Contacts and Accounts) */
+.scrim { position: absolute; inset: 0; z-index: 10; background: var(--scrim); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); display: grid; place-items: center; padding: 14px; animation: fade var(--base); }
+.dlg { width: min(460px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 22px; background: var(--surface); border: 1px solid var(--glass-line); box-shadow: var(--shadow-lg); animation: pop var(--slow) var(--ease-spring); overflow: hidden; }
+.dlg-head { padding: 18px 22px 0; display: flex; align-items: center; gap: 10px; }
+.dlg-head h3 { font-size: 19px; font-weight: 650; flex: 1; overflow-wrap: anywhere; }
+.dlg-body { padding: 14px 22px 18px; overflow-y: auto; color: var(--text-muted); }
+.dlg-foot { display: flex; gap: 8px; padding: 14px 22px; background: var(--surface-2); border-top: 1px solid var(--border); }
+.dlg-foot .sp { flex: 1; }
+.scrim.edge { place-items: stretch end; padding: 10px; }
+.sheet { width: min(400px, 100%); display: flex; flex-direction: column; border-radius: 20px; background: var(--surface); border: 1px solid var(--glass-line); box-shadow: var(--shadow-lg); overflow: hidden; animation: slide var(--slow) var(--ease-out); }
+@keyframes slide { from { transform: translateX(40px); opacity: 0; } }
+.sheet-body { flex: 1; overflow-y: auto; padding: 16px 22px 20px; display: grid; gap: 14px; align-content: start; }
+.pick-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border-radius: 14px; text-align: left; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); transition: transform var(--fast) var(--ease-spring), border-color var(--fast), background var(--fast), box-shadow var(--fast); }
+.pick-item:hover { transform: translateX(-3px); border-color: var(--bank-ink); background: var(--bank-soft); box-shadow: 0 0 0 3px var(--bank-soft); color: var(--bank-ink); }
+.pick-item .ext { width: 38px; height: 38px; flex: none; border-radius: 11px; display: grid; place-items: center; background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.pick-item div { flex: 1; min-width: 0; } .pick-item b { display: block; font-weight: 600; color: var(--text); } .pick-item small { font-size: 12.5px; }
+.ltabs { display: flex; gap: 4px; padding: 0 16px; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; }
+.ltabs button { position: relative; padding: 10px 12px 12px; font-weight: 550; color: var(--text-muted); white-space: nowrap; transition: color var(--fast); }
+.ltabs button:hover { color: var(--text); }
+.ltabs button::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--bank-primary); transform: scaleX(0); transition: transform var(--base) var(--ease-out); }
+.ltabs button[aria-selected="true"] { color: var(--bank-ink); } .ltabs button[aria-selected="true"]::after { transform: scaleX(1); }
+.sect { padding: 20px 22px; animation: enter var(--base) var(--ease-out); }
+.fg { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.fg .full { grid-column: 1 / -1; }
+.f label, .f .flab { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; font-weight: 500; margin-bottom: 5px; }
+.f label .tg { font-size: 10.5px; padding: 0 6px; }
+.f input, .f select, .f .fake { width: 100%; height: 40px; padding: 0 12px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); outline: 0; transition: border-color var(--fast), box-shadow var(--fast); display: flex; align-items: center; gap: 8px; text-align: left; }
+.f input:focus, .f select:focus, .f .fake:focus-visible { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.f .fake .dn { margin-left: auto; color: var(--text-muted); }
+.f .fake i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.f input[type="range"] { height: 28px; padding: 0; border: 0; box-shadow: none; background: none; accent-color: var(--bank-primary); }
+.f label b { color: var(--bank-ink); font-variant-numeric: tabular-nums; }
+.f.bad input, .f.bad .fake { border-color: var(--danger-text); }
+.f .err { color: var(--danger-text); font-size: 12px; margin-top: 4px; }
+.fpop { width: 100%; min-width: 240px; max-height: 300px; overflow-y: auto; }
+.savebar { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; background: var(--surface-2); border-top: 1px solid var(--border); border-radius: 0 0 18px 18px; }
+.toast { position: absolute; z-index: 12; left: 50%; bottom: 18px; transform: translate(-50%, 80px); padding: 10px 16px; border-radius: 14px; display: flex; align-items: center; gap: 8px; font-weight: 500; white-space: nowrap; color: var(--chrome-strong); background: var(--chrome-bg); border: 1px solid var(--chrome-line); box-shadow: var(--shadow-lg); transition: transform var(--slow) var(--ease-spring); }
+.toast.on { transform: translate(-50%, 0); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 12px 6px 2px 46px; font-size: 12.5px; color: var(--text-muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; } .legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.legend em { margin-left: auto; font-style: normal; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; } }
+
+/* ---- Tickets: shared bits ---- */
+.face { width: 26px; height: 26px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 10px; font-weight: 650; color: #fff; background: var(--h); box-shadow: 0 0 0 2px var(--surface); }
+.face.lg { width: 34px; height: 34px; font-size: 12px; }
+.who { display: inline-flex; align-items: center; gap: 6px; min-width: 0; color: var(--text-muted); }
+.who b { color: var(--text); font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: color-mix(in srgb, var(--c) 70%, var(--text)); white-space: nowrap; }
+.pr .bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+.pr .bars i { width: 3px; border-radius: 2px; background: color-mix(in srgb, var(--c) 22%, var(--surface-3)); }
+.pr .bars i:nth-child(1) { height: 4px; } .pr .bars i:nth-child(2) { height: 7px; } .pr .bars i:nth-child(3) { height: 10px; } .pr .bars i:nth-child(4) { height: 12px; }
+.pr .bars i.on { background: var(--c); }
+.chn { display: inline-flex; align-items: center; gap: 5px; color: var(--text-muted); font-size: 12.5px; white-space: nowrap; }
+.esc { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; color: var(--danger-text); background: var(--danger-bg); }
+.frc { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; color: var(--warn-text); background: var(--warn-bg); white-space: nowrap; }
+.frc.late { color: var(--danger-text); background: var(--danger-bg); }
+.opt[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+.pop .opt .why { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+
+/* the fuse: how much of the SLA time is used */
+.fuse { position: relative; height: 8px; border-radius: 99px; background: var(--surface-3); }
+.fuse > i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--w); min-width: 8px; border-radius: inherit; background: var(--c); transition: width 1s linear, background var(--slow); }
+.fuse > i::after { content: ''; position: absolute; right: -3px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 22%, transparent); }
+.fuse.hot > i::after { animation: spark .9s ease-in-out infinite; }
+@keyframes spark { 50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--c) 6%, transparent); transform: scale(1.15); } }
+.fuse.breach > i { width: 100%; background: repeating-linear-gradient(-45deg, var(--c) 0 6px, color-mix(in srgb, var(--c) 62%, #fff) 6px 12px); background-size: 17px 17px; animation: crawl 1s linear infinite; }
+.fuse.breach > i::after, .fuse.paused > i::after, .fuse.done > i::after { display: none; }
+@keyframes crawl { to { background-position: 17px 0; } }
+.fuse.paused > i { background: repeating-linear-gradient(-45deg, var(--border-strong) 0 4px, var(--surface-3) 4px 8px); }
+.fuse.done > i { width: 100%; opacity: .55; }
+.fuse-t { display: flex; justify-content: space-between; gap: 8px; margin-top: 7px; font-size: 12.5px; color: var(--text-muted); white-space: nowrap; }
+.fuse-t b { color: color-mix(in srgb, var(--c) 72%, var(--text)); font-variant-numeric: tabular-nums; font-weight: 650; }
+
+/* ---- Queue ---- */
+.desk { display: grid; grid-template-columns: 268px minmax(0, 1fr); gap: 14px; margin-bottom: 16px; }
+.dialcard { position: relative; padding: 12px 12px 10px; display: flex; flex-direction: column; align-items: center; overflow: hidden;
+  background: radial-gradient(80% 60% at 50% 40%, color-mix(in srgb, var(--bank-primary) 7%, transparent), transparent 70%), var(--surface); }
+.dialcard svg { width: 236px; height: 236px; overflow: visible; }
+.dialcard .cap { font-size: 12px; color: var(--text-muted); text-align: center; }
+.dot { cursor: pointer; transition: r var(--fast) var(--ease-spring); }
+.dot:hover { r: 9; }
+.core { animation: core 1.6s ease-in-out infinite; transform-origin: 118px 118px; }
+@keyframes core { 50% { transform: scale(1.06); } }
+.hand { stroke: var(--bank-ink); stroke-width: 2; stroke-linecap: round; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.tile { position: relative; overflow: hidden; text-align: left; padding: 14px 16px 13px; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 3px;
+  animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); transition: transform var(--fast) var(--ease-spring), border-color var(--fast), box-shadow var(--fast); }
+.tile:hover { transform: translateY(-2px); border-color: var(--bank-soft-line); }
+.tile[aria-pressed="true"] { border-color: var(--bank-ink); box-shadow: 0 0 0 3px var(--bank-soft), var(--shadow); }
+.tile .lab { display: flex; align-items: center; gap: 6px; }
+.tile .lab i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.tile b { font-family: var(--font-display); font-size: 30px; line-height: 36px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.tile.hot b { color: var(--danger-text); }
+.tile small { color: var(--text-muted); font-size: 12px; }
+.tile.hot::before { content: ''; position: absolute; inset: auto -20px -30px auto; width: 90px; height: 90px; border-radius: 50%; background: color-mix(in srgb, #d33a3a 16%, transparent); animation: core 2s ease-in-out infinite; }
+.mbars { display: flex; align-items: flex-end; gap: 4px; height: 22px; margin-top: 2px; }
+.mbars i { flex: 1; border-radius: 3px; background: color-mix(in srgb, var(--bank-primary) 30%, var(--surface-3)); height: var(--h); transform-origin: bottom; animation: rise var(--slow) var(--ease-out) backwards; animation-delay: var(--d); }
+.mbars i.lo { background: color-mix(in srgb, #d33a3a 55%, var(--surface-3)); }
+@keyframes rise { from { transform: scaleY(0); } }
+
+.q { overflow: hidden; }
+.qhead, .qrow { display: grid; grid-template-columns: 5px minmax(0, 1fr) 168px 112px 230px; gap: 16px; align-items: center; padding-right: 18px; }
+.qhead { padding-top: 11px; padding-bottom: 9px; }
+.qrow { position: relative; width: 100%; text-align: left; padding-top: 13px; padding-bottom: 13px; border-top: 1px solid var(--border); cursor: pointer; transition: background var(--fast);
+  animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); }
+.qrow:hover { background: color-mix(in srgb, var(--bank-primary) 3%, var(--surface-2)); }
+.qrow.landed { animation: landed 1.6s var(--ease-out); }
+@keyframes landed { 0% { background: var(--bank-soft); } 100% { background: transparent; } }
+.qrow .stripe { align-self: stretch; border-radius: 0 4px 4px 0; background: var(--c); }
+.qrow.breach .stripe { box-shadow: 0 0 12px color-mix(in srgb, var(--c) 70%, transparent); }
+.qm { min-width: 0; }
+.qm .t { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.qm .t span { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qm .id { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; flex: none; }
+.qm .s { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-top: 4px; font-size: 12.5px; }
+.ownc { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; }
+.ownc .face { animation: pop var(--slow) var(--ease-spring); }
+.take { height: 30px; padding: 0 12px; border-radius: 999px; border: 1px dashed var(--bank-soft-line); color: var(--bank-ink); font-weight: 600; font-size: 12.5px; display: inline-flex; align-items: center; gap: 5px; transition: background var(--fast), transform var(--fast) var(--ease-spring); }
+.take:hover { background: var(--bank-soft); transform: translateY(-1px); }
+.qfoot { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 12.5px; }
+
+/* team board */
+.tray { padding: 14px 16px; margin-bottom: 14px; border: 1.5px dashed var(--border-strong); background: var(--surface-2); box-shadow: none; transition: border-color var(--fast), background var(--fast); }
+.tray h3 { font-size: 15px; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.tray .chips { display: flex; flex-wrap: wrap; gap: 10px; min-height: 40px; }
+.crew { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.agent { padding: 14px; display: flex; flex-direction: column; gap: 10px; transition: border-color var(--fast), box-shadow var(--fast), transform var(--fast) var(--ease-spring); animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); }
+.agent.over, .tray.over { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft), var(--shadow); transform: translateY(-2px); }
+.agent-h { display: flex; align-items: center; gap: 10px; }
+.agent-h div { flex: 1; min-width: 0; } .agent-h b { display: block; } .agent-h small { color: var(--text-muted); font-size: 12px; }
+.load { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; }
+.load i { height: 6px; border-radius: 3px; background: var(--surface-3); transition: background var(--base); }
+.load i.on { background: var(--c); }
+.load-t { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-top: -4px; }
+.tchips { display: grid; gap: 8px; min-height: 40px; align-content: start; }
+.tchip { display: grid; gap: 6px; padding: 9px 11px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; text-align: left; transition: transform var(--fast) var(--ease-spring), opacity var(--fast); }
+.tray .tchip { width: 230px; }
+.tchip:hover { transform: translateY(-1px); }
+.tchip.lifted { opacity: .35; }
+.tchip .t1 { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; min-width: 0; }
+.tchip .t1 span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tchip .t1 .id { font-weight: 500; font-size: 11.5px; color: var(--text-muted); flex: none; }
+.tchip .fuse { height: 5px; } .tchip .fuse > i::after { width: 8px; height: 8px; margin-top: -4px; }
+.tchip .fuse-t { margin-top: 0; font-size: 11.5px; }
+.flychip { position: absolute; z-index: 20; pointer-events: none; width: 230px; transform: rotate(-3deg) scale(1.04); box-shadow: var(--shadow-lg); cursor: grabbing; }
+
+/* ---- Ticket room ---- */
+.tkh { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.tkh .tt { flex: 1 1 360px; min-width: 0; }
+.tkh h2 { font-size: 26px; line-height: 32px; font-weight: 700; letter-spacing: -0.02em; }
+.tkh .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 8px; font-size: 13px; }
+.tkh .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.trackc { position: relative; padding: 16px 20px 14px; margin-bottom: 14px; overflow: hidden; }
+.trk-top { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 18px; margin-bottom: 14px; }
+.timer { font-family: var(--font-display); font-size: 34px; line-height: 36px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--c) 75%, var(--text)); }
+.timer-l { color: var(--text-muted); font-size: 13px; padding-bottom: 4px; }
+.trk-top .sp { flex: 1; }
+.goal { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 12px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); font-size: 12.5px; }
+.goal b { font-weight: 600; } .goal .ok { color: var(--ok-text); } .goal .bad { color: var(--danger-text); }
+.trk { position: relative; height: 58px; }
+.trk-bar { position: absolute; left: 0; right: 0; top: 14px; height: 10px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+.trk-fill { position: absolute; left: 0; top: 0; bottom: 0; width: var(--w); background: linear-gradient(90deg, color-mix(in srgb, var(--c) 45%, var(--surface-3)), var(--c)); border-radius: 99px; transition: width 1s linear; }
+.trk-over { position: absolute; top: 0; bottom: 0; left: var(--l); width: var(--w); background: repeating-linear-gradient(-45deg, #d33a3a 0 5px, #e8726f 5px 10px); }
+.trk-pause { position: absolute; top: 0; bottom: 0; left: var(--l); width: var(--w); background: repeating-linear-gradient(-45deg, var(--border-strong) 0 4px, var(--surface) 4px 8px); }
+.mk { position: absolute; top: 0; left: var(--x); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11.5px; color: var(--text-muted); white-space: nowrap; }
+.mk .pin { width: 14px; height: 14px; margin-top: 12px; border-radius: 50%; background: var(--surface); box-shadow: inset 0 0 0 3px var(--c); }
+.mk.flag .pin { border-radius: 3px; transform: rotate(45deg); }
+.mk.now .pin { width: 4px; height: 26px; margin-top: 6px; border-radius: 3px; background: var(--bank-ink); box-shadow: 0 0 0 3px var(--bank-soft); animation: core 1.6s ease-in-out infinite; }
+.mk.now { color: var(--bank-ink); font-weight: 600; }
+.mk.start { transform: none; align-items: flex-start; } .mk.end { transform: translateX(-100%); align-items: flex-end; }
+.mk b { color: var(--text); font-weight: 600; }
+.stamp { position: absolute; left: 50%; top: 10px; z-index: 2; padding: 6px 14px; border: 3px solid var(--c); border-radius: 12px; color: var(--c); background: color-mix(in srgb, var(--surface) 85%, transparent); font-family: var(--font-display); font-weight: 750; font-size: 15px; text-transform: uppercase; letter-spacing: .04em; transform: translateX(-50%) rotate(-7deg); animation: stamp .55s var(--ease-spring); }
+.stamp small { display: block; font-family: var(--font-sans); font-size: 11px; font-weight: 600; text-transform: none; letter-spacing: 0; }
+@keyframes stamp { from { transform: translateX(-50%) rotate(-7deg) scale(2.6); opacity: 0; } }
+.tcols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; align-items: start; }
+.convo { display: flex; flex-direction: column; overflow: hidden; }
+.convo-h { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.convo-h h3 { flex: 1; font-size: 16px; }
+.thread { display: flex; flex-direction: column; gap: 12px; padding: 18px; height: 440px; overflow-y: auto; background: linear-gradient(180deg, var(--surface-2), var(--surface) 140px); }
+.msg { display: flex; align-items: flex-end; gap: 10px; max-width: 80%; animation: msgin var(--slow) var(--ease-spring) backwards; }
+@keyframes msgin { from { opacity: 0; transform: translateY(12px) scale(.97); } }
+.msg.me, .msg.note { align-self: flex-end; flex-direction: row-reverse; }
+.bub { padding: 10px 14px; border-radius: 16px 16px 16px 5px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--border), var(--shadow); overflow-wrap: anywhere; }
+.msg.me .bub { border-radius: 16px 16px 5px 16px; background: linear-gradient(170deg, color-mix(in srgb, var(--bank-primary) 16%, var(--surface)), var(--bank-soft)); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.msg.note .bub { border-radius: 16px 16px 5px 16px; background: var(--warn-bg); color: var(--warn-text); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warn-text) 30%, transparent); }
+.bub .by { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; font-size: 11.5px; color: var(--text-muted); }
+.msg.note .bub .by { color: var(--warn-text); }
+.bub .by b { color: var(--text); font-weight: 600; } .msg.note .bub .by b { color: inherit; }
+.att { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 10px; border-radius: 10px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); font-size: 12.5px; font-weight: 500; }
+.sysl { align-self: center; display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: var(--surface-3); color: var(--text-muted); font-size: 12px; text-align: center; animation: msgin var(--slow) var(--ease-out) backwards; }
+.sysl b { color: var(--text); font-weight: 600; }
+.composer { border-top: 1px solid var(--border); padding: 12px 14px 14px; display: grid; gap: 10px; transition: background var(--base); }
+.composer.note { background: color-mix(in srgb, var(--warn-bg) 55%, var(--surface)); }
+.composer textarea { width: 100%; min-height: 76px; resize: vertical; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border-strong); background: var(--surface); outline: 0; font: inherit; color: inherit; transition: border-color var(--fast), box-shadow var(--fast); }
+.composer textarea:focus { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.composer.note textarea:focus { border-color: var(--warn-text); box-shadow: 0 0 0 4px var(--warn-bg); }
+.crow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.crow .sp { flex: 1; }
+.tickbox { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--text-muted); cursor: pointer; }
+.tickbox input { width: 16px; height: 16px; accent-color: var(--bank-primary); }
+.side .box h3 { font-size: 14.5px; }
+.fieldbtn { width: 100%; display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); font-weight: 550; text-align: left; transition: border-color var(--fast), box-shadow var(--fast); }
+.fieldbtn:hover { border-color: var(--bank-soft-line); box-shadow: 0 0 0 3px var(--bank-soft); }
+.fieldbtn .dn { margin-left: auto; color: var(--text-muted); }
+.fieldbtn i.c { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.slab { display: block; font-size: 12px; color: var(--text-muted); margin: 0 0 5px; }
+.sgrid { display: grid; gap: 12px; }
+.cust { display: flex; align-items: center; gap: 12px; }
+.cust .av { width: 40px; height: 40px; font-size: 13px; }
+.cust div { min-width: 0; } .cust b { display: block; }
+.minis { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin-top: 12px; }
+.mini { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 11px; background: var(--surface-2); font-size: 12.5px; text-align: left; width: 100%; }
+.mini:hover { background: var(--bank-soft); }
+.mini span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lvls { display: grid; gap: 8px; }
+.lvl { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 14px; border: 1px solid var(--border-strong); text-align: left; width: 100%; transition: border-color var(--fast), background var(--fast); }
+.lvl[aria-checked="true"] { border-color: #d33a3a; background: color-mix(in srgb, #d33a3a 8%, var(--surface)); }
+.lvl .n { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-weight: 700; background: var(--danger-bg); color: var(--danger-text); flex: none; }
+.lvl div { flex: 1; } .lvl b { display: block; } .lvl small { color: var(--text-muted); }
+.ta { width: 100%; min-height: 84px; padding: 10px 12px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); outline: 0; font: inherit; color: inherit; resize: vertical; }
+.ta:focus { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.f.bad .ta { border-color: var(--danger-text); }
+
+/* ---- form ---- */
+.fcols { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; align-items: start; max-width: 1120px; }
+.fhead { padding: 20px 22px 6px; } .fhead h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; } .fhead p { margin: 4px 0 0; color: var(--text-muted); }
+.sect { padding: 18px 22px 22px; border-top: 1px solid var(--border); }
+.sect h3 { font-size: 15px; font-weight: 650; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.sect h3 .n { width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; font-size: 11.5px; background: var(--bank-soft); color: var(--bank-ink); }
+.sect .fg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.fake { cursor: pointer; }
+.sim { margin-top: 10px; padding: 10px 12px; border-radius: 14px; background: var(--warn-bg); color: var(--warn-text); font-size: 12.5px; animation: enter var(--base) var(--ease-out); }
+.sim b { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.sim button { display: flex; width: 100%; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 9px; text-align: left; color: var(--text); background: color-mix(in srgb, var(--surface) 70%, transparent); margin-top: 4px; }
+.sim button:hover { background: var(--surface); }
+.sim button span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prio-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.pcard { padding: 10px 12px; border-radius: 14px; border: 1px solid var(--border-strong); text-align: left; display: grid; gap: 4px; transition: border-color var(--fast), background var(--fast), transform var(--fast) var(--ease-spring); }
+.pcard:hover { transform: translateY(-2px); }
+.pcard[aria-checked="true"] { border-color: var(--c); background: color-mix(in srgb, var(--c) 10%, var(--surface)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 18%, transparent); }
+.pcard small { font-size: 11.5px; color: var(--text-muted); }
+.more-p { margin-top: 8px; font-size: 12.5px; }
+.drop { margin-top: 4px; padding: 18px; border-radius: 14px; border: 1.5px dashed var(--border-strong); text-align: center; color: var(--text-muted); font-size: 13px; transition: border-color var(--fast), background var(--fast); }
+.drop:hover { border-color: var(--bank-ink); background: var(--bank-soft); color: var(--bank-ink); }
+.files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.prev { position: sticky; top: 74px; padding: 18px; display: grid; gap: 14px; }
+.prev h4 { margin: 0; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+.promise { display: grid; gap: 0; }
+.pstep { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; padding-bottom: 14px; }
+.pstep::before { content: ''; position: absolute; left: 10px; top: 20px; bottom: 0; width: 2px; background: var(--border); }
+.pstep:last-child { padding-bottom: 0; } .pstep:last-child::before { display: none; }
+.pstep i { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 16%, var(--surface)); color: var(--c); box-shadow: inset 0 0 0 2px var(--c); }
+.pstep b { display: block; font-variant-numeric: tabular-nums; animation: fade var(--base); }
+.pstep small { color: var(--text-muted); font-size: 12px; }
+.clockn { padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 12.5px; color: var(--text-muted); }
+.qprev { border-radius: 14px; border: 1px solid var(--border); padding: 12px; display: grid; gap: 8px; background: var(--surface-2); }
+.qprev .t { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---- SLA policies ---- */
+.ladder { overflow: hidden; }
+.lrow { display: grid; grid-template-columns: 140px 136px 136px minmax(0, 1fr) 196px; gap: 16px; align-items: center; padding: 14px 20px; border-top: 1px solid var(--border); animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); }
+.lrow.head { border-top: 0; padding-top: 12px; padding-bottom: 10px; }
+.stepper { display: flex; align-items: center; height: 38px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); overflow: hidden; }
+.stepper button { width: 34px; height: 100%; display: grid; place-items: center; color: var(--text-muted); transition: background var(--fast), color var(--fast); }
+.stepper button:hover { background: var(--bank-soft); color: var(--bank-ink); }
+.stepper span { flex: 1; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stepper span.bump { animation: bump var(--base) var(--ease-spring); }
+@keyframes bump { 50% { transform: scale(1.18); color: var(--bank-ink); } }
+.unsaved { display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; height: 38px; border-radius: 12px; font-size: 13px; font-weight: 600; color: var(--warn-text); background: var(--warn-bg); animation: pop var(--base) var(--ease-spring); }
+.calm .qrow:not(.landed), .calm .tile, .calm .tile.hot::before, .calm .agent, .calm .lrow, .calm .mbars i, .calm .msg, .calm .sysl, .calm .ptag, .calm .sect, .calm .pick-item { animation: none; }
+.calm .msg:last-child, .calm .sysl:last-child { animation: msgin var(--slow) var(--ease-spring) backwards; }
+.scale { position: relative; height: 34px; }
+.scale .rs { position: absolute; left: 0; top: 6px; height: 12px; width: var(--w); border-radius: 99px; background: color-mix(in srgb, var(--c) 32%, var(--surface-3)); transition: width var(--slow) var(--ease-out); }
+.scale .fs { position: absolute; left: 0; top: 6px; height: 12px; width: var(--w); border-radius: 99px; background: var(--c); transition: width var(--slow) var(--ease-out); }
+.scale .axis { position: absolute; left: 0; right: 0; bottom: 0; display: flex; font-size: 10.5px; color: var(--text-muted); }
+.scale .axis span { position: absolute; left: var(--x); transform: translateX(-50%); }
+.scale .axis span { white-space: nowrap; } .scale .axis span:first-child { transform: none; } .scale .axis span:last-child { transform: translateX(-100%); }
+.scale .gl { position: absolute; top: 2px; height: 20px; left: var(--x); width: 1px; background: var(--border); }
+.clocksel { display: flex; padding: 3px; gap: 2px; border-radius: 11px; background: var(--surface-3); }
+.clocksel button { flex: 1; padding: 6px 8px; border-radius: 9px; font-size: 12px; font-weight: 550; color: var(--text-muted); white-space: nowrap; }
+.clocksel button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.scols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+.rule { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); }
+.rule:first-of-type { border-top: 0; }
+.rule .ri { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 14%, var(--surface)); color: var(--c); }
+.rule p { margin: 0; } .rule small { color: var(--text-muted); font-size: 12px; }
+.rule .inl { display: inline-flex; align-items: center; gap: 2px; margin: 0 3px; padding: 0 4px; border-radius: 8px; background: var(--bank-soft); color: var(--bank-ink); font-weight: 650; }
+.rule .inl button { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 6px; }
+.rule .inl button:hover { background: var(--surface); }
+.sw2 { position: relative; width: 40px; height: 24px; border-radius: 99px; background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--border-strong); transition: background var(--base); flex: none; }
+.sw2::after { content: ''; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: var(--shadow); transition: transform var(--base) var(--ease-spring); }
+.sw2[aria-checked="true"] { background: var(--bank-primary); } .sw2[aria-checked="true"]::after { transform: translateX(16px); }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.wd { padding: 8px 4px; border-radius: 11px; text-align: center; background: var(--bank-soft); color: var(--bank-ink); font-size: 12px; box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.wd b { display: block; font-size: 12.5px; } .wd small { font-size: 10.5px; }
+.wd.off { background: var(--surface-2); color: var(--text-muted); box-shadow: inset 0 0 0 1px var(--border); }
+.ptags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ptag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--c) 14%, var(--surface)); color: color-mix(in srgb, var(--c) 62%, var(--text)); font-size: 12.5px; font-weight: 600; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 26%, transparent); animation: pop var(--base) var(--ease-spring); }
+.ptag button { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; }
+.ptag button:hover { background: var(--surface); }
+.addt { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; border-radius: 999px; border: 1px dashed var(--border-strong); color: var(--text-muted); font-size: 12.5px; font-weight: 550; }
+.addt:hover { color: var(--bank-ink); border-color: var(--bank-soft-line); background: var(--bank-soft); }
+.apply { display: grid; gap: 8px; }
+.apply label { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border-strong); cursor: pointer; }
+.apply label:has(input:checked) { border-color: var(--bank-ink); background: var(--bank-soft); }
+.apply input { margin-top: 3px; accent-color: var(--bank-primary); }
+.apply small { display: block; color: var(--text-muted); font-size: 12px; }
+.savebar.sticky { position: sticky; bottom: 0; z-index: 3; margin-top: 14px; border-radius: 16px; border: 1px solid var(--border); box-shadow: var(--shadow-lg); align-items: center; animation: enter var(--base) var(--ease-out); }
+.savebar .msg-t { margin-right: auto; color: var(--text-muted); font-size: 13px; }
+
+@container (max-width: 1100px) {
+  .qhead, .qrow { grid-template-columns: 5px minmax(0, 1fr) 150px 100px 190px; gap: 12px; }
+  .lrow { grid-template-columns: 120px 130px 130px minmax(0, 1fr); } .lrow.head > :nth-child(5) { display: none; } .lrow > :nth-child(5) { grid-column: 2 / -1; }
+}
+@container (max-width: 980px) {
+  .desk { grid-template-columns: minmax(0, 1fr); } .dialcard { flex-direction: row; justify-content: center; gap: 20px; }
+  .tcols, .fcols { grid-template-columns: minmax(0, 1fr); } .prev { position: static; }
+  .scols { grid-template-columns: minmax(0, 1fr); }
+  .qhead .hs { display: none; } .qhead, .qrow { grid-template-columns: 5px minmax(0, 1fr) 100px 180px; } .qrow .stc { display: none; }
+}
+@container (max-width: 760px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .rail, .chip-me span { display: none; }
+  .page { padding: 18px 14px 90px; }
+  .ph h2 { font-size: 24px; }
+  .ph .acts { width: 100%; } .ph .acts > * { flex: 1; } .ph .acts .btn { width: 100%; }
+  .dialcard { flex-direction: column; } .dialcard svg { width: 200px; height: 200px; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .tile b { font-size: 26px; line-height: 30px; }
+  .qhead { display: none; }
+  .qrow { grid-template-columns: 5px minmax(0, 1fr) auto; grid-template-areas: "s m o" "s f f"; gap: 10px 12px; padding-right: 14px; }
+  .qrow .stripe { grid-area: s; } .qrow .qm { grid-area: m; } .qrow .ownc { grid-area: o; } .qrow .fz { grid-area: f; }
+  .qrow .ownc .nm { display: none; }
+  .tkh h2 { font-size: 22px; line-height: 28px; } .tkh .acts { width: 100%; } .tkh .acts .btn { flex: 1; } .tkh .acts .btn.sq { flex: none; }
+  .timer { font-size: 28px; }
+  .mk.mid small { display: none; }
+  .thread { height: 380px; padding: 14px; } .msg { max-width: 92%; }
+  .sect .fg, .prio-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sect, .fhead { padding-left: 14px; padding-right: 14px; }
+  .lrow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 14px; } .lrow.head { display: none; } .lrow > :first-child { grid-column: 1 / -1; } .lrow > :nth-child(4), .lrow > :nth-child(5) { grid-column: 1 / -1; }
+  .scrim.edge { padding: 0; place-items: end stretch; } .sheet { width: 100%; max-height: 94%; border-radius: 20px 20px 0 0; }
+  .crew { grid-template-columns: minmax(0, 1fr); } .tray .tchip { width: 100%; }
+}
+</style>
+<div class="deck">
+  <h1>Tickets with SLA <small>Harbor CRM 3.0, design for your review. Four screens, all clickable, and the clocks really tick. Open a ticket, reply, change status or priority, drag tickets onto people in Team view.</small></h1>
+  <div class="pick">Screen
+    <div class="seg" id="screens">
+      <button aria-pressed="true" data-s="queue">Queue</button>
+      <button aria-pressed="false" data-s="ticket">Ticket</button>
+      <button aria-pressed="false" data-s="form">New ticket</button>
+      <button aria-pressed="false" data-s="sla">SLA policies</button>
+    </div>
+  </div>
+  <div class="pick">Bank
+    <div class="seg" id="banks">
+      <button aria-pressed="true" data-bank="0"><i class="sw" style="--c:#1d3a6e"></i>Harbor</button>
+      <button aria-pressed="false" data-bank="1"><i class="sw" style="--c:#9b1c3a"></i>Meridian</button>
+      <button aria-pressed="false" data-bank="2"><i class="sw" style="--c:#0f6b52"></i>Cedar</button>
+    </div>
+  </div>
+  <div class="pick"><div class="seg"><button id="themeBtn" aria-pressed="false">Light / dark</button></div></div>
+</div>
+
+<div class="stage">
+  <div class="app" id="app">
+    <aside class="rail" aria-hidden="true" id="rail"></aside>
+    <div class="main" id="main">
+      <header class="tb">
+        <div class="crumb"><span id="crumbA">Service</span><span>/</span><b id="crumb">Tickets</b></div>
+        <div class="chip-me"><i class="av">PN</i><span>Priya Nair</span></div>
+      </header>
+      <main class="page" id="page"></main>
+    </div>
+    <div id="ovl"></div>
+    <div class="toast" id="toast" role="status"></div>
+  </div>
+</div>
+
+<script>
+const I = {
+  dashboard: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  pulse: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/>',
+  deal: '<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+  checksq: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12l3 3 5-6"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>',
+  plus: '<path d="M5 12h14M12 5v14"/>',
+  minus: '<path d="M5 12h14"/>',
+  x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  down: '<path d="M6 9l6 6 6-6"/>',
+  left: '<path d="M15 18l-6-6 6-6"/>',
+  tool: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>',
+  edit: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  trash: '<path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/>',
+  chat: '<path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.6A8.4 8.4 0 1 1 21 11.5z"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>',
+  clip: '<path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  send: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
+  up: '<path d="M12 19V5M5 12l7-7 7 7"/>',
+  bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/>',
+  alert: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/>',
+  pause: '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>',
+  users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  shuffle: '<path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>',
+  layers: '<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>',
+  sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>'
+};
+const ic = (n, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const init = (n) => n.split(' ').filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+const hm = (m) => { m = ((Math.floor(m) % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+const span = (m) => { m = Math.max(0, Math.floor(m)); if (m >= 1440) { const d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60); return d + ' d' + (h ? ' ' + h + ' h' : ''); } if (m >= 60) return Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' m' : ''); return m + ' m'; };
+const hspan = (m) => (m >= 60 ? Math.round(m / 60) + ' h' : m + ' m');
+const pspan = (m, h24) => (h24 ? span(m) : hspan(m).replace(' h', ' working h'));
+const hms = (m) => { const s = Math.max(0, Math.floor(m * 60)); return Math.floor(s / 3600) + ':' + String(Math.floor((s % 3600) / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+
+/* Time is counted in minutes from Wednesday 18 November 2026, 00:00. The page starts at 11:40 and the clock runs for real. */
+const T0 = performance.now(), START = 11 * 60 + 40;
+const NOW = () => START + (performance.now() - T0) / 60000;
+const dow = (min) => (((3 + Math.floor(min / 1440)) % 7) + 7) % 7;
+const dayName = (min) => { const d = Math.floor(min / 1440); if (d === 0) return 'Today'; if (d === -1) return 'Yesterday'; if (d === 1) return 'Tomorrow'; return new Date(2026, 10, 18 + d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); };
+const when = (min) => dayName(min) + ' ' + hm(min);
+const whenS = (min) => (Math.floor(min / 1440) === 0 ? hm(min) : when(min));
+/* working hours: Monday to Saturday, 09:00 to 18:00 (bank setting, used by SLAs that do not run round the clock) */
+const WORK = { from: 540, to: 1080 };
+function addWork(t, mins, h24) {
+  if (h24) return t + mins;
+  let guard = 0;
+  while (mins > 0 && guard++ < 400) {
+    const day = Math.floor(t / 1440), tod = t - day * 1440;
+    if (dow(t) === 0) { t = (day + 1) * 1440 + WORK.from; continue; }
+    if (tod < WORK.from) { t = day * 1440 + WORK.from; continue; }
+    if (tod >= WORK.to) { t = (day + 1) * 1440 + WORK.from; continue; }
+    const c = Math.min(mins, WORK.to - tod); t += c; mins -= c;
+  }
+  return t;
+}
+
+const USERS = { PN: ['Priya Nair', '#1d3a6e', 'Team lead'], AD: ['Arjun Das', '#d9642b', 'Service officer'], SI: ['Sana Iyer', '#0f97a8', 'Service officer'], RK: ['Rahul Khanna', '#6d4fd6', 'Service manager'] };
+const ME = 'PN', CAP = 6;
+const face = (u, cls = '') => (USERS[u] ? `<i class="face ${cls}" style="--h:${USERS[u][1]}" title="${esc(USERS[u][0])}">${init(USERS[u][0])}</i>` : '');
+/* Priorities, statuses, channels, categories and canned replies are lists the bank keeps in Setup. */
+let POL = {
+  Urgent: { c: '#d33a3a', lv: 4, fr: 15, res: 240, h24: true },
+  High: { c: '#e07b1a', lv: 3, fr: 60, res: 480, h24: true },
+  Medium: { c: '#c9a20e', lv: 2, fr: 240, res: 1440, h24: false },
+  Low: { c: '#5b8def', lv: 1, fr: 480, res: 2880, h24: false }
+};
+const PRIS = () => Object.keys(POL);
+const STATUS = [['New', '#2f6fe0'], ['Open', '#0f97a8'], ['In Progress', '#6d4fd6'], ['Waiting on customer', '#c98a12'], ['Resolved', '#1f9d63'], ['Closed', '#8a93a6']];
+const SC = Object.fromEntries(STATUS);
+let PAUSE = ['Waiting on customer'];
+const DONE = ['Resolved', 'Closed'];
+const FLOW = { New: ['Open', 'In Progress', 'Closed'], Open: ['In Progress', 'Waiting on customer', 'Resolved', 'Closed'], 'In Progress': ['Waiting on customer', 'Resolved', 'Open'], 'Waiting on customer': ['In Progress', 'Resolved', 'Closed'], Resolved: ['Closed', 'In Progress'], Closed: ['Open'] };
+const CH = { Phone: 'phone', Email: 'mail', WhatsApp: 'chat', Branch: 'building', Portal: 'globe' };
+const CATS = ['Payments', 'Cards', 'Net banking', 'Loans', 'Accounts', 'Deposits', 'Forex', 'KYC'];
+const CUST = {
+  kavya: ['Kavya Anand', 'Anand Motors'], rohan: ['Rohan Mehta', ''], neha: ['Neha Joshi', 'Joshi Clinics LLP'], dev: ['Dev Malhotra', 'Verma Textiles Pvt Ltd'], ishaan: ['Ishaan Kapoor', ''],
+  leela: ['Leela Thomas', 'Coastal Health Network'], aditi: ['Aditi Rao', 'Lumen Cloud Systems'], farhan: ['Farhan Sheikh', 'Sheikh Traders'], meera: ['Meera Shetty', 'Shetty Foods'],
+  vikram: ['Vikram Rao', 'Northwind Power'], anil: ['Anil Verma', 'Verma Textiles Pvt Ltd'], asha: ['Asha Kulkarni', ''], rohit: ['Rohit Bansal', '']
+};
+const CANNED = [
+  ['Acknowledge', 'Hello {{first_name}}, thank you for writing to us. I have taken this up and will update you within the hour.'],
+  ['Need reference numbers', 'Hello {{first_name}}, could you share the transaction reference numbers (RRN) and the date of the failed payments?'],
+  ['Card blocked for safety', 'Hello {{first_name}}, your card was blocked by our fraud check. Please confirm the last three transactions so we can unblock it.'],
+  ['Fixed, please retry', 'Hello {{first_name}}, this has been fixed on our side. Please try again and tell us if anything still fails.'],
+  ['Visit branch with KYC', 'Hello {{first_name}}, please visit your home branch with an original ID proof so we can complete this request.']
+];
+
+let T = [
+  { id: 'TK-1048', sub: 'UPI collect requests failing since morning', who: 'kavya', pri: 'Urgent', st: 'In Progress', own: 'AD', ch: 'WhatsApp', cat: 'Payments', at: 515, fr: 525 },
+  { id: 'TK-1047', sub: 'Card blocked after travel abroad', who: 'rohan', pri: 'High', st: 'New', own: null, ch: 'Phone', cat: 'Cards', at: 660, fr: null },
+  { id: 'TK-1046', sub: 'Net banking OTP not received', who: 'neha', pri: 'Urgent', st: 'Open', own: 'PN', ch: 'Email', cat: 'Net banking', at: 440, fr: 452, esc: 1 },
+  { id: 'TK-1045', sub: 'Loan statement shows the wrong EMI', who: 'dev', pri: 'Medium', st: 'In Progress', own: 'PN', ch: 'Branch', cat: 'Loans', at: -530, fr: -470 },
+  { id: 'TK-1044', sub: 'Cheque book not delivered', who: 'ishaan', pri: 'Low', st: 'Waiting on customer', own: 'SI', ch: 'Portal', cat: 'Accounts', at: -2280, fr: -2200, pausedAt: -740 },
+  { id: 'TK-1043', sub: 'Escrow mandate not updated after board change', who: 'leela', pri: 'High', st: 'In Progress', own: 'SI', ch: 'Email', cat: 'Accounts', at: 270, fr: 300 },
+  { id: 'TK-1042', sub: 'Duplicate charge on corporate card', who: 'aditi', pri: 'High', st: 'Open', own: 'AD', ch: 'Email', cat: 'Cards', at: 180, fr: 205, esc: 2 },
+  { id: 'TK-1041', sub: 'Change registered mobile number', who: 'farhan', pri: 'Medium', st: 'New', own: null, ch: 'Branch', cat: 'KYC', at: 675, fr: null },
+  { id: 'TK-1040', sub: 'Forex rate disputed on export bill', who: 'meera', pri: 'Medium', st: 'In Progress', own: 'AD', ch: 'Phone', cat: 'Forex', at: -840, fr: -800 },
+  { id: 'TK-1039', sub: 'Statement download times out', who: 'vikram', pri: 'Low', st: 'Open', own: null, ch: 'Portal', cat: 'Net banking', at: 610, fr: null },
+  { id: 'TK-1038', sub: 'Standing instruction not executed', who: 'anil', pri: 'Urgent', st: 'Waiting on customer', own: 'RK', ch: 'Phone', cat: 'Payments', at: 610, fr: 618, pausedAt: 628 },
+  { id: 'TK-1037', sub: 'Close dormant savings account', who: 'asha', pri: 'Low', st: 'Resolved', own: 'SI', ch: 'Branch', cat: 'Accounts', at: -4000, fr: -3900, done: -200 },
+  { id: 'TK-1036', sub: 'ATM debited but cash not dispensed', who: 'rohit', pri: 'High', st: 'Resolved', own: 'RK', ch: 'Phone', cat: 'Cards', at: -1140, fr: -1125, done: -940 },
+  { id: 'TK-1035', sub: 'Credit limit increase request', who: 'kavya', pri: 'Medium', st: 'Closed', own: 'AD', ch: 'Email', cat: 'Cards', at: -7000, fr: -6800, late: 130 }
+];
+const polOf = (t) => t.pol || POL[t.pri];
+const dueOf = (t) => addWork(t.at, polOf(t).res, polOf(t).h24) + (t.paused || 0);
+const frDueOf = (t) => addWork(t.at, polOf(t).fr, polOf(t).h24);
+T.forEach((t) => { if (t.late) { t.done = dueOf(t) + t.late; delete t.late; } });
+const isOpen = (t) => !DONE.includes(t.st);
+const leftOf = (t) => dueOf(t) - (t.done != null ? t.done : t.pausedAt != null ? t.pausedAt : NOW());
+function stateOf(t) {
+  if (!isOpen(t)) return 'done';
+  if (t.pausedAt != null) return 'paused';
+  const left = leftOf(t), total = dueOf(t) - t.at - (t.paused || 0);
+  if (left < 0) return 'breach';
+  if (left < Math.max(30, total * 0.2)) return 'hot';
+  if (left < total * 0.45) return 'warn';
+  return 'ok';
+}
+const SCOL = { ok: '#1f9d63', warn: '#d9a21a', hot: '#e0611a', breach: '#d33a3a', paused: '#8a93a6', done: '#1f9d63' };
+const colOf = (t) => (stateOf(t) === 'done' && t.done > dueOf(t) ? '#d33a3a' : SCOL[stateOf(t)]);
+
+const THREAD = {
+  'TK-1048': [
+    { k: 'cust', at: 515, text: 'Since morning every UPI collect request from our dealers fails with “U30, debit failed”. More than 40 payments are stuck. Please fix this urgently.' },
+    { k: 'sys', at: 515, text: 'Created from <b>WhatsApp</b> · Urgent · resolve within 4 h, round the clock' },
+    { k: 'sys', at: 516, text: 'Assigned to <b>Arjun Das</b> by the rule “Payments go to Arjun”' },
+    { k: 'me', who: 'AD', at: 525, text: 'Hello Kavya, I have raised this with our UPI switch team. Could you share two of the failed transaction reference numbers?' },
+    { k: 'cust', at: 545, text: 'Here you go: RRN 432918877102 and 432918877455.', file: 'failed-upi-payments.png' },
+    { k: 'note', who: 'AD', at: 560, text: 'Switch team says the collect limit on the Anand Motors VPA was set to ₹0 after the KYC refresh. Waiting for operations to restore it.' },
+    { k: 'sys', at: 605, text: 'Status <b>Open</b> → <b>In Progress</b>' },
+    { k: 'note', who: 'PN', at: 670, text: 'Operations request OPS-2291 raised, expected by 12:00. Arjun, please keep the customer posted.' }
+  ]
+};
+function threadOf(t) {
+  if (!THREAD[t.id]) {
+    const L = [{ k: 'cust', at: t.at, text: 'Hello, ' + t.sub.charAt(0).toLowerCase() + t.sub.slice(1) + '. Please look into it.' },
+      { k: 'sys', at: t.at, text: `Created from <b>${t.ch}</b> · ${t.pri} · resolve within ${hspan(polOf(t).res)}${polOf(t).h24 ? ', round the clock' : ' of working time'}` }];
+    if (t.fr != null) L.push({ k: 'me', who: t.own || ME, at: t.fr, text: CANNED[0][1].replace('{{first_name}}', CUST[t.who][0].split(' ')[0]) });
+    if (t.esc) L.push({ k: 'sys', at: t.fr + 20, text: `Escalated to <b>level ${t.esc}</b> · ${t.esc === 2 ? 'Rahul Khanna' : 'Priya Nair'}` });
+    if (t.pausedAt != null) L.push({ k: 'sys', at: t.pausedAt, text: 'Status → <b>Waiting on customer</b> · SLA clock paused' });
+    if (t.done != null) L.push({ k: 'sys', at: t.done, text: `Status → <b>Resolved</b> · ${t.done <= dueOf(t) ? 'within SLA' : 'after the SLA'}` });
+    THREAD[t.id] = L;
+  }
+  return THREAD[t.id];
+}
+
+/* ---------- state ---------- */
+let screen = 'queue', mode = 'queue', view = 'open', q = '', fPri = [], cur = 'TK-1048', pop = null, dlg = null, landed = null, stampFor = null;
+let C = { mode: 'reply', text: '', wait: false };
+let F = null;
+let LOGO = 'H';
+const $page = () => $('page');
+const TBT = (t) => T.find((x) => x.id === t);
+
+/* ---------- small renderers ---------- */
+function prHTML(p) { const P = POL[p] || { c: '#8a93a6', lv: 1 }; return `<span class="pr" style="--c:${P.c}"><span class="bars">${[1, 2, 3, 4].map((n) => `<i class="${n <= P.lv ? 'on' : ''}"></i>`).join('')}</span>${esc(p)}</span>`; }
+const stPill = (s) => `<span class="pill" style="--c:${SC[s] || '#8a93a6'}"><i></i>${esc(s)}</span>`;
+const chHTML = (c) => `<span class="chn">${ic(CH[c] || 'globe', 14)}${esc(c)}</span>`;
+const custHTML = (k) => `<span class="who"><b>${esc(CUST[k][0])}</b>${CUST[k][1] ? '· ' + esc(CUST[k][1]) : ''}</span>`;
+function fuseText(t) {
+  const s = stateOf(t), left = leftOf(t);
+  if (s === 'done') return t.done <= dueOf(t) ? [`Met · ${span(dueOf(t) - t.done)} to spare`, whenS(t.done)] : [`Missed by ${span(t.done - dueOf(t))}`, whenS(t.done)];
+  if (s === 'paused') return [`Paused · ${span(left)} left`, 'waiting on customer'];
+  if (s === 'breach') return [`Breached ${span(-left)} ago`, 'was due ' + whenS(dueOf(t))];
+  return [left < 1440 ? span(left) + ' left' : 'Due ' + when(dueOf(t)), left < 1440 ? 'due ' + whenS(dueOf(t)) : span(left) + ' left'];
+}
+function fuseHTML(t) {
+  const s = stateOf(t), total = dueOf(t) - t.at - (t.paused || 0), used = Math.min(1, Math.max(0, (total - leftOf(t)) / total)), [a, b] = fuseText(t);
+  return `<div class="fz" data-fz="${t.id}" style="--c:${colOf(t)}"><div class="fuse ${s}"><i style="--w:${(used * 100).toFixed(2)}%"></i></div><div class="fuse-t"><b>${a}</b><span>${b}</span></div></div>`;
+}
+function frChip(t) {
+  if (t.fr != null || !isOpen(t)) return '';
+  const left = frDueOf(t) - NOW();
+  return left < 0 ? `<span class="frc late">${ic('chat', 12)}First reply ${span(-left)} late</span>` : `<span class="frc">${ic('chat', 12)}First reply in ${span(left)}</span>`;
+}
+function popList(key, opts, sel, ph, cls = '') {
+  return `<div class="pop ${cls}" data-pop="${key}">${opts.length > 6 || ph ? `<input placeholder="${ph || 'Search'}" data-filter aria-label="${ph || 'Search'}">` : ''}${opts.map((o) => `<button type="button" class="opt" role="menuitemradio" data-pk="${key}" data-v="${esc(o.v)}" aria-checked="${Array.isArray(sel) ? sel.includes(o.v) : o.v === sel}"${o.dis ? ` aria-disabled="true" title="${esc(o.dis)}"` : ''}>${o.c ? `<i style="--c:${o.c}"></i>` : ''}${o.html || esc(o.label || o.v)}${o.dis ? `<span class="why">${esc(o.dis)}</span>` : o.small ? `<small>${esc(o.small)}</small>` : ''}<span class="tick">${ic('check', 15)}</span></button>`).join('')}<div class="none" hidden>Nothing matches</div></div>`;
+}
+
+/* ---------- views of the queue ---------- */
+const VIEWS = [
+  ['open', 'All open tickets', (t) => isOpen(t)], ['mine', 'My open tickets', (t) => isOpen(t) && t.own === ME], ['unassigned', 'Unassigned', (t) => isOpen(t) && !t.own],
+  ['breach', 'Breached', (t) => stateOf(t) === 'breach'], ['hour', 'Due within 1 hour', (t) => ['hot', 'warn', 'ok'].includes(stateOf(t)) && leftOf(t) <= 60], ['firstreply', 'Waiting for a first reply', (t) => isOpen(t) && t.fr == null],
+  ['paused', 'Waiting on customer', (t) => stateOf(t) === 'paused'], ['escalated', 'Escalated', (t) => isOpen(t) && t.esc], ['done', 'Resolved and closed', (t) => !isOpen(t)], ['all', 'Every ticket', () => true]
+];
+const viewFn = () => (VIEWS.find((v) => v[0] === view) || VIEWS[0])[2];
+function visible() {
+  const s = q.trim().toLowerCase();
+  return T.filter(viewFn()).filter((t) => !fPri.length || fPri.includes(t.pri))
+    .filter((t) => !s || (t.id + ' ' + t.sub + ' ' + CUST[t.who].join(' ') + ' ' + t.cat).toLowerCase().includes(s))
+    .sort((a, b) => (isOpen(a) === isOpen(b) ? (isOpen(a) ? (a.pausedAt != null) - (b.pausedAt != null) || leftOf(a) - leftOf(b) : b.done - a.done) : isOpen(a) ? -1 : 1));
+}
+
+function dial() {
+  const cx = 118, cy = 118, R = { 4: 100, 3: 84, 2: 68, 1: 52 }, now = NOW();
+  const open = T.filter((t) => stateOf(t) !== 'done' && stateOf(t) !== 'paused');
+  const breached = open.filter((t) => leftOf(t) < 0), soon = open.filter((t) => leftOf(t) >= 0 && leftOf(t) <= 720), later = open.length - breached.length - soon.length;
+  const pt = (r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  const arc = (r, a0, a1) => { const [x0, y0] = pt(r, a0), [x1, y1] = pt(r, a1); return `M${x0.toFixed(1)} ${y0.toFixed(1)}A${r} ${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`; };
+  const A = (m) => -Math.PI / 2 + (m / 720) * Math.PI * 2;
+  let s = `<svg viewBox="-14 -6 264 258" role="img" aria-label="SLA clock: open tickets placed by time left, next 12 hours">`;
+  s += `<path d="${arc(110, A(0), A(60))}" stroke="color-mix(in srgb, #d33a3a 30%, transparent)" stroke-width="10" fill="none" stroke-linecap="round"/>`;
+  s += `<path d="${arc(110, A(60), A(240))}" stroke="color-mix(in srgb, #d9a21a 22%, transparent)" stroke-width="10" fill="none"/>`;
+  [4, 3, 2, 1].forEach((lv) => (s += `<circle cx="${cx}" cy="${cy}" r="${R[lv]}" fill="none" stroke="var(--border)" stroke-dasharray="2 4"/>`));
+  for (let h = 0; h < 12; h++) { const [x0, y0] = pt(116, A(h * 60)), [x1, y1] = pt(h % 3 ? 112 : 108, A(h * 60)); s += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--border-strong)" stroke-width="${h % 3 ? 1 : 2}"/>`; }
+  [[0, 'now'], [180, '3 h'], [360, '6 h'], [540, '9 h']].forEach(([m, l]) => { const [x, y] = pt(127, A(m)); s += `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="10.5" fill="${m ? 'var(--text-muted)' : 'var(--bank-ink)'}" font-weight="${m ? 400 : 650}">${l}</text>`; });
+  s += `<line class="hand" x1="${cx}" y1="${cy - 36}" x2="${cx}" y2="${cy - 104}"/>`;
+  soon.forEach((t, i) => { const [x, y] = pt(R[POL[t.pri] ? POL[t.pri].lv : 1], A(leftOf(t))); s += `<circle class="dot" data-open="${t.id}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="${POL[t.pri].c}" stroke="var(--surface)" stroke-width="2.5"><title>${t.id} ${esc(t.sub)} · ${span(leftOf(t))} left</title></circle>`; });
+  s += `<g class="${breached.length ? 'core' : ''}"><circle cx="${cx}" cy="${cy}" r="34" fill="${breached.length ? 'color-mix(in srgb, #d33a3a 16%, var(--surface))' : 'var(--surface-2)'}" stroke="${breached.length ? '#d33a3a' : 'var(--border)'}" stroke-width="2"/>`;
+  s += `<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="24" font-weight="700" font-family="var(--font-display)" fill="${breached.length ? 'var(--danger-text)' : 'var(--text-muted)'}">${breached.length}</text><text x="${cx}" y="${cy + 19}" text-anchor="middle" font-size="9.5" fill="var(--text-muted)">breached</text></g>`;
+  breached.forEach((t, i) => { const [x, y] = pt(22, -Math.PI / 2 + i * 1.3 + 2.4); s += `<circle class="dot" data-open="${t.id}" cx="${x}" cy="${y}" r="4.5" fill="#d33a3a" stroke="var(--surface)" stroke-width="1.5"><title>${t.id} breached ${span(-leftOf(t))} ago</title></circle>`; });
+  s += `</svg>`;
+  return `<div class="card dialcard" id="dial">${s}<div class="cap">Next 12 hours. Rings by priority, outside Urgent.${later ? `<br>${plural(later, 'ticket')} due later.` : ''}</div></div>`;
+}
+function tiles() {
+  const n = (id) => T.filter(VIEWS.find((v) => v[0] === id)[2]).length;
+  const met = [96, 88, 100, 92, 84, 95, 91];
+  const tl = [
+    ['breach', 'Breached', n('breach'), 'past their resolve time', '#d33a3a', n('breach') > 0],
+    ['hour', 'Due within 1 hour', n('hour'), 'act on these next', '#e0611a'],
+    ['firstreply', 'First reply due', n('firstreply'), 'nobody has answered yet', '#d9a21a'],
+    ['unassigned', 'Unassigned', n('unassigned'), 'waiting to be picked up', '#2f6fe0'],
+    ['paused', 'Paused', n('paused'), 'waiting on the customer', '#8a93a6']
+  ];
+  return `<div class="tiles">${tl.map(([id, l, v, sub, c, hot], i) => `<button class="tile ${hot ? 'hot' : ''}" style="--d:${i * 40}ms" data-view="${id}" aria-pressed="${view === id}"><span class="lab"><i style="--c:${c}"></i>${l}</span><b>${v}</b><small>${sub}</small></button>`).join('')}
+    <div class="tile" style="--d:200ms"><span class="lab"><i style="--c:#1f9d63"></i>Met SLA this week</span><b>92%</b><div class="mbars">${met.map((m, i) => `<i class="${m < 90 ? 'lo' : ''}" style="--h:${m - 70}px;--d:${300 + i * 50}ms" title="${m}%"></i>`).join('')}</div></div></div>`;
+}
+function queueRows(list) {
+  if (!list.length) return `<div class="empty"><b>Nothing here</b>No ticket matches this view${q ? ' and search' : ''}.</div>`;
+  return list.map((t, i) => {
+    const s = stateOf(t);
+    return `<div class="qrow ${s} ${landed === t.id ? 'landed' : ''}" role="link" tabindex="0" data-open="${t.id}" style="--d:${Math.min(i, 12) * 30}ms;--c:${POL[t.pri] ? POL[t.pri].c : '#8a93a6'}">
+      <span class="stripe"></span>
+      <div class="qm"><div class="t"><span class="id">${t.id}</span><span>${esc(t.sub)}</span>${t.esc && isOpen(t) ? `<em class="esc">${ic('up', 11)}L${t.esc}</em>` : ''}</div>
+        <div class="s">${custHTML(t.who)}${chHTML(t.ch)}${prHTML(t.pri)}${frChip(t)}</div></div>
+      <div class="stc">${stPill(t.st)}</div>
+      <div class="ownc">${t.own ? face(t.own) + `<span class="nm">${esc(USERS[t.own][0].split(' ')[0])}</span>` : isOpen(t) ? `<button class="take" data-take="${t.id}">${ic('plus', 13)}Take</button>` : ''}</div>
+      ${fuseHTML(t)}</div>`;
+  }).join('');
+}
+function queueView() {
+  const list = visible(), vname = (VIEWS.find((v) => v[0] === view) || VIEWS[0])[1];
+  const priOpts = PRIS().map((p) => ({ v: p, c: POL[p].c }));
+  return `<div class="ph"><div><h2>Tickets</h2><p>${plural(T.filter(isOpen).length, 'open ticket')} · the clock runs on each ticket's SLA policy</p></div>
+    <div class="acts"><div class="pop-wrap"><button class="btn" data-pop-open="tool">${ic('tool', 16)}ToolBox</button>${pop === 'tool' ? toolPop() : ''}</div>
+    <button class="btn pri" data-act="new">${ic('plus', 16)}New ticket</button></div></div>
+    <div class="desk">${dial()}${tiles()}</div>
+    <div class="tools">
+      <div class="pop-wrap"><button class="fchip set" data-pop-open="view">${ic('layers', 15)}${esc(vname)}${ic('down', 14)}</button>${pop === 'view' ? popList('view', VIEWS.map((v) => ({ v: v[0], label: v[1], small: String(T.filter(v[2]).length) })), view, 'Find a view') : ''}</div>
+      <label class="search">${ic('search', 16)}<input id="q" placeholder="Search subject, customer, ID" value="${esc(q)}" aria-label="Search tickets"></label>
+      <div class="pop-wrap"><button class="fchip ${fPri.length ? 'set' : ''}" data-pop-open="pri">${fPri.length ? 'Priority: ' + fPri.join(', ') : '+ Priority'}</button>${pop === 'pri' ? popList('pri', priOpts, fPri) : ''}</div>
+      <span style="flex:1"></span>
+      <div class="seg" role="group" aria-label="View mode"><button aria-pressed="${mode === 'queue'}" data-mode="queue">${ic('list', 14)}Queue</button><button aria-pressed="${mode === 'team'}" data-mode="team">${ic('users', 14)}Team</button></div>
+    </div>
+    ${mode === 'queue' ? `<div class="card q"><div class="qhead lab"><span></span><span>Ticket · sorted by time left</span><span class="hs">Status</span><span>Owner</span><span>SLA</span></div>${queueRows(list)}<div class="qfoot">${ic('clock', 14)}Clocks for Medium and Low count working hours only, Monday to Saturday 09:00 to 18:00.</div></div>` : teamView(list)}`;
+}
+function chipHTML(t) { return `<div class="tchip" data-chip="${t.id}" style="--c:${POL[t.pri] ? POL[t.pri].c : '#888'}"><div class="t1">${prHTML(t.pri).replace(/>[A-Za-z ]+<\/span>$/, '></span>')}<span class="id">${t.id}</span><span>${esc(t.sub)}</span></div>${fuseHTML(t)}</div>`; }
+function teamView(list) {
+  const open = list.filter(isOpen), un = open.filter((t) => !t.own);
+  return `<div class="card tray" data-drop="">${''}<h3>${ic('shuffle', 16)}Unassigned <span class="muted" style="font-weight:400;font-size:13px">drag a ticket onto a person to assign it</span></h3><div class="chips">${un.map(chipHTML).join('') || '<span class="muted" style="font-size:13px;align-self:center">Every open ticket has an owner.</span>'}</div></div>
+    <div class="crew">${Object.keys(USERS).map((u, i) => {
+      const mine = open.filter((t) => t.own === u).sort((a, b) => leftOf(a) - leftOf(b)), all = T.filter((t) => isOpen(t) && t.own === u);
+      const worst = all.reduce((w, t) => (['breach', 'hot', 'warn', 'ok', 'paused'].indexOf(stateOf(t)) < ['breach', 'hot', 'warn', 'ok', 'paused'].indexOf(w) ? stateOf(t) : w), 'paused');
+      const next = all.filter((t) => stateOf(t) !== 'paused').sort((a, b) => leftOf(a) - leftOf(b))[0];
+      return `<div class="card agent" data-drop="${u}" style="--d:${i * 50}ms"><div class="agent-h">${face(u, 'lg')}<div><b>${USERS[u][0]}</b><small>${USERS[u][2]}</small></div></div>
+        <div class="load" style="--c:${SCOL[worst]}">${Array.from({ length: CAP }, (_, k) => `<i class="${k < all.length ? 'on' : ''}"></i>`).join('')}</div>
+        <div class="load-t"><span>${all.length} of ${CAP} open</span><span>${next ? (leftOf(next) < 0 ? 'breach now' : 'next due in ' + span(leftOf(next))) : 'nothing due'}</span></div>
+        <div class="tchips">${mine.map(chipHTML).join('')}</div></div>`;
+    }).join('')}</div>`;
+}
+function toolPop() {
+  return `<div class="pop right" data-pop="tool">${[['sla', 'SLA policies', 'clock'], ['status', 'Status codes', 'sliders'], ['canned', 'Canned replies', 'chat'], ['fields', 'Custom fields', 'list'], ['layout', 'Customise page layout', 'layers']].map(([v, l, i]) => `<button class="opt" data-pk="tool" data-v="${v}">${ic(i, 15)}${l}</button>`).join('')}</div>`;
+}
+
+/* ---------- ticket room ---------- */
+function track(t) {
+  const now = NOW(), due = dueOf(t), frd = frDueOf(t), end0 = t.done != null ? t.done : t.pausedAt != null ? t.pausedAt : now;
+  const a = t.at, b = Math.max(due, end0) + (Math.max(due, end0) - a) * 0.06;
+  const X = (m) => Math.max(0, Math.min(100, ((m - a) / (b - a)) * 100));
+  const s = stateOf(t), c = colOf(t);
+  let h = `<div class="trk" style="--c:${c}"><div class="trk-bar"><div class="trk-fill" style="--w:${X(Math.min(end0, due))}%"></div>`;
+  if (end0 > due) h += `<div class="trk-over" style="--l:${X(due)}%;--w:${X(end0) - X(due)}%"></div>`;
+  if (t.pausedAt != null) h += `<div class="trk-pause" style="--l:${X(t.pausedAt)}%;--w:${100 - X(t.pausedAt)}%"></div>`;
+  h += `</div><div class="mk start" style="--x:0%;--c:var(--text-muted)"><i class="pin"></i><small>Created <b>${whenS(a)}</b></small></div>`;
+  const frx = X(t.fr != null ? t.fr : frd);
+  if (frx > 10 && frx < 88) h += `<div class="mk mid" style="--x:${frx}%;--c:${t.fr != null && t.fr <= frd ? '#1f9d63' : '#d9a21a'}"><i class="pin"></i><small>First reply ${t.fr != null ? '<b>' + whenS(t.fr) + '</b>' : 'due ' + whenS(frd)}</small></div>`;
+  if (s !== 'done' && s !== 'paused' && X(now) < 92 && X(now) > 6 && Math.abs(X(now) - frx) > 7) h += `<div class="mk now mid" style="--x:${X(now)}%"><i class="pin"></i><small>now</small></div>`;
+  h += `<div class="mk flag ${X(due) > 88 ? 'end' : ''}" style="--x:${X(due)}%;--c:${c}"><i class="pin"></i><small>Resolve by <b>${whenS(due)}</b></small></div></div>`;
+  return h;
+}
+function timerHTML(t) {
+  const s = stateOf(t), left = leftOf(t);
+  if (s === 'done') return `<span class="timer" style="--c:${colOf(t)}">${t.done <= dueOf(t) ? 'Met' : 'Missed'}</span><span class="timer-l">${t.done <= dueOf(t) ? span(dueOf(t) - t.done) + ' to spare' : span(t.done - dueOf(t)) + ' late'} · resolved ${when(t.done)}</span>`;
+  if (s === 'paused') return `<span class="timer" style="--c:#8a93a6">${hms(left)}</span><span class="timer-l">${ic('pause', 13)} paused while waiting on the customer</span>`;
+  if (s === 'breach') return `<span class="timer" style="--c:#d33a3a">+${hms(-left)}</span><span class="timer-l">over the SLA</span>`;
+  return `<span class="timer" style="--c:${colOf(t)}">${hms(left)}</span><span class="timer-l">left to resolve</span>`;
+}
+function goals(t) {
+  const frd = frDueOf(t), frOk = t.fr != null && t.fr <= frd, P = polOf(t);
+  return `<div class="goal">${ic('chat', 14)}First reply ${t.fr != null ? `<b class="${frOk ? 'ok' : 'bad'}">${frOk ? 'met' : 'late'} in ${span(t.fr - t.at)}</b>` : `<b class="${NOW() > frd ? 'bad' : ''}">due ${whenS(frd)}</b>`}<span class="muted">target ${hspan(P.fr)}</span></div>
+    <div class="goal">${ic('clock', 14)}Resolve <b>target ${hspan(P.res)}</b><span class="muted">${P.h24 ? 'round the clock' : 'working hours'}</span></div>`;
+}
+function bubble(m) {
+  if (m.k === 'sys') return `<div class="sysl">${ic('clock', 12)}${m.text} · ${whenS(m.at)}</div>`;
+  const t = TBT(cur), mine = m.k !== 'cust', nm = mine ? USERS[m.who][0] : CUST[t.who][0];
+  return `<div class="msg ${m.k}">${mine ? face(m.who) : `<i class="av sm soft">${init(nm)}</i>`}<div class="bub"><div class="by"><b>${esc(nm)}</b>${m.k === 'note' ? ic('lock', 11) + 'internal note' : ''}<span>${whenS(m.at)}</span></div>${esc(m.text)}${m.file ? `<div><span class="att">${ic('clip', 13)}${esc(m.file)}</span></div>` : ''}</div></div>`;
+}
+function ticketView() {
+  const t = TBT(cur); if (!t) { cur = T[0].id; return ticketView(); }
+  const allowed = FLOW[t.st] || [];
+  const stOpts = STATUS.map(([s, c]) => ({ v: s, c, dis: s === t.st ? '' : allowed.includes(s) ? '' : 'not from ' + t.st, small: PAUSE.includes(s) ? 'pauses SLA' : '' }));
+  const others = T.filter((x) => x.who === t.who && x.id !== t.id);
+  const thread = threadOf(t);
+  return `<button class="back" data-go="queue">${ic('left', 15)}Tickets</button>
+  <div class="tkh"><div class="tt"><div class="muted num" style="font-size:13px">${t.id} · ${esc(t.cat)}</div><h2>${esc(t.sub)}</h2>
+    <div class="meta">${stPill(t.st)}${prHTML(t.pri)}${chHTML(t.ch)}${t.esc && isOpen(t) ? `<span class="esc">${ic('up', 11)}Escalated level ${t.esc}</span>` : ''}</div></div>
+    <div class="acts"><button class="btn" data-act="edit">${ic('edit', 15)}Edit</button>${isOpen(t) ? `<button class="btn" data-act="escalate">${ic('up', 15)}Escalate</button><button class="btn pri" data-act="resolve">${ic('check', 15)}Resolve</button>` : `<button class="btn" data-act="reopen">Reopen</button>`}
+    <button class="btn sq ${t.st === 'Closed' ? 'danger' : ''}" data-act="delete" ${t.st === 'Closed' ? '' : 'disabled'} title="${t.st === 'Closed' ? 'Delete ticket' : 'Only closed tickets can be deleted'}" aria-label="Delete ticket">${ic('trash', 16)}</button></div></div>
+  <div class="card trackc" id="trackc">${stampFor === t.id ? stampHTML(t) : ''}<div class="trk-top"><span id="timer" style="display:contents">${timerHTML(t)}</span><span class="sp"></span>${goals(t)}</div><div id="trk">${track(t)}</div></div>
+  <div class="tcols">
+    <div class="card convo"><div class="convo-h"><h3>Conversation</h3><span class="muted" style="font-size:12.5px">${plural(thread.filter((m) => m.k !== 'sys').length, 'message')}</span></div>
+      <div class="thread" id="thread">${thread.map(bubble).join('')}</div>
+      <div class="composer ${C.mode}">
+        <div class="crow"><div class="seg" role="group" aria-label="Message type"><button aria-pressed="${C.mode === 'reply'}" data-cmode="reply">${ic('send', 13)}Reply to customer</button><button aria-pressed="${C.mode === 'note'}" data-cmode="note">${ic('lock', 13)}Internal note</button></div><span class="sp"></span>
+          ${C.mode === 'reply' ? `<div class="pop-wrap"><button class="btn ghost" data-pop-open="canned">${ic('chat', 15)}Canned reply${ic('down', 14)}</button>${pop === 'canned' ? popList('canned', CANNED.map((c) => ({ v: c[0], html: `<span><b style="display:block;font-weight:600">${c[0]}</b><small style="margin:0;font-size:12px;color:var(--text-muted)">${esc(c[1].slice(0, 54))}…</small></span>` })), null, 'Find a reply', 'right') : ''}</div>` : ''}</div>
+        <textarea id="ctext" placeholder="${C.mode === 'reply' ? 'Write to ' + esc(CUST[t.who][0].split(' ')[0]) + '…' : 'Only your team sees this note'}" aria-label="Message">${esc(C.text)}</textarea>
+        <div class="crow"><button class="btn ghost sq" aria-label="Attach a file" data-act="attach">${ic('clip', 16)}</button>
+          ${C.mode === 'reply' && isOpen(t) && !PAUSE.includes(t.st) ? `<label class="tickbox"><input type="checkbox" id="cwait" ${C.wait ? 'checked' : ''}>Then set to Waiting on customer (pauses SLA)</label>` : ''}<span class="sp"></span>
+          <button class="btn pri" data-act="send">${ic('send', 15)}${C.mode === 'reply' ? 'Send reply' : 'Add note'}</button></div>
+      </div></div>
+    <div class="stack side">
+      <div class="card box"><h3>Handling</h3><div class="sgrid">
+        <div><span class="slab">Status</span><div class="pop-wrap"><button class="fieldbtn" data-pop-open="tstatus"><i class="c" style="--c:${SC[t.st]}"></i>${esc(t.st)}<span class="dn">${ic('down', 15)}</span></button>${pop === 'tstatus' ? popList('tstatus', stOpts, t.st, 'Find a status', 'fpop') : ''}</div></div>
+        <div><span class="slab">Priority</span><div class="pop-wrap"><button class="fieldbtn" data-pop-open="tpri">${prHTML(t.pri)}<span class="dn">${ic('down', 15)}</span></button>${pop === 'tpri' ? popList('tpri', PRIS().map((p) => ({ v: p, c: POL[p].c, small: hspan(POL[p].res) + (POL[p].h24 ? '' : ' working') })), t.pri, '', 'fpop') : ''}</div></div>
+        <div><span class="slab">Owner</span><div class="pop-wrap"><button class="fieldbtn" data-pop-open="towner">${t.own ? face(t.own) + esc(USERS[t.own][0]) : '<span class="muted">Unassigned</span>'}<span class="dn">${ic('down', 15)}</span></button>${pop === 'towner' ? popList('towner', [{ v: '', label: 'Unassigned' }].concat(Object.keys(USERS).map((u) => ({ v: u, html: face(u) + esc(USERS[u][0]), small: T.filter((x) => isOpen(x) && x.own === u).length + ' open' }))), t.own || '', 'Find a person', 'fpop') : ''}</div></div>
+      </div></div>
+      <div class="card box"><h3>Customer</h3><div class="cust"><i class="av soft">${init(CUST[t.who][0])}</i><div><b class="link">${esc(CUST[t.who][0])}</b><span class="muted" style="font-size:12.5px">${CUST[t.who][1] ? esc(CUST[t.who][1]) : 'Individual customer'}</span></div></div>
+        ${others.length ? `<div class="minis"><span class="slab" style="margin:0">Other tickets from ${esc(CUST[t.who][0].split(' ')[0])}</span>${others.map((o) => `<button class="mini" data-open="${o.id}"><span>${o.id} ${esc(o.sub)}</span>${stPill(o.st)}</button>`).join('')}</div>` : ''}</div>
+      <div class="card box"><h3>Details</h3><dl class="kv"><div><dt>Category</dt><dd>${esc(t.cat)}</dd></div><div><dt>Channel</dt><dd>${chHTML(t.ch)}</dd></div><div><dt>Created</dt><dd>${when(t.at)}</dd></div><div><dt>SLA policy</dt><dd>Standard · ${esc(t.pri)}</dd></div></dl></div>
+    </div></div>`;
+}
+function stampHTML(t) { const ok = t.done <= dueOf(t); return `<div class="stamp" style="--c:${ok ? '#1f9d63' : '#d33a3a'}">${ok ? 'Resolved in time' : 'Resolved late'}<small>${ok ? span(dueOf(t) - t.done) + ' to spare' : span(t.done - dueOf(t)) + ' over'}</small></div>`; }
+
+/* ---------- new and edit ticket (full page) ---------- */
+const LAYOUTS = [['Standard ticket', 'Customer, issue, priority, description, files', 'ticket'], ['Card dispute', 'Adds transaction date, amount and merchant', 'layers'], ['Branch walk-in', 'Short form for the counter, customer and issue only', 'building']];
+function newForm(t) {
+  F = t ? { edit: t.id, layout: 'Standard ticket', who: t.who, sub: t.sub, cat: t.cat, ch: t.ch, pri: t.pri, own: t.own, desc: threadOf(t)[0].text, files: [], err: {} }
+    : { edit: null, layout: 'Standard ticket', who: null, sub: '', cat: null, ch: 'Phone', pri: 'Medium', own: null, desc: '', files: [], err: {}, amt: '', mer: '', tdate: '2026-11-17' };
+}
+function similar() {
+  const words = F.sub.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !['the', 'and', 'not', 'for', 'after', 'with', 'from'].includes(w));
+  if (!words.length) return [];
+  return T.filter((t) => isOpen(t) && t.id !== F.edit && words.some((w) => t.sub.toLowerCase().includes(w))).slice(0, 3);
+}
+function promise() {
+  const P = POL[F.pri], now = NOW(), frd = addWork(now, P.fr, P.h24), rd = addWork(now, P.res, P.h24);
+  return `<div class="promise">
+    <div class="pstep" style="--c:var(--bank-ink)"><i>${ic('plus', 12)}</i><div><b>${F.edit ? 'Created ' + when(TBT(F.edit).at) : 'Now · ' + hm(now)}</b><small>${F.edit ? 'clock started then' : 'the clock starts when you create it'}</small></div></div>
+    <div class="pstep" style="--c:#d9a21a"><i>${ic('chat', 12)}</i><div><b>${when(frd)}</b><small>first reply within ${pspan(P.fr, P.h24)}</small></div></div>
+    <div class="pstep" style="--c:${P.c}"><i>${ic('check', 12)}</i><div><b>${when(rd)}</b><small>resolve within ${pspan(P.res, P.h24)}</small></div></div></div>
+    <div class="clockn">${P.h24 ? `${ic('clock', 13)} <b>${F.pri}</b> runs round the clock, nights and Sundays included.` : `${ic('clock', 13)} <b>${F.pri}</b> counts working hours only: Monday to Saturday, 09:00 to 18:00.`} The clock pauses while the ticket waits on the customer.</div>`;
+}
+function formView() {
+  const sim = F.sub.length >= 3 ? similar() : [], err = F.err, edit = F.edit ? TBT(F.edit) : null;
+  const custOpts = Object.keys(CUST).map((k) => ({ v: k, html: `<span>${esc(CUST[k][0])}<small style="display:block;margin:0;font-size:11.5px;color:var(--text-muted)">${CUST[k][1] || 'Individual'}</small></span>` }));
+  const openOf = F.who ? T.filter((t) => t.who === F.who && isOpen(t) && t.id !== F.edit) : [];
+  return `<button class="back" data-go="${edit ? 'ticket' : 'queue'}">${ic('left', 15)}${edit ? edit.id : 'Tickets'}</button>
+  <div class="fcols"><div class="card">
+    <div class="fhead"><h2>${edit ? 'Edit ' + edit.id : 'New ticket'}</h2><p>${edit ? 'Changing the priority moves the due time. Everything else keeps the clock as it is.' : `Layout: <b>${F.layout}</b> · <button class="link" data-act="new">change</button>`}</p></div>
+    <div class="sect"><h3><span class="n">1</span>Customer</h3><div class="fg">
+      <div class="f full ${err.who ? 'bad' : ''}"><label>Customer <span class="muted">required</span></label><div class="pop-wrap"><button type="button" class="fake" data-pop-open="fwho">${F.who ? `<i class="av sm soft">${init(CUST[F.who][0])}</i>${esc(CUST[F.who][0])}<span class="muted">${CUST[F.who][1] ? '· ' + esc(CUST[F.who][1]) : ''}</span>` : '<span class="muted">Search contacts</span>'}<span class="dn">${ic('down', 15)}</span></button>${pop === 'fwho' ? popList('fwho', custOpts, F.who, 'Type a name', 'fpop') : ''}</div>${err.who ? '<div class="err">Choose who raised this ticket.</div>' : ''}
+        ${openOf.length ? `<div class="more-p muted">${esc(CUST[F.who][0].split(' ')[0])} already has ${plural(openOf.length, 'open ticket')}: ${openOf.map((o) => `<button class="link" data-open="${o.id}">${o.id}</button>`).join(', ')}</div>` : ''}</div>
+    </div></div>
+    <div class="sect"><h3><span class="n">2</span>Issue</h3><div class="fg">
+      <div class="f full ${err.sub ? 'bad' : ''}"><label for="fsub">Subject <span class="muted">required</span></label><input id="fsub" value="${esc(F.sub)}" placeholder="What is going wrong, in a few words" autocomplete="off">${err.sub ? '<div class="err">A subject helps the team pick the ticket up.</div>' : ''}
+        <div id="simbox">${simHTML(sim)}</div></div>
+      <div class="f"><label>Category</label><div class="pop-wrap"><button type="button" class="fake" data-pop-open="fcat">${F.cat ? esc(F.cat) : '<span class="muted">Choose</span>'}<span class="dn">${ic('down', 15)}</span></button>${pop === 'fcat' ? popList('fcat', CATS.map((c) => ({ v: c })), F.cat, 'Find a category', 'fpop') : ''}</div></div>
+      <div class="f"><label>Channel</label><div class="pop-wrap"><button type="button" class="fake" data-pop-open="fch">${ic(CH[F.ch], 15)}${esc(F.ch)}<span class="dn">${ic('down', 15)}</span></button>${pop === 'fch' ? popList('fch', Object.keys(CH).map((c) => ({ v: c, html: ic(CH[c], 15) + c })), F.ch, '', 'fpop') : ''}</div></div>
+      ${F.layout === 'Card dispute' ? `<div class="f"><label for="ftd">Transaction date</label><input id="ftd" type="date" value="${F.tdate}"></div><div class="f"><label for="famt">Amount (₹)</label><input id="famt" inputmode="decimal" value="${esc(F.amt)}" placeholder="0.00"></div><div class="f full"><label for="fmer">Merchant</label><input id="fmer" value="${esc(F.mer)}" placeholder="As shown on the statement"></div>` : ''}
+    </div></div>
+    <div class="sect"><h3><span class="n">3</span>Priority and owner</h3>
+      <div class="prio-cards" role="radiogroup" aria-label="Priority">${PRIS().map((p) => `<button type="button" class="pcard" role="radio" data-fpri="${p}" aria-checked="${F.pri === p}" style="--c:${POL[p].c}">${prHTML(p)}<small>reply ${hspan(POL[p].fr)} · fix ${hspan(POL[p].res)}</small></button>`).join('')}</div>
+      <div class="fg" style="margin-top:14px"><div class="f"><label>Owner</label><div class="pop-wrap"><button type="button" class="fake" data-pop-open="fown">${F.own ? face(F.own) + esc(USERS[F.own][0]) : '<span class="muted">Assign by rule</span>'}<span class="dn">${ic('down', 15)}</span></button>${pop === 'fown' ? popList('fown', [{ v: '', label: 'Assign by rule', small: 'Payments go to Arjun' }].concat(Object.keys(USERS).map((u) => ({ v: u, html: face(u) + esc(USERS[u][0]), small: T.filter((x) => isOpen(x) && x.own === u).length + ' open' }))), F.own || '', 'Find a person', 'fpop') : ''}</div></div></div></div>
+    ${F.layout === 'Branch walk-in' ? '' : `<div class="sect"><h3><span class="n">4</span>Description and files</h3><div class="f ${err.desc ? 'bad' : ''}"><textarea class="ta" id="fdesc" placeholder="What the customer told you, steps, reference numbers" aria-label="Description">${esc(F.desc)}</textarea></div>
+      <button type="button" class="drop" data-act="file" style="width:100%">${ic('clip', 15)} Drop files here or click to add a statement, screenshot or form</button><div class="files">${F.files.map((f) => `<span class="att">${ic('clip', 13)}${esc(f)}</span>`).join('')}</div></div>`}
+    <div class="savebar"><button class="btn ghost" data-go="${edit ? 'ticket' : 'queue'}">Cancel</button><button class="btn pri" data-act="save">${ic('check', 15)}${edit ? 'Save changes' : 'Create ticket'}</button></div>
+  </div>
+  <div class="card prev"><h4>SLA promise</h4><div id="promise">${promise()}</div>
+    <h4>In the queue it will look like</h4><div class="qprev" id="qprev">${qprevHTML()}</div></div></div>`;
+}
+function simHTML(sim) { return sim.length ? `<div class="sim"><b>${ic('alert', 14)}Looks like ${sim.length === 1 ? 'an open ticket' : plural(sim.length, 'open ticket')} already covers this</b>${sim.map((t) => `<button type="button" data-open="${t.id}"><span>${t.id} · ${esc(t.sub)}</span>${esc(CUST[t.who][0])}</button>`).join('')}</div>` : ''; }
+function qprevHTML() {
+  const P = POL[F.pri], fake = { id: 'new', at: NOW(), pri: F.pri, st: 'New', fr: null, paused: 0 };
+  return `<div class="t">${esc(F.sub || 'Subject')}</div><div class="qm"><div class="s" style="margin:0">${F.who ? custHTML(F.who) : '<span class="muted">Customer</span>'}${prHTML(F.pri)}</div></div>${fuseHTML(fake)}`;
+}
+
+/* ---------- SLA policies ---------- */
+const STEPS = [15, 30, 60, 120, 240, 480, 720, 1440, 2160, 2880, 4320];
+let PE = null, PDIRTY = false, PAPPLY = 'new', bumped = null;
+let RULES = { warn: 80, notify: true, l1: true, l2: true, l2after: 120, unassigned: true, unmins: 30 };
+const SX = (m) => (Math.log(m / 10) / Math.log(4320 / 10)) * 100;
+function slaView() {
+  if (!PE) PE = JSON.parse(JSON.stringify(POL));
+  const axis = [[15, '15 m'], [60, '1 h'], [240, '4 h'], [1440, '1 d'], [4320, '3 d']];
+  return `<button class="back" data-go="queue">${ic('left', 15)}Tickets</button>
+  <div class="ph"><div><h2>SLA policies</h2><p>How fast the bank promises to reply and to resolve, for each priority. Priorities come from your priority list in Setup.</p></div>
+    <div class="acts">${PDIRTY ? `<span class="unsaved">${ic('edit', 13)}Unsaved changes</span><button class="btn ghost" data-act="pdiscard">Discard</button>` : ''}<button class="btn pri" data-act="psave" ${PDIRTY ? '' : 'disabled'}>${ic('check', 15)}Save policy</button></div></div>
+  <div class="card ladder"><div class="lrow head lab"><span>Priority</span><span>First reply</span><span>Resolve</span><span>On a 3 day scale</span><span>Clock</span></div>
+  ${Object.keys(PE).map((p, i) => { const P = PE[p]; return `<div class="lrow" style="--d:${i * 50}ms;--c:${P.c}">${prHTML(p)}
+    <div class="stepper"><button data-step="${p}:fr:-1" aria-label="Shorter first reply for ${p}">${ic('minus', 14)}</button><span class="${bumped === p + 'fr' ? 'bump' : ''}">${hspan(P.fr)}</span><button data-step="${p}:fr:1" aria-label="Longer first reply for ${p}">${ic('plus', 14)}</button></div>
+    <div class="stepper"><button data-step="${p}:res:-1" aria-label="Shorter resolve time for ${p}">${ic('minus', 14)}</button><span class="${bumped === p + 'res' ? 'bump' : ''}">${hspan(P.res)}</span><button data-step="${p}:res:1" aria-label="Longer resolve time for ${p}">${ic('plus', 14)}</button></div>
+    <div class="scale"><span class="rs" style="--w:${SX(P.res)}%"></span><span class="fs" style="--w:${SX(P.fr)}%"></span>${axis.map(([m]) => `<i class="gl" style="--x:${SX(m)}%"></i>`).join('')}<div class="axis">${axis.map(([m, l]) => `<span style="--x:${SX(m)}%">${l}</span>`).join('')}</div></div>
+    <div class="clocksel" role="group" aria-label="Clock for ${p}"><button aria-pressed="${P.h24}" data-clock="${p}:1" title="Round the clock">24/7</button><button aria-pressed="${!P.h24}" data-clock="${p}:0">Working hours</button></div></div>`; }).join('')}</div>
+  <div class="scols">
+    <div class="card box"><h3>Escalation</h3>
+      <div class="rule" style="--c:#d9a21a"><span class="ri">${ic('bell', 16)}</span><p>When <span class="inl"><button data-rule="warn:-5" aria-label="Lower">${ic('minus', 12)}</button>${RULES.warn}%<button data-rule="warn:5" aria-label="Higher">${ic('plus', 12)}</button></span> of the time is used, notify the owner and the team lead<br><small>The ticket turns amber in the queue at this point</small></p><button class="sw2" role="switch" aria-checked="${RULES.notify}" data-sw="notify" aria-label="Warning on or off"></button></div>
+      <div class="rule" style="--c:#d33a3a"><span class="ri">${ic('up', 16)}</span><p>On breach, escalate to <b>level 1</b>, Priya Nair<br><small>Team lead gets the ticket on her board with a red badge</small></p><button class="sw2" role="switch" aria-checked="${RULES.l1}" data-sw="l1" aria-label="Level 1 on or off"></button></div>
+      <div class="rule" style="--c:#d33a3a"><span class="ri">${ic('up', 16)}</span><p><span class="inl"><button data-rule="l2after:-30" aria-label="Sooner">${ic('minus', 12)}</button>${span(RULES.l2after)}<button data-rule="l2after:30" aria-label="Later">${ic('plus', 12)}</button></span> after breach, escalate to <b>level 2</b>, Rahul Khanna<br><small>Service manager, also told by email</small></p><button class="sw2" role="switch" aria-checked="${RULES.l2}" data-sw="l2" aria-label="Level 2 on or off"></button></div>
+      <div class="rule" style="--c:#2f6fe0"><span class="ri">${ic('shuffle', 16)}</span><p>Unassigned for <span class="inl"><button data-rule="unmins:-15" aria-label="Sooner">${ic('minus', 12)}</button>${span(RULES.unmins)}<button data-rule="unmins:15" aria-label="Later">${ic('plus', 12)}</button></span>, give it to the person with the lightest load<br><small>Uses the assignment rules first, then round robin</small></p><button class="sw2" role="switch" aria-checked="${RULES.unassigned}" data-sw="unassigned" aria-label="Auto assign on or off"></button></div>
+    </div>
+    <div class="stack">
+      <div class="card box"><h3>Working hours</h3><div class="week">${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => `<div class="wd ${i === 6 ? 'off' : ''}"><b>${d}</b><small>${i === 6 ? 'closed' : '09–18'}</small></div>`).join('')}</div>
+        <p class="muted" style="font-size:12.5px;margin:10px 0 0">From the branch calendar in Setup, with 14 bank holidays this year. Working-hour clocks skip nights, Sundays and holidays.</p></div>
+      <div class="card box"><h3>Pause the clock when status is</h3><div class="ptags">${PAUSE.map((s) => `<span class="ptag" style="--c:${SC[s]}">${esc(s)}<button data-unpause="${esc(s)}" aria-label="Stop pausing on ${esc(s)}">${ic('x', 12)}</button></span>`).join('')}
+        <div class="pop-wrap"><button class="addt" data-pop-open="pause">${ic('plus', 13)}Add status</button>${pop === 'pause' ? popList('pause', STATUS.filter(([s]) => !PAUSE.includes(s) && !DONE.includes(s)).map(([s, c]) => ({ v: s, c })), null, 'Find a status') : ''}</div></div></div>
+    </div></div>
+  `;
+}
+
+/* ---------- overlays ---------- */
+function overlay() {
+  let h = '';
+  const t = TBT(cur);
+  if (dlg === 'layout') h = `<div class="scrim edge" data-close><div class="sheet" role="dialog" aria-label="Choose a layout"><div class="dlg-head"><h3>Choose a layout</h3><button class="btn ghost sq" data-close aria-label="Close">${ic('x', 16)}</button></div><div class="sheet-body"><p class="muted" style="margin:0">Each layout shows the fields that kind of ticket needs. Admins set them up in Customise page layout.</p>${LAYOUTS.map(([n, d, i], k) => `<button class="pick-item" data-layout="${n}" style="--d:${k * 50}ms"><span class="ext">${ic(i, 18)}</span><div><b>${n}</b><small>${d}</small></div></button>`).join('')}</div></div></div>`;
+  if (dlg === 'resolve' && t) h = `<div class="scrim" data-close><div class="dlg" role="dialog" aria-label="Resolve ticket"><div class="dlg-head"><h3>Resolve ${t.id}</h3></div><div class="dlg-body"><p style="margin:0 0 12px">${leftOf(t) >= 0 ? `You are inside the SLA with <b style="color:var(--ok-text)">${span(leftOf(t))}</b> to spare.` : `This ticket is <b style="color:var(--danger-text)">${span(-leftOf(t))}</b> over its SLA. It will count as missed.`}</p>
+    <div class="f" id="rf"><label for="rnote" style="color:var(--text)">Resolution note <span class="muted">required</span></label><textarea class="ta" id="rnote" placeholder="What fixed it. The customer sees this."></textarea><div class="err" hidden id="rerr">Write what fixed it.</div></div>
+    <label class="tickbox" style="margin-top:10px"><input type="checkbox" checked id="rsend">Send the note to ${esc(CUST[t.who][0].split(' ')[0])} by ${t.ch === 'Branch' ? 'email' : esc(t.ch)}</label></div>
+    <div class="dlg-foot"><span class="sp"></span><button class="btn ghost" data-close>Cancel</button><button class="btn pri" data-act="doresolve">${ic('check', 15)}Resolve</button></div></div></div>`;
+  if (dlg && dlg.startsWith('escalate') && t) { const lv = +(dlg.split(':')[1] || Math.min(3, (t.esc || 0) + 1));
+    h = `<div class="scrim" data-close><div class="dlg" role="dialog" aria-label="Escalate ticket"><div class="dlg-head"><h3>Escalate ${t.id}</h3></div><div class="dlg-body"><div class="lvls">${[[1, 'Priya Nair', 'Team lead'], [2, 'Rahul Khanna', 'Service manager'], [3, 'Zonal service head', 'by email, outside the CRM']].map(([n, w, r]) => `<button class="lvl" data-lv="${n}" aria-checked="${lv === n}"><span class="n">L${n}</span><div><b>${w}</b><small>${r}</small></div>${lv === n ? ic('check', 16) : ''}</button>`).join('')}</div>
+    <div class="f" id="ef" style="margin-top:12px"><label for="enote" style="color:var(--text)">Why <span class="muted">required</span></label><textarea class="ta" id="enote" placeholder="What is blocking it and what you need"></textarea><div class="err" hidden id="eerr">Say why it needs to go up.</div></div></div>
+    <div class="dlg-foot"><span class="sp"></span><button class="btn ghost" data-close>Cancel</button><button class="btn pri" data-act="doescalate" data-lv="${lv}">${ic('up', 15)}Escalate</button></div></div></div>`; }
+  if (dlg === 'psave') h = `<div class="scrim" data-close><div class="dlg" role="dialog" aria-label="Save SLA policy"><div class="dlg-head"><h3>Save SLA policy</h3></div><div class="dlg-body"><p style="margin:0 0 12px">What should happen to the ${plural(T.filter(isOpen).length, 'open ticket')} already running?</p><div class="apply"><label><input type="radio" name="apply" value="new" ${PAPPLY === 'new' ? 'checked' : ''}><span style="color:var(--text)">Keep their due times<small>The new rules apply to new tickets only</small></span></label><label><input type="radio" name="apply" value="all" ${PAPPLY === 'all' ? 'checked' : ''}><span style="color:var(--text)">Recalculate them<small>Due times of open tickets move to the new rules</small></span></label></div></div><div class="dlg-foot"><span class="sp"></span><button class="btn ghost" data-close>Cancel</button><button class="btn pri" data-act="dopsave">${ic('check', 15)}Save policy</button></div></div></div>`;
+  if (dlg === 'delete' && t) h = `<div class="scrim" data-close><div class="dlg" role="dialog" aria-label="Delete ticket"><div class="dlg-head"><h3>Delete ${t.id}?</h3></div><div class="dlg-body">“${esc(t.sub)}” and its conversation are removed for good. Its SLA result stays in reports.</div><div class="dlg-foot"><span class="sp"></span><button class="btn ghost" data-close>Cancel</button><button class="btn danger" data-act="dodelete">${ic('trash', 15)}Delete</button></div></div></div>`;
+  $('ovl').innerHTML = h;
+  const ta = $('ovl').querySelector('textarea'); if (ta) setTimeout(() => ta.focus(), 50);
+}
+
+/* ---------- render ---------- */
+function rail() { $('rail').innerHTML = '<i class="logo" id="logo">' + LOGO + '</i>' + ['dashboard', 'pulse', 'target', 'user', 'building', 'deal', 'checksq', 'calendar', 'ticket'].map((n) => `<span class="${n === 'ticket' ? 'on' : ''}">${ic(n, 18)}</span>`).join(''); }
+let lastKey = '';
+function render() {
+  const keepY = $('main').scrollTop;
+  const p = $page();
+  p.classList.toggle('calm', lastKey === screen + mode + cur);
+  lastKey = screen + mode + cur;
+  if (screen === 'queue') p.innerHTML = queueView();
+  else if (screen === 'ticket') p.innerHTML = ticketView();
+  else if (screen === 'form') p.innerHTML = formView();
+  else p.innerHTML = slaView();
+  $('crumbA').textContent = screen === 'sla' ? 'Setup' : 'Service';
+  $('crumb').textContent = screen === 'queue' ? 'Tickets' : screen === 'ticket' ? cur : screen === 'form' ? (F && F.edit ? 'Edit ' + F.edit : 'New ticket') : 'SLA policies';
+  document.querySelectorAll('#screens button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.s === screen));
+  $('main').scrollTop = keepY;
+  const th = $('thread'); if (th) th.scrollTop = th.scrollHeight;
+  const pf = p.querySelector('.pop input[data-filter]'); if (pf) pf.focus();
+  overlay();
+}
+function show(s) {
+  screen = s; pop = null; dlg = null;
+  if (s === 'form' && !F) newForm();
+  p0(); render(); $('main').scrollTop = 0;
+}
+const p0 = () => {};
+function openTicket(id) { cur = id; C = { mode: 'reply', text: '', wait: false }; stampFor = null; show('ticket'); }
+
+let tt;
+function toast(m) { const el = $('toast'); el.innerHTML = ic('check', 15) + esc(m); el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), 2600); }
+
+/* ---------- actions ---------- */
+function sys(t, text) { threadOf(t).push({ k: 'sys', at: NOW(), text }); }
+function setStatus(t, s) {
+  const from = t.st;
+  if (t.pausedAt != null && !PAUSE.includes(s)) { t.paused = (t.paused || 0) + (NOW() - t.pausedAt); t.pausedAt = null; }
+  if (PAUSE.includes(s) && t.pausedAt == null) t.pausedAt = NOW();
+  if (DONE.includes(s) && t.done == null) t.done = NOW();
+  if (!DONE.includes(s)) t.done = null;
+  t.st = s;
+  sys(t, `Status <b>${esc(from)}</b> → <b>${esc(s)}</b>${PAUSE.includes(s) ? ' · SLA clock paused' : PAUSE.includes(from) && !DONE.includes(s) ? ' · SLA clock running again' : ''}`);
+}
+function pick(key, v) {
+  const t = TBT(cur);
+  if (key === 'view') { view = v; pop = null; render(); return; }
+  if (key === 'pri') { fPri = fPri.includes(v) ? fPri.filter((x) => x !== v) : fPri.concat(v); render(); return; }
+  if (key === 'tool') { pop = null; if (v === 'sla') return show('sla'); render(); return toast('Opens in Setup'); }
+  if (key === 'tstatus') {
+    pop = null; if (v === t.st) return render();
+    if (v === 'Resolved') { dlg = 'resolve'; return render(); }
+    setStatus(t, v); render(); return toast(PAUSE.includes(v) ? 'SLA paused while waiting on the customer' : `Status set to ${v}`);
+  }
+  if (key === 'tpri') {
+    pop = null; if (v === t.pri) return render();
+    const before = dueOf(t); t.pri = v; t.pol = null; const after = dueOf(t);
+    sys(t, `Priority → <b>${esc(v)}</b> · due moved to ${whenS(after)}`); render();
+    return toast(`Due ${after < before ? 'brought forward' : 'pushed back'} to ${when(after)}`);
+  }
+  if (key === 'towner') { pop = null; t.own = v || null; sys(t, v ? `Assigned to <b>${USERS[v][0]}</b>` : 'Unassigned'); render(); return toast(v ? `Assigned to ${USERS[v][0]}` : 'Back in the unassigned queue'); }
+  if (key === 'canned') { pop = null; const c = CANNED.find((x) => x[0] === v); C.text = c[1].replace('{{first_name}}', CUST[t.who][0].split(' ')[0]); render(); const ta = $('ctext'); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); return; }
+  if (key === 'fwho') { F.who = v; F.err.who = false; pop = null; return render(); }
+  if (key === 'fcat') { F.cat = v; pop = null; return render(); }
+  if (key === 'fch') { F.ch = v; pop = null; return render(); }
+  if (key === 'fown') { F.own = v || null; pop = null; return render(); }
+  if (key === 'pause') { PAUSE.push(v); pop = null; PDIRTY = true; return render(); }
+}
+function send() {
+  const t = TBT(cur), text = $('ctext').value.trim();
+  if (!text) { $('ctext').focus(); return toast('Write something first'); }
+  const now = NOW(); let msg = C.mode === 'note' ? 'Note added' : 'Reply sent';
+  threadOf(t).push({ k: C.mode === 'note' ? 'note' : 'me', who: ME, at: now, text });
+  if (C.mode === 'reply' && t.fr == null) { t.fr = now; msg = now <= frDueOf(t) ? `First reply sent, inside the SLA (${span(now - t.at)})` : 'First reply sent, late'; if (t.st === 'New') { t.st = 'Open'; } }
+  if (C.mode === 'reply' && C.wait) { setStatus(t, 'Waiting on customer'); msg += ' · clock paused'; }
+  C = { mode: C.mode, text: '', wait: false };
+  render(); toast(msg);
+}
+function saveForm() {
+  const sub = (($('fsub') || {}).value || '').trim(); F.sub = sub; if ($('fdesc')) F.desc = $('fdesc').value;
+  F.err = { who: !F.who, sub: !sub };
+  if (F.err.who || F.err.sub) { render(); return toast('Fill in the required fields'); }
+  if (F.edit) {
+    const t = TBT(F.edit), before = dueOf(t);
+    Object.assign(t, { who: F.who, sub: F.sub, cat: F.cat || t.cat, ch: F.ch, own: F.own });
+    if (t.pri !== F.pri) { t.pri = F.pri; t.pol = null; sys(t, `Priority → <b>${F.pri}</b> · due moved to ${whenS(dueOf(t))}`); }
+    cur = t.id; F = null; show('ticket'); return toast(dueOf(t) !== before ? 'Saved · due time moved to ' + when(dueOf(t)) : 'Changes saved');
+  }
+  const id = 'TK-' + (Math.max(...T.map((t) => +t.id.slice(3))) + 1);
+  const own = F.own || (F.cat === 'Payments' ? 'AD' : null);
+  T.unshift({ id, sub: F.sub, who: F.who, pri: F.pri, st: own ? 'Open' : 'New', own, ch: F.ch, cat: F.cat || 'Accounts', at: NOW(), fr: null });
+  THREAD[id] = [{ k: 'cust', at: NOW(), text: F.desc || F.sub }, { k: 'sys', at: NOW(), text: `Created from <b>${F.ch}</b> by Priya Nair · ${F.pri}` }];
+  landed = id; F = null; view = 'open'; q = ''; fPri = []; mode = 'queue'; show('queue'); toast(`${id} created · first reply due ${whenS(frDueOf(T[0]))}`);
+}
+
+/* ---------- events ---------- */
+const app = $('app');
+app.addEventListener('click', (e) => {
+  if (suppress) return;
+  const el = (s) => e.target.closest(s);
+  let b;
+  if ((b = el('[data-pk]'))) { if (b.getAttribute('aria-disabled') === 'true') return toast('Not allowed: ' + b.title); return pick(b.dataset.pk, b.dataset.v); }
+  if ((b = el('[data-pop-open]'))) { pop = pop === b.dataset.popOpen ? null : b.dataset.popOpen; if (screen === 'ticket') C.text = ($('ctext') || {}).value || C.text; if (screen === 'form' && $('fsub')) { F.sub = $('fsub').value; if ($('fdesc')) F.desc = $('fdesc').value; } return render(); }
+  if (pop && !el('.pop')) { pop = null; render(); }
+  if (el('[data-close]') && (e.target.matches('[data-close]') || el('button[data-close]'))) { dlg = null; return overlay(); }
+  if ((b = el('[data-take]'))) { const t = TBT(b.dataset.take); t.own = ME; sys(t, 'Taken by <b>Priya Nair</b>'); render(); return toast(`${t.id} is yours`); }
+  if ((b = el('[data-open]'))) return openTicket(b.dataset.open);
+  if ((b = el('[data-view]'))) { view = view === b.dataset.view ? 'open' : b.dataset.view; return render(); }
+  if ((b = el('[data-mode]'))) { mode = b.dataset.mode; return render(); }
+  if ((b = el('[data-go]'))) { if (b.dataset.go === 'queue' || b.dataset.go === 'ticket') F = null; return show(b.dataset.go); }
+  if ((b = el('[data-cmode]'))) { C.text = $('ctext').value; C.mode = b.dataset.cmode; render(); return $('ctext').focus(); }
+  if ((b = el('[data-layout]'))) { newForm(); F.layout = b.dataset.layout; dlg = null; screen = 'form'; render(); $('main').scrollTop = 0; return; }
+  if ((b = el('[data-fpri]'))) { F.pri = b.dataset.fpri; F.sub = $('fsub').value; if ($('fdesc')) F.desc = $('fdesc').value; return render(); }
+  if ((b = el('[data-lv]')) && !b.dataset.act) { C.etext = $('enote').value; dlg = 'escalate:' + b.dataset.lv; overlay(); $('enote').value = C.etext || ''; return; }
+  if ((b = el('[data-step]'))) { const [p, k, d] = b.dataset.step.split(':'); const i = STEPS.indexOf(PE[p][k]), n = STEPS[Math.max(0, Math.min(STEPS.length - 1, (i < 0 ? 4 : i) + +d))]; if (k === 'fr' && n >= PE[p].res) return toast('First reply must come before resolve'); if (k === 'res' && n <= PE[p].fr) return toast('Resolve must come after the first reply'); PE[p][k] = n; PDIRTY = true; bumped = p + k; render(); bumped = null; return; }
+  if ((b = el('[data-clock]'))) { const [p, v] = b.dataset.clock.split(':'); PE[p].h24 = v === '1'; PDIRTY = true; return render(); }
+  if ((b = el('[data-rule]'))) { const [k, d] = b.dataset.rule.split(':'); const lim = { warn: [50, 95], l2after: [30, 480], unmins: [15, 240] }[k]; RULES[k] = Math.max(lim[0], Math.min(lim[1], RULES[k] + +d)); PDIRTY = true; return render(); }
+  if ((b = el('[data-sw]'))) { RULES[b.dataset.sw] = !RULES[b.dataset.sw]; PDIRTY = true; return render(); }
+  if ((b = el('[data-unpause]'))) { PAUSE = PAUSE.filter((s) => s !== b.dataset.unpause); PDIRTY = true; return render(); }
+  if ((b = el('[data-act]'))) {
+    const a = b.dataset.act, t = TBT(cur);
+    if (a === 'new') { dlg = 'layout'; return overlay(); }
+    if (a === 'edit') { newForm(t); screen = 'form'; pop = null; render(); $('main').scrollTop = 0; return; }
+    if (a === 'resolve') { dlg = 'resolve'; return overlay(); }
+    if (a === 'escalate') { dlg = 'escalate'; return overlay(); }
+    if (a === 'delete') { dlg = 'delete'; return overlay(); }
+    if (a === 'reopen') { setStatus(t, t.st === 'Closed' ? 'Open' : 'In Progress'); stampFor = null; render(); return toast('Reopened · the SLA clock continues from where it stopped'); }
+    if (a === 'send') return send();
+    if (a === 'attach' || a === 'file') { if (a === 'file') { F.sub = $('fsub').value; if ($('fdesc')) F.desc = $('fdesc').value; F.files.push(['statement-oct.pdf', 'screenshot.png', 'signed-request.jpg'][F.files.length % 3]); return render(); } return toast('File picker opens here'); }
+    if (a === 'save') return saveForm();
+    if (a === 'doresolve') { const n = $('rnote').value.trim(); if (!n) { $('rf').classList.add('bad'); $('rerr').hidden = false; return $('rnote').focus(); } if ($('rsend').checked) threadOf(t).push({ k: 'me', who: ME, at: NOW(), text: n }); setStatus(t, 'Resolved'); dlg = null; stampFor = t.id; render(); return toast(t.done <= dueOf(t) ? 'Resolved inside the SLA' : 'Resolved, counted as missed'); }
+    if (a === 'doescalate') { const n = $('enote').value.trim(), lv = +b.dataset.lv; if (!n) { $('ef').classList.add('bad'); $('eerr').hidden = false; return $('enote').focus(); } t.esc = lv; sys(t, `Escalated to <b>level ${lv}</b> · ${esc(n)}`); dlg = null; render(); return toast(`Escalated to level ${lv}`); }
+    if (a === 'dodelete') { T = T.filter((x) => x.id !== t.id); dlg = null; cur = T[0].id; show('queue'); return toast('Ticket deleted'); }
+    if (a === 'psave') { dlg = 'psave'; return overlay(); }
+    if (a === 'dopsave') { dlg = null; if (PAPPLY === 'new') T.filter(isOpen).forEach((x) => { if (!x.pol) x.pol = { ...POL[x.pri] }; }); POL = JSON.parse(JSON.stringify(PE)); PDIRTY = false; render(); return toast(PAPPLY === 'new' ? 'Saved · applies to new tickets' : 'Saved · open tickets recalculated'); }
+    if (a === 'pdiscard') { PE = null; PDIRTY = false; PAUSE = ['Waiting on customer']; RULES = { warn: 80, notify: true, l1: true, l2: true, l2after: 120, unassigned: true, unmins: 30 }; return render(); }
+  }
+});
+app.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('.qrow')) openTicket(e.target.dataset.open); if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && e.target.id === 'ctext') send(); });
+app.addEventListener('input', (e) => {
+  if (e.target.id === 'q') { q = e.target.value; const pos = e.target.selectionStart; render(); const qi = $('q'); qi.focus(); qi.setSelectionRange(pos, pos); }
+  if (e.target.matches('[data-filter]')) { const s = e.target.value.toLowerCase(), box = e.target.closest('.pop'); let n = 0; box.querySelectorAll('.opt').forEach((o) => { const ok = o.textContent.toLowerCase().includes(s); o.hidden = !ok; n += ok; }); box.querySelector('.none').hidden = n > 0; }
+  if (e.target.id === 'ctext') C.text = e.target.value;
+  if (e.target.id === 'fsub') { F.sub = e.target.value; $('simbox').innerHTML = F.sub.length >= 3 ? simHTML(similar()) : ''; $('qprev').innerHTML = qprevHTML(); }
+  if (e.target.id === 'famt') F.amt = e.target.value; if (e.target.id === 'fmer') F.mer = e.target.value;
+});
+app.addEventListener('change', (e) => { if (e.target.id === 'cwait') C.wait = e.target.checked; if (e.target.name === 'apply') { PAPPLY = e.target.value; render(); } });
+
+/* drag a ticket chip onto a person (Team view) */
+let drag = null, suppress = false;
+app.addEventListener('pointerdown', (e) => {
+  const chip = e.target.closest('.tchip'); if (!chip || e.button !== 0) return;
+  drag = { id: chip.dataset.chip, x: e.clientX, y: e.clientY, on: false, chip };
+});
+document.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  if (!drag.on) { if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return; drag.on = true; drag.chip.classList.add('lifted'); document.body.classList.add('dragging'); drag.fly = drag.chip.cloneNode(true); drag.fly.classList.add('flychip'); drag.fly.classList.remove('lifted'); app.appendChild(drag.fly); }
+  const a = app.getBoundingClientRect(); drag.fly.style.left = e.clientX - a.left - 110 + 'px'; drag.fly.style.top = e.clientY - a.top - 24 + 'px';
+  const hit = document.elementFromPoint(e.clientX, e.clientY), zone = hit && hit.closest('[data-drop]');
+  document.querySelectorAll('[data-drop]').forEach((z) => z.classList.toggle('over', z === zone));
+  drag.zone = zone;
+});
+document.addEventListener('pointerup', () => {
+  if (!drag) return; const d = drag; drag = null;
+  if (!d.on) { suppress = true; setTimeout(() => (suppress = false), 0); return openTicket(d.id); }
+  suppress = true; setTimeout(() => (suppress = false), 0);
+  d.fly.remove(); document.body.classList.remove('dragging');
+  const t = TBT(d.id);
+  if (d.zone) { const u = d.zone.dataset.drop || null; if (u !== (t.own || null)) { t.own = u; sys(t, u ? `Assigned to <b>${USERS[u][0]}</b>` : 'Unassigned'); toast(u ? `${t.id} assigned to ${USERS[u][0]}` + (T.filter((x) => isOpen(x) && x.own === u).length > CAP ? ' · over capacity' : '') : `${t.id} is back in Unassigned`); } }
+  render();
+});
+document.addEventListener('keydown', (e) => { if (e.key !== 'Escape') return; if (pop) { pop = null; render(); } else if (dlg) { dlg = null; overlay(); } });
+$('screens').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.s === 'form') { newForm(); } if (b.dataset.s === 'ticket') { C = { mode: 'reply', text: '', wait: false }; } show(b.dataset.s); });
+
+/* the clocks tick: every second the fuses and the ticket timer update in place */
+let tick = 0;
+setInterval(() => {
+  tick++;
+  if (drag) return;
+  document.querySelectorAll('[data-fz]').forEach((el) => { const t = TBT(el.dataset.fz); if (t) el.outerHTML = fuseHTML(t); });
+  if (screen === 'ticket') { const t = TBT(cur); if ($('timer')) $('timer').innerHTML = timerHTML(t); if (tick % 10 === 0 && $('trk')) $('trk').innerHTML = track(t); }
+  if (screen === 'queue' && tick % 20 === 0 && $('dial') && !pop) $('dial').outerHTML = dial();
+}, 1000);
+
+const isDark = () => (document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
+$('themeBtn').addEventListener('click', () => { document.documentElement.dataset.theme = isDark() ? 'light' : 'dark'; });
+const BANKS = [['H', '#1d3a6e', '#1d3a6e', '#9db8ee'], ['M', '#9b1c3a', '#8a1933', '#f2a3b5'], ['C', '#0f6b52', '#0d5c47', '#7fd6b9']];
+$('banks').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  const [letter, primary, inkL, inkD] = BANKS[+b.dataset.bank], r = document.documentElement.style;
+  r.setProperty('--bank-primary', primary); r.setProperty('--bank-ink-light', inkL); r.setProperty('--bank-ink-dark', inkD);
+  USERS.PN[1] = primary; LOGO = letter; $('logo').textContent = letter; render();
+  $('banks').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+});
+rail();
+render();
+</script>
