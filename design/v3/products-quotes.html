@@ -1,0 +1,1269 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Harbor Products and Quotes 3.0</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: Products and Quotes is a catalogue and a paper desk. Every product is drawn as a card in its family colour that tilts towards the pointer; the product page has a price history; quotes are shown as the real document the customer gets, with a stamp when decided; a fan chart shows where quote value stands; the quote builder lets you drag products onto the paper and slide discounts, with approval above the bank limit. Tokens mirror src/styles/v3.css. */
+:root {
+  --bank-primary: #1d3a6e; --bank-on: #ffffff; --bank-ink-light: #1d3a6e; --bank-ink-dark: #9db8ee;
+  --bank-ink: var(--bank-ink-light);
+  --bg: color-mix(in srgb, var(--bank-primary) 4%, #f5f6f8);
+  --surface: #ffffff;
+  --surface-2: color-mix(in srgb, var(--bank-primary) 4%, #f3f4f6);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 7%, #e8eaee);
+  --border: color-mix(in srgb, var(--bank-primary) 8%, #e2e5ea);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 10%, #cfd4dc);
+  --text: #171b26; --text-muted: #5a6272;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 10%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 26%, var(--surface));
+  --chrome-bg: color-mix(in srgb, var(--bank-primary) 26%, #0a0d15);
+  --chrome-hover: color-mix(in srgb, var(--bank-primary) 34%, #151a26);
+  --chrome-line: color-mix(in srgb, var(--bank-primary) 30%, #1c2331);
+  --chrome-active: color-mix(in srgb, var(--bank-primary) 55%, #1a2030);
+  --chrome-text: #cfd5e3; --chrome-muted: #98a1b6; --chrome-strong: #ffffff;
+  --glass: color-mix(in srgb, var(--surface) 72%, transparent);
+  --glass-line: color-mix(in srgb, var(--text) 9%, transparent);
+  --scrim: color-mix(in srgb, var(--bank-primary) 18%, rgba(9, 12, 20, 0.5));
+  --warn-bg: #fdf0d5; --warn-text: #8a5300; --danger-bg: #fde7e7; --danger-text: #a12626; --ok-bg: #dcf5ea; --ok-text: #0c6b47;
+  --shadow: 0 1px 2px rgba(16, 22, 38, 0.05), 0 4px 12px -2px rgba(16, 22, 38, 0.07);
+  --shadow-lg: 0 4px 8px rgba(16, 22, 38, 0.05), 0 24px 48px -12px rgba(16, 22, 38, 0.24);
+  --shadow-dock: 0 18px 40px -16px color-mix(in srgb, var(--bank-primary) 70%, rgba(0, 0, 0, 0.6));
+  --shadow-bank: 0 6px 18px -6px color-mix(in srgb, var(--bank-primary) 60%, transparent);
+  --font-sans: 'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --fast: 150ms; --base: 220ms; --slow: 350ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bank-ink: var(--bank-ink-dark);
+  --bg: color-mix(in srgb, var(--bank-primary) 7%, #0d1119);
+  --surface: color-mix(in srgb, var(--bank-primary) 5%, #171c28);
+  --surface-2: color-mix(in srgb, var(--bank-primary) 7%, #1f2533);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 9%, #293041);
+  --border: color-mix(in srgb, var(--bank-primary) 10%, #2c3445);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 12%, #3a4358);
+  --text: #e9ecf3; --text-muted: #9aa3b6;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 22%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 42%, var(--surface));
+  --glass: color-mix(in srgb, var(--surface) 68%, transparent);
+  --glass-line: color-mix(in srgb, #fff 9%, transparent);
+  --warn-bg: #3d2c0b; --warn-text: #f7cf7d; --danger-bg: #431417; --danger-text: #ffb1b1; --ok-bg: #0f3327; --ok-text: #86e3b9;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bank-ink: var(--bank-ink-dark);
+  --bg: color-mix(in srgb, var(--bank-primary) 7%, #0d1119);
+  --surface: color-mix(in srgb, var(--bank-primary) 5%, #171c28);
+  --surface-2: color-mix(in srgb, var(--bank-primary) 7%, #1f2533);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 9%, #293041);
+  --border: color-mix(in srgb, var(--bank-primary) 10%, #2c3445);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 12%, #3a4358);
+  --text: #e9ecf3; --text-muted: #9aa3b6;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 22%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 42%, var(--surface));
+  --glass: color-mix(in srgb, var(--surface) 68%, transparent);
+  --glass-line: color-mix(in srgb, #fff 9%, transparent);
+  --warn-bg: #3d2c0b; --warn-text: #f7cf7d; --danger-bg: #431417; --danger-text: #ffb1b1; --ok-bg: #0f3327; --ok-text: #86e3b9;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.45;
+  padding-block: 16px 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-font-smoothing: antialiased;
+}
+body.dragging { cursor: grabbing; -webkit-user-select: none; user-select: none; }
+button, input, select { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--bank-ink); outline-offset: 2px; border-radius: 6px; }
+svg { flex: none; display: block; }
+h2, h3 { font-family: var(--font-display); margin: 0; letter-spacing: -0.01em; }
+i { font-style: normal; }
+
+.deck { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; max-width: 1280px; margin: 0 auto 14px; }
+.deck h1 { font-family: var(--font-display); font-size: 20px; font-weight: 650; margin: 0; flex: 1 1 200px; }
+.deck h1 small { display: block; font-family: var(--font-sans); font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.pick { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); }
+.seg { display: flex; flex-wrap: wrap; padding: 3px; gap: 2px; background: var(--surface-3); border-radius: 999px; }
+.seg button { padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--text-muted); display: flex; align-items: center; gap: 6px; transition: background var(--fast), color var(--fast); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.sw { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
+
+.stage { container-type: inline-size; max-width: 1280px; margin: 0 auto; }
+.app { position: relative; overflow: hidden; display: grid; grid-template-columns: auto minmax(0, 1fr); height: clamp(640px, 86vh, 840px); border-radius: 20px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg);
+  background: radial-gradient(60% 50% at 100% 0%, color-mix(in srgb, var(--bank-primary) 13%, transparent), transparent 70%), radial-gradient(50% 50% at 0% 100%, color-mix(in srgb, var(--bank-primary) 8%, transparent), transparent 70%), var(--bg); }
+.rail { width: 60px; margin: 10px 0 10px 10px; border-radius: 18px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; color: var(--chrome-muted); border: 1px solid var(--chrome-line); box-shadow: var(--shadow-dock);
+  background: radial-gradient(130% 42% at 0% 0%, color-mix(in srgb, var(--bank-primary) 62%, transparent), transparent 72%), var(--chrome-bg); }
+.rail .logo { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 8px; background: var(--bank-primary); color: var(--bank-on); font-family: var(--font-display); font-weight: 700; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+.rail span { width: 40px; height: 36px; border-radius: 10px; display: grid; place-items: center; }
+.rail span.on { color: var(--chrome-strong); background: var(--chrome-active); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+.main { position: relative; min-width: 0; overflow-y: auto; display: flex; flex-direction: column; }
+.tb { position: sticky; top: 0; z-index: 4; display: flex; align-items: center; gap: 10px; margin: 10px 12px 0; padding: 8px 10px 8px 16px; border-radius: 16px; background: var(--glass); -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px); border: 1px solid var(--glass-line); box-shadow: var(--shadow); }
+.crumb { display: flex; gap: 7px; color: var(--text-muted); font-size: 13px; white-space: nowrap; min-width: 0; overflow: hidden; }
+.crumb b { color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.chip-me { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 5px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-weight: 600; font-size: 13px; white-space: nowrap; }
+.av { width: 30px; height: 30px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 11.5px; font-weight: 600; background: var(--bank-primary); color: var(--bank-on); }
+.av.sm { width: 24px; height: 24px; font-size: 9.5px; }
+.av.soft { background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.page { flex: 1; padding: 22px 24px 90px; animation: enter var(--slow) var(--ease-out); }
+@keyframes enter { from { opacity: 0; transform: translateY(10px); } }
+@keyframes pop { from { opacity: 0; transform: scale(.9) translateY(8px); } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes grow { from { transform: scaleX(0); } }
+
+/* shared pieces */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 14px; border-radius: 12px; font-weight: 550; white-space: nowrap; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow);
+  transition: transform var(--fast) var(--ease-spring), border-color var(--fast), filter var(--fast), background var(--fast), color var(--fast); }
+.btn:hover { transform: translateY(-1px); border-color: var(--bank-soft-line); }
+.btn:active { transform: scale(.97); }
+.btn.pri { color: var(--bank-on); border-color: transparent; background: linear-gradient(180deg, color-mix(in srgb, var(--bank-primary) 90%, #fff), var(--bank-primary)); box-shadow: inset 0 1px 0 rgba(255,255,255,.22), var(--shadow-bank); }
+.btn.pri:hover { filter: brightness(1.08); }
+.btn.ghost { background: none; border-color: transparent; box-shadow: none; color: var(--text-muted); }
+.btn.ghost:hover { background: var(--surface-2); color: var(--text); }
+.btn.danger { color: var(--danger-text); }
+.btn.sq { width: 38px; padding: 0; }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap;
+  background: color-mix(in srgb, var(--c) 14%, var(--surface)); color: color-mix(in srgb, var(--c) 62%, var(--text)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 26%, transparent); }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.ph { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 18px; }
+.ph h2 { font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.02em; }
+.ph p { margin: 2px 0 0; color: var(--text-muted); }
+.ph .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+.lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.muted { color: var(--text-muted); }
+.num { font-variant-numeric: tabular-nums; }
+.link { color: var(--bank-ink); font-weight: 550; } .link:hover { text-decoration: underline; }
+.tg { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 500; white-space: nowrap; background: var(--surface-2); color: var(--text-muted); box-shadow: inset 0 0 0 1px var(--border); }
+.tg.add { border: 1px dashed var(--border-strong); background: none; box-shadow: none; }
+.tg.add:hover { color: var(--bank-ink); border-color: var(--bank-soft-line); background: var(--bank-soft); }
+
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; }
+.search { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; flex: 1 1 220px; max-width: 320px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-muted); transition: box-shadow var(--fast), border-color var(--fast); }
+.search:focus-within { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--text); }
+.fchip { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border-radius: 12px; border: 1px dashed var(--border-strong); color: var(--text-muted); font-weight: 500; white-space: nowrap; transition: background var(--fast), border-color var(--fast), color var(--fast); }
+.fchip:hover { background: var(--surface); color: var(--text); }
+.fchip.set { border-style: solid; border-color: var(--bank-soft-line); background: var(--bank-soft); color: var(--bank-ink); }
+.pop-wrap { position: relative; }
+.pop { position: absolute; z-index: 9; top: 44px; left: 0; width: 250px; padding: 6px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg); transform-origin: top left; animation: pop var(--base) var(--ease-spring); }
+.pop.right { left: auto; right: 0; transform-origin: top right; }
+.pop input { width: 100%; height: 34px; padding: 0 10px; margin-bottom: 4px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); outline: 0; }
+.pop input:focus { border-color: var(--bank-ink); }
+.pop .opt { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 10px; border-radius: 10px; text-align: left; font-weight: 500; }
+.pop .opt:hover { background: var(--bank-soft); }
+.pop .opt i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.pop .opt .tick { margin-left: auto; color: var(--bank-ink); opacity: 0; }
+.pop .opt[aria-checked="true"] .tick { opacity: 1; }
+.pop .opt small { margin-left: auto; color: var(--text-muted); font-size: 12px; }
+.pop .none { padding: 10px; color: var(--text-muted); font-size: 12.5px; }
+.empty { padding: 44px 20px; text-align: center; color: var(--text-muted); }
+.empty b { display: block; font-family: var(--font-display); font-size: 17px; color: var(--text); }
+.back { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-weight: 500; margin-bottom: 12px; }
+.back:hover { color: var(--bank-ink); }
+.box { padding: 18px 20px; }
+.box h3 { font-size: 16px; font-weight: 650; margin-bottom: 12px; }
+.box-h { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; } .box-h h3 { margin: 0; flex: 1; }
+.cols { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.stack { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.kv { display: grid; gap: 10px; margin: 0; }
+.kv div { display: flex; gap: 10px; align-items: center; }
+.kv dt { width: 96px; flex: none; font-size: 12.5px; color: var(--text-muted); } .kv dd { margin: 0; min-width: 0; flex: 1; overflow-wrap: anywhere; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+/* dialogs, sheet, form basics (shared with Contacts and Accounts) */
+.scrim { position: absolute; inset: 0; z-index: 10; background: var(--scrim); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); display: grid; place-items: center; padding: 14px; animation: fade var(--base); }
+.dlg { width: min(460px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 22px; background: var(--surface); border: 1px solid var(--glass-line); box-shadow: var(--shadow-lg); animation: pop var(--slow) var(--ease-spring); overflow: hidden; }
+.dlg-head { padding: 18px 22px 0; display: flex; align-items: center; gap: 10px; }
+.dlg-head h3 { font-size: 19px; font-weight: 650; flex: 1; overflow-wrap: anywhere; }
+.dlg-body { padding: 14px 22px 18px; overflow-y: auto; color: var(--text-muted); }
+.dlg-foot { display: flex; gap: 8px; padding: 14px 22px; background: var(--surface-2); border-top: 1px solid var(--border); }
+.dlg-foot .sp { flex: 1; }
+.scrim.edge { place-items: stretch end; padding: 10px; }
+.sheet { width: min(400px, 100%); display: flex; flex-direction: column; border-radius: 20px; background: var(--surface); border: 1px solid var(--glass-line); box-shadow: var(--shadow-lg); overflow: hidden; animation: slide var(--slow) var(--ease-out); }
+@keyframes slide { from { transform: translateX(40px); opacity: 0; } }
+.sheet-body { flex: 1; overflow-y: auto; padding: 16px 22px 20px; display: grid; gap: 14px; align-content: start; }
+.pick-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border-radius: 14px; text-align: left; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); transition: transform var(--fast) var(--ease-spring), border-color var(--fast), background var(--fast), box-shadow var(--fast); }
+.pick-item:hover { transform: translateX(-3px); border-color: var(--bank-ink); background: var(--bank-soft); box-shadow: 0 0 0 3px var(--bank-soft); color: var(--bank-ink); }
+.pick-item .ext { width: 38px; height: 38px; flex: none; border-radius: 11px; display: grid; place-items: center; background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.pick-item div { flex: 1; min-width: 0; } .pick-item b { display: block; font-weight: 600; color: var(--text); } .pick-item small { font-size: 12.5px; }
+.ltabs { display: flex; gap: 4px; padding: 0 16px; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; }
+.ltabs button { position: relative; padding: 10px 12px 12px; font-weight: 550; color: var(--text-muted); white-space: nowrap; transition: color var(--fast); }
+.ltabs button:hover { color: var(--text); }
+.ltabs button::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--bank-primary); transform: scaleX(0); transition: transform var(--base) var(--ease-out); }
+.ltabs button[aria-selected="true"] { color: var(--bank-ink); } .ltabs button[aria-selected="true"]::after { transform: scaleX(1); }
+.sect { padding: 20px 22px; animation: enter var(--base) var(--ease-out); }
+.fg { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.fg .full { grid-column: 1 / -1; }
+.f label, .f .flab { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; font-weight: 500; margin-bottom: 5px; }
+.f label .tg { font-size: 10.5px; padding: 0 6px; }
+.f input, .f select, .f .fake { width: 100%; height: 40px; padding: 0 12px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); outline: 0; transition: border-color var(--fast), box-shadow var(--fast); display: flex; align-items: center; gap: 8px; text-align: left; }
+.f input:focus, .f select:focus, .f .fake:focus-visible { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.f .fake .dn { margin-left: auto; color: var(--text-muted); }
+.f .fake i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.f input[type="range"] { height: 28px; padding: 0; border: 0; box-shadow: none; background: none; accent-color: var(--bank-primary); }
+.f label b { color: var(--bank-ink); font-variant-numeric: tabular-nums; }
+.f.bad input, .f.bad .fake { border-color: var(--danger-text); }
+.f .err { color: var(--danger-text); font-size: 12px; margin-top: 4px; }
+.fpop { width: 100%; min-width: 240px; max-height: 300px; overflow-y: auto; }
+.savebar { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; background: var(--surface-2); border-top: 1px solid var(--border); border-radius: 0 0 18px 18px; }
+.toast { position: absolute; z-index: 12; left: 50%; bottom: 18px; transform: translate(-50%, 80px); padding: 10px 16px; border-radius: 14px; display: flex; align-items: center; gap: 8px; font-weight: 500; white-space: nowrap; color: var(--chrome-strong); background: var(--chrome-bg); border: 1px solid var(--chrome-line); box-shadow: var(--shadow-lg); transition: transform var(--slow) var(--ease-spring); }
+.toast.on { transform: translate(-50%, 0); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 12px 6px 2px 46px; font-size: 12.5px; color: var(--text-muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; } .legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.legend em { margin-left: auto; font-style: normal; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; } }
+
+/* ---- Products and Quotes ---- */
+.face { width: 26px; height: 26px; border-radius: 50%; flex: none; display: inline-grid; place-items: center; font-size: 10px; font-weight: 650; color: #fff; background: var(--h); box-shadow: 0 0 0 2px var(--surface); }
+.face.lg { width: 34px; height: 34px; font-size: 12px; }
+:root { --paper: #fffdf9; --paper-ink: #1b2130; --paper-muted: #6b7180; --paper-line: #e8e3d8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper: color-mix(in srgb, var(--bank-primary) 6%, #1d2331); --paper-ink: #e9ecf3; --paper-muted: #9aa3b6; --paper-line: #343c50; } }
+:root[data-theme="dark"] { --paper: color-mix(in srgb, var(--bank-primary) 6%, #1d2331); --paper-ink: #e9ecf3; --paper-muted: #9aa3b6; --paper-line: #343c50; }
+.page.quiet * { animation: none !important; }
+textarea { font: inherit; color: inherit; }
+.f textarea { width: 100%; min-height: 84px; padding: 10px 12px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); outline: 0; resize: vertical; }
+.f textarea:focus { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.f .hint { font-size: 12px; color: var(--text-muted); margin-top: 5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.money-in { position: relative; } .money-in span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); } .f .money-in input { padding-left: 26px; font-variant-numeric: tabular-nums; }
+.switch { position: relative; width: 40px; height: 23px; flex: none; border-radius: 99px; background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--border-strong); transition: background var(--base); }
+.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 17px; height: 17px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform var(--base) var(--ease-spring); }
+.switch[aria-checked="true"] { background: var(--bank-primary); box-shadow: none; } .switch[aria-checked="true"]::after { transform: translateX(17px); }
+.swrow { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); }
+.swrow div { flex: 1; } .swrow b { display: block; } .swrow small { color: var(--text-muted); }
+.note { display: flex; gap: 10px; align-items: flex-start; padding: 11px 13px; border-radius: 13px; font-size: 13px; background: var(--warn-bg); color: var(--warn-text); animation: enter var(--base) var(--ease-out); }
+.note.info { background: var(--bank-soft); color: var(--bank-ink); }
+.note.ok { background: var(--ok-bg); color: var(--ok-text); }
+.vseg { margin-left: auto; }
+
+/* the product card: every product is drawn as a card in its family colour, and it tilts towards the pointer */
+.pc { position: relative; display: flex; flex-direction: column; justify-content: space-between; width: 100%; aspect-ratio: 1.586; padding: 14px 16px 13px; border-radius: 16px; overflow: hidden; color: #fff; text-align: left;
+  background: radial-gradient(110% 80% at var(--mx, 25%) var(--my, 0%), rgba(255,255,255,.30), transparent 55%),
+    linear-gradient(140deg, color-mix(in srgb, var(--fc) 92%, #fff), color-mix(in srgb, var(--fc) 62%, var(--bank-primary)) 58%, color-mix(in srgb, var(--bank-primary) 62%, #04060b));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 0 0 1px rgba(255,255,255,.08), 0 18px 30px -18px color-mix(in srgb, var(--fc) 80%, #000);
+  transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .6s var(--ease-out), box-shadow var(--base), filter var(--base); }
+.pc::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-radial-gradient(circle at 115% 125%, rgba(255,255,255,.075) 0 1px, transparent 1px 13px); }
+.pc.live { transition: transform 90ms linear, box-shadow var(--base); }
+.pc > * { position: relative; }
+.pc-top { display: flex; align-items: center; gap: 8px; }
+.pc-ic { width: 34px; height: 26px; border-radius: 7px; display: grid; place-items: center; background: linear-gradient(135deg, rgba(255,255,255,.42), rgba(255,255,255,.12)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); }
+.pc-bank { margin-left: auto; font-family: var(--font-display); font-size: 11.5px; font-weight: 650; opacity: .8; letter-spacing: .02em; }
+.pc-nm { display: block; font-family: var(--font-display); font-size: 17px; line-height: 21px; font-weight: 650; letter-spacing: -0.01em; text-wrap: balance; text-shadow: 0 1px 2px rgba(0,0,0,.18); }
+.pc-bot { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.pc-sku { font-size: 11px; letter-spacing: .16em; opacity: .78; font-variant-numeric: tabular-nums; }
+.pc-pr { font-family: var(--font-display); font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pc-pr small { font-family: var(--font-sans); font-size: 11.5px; font-weight: 500; opacity: .85; margin-left: 3px; }
+.pc.retired { filter: grayscale(.92) brightness(.9); }
+.pc-ret { position: absolute !important; top: 15px; right: -30px; transform: rotate(35deg); width: 120px; text-align: center; padding: 2px 0; font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; background: rgba(0,0,0,.45); }
+.pc.big { border-radius: 22px; padding: 22px 24px 20px; } .pc.big .pc-nm { font-size: 25px; line-height: 30px; } .pc.big .pc-pr { font-size: 26px; } .pc.big .pc-ic { width: 44px; height: 34px; border-radius: 9px; }
+
+/* catalogue */
+.fam { margin-bottom: 24px; }
+.fam-h { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.fam-h h3 { font-size: 17px; font-weight: 650; }
+.fdot { width: 10px; height: 10px; border-radius: 3px; background: var(--fc); box-shadow: 0 0 0 4px color-mix(in srgb, var(--fc) 16%, transparent); }
+.fam-h .fv { margin-left: auto; font-size: 12.5px; color: var(--text-muted); }
+.fam-h .fv b { color: var(--text); font-variant-numeric: tabular-nums; }
+.shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(226px, 1fr)); gap: 18px 16px; }
+.slot { display: flex; flex-direction: column; gap: 8px; text-align: left; border-radius: 16px; animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); }
+.slot:hover .pc { box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 26px 40px -20px color-mix(in srgb, var(--fc) 85%, #000); }
+.slot-m { display: flex; justify-content: space-between; gap: 8px; padding: 0 4px; font-size: 12.5px; color: var(--text-muted); }
+.slot-m b { color: var(--text); font-weight: 600; }
+.plist { overflow: hidden; }
+.pl-row { display: grid; grid-template-columns: 52px minmax(0, 1.6fr) 110px 150px 96px 130px 104px 64px; gap: 14px; align-items: center; padding: 10px 18px; border-top: 1px solid var(--border); cursor: pointer; transition: background var(--fast); animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); }
+.pl-row:hover { background: color-mix(in srgb, var(--bank-primary) 3%, var(--surface-2)); }
+.pl-row.head { border-top: 0; cursor: default; padding-top: 12px; padding-bottom: 8px; animation: none; } .pl-row.head:hover { background: none; }
+.pl-row.dim { opacity: .62; }
+.r { text-align: right; font-variant-numeric: tabular-nums; }
+.mini { width: 52px; height: 33px; border-radius: 7px; background: linear-gradient(140deg, color-mix(in srgb, var(--fc) 92%, #fff), color-mix(in srgb, var(--fc) 62%, var(--bank-primary)) 60%, color-mix(in srgb, var(--bank-primary) 62%, #04060b)); box-shadow: 0 4px 10px -5px color-mix(in srgb, var(--fc) 80%, #000); display: grid; place-items: center; color: #fff; }
+.mini.off { filter: grayscale(.9); }
+.nm2 b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .nm2 small { color: var(--text-muted); font-size: 12px; letter-spacing: .06em; }
+.wbar { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.wbar span { flex: 1; height: 6px; border-radius: 9px; background: var(--surface-3); overflow: hidden; }
+.wbar span i { display: block; height: 100%; width: var(--w); border-radius: inherit; background: #1f9d63; transform-origin: left; animation: grow var(--slow) var(--ease-out) backwards; animation-delay: var(--d); }
+
+/* product page */
+.phero { display: grid; grid-template-columns: minmax(260px, 380px) minmax(0, 1fr); gap: 28px; align-items: center; margin-bottom: 20px; }
+.hero-card { animation: bob 6s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-6px); } }
+.hero-t h2 { font-size: 30px; line-height: 36px; font-weight: 700; letter-spacing: -0.02em; margin: 4px 0 6px; }
+.hero-t p { margin: 0 0 12px; color: var(--text-muted); max-width: 60ch; }
+.hero-t .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; }
+.hero-t .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.figs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.fig { padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); }
+.fig b { font-family: var(--font-display); font-size: 25px; line-height: 30px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.fig small { color: var(--text-muted); font-size: 12.5px; }
+.fig.ring { flex-direction: row; align-items: center; gap: 14px; }
+.ringsvg { width: 62px; height: 62px; flex: none; transform: rotate(-90deg); }
+.ringsvg circle { fill: none; stroke-width: 7; }
+.ringsvg .arc { stroke: #1f9d63; stroke-linecap: round; stroke-dasharray: var(--v) 100; animation: arc 1s var(--ease-out) backwards .2s; }
+@keyframes arc { from { stroke-dasharray: 0 100; } }
+.lim { position: relative; height: 8px; border-radius: 9px; background: var(--surface-3); margin: 8px 0 4px; }
+.lim i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--w); border-radius: inherit; background: var(--bank-primary); transform-origin: left; animation: grow var(--slow) var(--ease-out) backwards .2s; }
+.lim i.over { background: #e0611a; }
+.lim em { position: absolute; top: -4px; bottom: -4px; left: var(--l); width: 2px; border-radius: 2px; background: var(--text); }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .ln2 { fill: none; stroke: var(--bank-ink); stroke-width: 2.5; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.2s var(--ease-out) forwards .15s; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.chart .area { fill: url(#pg); opacity: 0; animation: fade .8s forwards .6s; }
+@keyframes fade2 { to { opacity: 1; } }
+.chart .area { animation-name: fade2; }
+.chart .gl { stroke: var(--border); stroke-dasharray: 3 4; }
+.chart text { fill: var(--text-muted); font-size: 11px; font-family: var(--font-sans); }
+.chart .pt { fill: var(--surface); stroke: var(--bank-ink); stroke-width: 2.5; }
+.chart .pl { fill: var(--text); font-weight: 600; font-size: 11.5px; }
+.uq { display: grid; grid-template-columns: 112px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; width: 100%; text-align: left; padding: 10px 6px; border-top: 1px solid var(--border); border-radius: 0; transition: background var(--fast); }
+.uq:hover { background: var(--surface-2); }
+.uq b { font-variant-numeric: tabular-nums; font-weight: 600; } .uq .ac { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .uq small { color: var(--text-muted); font-size: 12px; display: block; }
+.dz { display: inline-flex; padding: 1px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 650; background: var(--surface-2); color: var(--text-muted); box-shadow: inset 0 0 0 1px var(--border); font-variant-numeric: tabular-nums; }
+.dz.over { background: var(--warn-bg); color: var(--warn-text); box-shadow: none; }
+.lead { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--border); font-size: 13px; }
+.lead:first-of-type { border-top: 0; } .lead div { flex: 1; min-width: 0; } .lead b { display: block; font-weight: 550; } .lead small { color: var(--text-muted); }
+
+/* product form */
+.pfcols { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr); gap: 18px; align-items: start; }
+.prev { position: sticky; top: 74px; display: grid; gap: 14px; }
+.prev .qline { padding: 12px 14px; border-radius: 12px; background: var(--paper); color: var(--paper-ink); box-shadow: 0 0 0 1px var(--paper-line), var(--shadow); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; font-size: 13px; }
+.prev .qline small { color: var(--paper-muted); font-size: 11.5px; } .prev .qline .r { font-weight: 600; }
+.sug { display: inline-flex; align-items: center; gap: 5px; padding: 1px 9px; border-radius: 99px; font-size: 12px; font-weight: 600; color: var(--bank-ink); background: var(--bank-soft); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.sect + .sect { border-top: 1px solid var(--border); }
+.sect h3 { font-size: 15px; font-weight: 650; margin-bottom: 14px; }
+
+/* quotes desk */
+.qtop { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(250px, 1fr); gap: 14px; margin-bottom: 16px; }
+.fanc { padding: 16px 18px 10px; overflow: hidden; }
+.fan { width: 100%; height: auto; display: block; }
+.fan text { font-family: var(--font-sans); fill: var(--text-muted); font-size: 12px; }
+.fan .big { font-family: var(--font-display); fill: var(--text); font-size: 22px; font-weight: 700; }
+.fan .nmv { fill: var(--text); font-weight: 600; font-size: 13px; }
+.fan .rib { cursor: pointer; transition: opacity var(--base); }
+.fan .rib path { fill: var(--c); opacity: .26; transition: opacity var(--base); transform-origin: 170px 50%; animation: ribin .9s var(--ease-out) backwards; animation-delay: var(--d); }
+@keyframes ribin { from { transform: scaleX(0); } }
+.fan .rib:hover path, .fan .rib.on path { opacity: .55; }
+.fan .rib rect { fill: var(--c); }
+.fan.picked .rib:not(.on) { opacity: .45; }
+.fanbar { display: none; }
+.fanbar .bar { display: flex; height: 14px; border-radius: 99px; overflow: hidden; gap: 2px; margin: 4px 0 12px; }
+.fanbar .bar i { background: var(--c); flex: var(--f) 1 0; min-width: 4px; transform-origin: left; animation: grow var(--slow) var(--ease-out) backwards; }
+.fanbar .leg { display: grid; gap: 4px; }
+.fanbar .leg button { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; text-align: left; font-size: 13px; }
+.fanbar .leg button:hover, .fanbar .leg button.on { background: var(--surface-2); }
+.fanbar .leg i { width: 9px; height: 9px; border-radius: 3px; background: var(--c); }
+.fanbar .leg span { margin-left: auto; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.watch { display: grid; gap: 14px; align-content: start; }
+.wcard { padding: 14px 16px; }
+.wcard .wh { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; margin-bottom: 8px; }
+.wcard .wh b { font-family: var(--font-display); font-size: 24px; line-height: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.wcard .wh span { flex: 1; font-weight: 600; } .wcard .wh .ico { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: var(--c-bg); color: var(--c-fg); }
+.witem { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 8px; margin: 0 -8px; border-radius: 10px; font-size: 13px; text-align: left; }
+.witem:hover { background: var(--surface-2); } .witem b { font-variant-numeric: tabular-nums; font-weight: 600; } .witem span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); } .witem em { font-style: normal; font-size: 12px; font-weight: 600; }
+.grp { margin-bottom: 16px; }
+.grp-h { display: flex; align-items: baseline; gap: 10px; padding: 0 4px 8px; }
+.grp-h h3 { font-size: 15px; font-weight: 650; } .grp-h span { color: var(--text-muted); font-size: 12.5px; }
+.grp-h .gv { margin-left: auto; font-variant-numeric: tabular-nums; }
+.qr { display: grid; grid-template-columns: 26px 40px minmax(0, 1fr) 170px 150px 150px; gap: 14px; align-items: center; padding: 11px 18px 11px 14px; border-top: 1px solid var(--border); cursor: pointer; transition: background var(--fast); animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); }
+.qr:first-child { border-top: 0; }
+.qr:hover { background: color-mix(in srgb, var(--bank-primary) 3%, var(--surface-2)); }
+.qr.sel { background: var(--bank-soft); }
+.ck { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; cursor: pointer; }
+.ck input { width: 16px; height: 16px; accent-color: var(--bank-primary); cursor: pointer; }
+.thumb { position: relative; width: 34px; height: 44px; border-radius: 4px; background: var(--paper); box-shadow: 0 0 0 1px var(--paper-line), 0 6px 12px -6px rgba(16,22,38,.4); padding: 7px 5px 0; display: grid; gap: 3px; align-content: start; overflow: hidden; transform: rotate(-3deg); transition: transform var(--base) var(--ease-spring); }
+.qr:hover .thumb { transform: rotate(0deg) translateY(-2px) scale(1.06); }
+.thumb::before { content: ''; position: absolute; inset: 0 0 auto; height: 3px; background: var(--bank-primary); }
+.thumb i { height: 2.5px; border-radius: 2px; background: var(--paper-line); } .thumb i:nth-child(2n) { width: 70%; }
+.thumb em { position: absolute; right: -2px; bottom: 5px; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--c); transform: rotate(-14deg); }
+.qm2 { min-width: 0; } .qm2 .t { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.qm2 .t b { font-variant-numeric: tabular-nums; flex: none; } .qm2 .t span { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qm2 small { display: block; color: var(--text-muted); font-size: 12.5px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vd { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); min-width: 0; }
+.vd b { color: var(--text); font-weight: 600; } .vd.soon b { color: var(--warn-text); } .vd.late b { color: var(--danger-text); }
+.vring { width: 26px; height: 26px; flex: none; transform: rotate(-90deg); }
+.vring circle { fill: none; stroke-width: 4; } .vring .bg { stroke: var(--surface-3); } .vring .fg { stroke: var(--c); stroke-linecap: round; stroke-dasharray: var(--v) 100; }
+.amt { text-align: right; } .amt b { display: block; font-family: var(--font-display); font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; } .amt small { color: var(--text-muted); font-size: 11.5px; }
+.stc2 { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.apb { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; color: var(--warn-text); } .apb.ok { color: var(--ok-text); }
+.selbar { position: sticky; bottom: 14px; z-index: 5; display: flex; align-items: center; gap: 10px; width: fit-content; max-width: 100%; margin: 12px auto 0; padding: 8px 8px 8px 16px; border-radius: 16px; color: var(--chrome-strong); background: var(--chrome-bg); border: 1px solid var(--chrome-line); box-shadow: var(--shadow-lg); animation: pop var(--slow) var(--ease-spring); }
+.selbar .btn { height: 34px; background: var(--chrome-hover); border-color: var(--chrome-line); color: var(--chrome-strong); box-shadow: none; }
+.selbar .btn.danger { color: #ffb1b1; }
+
+/* the paper: a quote is shown as the document the customer gets */
+.paper { position: relative; background: var(--paper); color: var(--paper-ink); border-radius: 5px; padding: 32px 34px 26px; font-size: 12.5px; overflow: hidden;
+  box-shadow: 0 0 0 1px var(--paper-line), 0 2px 4px rgba(16,22,38,.06), 0 30px 60px -30px rgba(16,22,38,.55); transition: box-shadow var(--base), transform var(--base) var(--ease-spring); }
+.paper::before { content: ''; position: absolute; inset: 0 0 auto; height: 6px; background: linear-gradient(90deg, var(--bank-primary), color-mix(in srgb, var(--bank-primary) 45%, #fff)); }
+.paper.thud { animation: thud .32s ease-out .28s; }
+@keyframes thud { 40% { transform: translateY(3px) scale(.995); } }
+.lh { display: flex; align-items: flex-start; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--paper-line); }
+.blogo { width: 42px; height: 42px; flex: none; border-radius: 12px; display: grid; place-items: center; background: var(--bank-primary); color: var(--bank-on); font-family: var(--font-display); font-weight: 700; font-size: 19px; }
+.lh .bn b { display: block; font-family: var(--font-display); font-size: 16px; font-weight: 700; } .lh .bn small { color: var(--paper-muted); font-size: 11.5px; }
+.lh .qn { margin-left: auto; text-align: right; } .lh .qn .lab { color: var(--paper-muted); } .lh .qn b { display: block; font-family: var(--font-display); font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; } .lh .qn small { color: var(--paper-muted); }
+.bill { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 14px; padding: 14px 0 16px; }
+.bill .lab { color: var(--paper-muted); font-size: 10px; } .bill b { display: block; font-weight: 600; margin-top: 2px; } .bill small { color: var(--paper-muted); }
+.bill .ph0 { color: var(--paper-muted); font-style: italic; }
+table.lines { width: 100%; border-collapse: collapse; }
+table.lines th { text-align: left; font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--paper-muted); padding: 7px 6px; border-bottom: 1.5px solid color-mix(in srgb, var(--paper-ink) 70%, transparent); }
+table.lines td { padding: 9px 6px; border-bottom: 1px dashed var(--paper-line); vertical-align: top; }
+table.lines td small { display: block; color: var(--paper-muted); font-size: 11px; margin-top: 1px; }
+table.lines th.r, table.lines td.r { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+table.lines .dover { color: #c25a0c; font-weight: 650; }
+tr.new td { animation: inkin 1.6s var(--ease-out); }
+@keyframes inkin { 0% { background: color-mix(in srgb, var(--bank-primary) 18%, transparent); } 100% { background: transparent; } }
+tr.ph-row td { text-align: center; padding: 26px 6px; color: var(--paper-muted); font-style: italic; border: 1.5px dashed var(--paper-line); }
+.ptot { display: grid; grid-template-columns: minmax(0, 1fr) minmax(210px, 250px); gap: 20px; margin-top: 16px; }
+.ptot .terms { color: var(--paper-muted); font-size: 11.5px; } .ptot .terms b { color: var(--paper-ink); display: block; margin-bottom: 3px; }
+.ptot dl { margin: 0; display: grid; gap: 6px; } .ptot dl div { display: flex; justify-content: space-between; gap: 10px; } .ptot dt { color: var(--paper-muted); } .ptot dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+.ptot .fy { margin-top: 4px; padding-top: 10px; border-top: 1.5px solid color-mix(in srgb, var(--paper-ink) 70%, transparent); align-items: baseline; } .ptot .fy dt { color: var(--paper-ink); font-weight: 600; } .ptot .fy dd { font-family: var(--font-display); font-size: 22px; font-weight: 700; }
+.sig { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-top: 24px; color: var(--paper-muted); font-size: 11px; }
+.sig .hand2 { display: block; font-family: 'Segoe Script', 'Brush Script MT', cursive; font-size: 19px; color: var(--paper-ink); margin-bottom: 2px; }
+.stamp { position: absolute; z-index: 2; top: 128px; right: 44px; padding: 6px 16px 5px; border: 3.5px double var(--sc); border-radius: 10px; color: var(--sc); font-family: var(--font-display); font-weight: 800; font-size: 25px; letter-spacing: .14em; line-height: 1; text-align: center; transform: rotate(-13deg); opacity: .82; pointer-events: none; }
+.stamp small { display: block; font-family: var(--font-sans); font-size: 10px; font-weight: 700; letter-spacing: .12em; margin-top: 3px; }
+.stamp.fresh { animation: stamp .42s cubic-bezier(.2, 1.5, .4, 1) backwards; }
+@keyframes stamp { from { transform: rotate(-13deg) scale(2.6); opacity: 0; } }
+.paperbox { position: sticky; top: 74px; border-radius: 8px; transition: box-shadow var(--base), transform var(--base) var(--ease-spring); }
+.paperbox.over { box-shadow: 0 0 0 4px var(--bank-soft), 0 0 0 6px var(--bank-soft-line); transform: scale(1.01); }
+.paperbox .paper { font-size: 12px; padding: 26px 26px 22px; }
+
+/* quote page */
+.qph { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 16px; }
+.qph h2 { font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.02em; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.qph p { margin: 2px 0 0; color: var(--text-muted); } .qph .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+.qp { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr); gap: 18px; align-items: start; }
+.trk { display: grid; gap: 0; margin: 4px 0 14px; }
+.trk .st { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; position: relative; padding-bottom: 14px; }
+.trk .st::before { content: ''; position: absolute; left: 10px; top: 20px; bottom: 0; width: 2px; background: var(--border); }
+.trk .st:last-child::before { display: none; } .trk .st.done::before { background: var(--c); }
+.trk .st i { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); box-shadow: inset 0 0 0 2px var(--border-strong); color: #fff; }
+.trk .st.done i { background: var(--c); box-shadow: none; } .trk .st.now i { box-shadow: 0 0 0 5px color-mix(in srgb, var(--c) 22%, transparent); animation: pulse2 2s ease-in-out infinite; }
+@keyframes pulse2 { 50% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--c) 8%, transparent); } }
+.trk .st b { display: block; font-weight: 600; } .trk .st small { color: var(--text-muted); font-size: 12.5px; }
+.trk .st.off b { color: var(--text-muted); font-weight: 500; }
+.sacts { display: grid; gap: 8px; } .sacts .btn { width: 100%; }
+.sacts .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hist { display: grid; gap: 0; }
+.hist div { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 10px; padding: 7px 0; border-top: 1px solid var(--border); font-size: 13px; }
+.hist div:first-child { border-top: 0; } .hist time { color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.appr { display: grid; gap: 10px; }
+.appr .who2 { display: flex; align-items: center; gap: 10px; } .appr .who2 div { flex: 1; } .appr .who2 small { display: block; color: var(--text-muted); font-size: 12px; }
+.appr ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 13px; }
+.appr li { display: flex; justify-content: space-between; gap: 8px; }
+.demo { font-size: 11.5px; color: var(--text-muted); }
+
+/* quote builder */
+.studio { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); gap: 18px; align-items: start; }
+.chips2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; max-height: 254px; overflow-y: auto; padding: 2px; margin: 0 -2px; }
+.pchip { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 13px; text-align: left; background: var(--surface); border: 1px solid var(--border-strong); cursor: grab; -webkit-user-select: none; user-select: none; transition: transform var(--fast) var(--ease-spring), border-color var(--fast), background var(--fast), opacity var(--fast); }
+.pchip:hover { transform: translateY(-1px); border-color: var(--bank-soft-line); background: var(--bank-soft); }
+.pchip .mini { width: 34px; height: 22px; border-radius: 5px; flex: none; }
+.pchip div { flex: 1; min-width: 0; } .pchip b { display: block; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pchip small { color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.pchip .add { color: var(--bank-ink); }
+.pchip.lifted { opacity: .35; }
+.pchip.fly { position: absolute; z-index: 20; width: 220px; pointer-events: none; transform: rotate(-4deg) scale(1.04); box-shadow: var(--shadow-lg); background: var(--surface); border-color: var(--bank-ink); }
+.ln { display: grid; grid-template-columns: 6px minmax(0, 1fr) auto 32px; grid-template-areas: "s m q x" "s d a a"; gap: 10px 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); animation: enter var(--base) var(--ease-out); }
+.ln:first-of-type { border-top: 0; }
+.ln .sw2 { grid-area: s; align-self: stretch; border-radius: 4px; background: var(--fc); }
+.ln .lm { grid-area: m; min-width: 0; } .ln .lm b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ln .lm small { color: var(--text-muted); font-size: 12px; }
+.ln .step { grid-area: q; } .ln .rm { grid-area: x; width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; color: var(--text-muted); } .ln .rm:hover { background: var(--danger-bg); color: var(--danger-text); }
+.ln .dsl { grid-area: d; min-width: 0; } .ln .la { grid-area: a; text-align: right; font-weight: 650; font-variant-numeric: tabular-nums; font-size: 14px; }
+.step { display: inline-flex; align-items: center; height: 34px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); overflow: hidden; }
+.step button { width: 30px; height: 100%; display: grid; place-items: center; color: var(--text-muted); } .step button:hover { background: var(--surface-2); color: var(--text); }
+.step input { width: 46px; height: 100%; border: 0; outline: 0; text-align: center; background: none; font-variant-numeric: tabular-nums; font-weight: 600; }
+.dsl { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 4px 10px; font-size: 12.5px; color: var(--text-muted); }
+.dsl b { color: var(--text); font-variant-numeric: tabular-nums; min-width: 34px; display: inline-block; }
+.dtrack { position: relative; height: 28px; display: flex; align-items: center; }
+.dtrack::before { content: ''; position: absolute; left: var(--lim); right: 0; top: 50%; height: 6px; margin-top: -3px; border-radius: 0 6px 6px 0; background: repeating-linear-gradient(-45deg, color-mix(in srgb, #e0611a 30%, transparent) 0 4px, transparent 4px 8px); pointer-events: none; }
+.dtrack::after { content: ''; position: absolute; left: var(--lim); top: 4px; bottom: 4px; width: 2px; border-radius: 2px; background: #e0611a; pointer-events: none; }
+.dtrack input { position: relative; z-index: 1; width: 100%; margin: 0; accent-color: var(--bank-primary); background: none; }
+.ln.over .dtrack input { accent-color: #e0611a; } .ln.over .dsl b { color: var(--warn-text); }
+.dnote { grid-column: 1 / -1; display: none; color: var(--warn-text); font-size: 12px; font-weight: 550; } .ln.over .dnote { display: flex; align-items: center; gap: 5px; }
+.vchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.vchips button { height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border-strong); font-weight: 550; font-size: 13px; transition: background var(--fast), border-color var(--fast), color var(--fast); }
+.vchips button[aria-pressed="true"] { background: var(--bank-soft); border-color: var(--bank-ink); color: var(--bank-ink); }
+.dock { position: sticky; bottom: 14px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 16px; padding: 10px 10px 10px 18px; border-radius: 18px; background: var(--glass); -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px); border: 1px solid var(--glass-line); box-shadow: var(--shadow-lg); }
+.dock .tot2 { flex: 1 1 200px; } .dock .tot2 small { display: block; color: var(--text-muted); font-size: 12px; } .dock .tot2 b { font-family: var(--font-display); font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dock .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.ferr { color: var(--danger-text); font-size: 12.5px; font-weight: 550; display: flex; align-items: center; gap: 6px; }
+
+/* reason list in the reject dialog */
+.rlist { display: grid; gap: 4px; max-height: 210px; overflow-y: auto; margin: 6px 0 12px; }
+.rlist button { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border-radius: 11px; text-align: left; color: var(--text); font-weight: 500; border: 1px solid transparent; }
+.rlist button:hover { background: var(--surface-2); } .rlist button[aria-checked="true"] { border-color: var(--bank-ink); background: var(--bank-soft); color: var(--bank-ink); }
+.dlg-body .search { max-width: none; }
+.dlg-body textarea { width: 100%; min-height: 70px; padding: 9px 11px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); outline: 0; }
+.dlg-body .f input { width: 100%; }
+
+@media print {
+  body { background: #fff; padding: 0; }
+  body * { visibility: hidden; }
+  .paper, .paper * { visibility: visible; }
+  .paper { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; }
+}
+
+@container (max-width: 1100px) {
+  .pl-row { grid-template-columns: 52px minmax(0, 1.6fr) 140px 90px 120px 64px; } .pl-row > :nth-child(3), .pl-row > :nth-child(7) { display: none; }
+  .qr { grid-template-columns: 26px 40px minmax(0, 1fr) 150px 130px 130px; gap: 12px; }
+}
+@container (max-width: 980px) {
+  .qtop, .qp, .studio, .pfcols, .cols { grid-template-columns: minmax(0, 1fr); }
+  .prev, .paperbox { position: static; }
+  .figs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .phero { grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 20px; }
+}
+@container (max-width: 760px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .rail, .chip-me span { display: none; }
+  .page { padding: 18px 14px 90px; }
+  .ph h2, .qph h2 { font-size: 24px; line-height: 30px; }
+  .ph .acts, .qph .acts { width: 100%; } .ph .acts .btn, .qph .acts .btn { flex: 1; } .qph .acts .btn.sq, .ph .acts .btn.sq { flex: none; }
+  .vseg { margin-left: 0; }
+  .shelf { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .fam-h { flex-wrap: wrap; } .fam-h .fv { width: 100%; margin-left: 20px; }
+  .pl-row { grid-template-columns: 52px minmax(0, 1fr) auto; } .pl-row.head { display: none; } .pl-row > :nth-child(5), .pl-row > :nth-child(6), .pl-row > :nth-child(8) { display: none; }
+  .phero { grid-template-columns: minmax(0, 1fr); } .hero-card { max-width: 340px; }
+  .hero-t h2 { font-size: 24px; line-height: 30px; } .hero-t .acts .btn { flex: 1; } .hero-t .acts .btn.sq { flex: none; }
+  .figs { gap: 10px; } .fig { padding: 12px; } .fig b { font-size: 20px; line-height: 26px; } .fig.ring { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .uq { grid-template-columns: minmax(0, 1fr) auto; } .uq > :nth-child(2) { display: none; }
+  .fan { display: none; } .fanbar { display: block; }
+  .qr { grid-template-columns: 26px 40px minmax(0, 1fr) auto; grid-template-areas: "c t m a" "c t v s"; gap: 6px 10px; padding: 12px 12px 12px 8px; }
+  .qr .ck { grid-area: c; } .qr .thumb { grid-area: t; } .qr .qm2 { grid-area: m; } .qr .vd { grid-area: v; } .qr .amt { grid-area: a; } .qr .stc2 { grid-area: s; align-items: flex-end; }
+  .paper { padding: 22px 16px 18px; font-size: 11.5px; } .paperbox .paper { padding: 20px 14px 18px; }
+  .bill { grid-template-columns: 1fr 1fr; } .bill > :first-child { grid-column: 1 / -1; }
+  table.lines .dc { display: none; } table.lines th, table.lines td { padding-left: 3px; padding-right: 3px; }
+  .ptot { grid-template-columns: minmax(0, 1fr); } .ptot .terms { order: 2; }
+  .stamp { top: 96px; right: 14px; font-size: 19px; padding: 5px 10px 4px; }
+  .lh .bn small { display: none; }
+  .ln { grid-template-areas: "s m m x" "s q a a" "s d d d"; }
+  .dock { padding: 10px 12px; } .dock .acts { width: 100%; } .dock .acts .btn { flex: 1; }
+  .sect .fg { grid-template-columns: minmax(0, 1fr); } .sect { padding-left: 14px; padding-right: 14px; }
+  .scrim.edge { padding: 0; place-items: end stretch; } .sheet { width: 100%; max-height: 94%; border-radius: 20px 20px 0 0; }
+}
+</style>
+<div class="deck">
+  <h1>Products and Quotes <small>Harbor CRM 3.0, design for your review. Six screens, all clickable. Hover a product card, open a quote and send, accept or reject it, and in the quote builder drag products onto the quote and move the discount sliders.</small></h1>
+  <div class="pick">Screen
+    <div class="seg" id="screens">
+      <button aria-pressed="true" data-s="catalogue">Catalogue</button>
+      <button aria-pressed="false" data-s="product">Product</button>
+      <button aria-pressed="false" data-s="pform">New product</button>
+      <button aria-pressed="false" data-s="quotes">Quotes</button>
+      <button aria-pressed="false" data-s="quote">Quote</button>
+      <button aria-pressed="false" data-s="studio">Quote builder</button>
+    </div>
+  </div>
+  <div class="pick">Bank
+    <div class="seg" id="banks">
+      <button aria-pressed="true" data-bank="0"><i class="sw" style="--c:#1d3a6e"></i>Harbor</button>
+      <button aria-pressed="false" data-bank="1"><i class="sw" style="--c:#9b1c3a"></i>Meridian</button>
+      <button aria-pressed="false" data-bank="2"><i class="sw" style="--c:#0f6b52"></i>Cedar</button>
+    </div>
+  </div>
+  <div class="pick"><div class="seg"><button id="themeBtn" aria-pressed="false">Light / dark</button></div></div>
+</div>
+
+<div class="stage">
+  <div class="app" id="app">
+    <aside class="rail" aria-hidden="true" id="rail"></aside>
+    <div class="main" id="main">
+      <header class="tb">
+        <div class="crumb"><span>Sales</span><span>/</span><span id="crumbA">Products</span><span id="crumbS">/</span><b id="crumb">Catalogue</b></div>
+        <div class="chip-me"><i class="av">PN</i><span>Priya Nair</span></div>
+      </header>
+      <main class="page" id="page"></main>
+    </div>
+    <div id="ovl"></div>
+    <div class="toast" id="toast" role="status"></div>
+  </div>
+</div>
+
+<script>
+const I = {
+  dashboard: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  pulse: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/>',
+  deal: '<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+  checksq: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12l3 3 5-6"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>',
+  box: '<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/>',
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
+  wallet: '<path d="M20 7H5a2 2 0 0 1 0-4h13v4"/><path d="M3 5v14a2 2 0 0 0 2 2h15V7"/><circle cx="16" cy="14" r="1.5"/>',
+  card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
+  zap: '<path d="M13 2L3 14h9l-1 8 10-12h-9z"/>',
+  coins: '<circle cx="8" cy="8" r="6"/><path d="M18.1 10.4A6 6 0 1 1 10.3 18M7 6h1v4"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>',
+  gem: '<path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M12 21L8 9l4-6 4 6z"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>',
+  plus: '<path d="M5 12h14M12 5v14"/>',
+  minus: '<path d="M5 12h14"/>',
+  x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  down: '<path d="M6 9l6 6 6-6"/>',
+  left: '<path d="M15 18l-6-6 6-6"/>',
+  tool: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>',
+  edit: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  trash: '<path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  alert: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/>',
+  send: '<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
+  printer: '<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  more: '<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/>',
+  undo: '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>',
+  layers: '<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>',
+  target2: '<path d="M12 5v14M5 12h14"/>',
+  hourglass: '<path d="M5 22h14M5 2h14M17 22v-4.2a2 2 0 0 0-.6-1.4L12 12l-4.4 4.4a2 2 0 0 0-.6 1.4V22M7 2v4.2a2 2 0 0 0 .6 1.4L12 12l4.4-4.4a2 2 0 0 0 .6-1.4V2"/>'
+};
+const ic = (n, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n] || I.box}</svg>`;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const init = (n) => n.split(' ').filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+const money = (n) => inr.format(Math.round(n || 0));
+const short = (n) => (n >= 1e7 ? '₹' + +(n / 1e7).toFixed(2) + ' Cr' : n >= 1e5 ? '₹' + +(n / 1e5).toFixed(1) + ' L' : money(n));
+/* Days are counted from today, Wednesday 18 November 2026 (day 0). */
+const dt = (d) => new Date(2026, 10, 18 + d);
+const day = (d) => dt(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const dayS = (d) => (d === 0 ? 'Today' : d === -1 ? 'Yesterday' : dt(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }));
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- bank settings: families, charge types, reasons, tax, discount limit and approver all live in Setup ---------- */
+const BANKNAME = ['Harbor Bank', 'Meridian Bank', 'Cedar Bank'], BRANCH = ['Corporate Banking · Fort, Mumbai', 'Business Banking · Connaught Place, Delhi', 'SME Banking · Indiranagar, Bengaluru'];
+let BI = 0;
+const SET = { limit: 15, tax: 18, taxName: 'GST', approver: 'RK', validity: 30 };
+const USERS = { PN: ['Priya Nair', '#1d3a6e', 'Relationship manager'], AD: ['Arjun Das', '#d9642b', 'Relationship manager'], SI: ['Sana Iyer', '#0f97a8', 'Relationship manager'], RK: ['Rahul Khanna', '#6d4fd6', 'Sales manager'] };
+const ME = 'PN';
+const face = (u, cls = '') => `<i class="face ${cls}" style="--h:${USERS[u][1]}" title="${esc(USERS[u][0])}">${init(USERS[u][0])}</i>`;
+const FAM = { Accounts: ['#2f6fe0', 'wallet', 'ACC'], Cards: ['#7a4fd6', 'card', 'CRD'], Payments: ['#0f97a8', 'zap', 'PAY'], Lending: ['#d9642b', 'coins', 'LND'], Trade: ['#1f9d63', 'globe', 'TRD'], Wealth: ['#b8860b', 'gem', 'WLT'] };
+const famC = (f) => (FAM[f] ? FAM[f][0] : '#5b6b8a');
+const UNITS = { 'One-time': ['', 'Due once'], Monthly: ['/ month', 'Every month'], Yearly: ['/ year', 'Every year'] };
+const REASONS = ['Price too high', 'Chose another bank', 'No longer needed', 'Terms not acceptable', 'Approval took too long', 'Customer went silent', 'Other'];
+const LAYOUTS = { products: [['Standard product', 'Name, family, price and description', 'box'], ['Fee-based service', 'Adds fee code and waiver rules', 'layers']] };
+const ACC = { anand: ['Anand Motors', 'Kavya Anand', 'Pune'], joshi: ['Joshi Clinics LLP', 'Neha Joshi', 'Nashik'], verma: ['Verma Textiles Pvt Ltd', 'Anil Verma', 'Surat'], coastal: ['Coastal Health Network', 'Leela Thomas', 'Kochi'], lumen: ['Lumen Cloud Systems', 'Aditi Rao', 'Bengaluru'], sheikh: ['Sheikh Traders', 'Farhan Sheikh', 'Hyderabad'], shetty: ['Shetty Foods', 'Meera Shetty', 'Mangaluru'], northwind: ['Northwind Power', 'Vikram Rao', 'Chennai'] };
+const DEALS = { d1: ['Dealer payments rollout', 'anand', 'Proposal'], d2: ['Clinic chain cards', 'joshi', 'Negotiation'], d3: ['Export credit line', 'verma', 'Proposal'], d4: ['Hospital cash management', 'coastal', 'Qualification'], d5: ['Corporate cards for staff', 'lumen', 'Negotiation'], d6: ['Fleet fuel cards', 'northwind', 'Proposal'], d7: ['Store POS upgrade', 'shetty', 'Closed Won'], d8: ['Branch payroll move', 'anand', 'Qualification'] };
+const STC = { Draft: '#8a93a6', Sent: '#2f6fe0', Accepted: '#1f9d63', Rejected: '#d33a3a', Expired: '#c98a12' };
+const FLOW = { Draft: ['Sent'], Sent: ['Accepted', 'Rejected', 'Expired'], Rejected: ['Draft'], Expired: ['Draft'], Accepted: [] };
+const DECIDED = ['Accepted', 'Rejected', 'Expired'];
+const pill = (s) => `<span class="pill" style="--c:${STC[s]}" data-testid="quote-status"><i></i>${s}</span>`;
+
+let P = [
+  { id: 'p1', name: 'Business Current Account Premium', sku: 'ACC-PRM', fam: 'Accounts', price: 2500, unit: 'Monthly', active: true, c: -410, desc: 'Current account with unlimited NEFT and RTGS, free cash deposits up to ₹10 lakh a month and a named relationship manager.', hist: [[-410, 1800, 'RK'], [-212, 2200, 'RK'], [-60, 2500, 'PN']] },
+  { id: 'p2', name: 'Payroll Account Bundle', sku: 'ACC-PAY', fam: 'Accounts', price: 150, unit: 'Monthly', active: true, c: -380, desc: 'Salary accounts for a company’s staff, priced per employee each month. Includes debit cards and bulk salary upload.', hist: [[-380, 150, 'RK']] },
+  { id: 'p3', name: 'Corporate Credit Card', sku: 'CRD-CORP', fam: 'Cards', price: 1999, unit: 'Yearly', active: true, c: -520, desc: 'Credit cards for employees with spend limits per card, monthly central billing and expense export.', hist: [[-520, 1499, 'RK'], [-150, 1999, 'RK']] },
+  { id: 'p4', name: 'Fleet Fuel Card', sku: 'CRD-FLT', fam: 'Cards', price: 499, unit: 'Yearly', active: true, c: -300, desc: 'Fuel cards for vehicles with per-vehicle limits and 1% cashback at partner pumps.', hist: [[-300, 499, 'RK']] },
+  { id: 'p5', name: 'POS Terminal Rental', sku: 'PAY-POS', fam: 'Payments', price: 699, unit: 'Monthly', active: true, c: -460, desc: 'Card and UPI terminal for shops, priced per terminal each month. Next-day settlement.', hist: [[-460, 799, 'RK'], [-240, 699, 'AD']] },
+  { id: 'p6', name: 'Payment Gateway Setup', sku: 'PAY-PG', fam: 'Payments', price: 15000, unit: 'One-time', active: true, c: -350, desc: 'Online payment gateway set up and tested on the customer’s website or app.', hist: [[-350, 15000, 'RK']] },
+  { id: 'p7', name: 'Cash Management Service', sku: 'PAY-CMS', fam: 'Payments', price: 12000, unit: 'Monthly', active: true, c: -600, desc: 'Collections, cash pick-up and payouts with daily reports for companies with many branches.', hist: [[-600, 10000, 'RK'], [-330, 12000, 'RK']] },
+  { id: 'p8', name: 'Working Capital Processing', sku: 'LND-WC', fam: 'Lending', price: 25000, unit: 'One-time', active: true, c: -700, desc: 'Processing fee for a working capital limit: appraisal, documents and set-up.', hist: [[-700, 25000, 'RK']] },
+  { id: 'p9', name: 'Equipment Loan Processing', sku: 'LND-EQ', fam: 'Lending', price: 10000, unit: 'One-time', active: true, c: -280, desc: 'Processing fee for a loan against machinery or vehicles.', hist: [[-280, 10000, 'RK']] },
+  { id: 'p10', name: 'Letter of Credit Issuance', sku: 'TRD-LC', fam: 'Trade', price: 7500, unit: 'One-time', active: true, c: -640, desc: 'Issue fee per import letter of credit, including SWIFT charges.', hist: [[-640, 6000, 'RK'], [-90, 7500, 'RK']] },
+  { id: 'p11', name: 'Bank Guarantee Issuance', sku: 'TRD-BG', fam: 'Trade', price: 5000, unit: 'One-time', active: true, c: -500, desc: 'Issue fee per bank guarantee (performance or financial).', hist: [[-500, 5000, 'RK']] },
+  { id: 'p12', name: 'Forex Hedging Desk', sku: 'TRD-FX', fam: 'Trade', price: 20000, unit: 'Yearly', active: false, c: -690, desc: 'Yearly access to the bank’s hedging desk for forwards and options. No longer sold.', hist: [[-690, 20000, 'RK']] },
+  { id: 'p13', name: 'Wealth Advisory Retainer', sku: 'WLT-ADV', fam: 'Wealth', price: 35000, unit: 'Yearly', active: true, c: -260, desc: 'Yearly advisory for promoters and their families: investments, insurance and estate planning.', hist: [[-260, 35000, 'RK']] }
+];
+const PBI = (id) => P.find((p) => p.id === id);
+const priceAt = (p, d) => { let v = p.hist[0][1]; p.hist.forEach(([hd, pr]) => { if (hd <= d) v = pr; }); return v; };
+let KEY = 0;
+const mkLine = (pid, q, d, at = 0) => { const p = PBI(pid); return { k: 'l' + ++KEY, p: pid, nm: p.name, sku: p.sku, un: p.unit, u: priceAt(p, at), q, d }; };
+
+const RAW = [
+  ['Q-2026-0052', 'lumen', 'd5', 'Draft', 0, 30, null, null, [['p3', 120, 20], ['p13', 1, 0]], 'waiting'],
+  ['Q-2026-0051', 'anand', 'd1', 'Draft', -1, 29, null, null, [['p5', 40, 10], ['p6', 1, 0], ['p7', 1, 5]]],
+  ['Q-2026-0050', 'northwind', 'd6', 'Sent', -9, 5, -8, null, [['p4', 85, 10], ['p1', 1, 0]]],
+  ['Q-2026-0049', 'joshi', 'd2', 'Sent', -6, 24, -5, null, [['p3', 30, 15], ['p2', 60, 5]]],
+  ['Q-2026-0048', 'coastal', 'd4', 'Sent', -15, 2, -14, null, [['p7', 1, 10], ['p1', 3, 0], ['p5', 12, 0]]],
+  ['Q-2026-0047', 'verma', 'd3', 'Sent', -4, 41, -3, null, [['p8', 1, 0], ['p10', 6, 10], ['p11', 2, 0]]],
+  ['Q-2026-0046', 'shetty', 'd7', 'Accepted', -30, -1, -28, -12, [['p5', 25, 15], ['p6', 1, 10]]],
+  ['Q-2026-0045', 'sheikh', null, 'Accepted', -44, -14, -43, -35, [['p1', 1, 0], ['p2', 18, 0]]],
+  ['Q-2026-0044', 'verma', null, 'Rejected', -52, -22, -50, -40, [['p12', 1, 10], ['p10', 4, 0]], null, 'Chose another bank'],
+  ['Q-2026-0043', 'anand', null, 'Expired', -80, -48, -78, -48, [['p9', 2, 5]]],
+  ['Q-2026-0042', 'coastal', null, 'Accepted', -95, -65, -93, -70, [['p13', 1, 0], ['p3', 12, 10]]],
+  ['Q-2026-0041', 'lumen', null, 'Rejected', -120, -90, -118, -101, [['p6', 1, 0], ['p5', 8, 20]], 'approved', 'Price too high'],
+  ['Q-2026-0040', 'joshi', null, 'Expired', -150, -120, -148, -120, [['p1', 2, 0], ['p3', 10, 5]]],
+  ['Q-2026-0039', 'northwind', null, 'Rejected', -170, -140, -168, -150, [['p4', 40, 10], ['p2', 25, 0]], null, 'Terms not acceptable'],
+  ['Q-2026-0038', 'sheikh', null, 'Accepted', -200, -170, -198, -185, [['p7', 1, 10], ['p8', 1, 0]]]
+];
+let Q = RAW.map(([id, acc, deal, st, c, valid, sent, dec, lines, appr, reason], i) => {
+  const own = i % 4 === 2 ? 'AD' : i % 5 === 3 ? 'SI' : 'PN';
+  const q = { id, acc, deal, st, c, valid, sent, dec, own, appr: appr || null, reason: reason || null, lines: lines.map(([p, n, d]) => mkLine(p, n, d, c)) };
+  q.hist = [[c, `Created by ${USERS[own][0]}`]];
+  if (appr) q.hist.push([c, `Approval asked from ${USERS.RK[0]}`]);
+  if (appr === 'approved') q.hist.push([c, `${USERS.RK[0]} approved the discounts`]);
+  if (sent != null) q.hist.push([sent, `Sent to ${ACC[acc][1]}`]);
+  if (st === 'Accepted') q.hist.push([dec, `${ACC[acc][1]} accepted` + (deal ? '; deal moved to Closed Won' : '')]);
+  if (st === 'Rejected') q.hist.push([dec, `Rejected: ${reason}`]);
+  if (st === 'Expired') q.hist.push([dec, 'Expired without an answer']);
+  return q;
+});
+const QBI = (id) => Q.find((q) => q.id === id);
+const needsAppr = (q) => q.lines.some((l) => l.d > SET.limit);
+function calc(lines) {
+  const g = { 'One-time': 0, Monthly: 0, Yearly: 0 }; let gross = 0, disc = 0;
+  lines.forEach((l) => { const a = l.q * l.u; gross += a; disc += (a * l.d) / 100; g[l.un] += a * (1 - l.d / 100); });
+  const t = 1 + SET.tax / 100;
+  return { g, gross, disc, tax: (gross - disc) * (t - 1), fy: (g['One-time'] + 12 * g.Monthly + g.Yearly) * t, t };
+}
+const fyOf = (q) => calc(q.lines).fy;
+function pstats(p) {
+  const qs = Q.filter((q) => q.lines.some((l) => l.p === p.id));
+  const open = qs.filter((q) => !DECIDED.includes(q.st));
+  const dec = qs.filter((q) => DECIDED.includes(q.st)), won = dec.filter((q) => q.st === 'Accepted');
+  const ls = qs.flatMap((q) => q.lines.filter((l) => l.p === p.id));
+  const value = ls.reduce((s, l) => s + l.q * l.u * (1 - l.d / 100), 0);
+  return { qs, open: open.length, win: dec.length ? Math.round((won.length / dec.length) * 100) : null, disc: ls.length ? ls.reduce((s, l) => s + l.d, 0) / ls.length : 0, value, lines: ls.length };
+}
+const LEADPOOL = ['Rhea Kapoor · Kapoor Exports', 'Imran Qureshi · Qureshi Logistics', 'Tara Menon · Menon Dental', 'Kunal Shah · Shah Agro', 'Pooja Iyer · Iyer & Co', 'Sameer Gill · Gill Transport', 'Divya Nair · Nair Bakers', 'Harsh Vora · Vora Pharma', 'Ayesha Khan · Khan Textiles', 'Nikhil Batra · Batra Steel'];
+const leadsOf = (p) => { const n = [9, 6, 11, 4, 7, 5, 3, 8, 2, 3, 1, 0, 2][P.indexOf(p)] ?? 0; return { n, list: Array.from({ length: Math.min(n, 4) }, (_, i) => LEADPOOL[(P.indexOf(p) * 3 + i) % LEADPOOL.length]) }; };
+
+/* ---------- state ---------- */
+let screen = 'catalogue', curP = 'p1', curQ = 'Q-2026-0049', pop = null, dlg = null;
+let view = 'shelf', famSel = [], pstat = 'all', pq = '';
+let qf = 'all', qs = '', sel = new Set();
+let F = null, S = null, stampNew = null, suppress = false;
+
+/* ---------- shared bits ---------- */
+const pcard = (p, cls = '') => `<span class="pc tilt ${p.active === false ? 'retired' : ''} ${cls}" style="--fc:${famC(p.fam)}">
+  <span class="pc-top"><i class="pc-ic">${ic(FAM[p.fam] ? FAM[p.fam][1] : 'box', cls.includes('big') ? 22 : 17)}</i><span class="pc-bank">${BANKNAME[BI]}</span></span>
+  <span class="pc-nm">${esc(p.name || 'Product name')}</span>
+  <span class="pc-bot"><span class="pc-sku">${esc(p.sku || 'SKU')}</span><span class="pc-pr">${money(p.price)}<small>${UNITS[p.unit] ? UNITS[p.unit][0] : ''}</small></span></span>
+  ${p.active === false ? '<span class="pc-ret">Retired</span>' : ''}</span>`;
+const mini = (p, s = 15) => `<span class="mini ${p.active === false ? 'off' : ''}" style="--fc:${famC(p.fam)}">${ic(FAM[p.fam] ? FAM[p.fam][1] : 'box', s)}</span>`;
+const priceTxt = (p) => money(p.price) + (UNITS[p.unit][0] ? ' ' + UNITS[p.unit][0] : ' one-time');
+function toolbox(mod) {
+  const links = mod === 'products'
+    ? [['Import data', 'layers'], ['Custom fields', 'list'], ['Customise page layout', 'grid'], ['Product families', 'box'], ['Charge types', 'clock']]
+    : [['Custom fields', 'list'], ['Customise page layout', 'grid'], ['Quote settings: tax, validity, discount limit, approver', 'shield'], ['Rejection reasons', 'x']];
+  return `<div class="pop-wrap"><button class="btn" data-a="pop" data-p="tb">${ic('tool')}ToolBox</button>${pop === 'tb' ? `<div class="pop right" style="width:290px">${links.map(([l, i]) => `<button class="opt" data-a="tbl" data-l="${esc(l)}">${ic(i, 16)}${esc(l)}</button>`).join('')}</div>` : ''}</div>`;
+}
+function picker(name, opts, cur, multi) {
+  /* searchable option list used for every bank-configurable list */
+  return `<div class="pop fpop">${opts.length > 6 ? '<input data-pf placeholder="Search…" aria-label="Search">' : ''}${opts.map(([v, label, c, sub]) => `<button class="opt" role="menuitemcheckbox" aria-checked="${multi ? cur.includes(v) : cur === v}" data-a="pick" data-p="${name}" data-v="${esc(v)}">${c ? `<i style="--c:${c}"></i>` : ''}${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ''}<span class="tick">${ic('check', 15)}</span></button>`).join('')}<div class="none" hidden>Nothing matches</div></div>`;
+}
+const back = (to, label) => `<button class="back" data-a="go" data-s="${to}">${ic('left', 16)}${label}</button>`;
+
+/* ---------- Catalogue ---------- */
+function filteredP() {
+  const s = pq.trim().toLowerCase();
+  return P.filter((p) => (!famSel.length || famSel.includes(p.fam)) && (pstat === 'all' || (pstat === 'on') === p.active) && (!s || (p.name + ' ' + p.sku + ' ' + p.fam).toLowerCase().includes(s)));
+}
+function catalogueView() {
+  const list = filteredP(), fams = Object.keys(FAM).filter((f) => list.some((p) => p.fam === f));
+  const famLabel = famSel.length ? (famSel.length === 1 ? famSel[0] : famSel.length + ' families') : 'Family';
+  let body;
+  if (!list.length) body = `<div class="card empty"><b>No products match</b>Try another word, or clear the filters.</div>`;
+  else if (view === 'shelf') {
+    let n = 0;
+    body = fams.map((f) => {
+      const ps = list.filter((p) => p.fam === f), val = ps.reduce((s, p) => s + pstats(p).value, 0);
+      return `<section class="fam" style="--fc:${famC(f)}"><div class="fam-h"><i class="fdot"></i><h3>${esc(f)}</h3><span class="muted">${ps.length}</span><span class="fv"><b>${short(val)}</b> quoted this year</span></div>
+      <div class="shelf">${ps.map((p) => { const st = pstats(p); return `<button class="slot" data-a="openP" data-id="${p.id}" style="--d:${n++ * 35}ms;--fc:${famC(p.fam)}">${pcard(p)}<span class="slot-m"><span>${st.open ? `<b>${st.open}</b> open ${st.open === 1 ? 'quote' : 'quotes'}` : p.active ? 'No open quotes' : 'Not sold any more'}</span><span>${st.win == null ? '' : `<b>${st.win}%</b> won`}</span></span></button>`; }).join('')}</div></section>`;
+    }).join('');
+  } else {
+    body = `<div class="card plist"><div class="pl-row head lab"><span></span><span>Product</span><span>Family</span><span class="r">Price</span><span class="r">Open quotes</span><span>Won</span><span class="r">Avg discount</span><span>On sale</span></div>
+    ${list.map((p, i) => { const st = pstats(p); return `<div class="pl-row ${p.active ? '' : 'dim'}" data-a="openP" data-id="${p.id}" role="link" tabindex="0" style="--d:${i * 25}ms">${mini(p)}<span class="nm2"><b>${esc(p.name)}</b><small>${esc(p.sku)}</small></span><span><span class="pill" style="--c:${famC(p.fam)}"><i></i>${esc(p.fam)}</span></span><span class="r"><b>${money(p.price)}</b> <small class="muted">${UNITS[p.unit][0] || 'once'}</small></span><span class="r">${st.open || '—'}</span><span class="wbar">${st.win == null ? '<span style="visibility:hidden"></span>—' : `<span><i style="--w:${st.win}%;--d:${i * 25}ms"></i></span>${st.win}%`}</span><span class="r">${st.lines ? st.disc.toFixed(1) + '%' : '—'}</span><span><button class="switch" role="switch" aria-checked="${p.active}" aria-label="On sale" data-a="toggleP" data-id="${p.id}"></button></span></div>`; }).join('')}</div>`;
+  }
+  return `<div class="ph"><div><h2>Products</h2><p>${plural(P.filter((p) => p.active).length, 'product')} on sale in ${Object.keys(FAM).length} families. Prices here are what new quotes start from.</p></div>
+    <div class="acts">${toolbox('products')}<button class="btn pri" data-a="newProduct">${ic('plus')}New product</button></div></div>
+  <div class="tools">
+    <label class="search">${ic('search', 16)}<input data-i="pq" value="${esc(pq)}" placeholder="Search name, SKU or family" aria-label="Search products"></label>
+    <div class="pop-wrap"><button class="fchip ${famSel.length ? 'set' : ''}" data-a="pop" data-p="fam">${ic('box', 15)}${esc(famLabel)}${ic('down', 14)}</button>${pop === 'fam' ? picker('fam', Object.keys(FAM).map((f) => [f, f, famC(f), P.filter((p) => p.fam === f).length]), famSel, true) : ''}</div>
+    <div class="pop-wrap"><button class="fchip ${pstat !== 'all' ? 'set' : ''}" data-a="pop" data-p="pst">${pstat === 'all' ? 'On sale and retired' : pstat === 'on' ? 'On sale' : 'Retired'}${ic('down', 14)}</button>${pop === 'pst' ? picker('pst', [['all', 'On sale and retired'], ['on', 'On sale'], ['off', 'Retired']], pstat) : ''}</div>
+    ${famSel.length || pstat !== 'all' || pq ? `<button class="btn ghost" data-a="clearP">Clear</button>` : ''}
+    <div class="seg vseg"><button aria-pressed="${view === 'shelf'}" data-a="view" data-v="shelf">${ic('grid', 15)}Cards</button><button aria-pressed="${view === 'list'}" data-a="view" data-v="list">${ic('list', 15)}Price list</button></div>
+  </div>${body}`;
+}
+
+/* ---------- Product page ---------- */
+function priceChart(p) {
+  const W = 560, H = 170, l = 30, r = 16, t = 24, b = 26, from = -730;
+  const pts = p.hist.map(([d, v, u]) => [Math.max(d, from), v, u]);
+  const vs = pts.map((x) => x[1]), lo = Math.min(...vs) * 0.8, hi = Math.max(...vs) * 1.12;
+  const X = (d) => l + ((d - from) / -from) * (W - l - r), Y = (v) => t + (1 - (v - lo) / (hi - lo)) * (H - t - b);
+  let path = `M${X(pts[0][0])},${Y(pts[0][1])}`;
+  pts.slice(1).forEach(([d, v]) => { path += ` H${X(d)} V${Y(v)}`; });
+  path += ` H${X(0)}`;
+  const area = path + ` V${H - b} H${X(pts[0][0])} Z`;
+  const ticks = [-730, -548, -365, -183, 0].map((d) => `<text x="${X(d)}" y="${H - 6}" text-anchor="middle">${dt(d).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</text>`).join('');
+  const grid = [lo + (hi - lo) * 0.25, lo + (hi - lo) * 0.75].map((v) => `<line class="gl" x1="${l}" x2="${W - r}" y1="${Y(v)}" y2="${Y(v)}"/>`).join('');
+  const dots = pts.map(([d, v, u], i) => `<g><circle class="pt" cx="${X(d)}" cy="${Y(v)}" r="5"><title>${money(v)} from ${day(d)} · set by ${USERS[u][0]}</title></circle><text class="pl" x="${X(d) + (i === pts.length - 1 && X(d) > W - 90 ? -8 : 8)}" y="${Y(v) - 9}" text-anchor="${i === pts.length - 1 && X(d) > W - 90 ? 'end' : 'start'}">${money(v)}</text></g>`).join('');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Price over the last two years"><defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--bank-primary)" stop-opacity=".22"/><stop offset="1" stop-color="var(--bank-primary)" stop-opacity="0"/></linearGradient></defs>${grid}<path class="area" d="${area}"/><path class="ln2" d="${path}" pathLength="1"/>${dots}${ticks}</svg>`;
+}
+function productView() {
+  const p = PBI(curP); if (!p) return back('catalogue', 'All products') + '<div class="card empty"><b>This product was deleted</b></div>';
+  const st = pstats(p), ld = leadsOf(p), prev = p.hist.length > 1 ? p.hist[p.hist.length - 2] : null;
+  const dpct = Math.min(100, (st.disc / 30) * 100);
+  const qrows = st.qs.slice().sort((a, b) => b.c - a.c).map((q) => { const l = q.lines.find((x) => x.p === p.id); return `<button class="uq" data-a="openQ" data-id="${q.id}"><b>${q.id}</b><span class="ac">${esc(ACC[q.acc][0])}<small>${dayS(q.c)}</small></span><span class="r">${l.q} × ${money(l.u)} <span class="dz ${l.d > SET.limit ? 'over' : ''}">${l.d ? '−' + l.d + '%' : 'list'}</span></span>${pill(q.st)}</button>`; }).join('');
+  return `${back('catalogue', 'All products')}
+  <div class="phero">
+    <div class="hero-card">${pcard(p, 'big')}</div>
+    <div class="hero-t">
+      <span class="lab">${esc(p.fam)} · ${esc(p.sku)}</span>
+      <h2>${esc(p.name)}</h2>
+      <p>${esc(p.desc)}</p>
+      <div class="row"><span class="pill" style="--c:${p.active ? '#1f9d63' : '#8a93a6'}" data-testid="product-status"><i></i>${p.active ? 'On sale' : 'Retired'}</span><span class="tg">${ic('clock', 13)}Added ${day(p.c)}</span><span class="tg">Layout: Standard product</span></div>
+      <div class="acts">
+        <button class="btn pri" data-a="quoteWith" data-id="${p.id}" ${p.active ? '' : 'disabled title="Retired products cannot go on new quotes"'}>${ic('file')}Add to a new quote</button>
+        <button class="btn" data-a="editP" data-testid="edit-product-btn">${ic('edit')}Edit</button>
+        <button class="btn" data-a="toast" data-m="New lead opens with ${esc(p.name)} filled in" data-testid="new-lead-for-product-btn">${ic('plus')}New lead</button>
+        <div class="pop-wrap"><button class="btn sq" data-a="pop" data-p="pmore" aria-label="More">${ic('more')}</button>${pop === 'pmore' ? `<div class="pop right"><button class="opt" data-a="toggleP" data-id="${p.id}">${ic(p.active ? 'x' : 'undo', 16)}${p.active ? 'Retire (stop selling)' : 'Put back on sale'}</button><button class="opt" data-a="delP" data-testid="delete-product-btn" style="color:var(--danger-text)">${ic('trash', 16)}Delete</button></div>` : ''}</div>
+      </div>
+    </div>
+  </div>
+  <div class="figs">
+    <div class="card fig" style="--d:0ms"><span class="lab">List price</span><b>${money(p.price)}</b><small>${UNITS[p.unit][1].toLowerCase()}${prev ? ` · was ${money(prev[1])} until ${dayS(p.hist[p.hist.length - 1][0])}` : ''}</small></div>
+    <div class="card fig" style="--d:60ms"><span class="lab">Quoted this year</span><b>${short(st.value)}</b><small>on ${plural(st.qs.length, 'quote')}, ${st.open} still open</small></div>
+    <div class="card fig ring" style="--d:120ms"><svg class="ringsvg" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9" stroke="var(--surface-3)"/>${st.win != null ? `<circle class="arc" cx="18" cy="18" r="15.9" pathLength="100" style="--v:${st.win}"/>` : ''}</svg><div><span class="lab">Won</span><b style="display:block">${st.win == null ? '—' : st.win + '%'}</b><small>of decided quotes</small></div></div>
+    <div class="card fig" style="--d:180ms"><span class="lab">Average discount</span><b>${st.disc.toFixed(1)}%</b><div class="lim"><i class="${st.disc > SET.limit ? 'over' : ''}" style="--w:${dpct}%"></i><em style="--l:${(SET.limit / 30) * 100}%"></em></div><small>approval needed above ${SET.limit}%</small></div>
+  </div>
+  <div class="cols">
+    <div class="stack">
+      <div class="card box"><div class="box-h"><h3>Price history</h3><span class="muted" style="font-size:12.5px">last two years</span></div>${priceChart(p)}<p class="muted" style="margin:8px 0 0;font-size:12.5px">Quotes keep the price they were made with, so changing the price never changes a quote already sent.</p></div>
+      <div class="card box"><div class="box-h"><h3>On quotes</h3><span class="muted">${st.qs.length}</span></div>${qrows || '<div class="muted">Not on any quote yet.</div>'}</div>
+    </div>
+    <div class="stack">
+      <div class="card box"><h3>Details</h3><dl class="kv"><div><dt>SKU</dt><dd><code>${esc(p.sku)}</code></dd></div><div><dt>Family</dt><dd><span class="pill" style="--c:${famC(p.fam)}"><i></i>${esc(p.fam)}</span></dd></div><div><dt>Charged</dt><dd>${esc(p.unit)}</dd></div><div><dt>Price</dt><dd>${money(p.price)}</dd></div><div><dt>Fee code</dt><dd class="muted">—</dd></div><div><dt>Added</dt><dd>${day(p.c)}</dd></div></dl></div>
+      <div class="card box"><div class="box-h"><h3>Leads for this product</h3><span class="muted">${ld.n}</span></div>${ld.list.map((x) => { const [n, co] = x.split(' · '); return `<div class="lead"><i class="av sm soft">${init(n)}</i><div><b>${esc(n)}</b><small>${esc(co)}</small></div></div>`; }).join('') || '<div class="muted">No leads yet.</div>'}${ld.n > 4 ? `<button class="link" data-a="toast" data-m="Opens Leads filtered to this product" style="margin-top:8px">See all ${ld.n}</button>` : ''}</div>
+    </div>
+  </div>`;
+}
+
+/* ---------- Product form ---------- */
+function newF(layout = 'Standard product') { F = { id: null, name: '', sku: '', fam: '', price: '', unit: 'One-time', desc: '', active: true, layout, err: {} }; }
+const skuSuggest = () => (F.fam && F.name ? FAM[F.fam][2] + '-' + F.name.split(/\s+/).filter(Boolean).map((w) => w[0]).join('').slice(0, 4).toUpperCase() : '');
+function prevHTML() {
+  const p = { ...F, price: +F.price || 0, fam: F.fam || 'none', unit: F.unit };
+  const old = F.id ? PBI(F.id) : null, open = old ? Q.filter((q) => !DECIDED.includes(q.st) && q.lines.some((l) => l.p === old.id)).length : 0;
+  return `<span class="lab">Live preview</span>${pcard(p, 'big')}
+  <span class="lab">On a quote it reads</span>
+  <div class="qline"><b>${esc(F.name || 'Product name')}</b><span class="r">${money(p.price)}</span><small>${esc(F.sku || 'SKU')} · ${esc(F.unit)}</small><small class="r">${UNITS[F.unit][1]}</small></div>
+  ${old && +F.price && +F.price !== old.price ? `<div class="note info">${ic('alert', 16)}<span>${open ? `${plural(open, 'open quote')} keep ${money(old.price)}. ` : ''}New quotes start at ${money(+F.price)}. The change goes into the price history.</span></div>` : ''}
+  ${F.active ? '' : `<div class="note">${ic('alert', 16)}<span>Retired products stay on old quotes but cannot be added to new ones.</span></div>`}`;
+}
+function pformView() {
+  const e = F.err, sug = skuSuggest();
+  return `${back(F.id ? 'product' : 'catalogue', F.id ? 'Back to product' : 'All products')}
+  <div class="ph"><div><h2>${F.id ? 'Edit ' + esc(PBI(F.id).name) : 'New product'}</h2><p>Layout: <b>${esc(F.layout)}</b>${F.id ? '' : ` · <button class="link" data-a="layout">Change</button>`}</p></div></div>
+  <div class="pfcols" data-testid="product-form-page">
+    <div class="card">
+      <div class="sect"><h3>Basics</h3><div class="fg">
+        <div class="f full ${e.name ? 'bad' : ''}"><label>Name</label><input data-i="F.name" data-testid="product-name" value="${esc(F.name)}" placeholder="For example, Business Current Account Premium">${e.name ? `<div class="err">${e.name}</div>` : ''}</div>
+        <div class="f ${e.fam ? 'bad' : ''}"><span class="flab">Family</span><div class="pop-wrap"><button class="fake" data-a="pop" data-p="famF">${F.fam ? `<i style="--c:${famC(F.fam)}"></i>${esc(F.fam)}` : '<span class="muted">Choose a family</span>'}<span class="dn">${ic('down', 15)}</span></button>${pop === 'famF' ? picker('famF', Object.keys(FAM).map((f) => [f, f, famC(f)]), F.fam) : ''}</div>${e.fam ? `<div class="err">${e.fam}</div>` : ''}</div>
+        <div class="f ${e.sku ? 'bad' : ''}"><label>SKU</label><input data-i="F.sku" data-testid="product-sku" value="${esc(F.sku)}" placeholder="ACC-XXX" style="text-transform:uppercase">${e.sku ? `<div class="err">${e.sku}</div>` : ''}${sug && !F.sku ? `<div class="hint">Suggested <button class="sug" data-a="useSku">${sug}</button></div>` : ''}</div>
+        <div class="f full"><label>Description</label><textarea data-i="F.desc" data-testid="product-description" placeholder="What the customer gets">${esc(F.desc)}</textarea></div>
+        ${F.layout === 'Fee-based service' ? `<div class="f"><label>Fee code</label><input data-i="F.fee" value="${esc(F.fee || '')}" placeholder="From the core banking fee table"></div><div class="f"><label>Waiver rule</label><input data-i="F.waive" value="${esc(F.waive || '')}" placeholder="For example, waived above ₹10 L balance"></div>` : ''}
+      </div></div>
+      <div class="sect"><h3>Price</h3><div class="fg">
+        <div class="f ${e.price ? 'bad' : ''}"><label>List price</label><div class="money-in"><span>₹</span><input data-i="F.price" data-testid="product-price" inputmode="numeric" value="${esc(F.price)}" placeholder="0"></div>${e.price ? `<div class="err">${e.price}</div>` : '<div class="hint">Before tax. Quotes add ' + SET.taxName + ' ' + SET.tax + '%.</div>'}</div>
+        <div class="f"><span class="flab">Charged</span><div class="pop-wrap"><button class="fake" data-a="pop" data-p="unitF">${esc(F.unit)}<span class="dn">${ic('down', 15)}</span></button>${pop === 'unitF' ? picker('unitF', Object.keys(UNITS).map((u) => [u, u, null, UNITS[u][1]]), F.unit) : ''}</div><div class="hint">Monthly and yearly prices count 12 and 1 times in a quote’s first-year value.</div></div>
+      </div></div>
+      <div class="sect"><h3>Selling</h3><div class="swrow"><div><b>On sale</b><small>Can be added to new quotes</small></div><button class="switch" role="switch" aria-checked="${F.active}" data-a="fActive" aria-label="On sale"></button></div></div>
+      <div class="savebar"><button class="btn ghost" data-a="go" data-s="${F.id ? 'product' : 'catalogue'}">Cancel</button><button class="btn pri" data-a="saveP" data-testid="save-product-btn">${ic('check')}${F.id ? 'Save changes' : 'Create product'}</button></div>
+    </div>
+    <aside class="prev" id="fprev">${prevHTML()}</aside>
+  </div>`;
+}
+
+/* ---------- Quotes desk ---------- */
+function fanSVG() {
+  const cats = Object.keys(STC), vals = cats.map((s) => Q.filter((q) => q.st === s).reduce((t, q) => t + fyOf(q), 0)), cnt = cats.map((s) => Q.filter((q) => q.st === s).length);
+  const tot = vals.reduce((a, b) => a + b, 0) || 1, H = 200, gap = 14, top = 14, L = 196, R = 420, sc = H / tot;
+  let ly = top, ry = top, ribs = '', lastLab = -99;
+  cats.forEach((s, i) => {
+    const h = Math.max(3, vals[i] * sc), mid = (L + R) / 2;
+    const d = `M${L},${ly} C${mid},${ly} ${mid},${ry} ${R},${ry} V${ry + h} C${mid},${ry + h} ${mid},${ly + h} ${L},${ly + h} Z`;
+    ribs += `<g class="rib ${qf === s ? 'on' : ''}" data-a="qf" data-f="${s}" style="--c:${STC[s]}" role="button" aria-label="Show ${s} quotes"><path d="${d}" style="--d:${i * 90}ms"/><rect x="${R}" y="${ry}" width="8" height="${h}" rx="3"/><text class="nmv" x="${R + 18}" y="${(lastLab = Math.max(ry + h / 2, lastLab + 36)) - 2}">${s}</text><text x="${R + 18}" y="${lastLab + 14}">${cnt[i]} · ${short(vals[i])}</text></g>`;
+    ly += h; ry += h + gap;
+  });
+  const vb = Math.max(ry, top + H + 4, lastLab + 24) + 6;
+  return `<svg class="fan ${qf !== 'all' && STC[qf] ? 'picked' : ''}" viewBox="0 0 600 ${vb}" role="img" aria-label="Quotes by status"><rect x="${L - 8}" y="${top}" width="8" height="${ly - top}" rx="3" fill="var(--bank-primary)"/><text x="${L - 20}" y="${top + (ly - top) / 2 - 8}" text-anchor="end">All ${Q.length} quotes</text><text class="big" x="${L - 20}" y="${top + (ly - top) / 2 + 18}" text-anchor="end">${short(tot)}</text>${ribs}</svg>
+  <div class="fanbar"><div class="bar">${cats.map((s, i) => `<i style="--c:${STC[s]};--f:${vals[i] || 0.01}"></i>`).join('')}</div><div class="leg">${cats.map((s, i) => `<button class="${qf === s ? 'on' : ''}" data-a="qf" data-f="${s}"><i style="--c:${STC[s]}"></i>${s}<span>${cnt[i]} · ${short(vals[i])}</span></button>`).join('')}</div></div>`;
+}
+const daysLeft = (q) => q.valid;
+function validity(q) {
+  if (q.st === 'Draft') return `<span class="vd">${ic('clock', 15)}<span>Valid till <b>${dayS(q.valid)}</b></span></span>`;
+  if (q.st === 'Sent') {
+    const left = daysLeft(q), total = Math.max(1, q.valid - q.sent), v = Math.max(4, (left / total) * 100), c = left <= 2 ? '#d33a3a' : left <= 7 ? '#d9a21a' : '#1f9d63';
+    return `<span class="vd ${left <= 2 ? 'late' : left <= 7 ? 'soon' : ''}"><svg class="vring" viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15.9"/><circle class="fg" cx="18" cy="18" r="15.9" pathLength="100" style="--c:${c};--v:${v}"/></svg><span><b>${plural(left, 'day')}</b> left</span></span>`;
+  }
+  if (q.st === 'Accepted') return `<span class="vd">${ic('check', 15)}<span>Accepted <b>${dayS(q.dec)}</b></span></span>`;
+  if (q.st === 'Rejected') return `<span class="vd"><span>${esc(q.reason || 'Rejected')}</span></span>`;
+  return `<span class="vd">${ic('hourglass', 15)}<span>Expired <b>${dayS(q.dec)}</b></span></span>`;
+}
+function qrow(q, i) {
+  const a = ACC[q.acc], ap = needsAppr(q) && q.st === 'Draft' ? (q.appr === 'approved' ? `<span class="apb ok">${ic('shield', 13)}Approved</span>` : q.appr === 'waiting' ? `<span class="apb">${ic('shield', 13)}Waiting for approval</span>` : `<span class="apb">${ic('shield', 13)}Needs approval</span>`) : '';
+  return `<div class="qr ${sel.has(q.id) ? 'sel' : ''}" data-a="openQ" data-id="${q.id}" role="link" tabindex="0" style="--d:${i * 30}ms">
+    <label class="ck" data-a="sel" data-id="${q.id}"><input type="checkbox" ${sel.has(q.id) ? 'checked' : ''} aria-label="Select ${q.id}"></label>
+    <span class="thumb" aria-hidden="true">${q.lines.slice(0, 5).map(() => '<i></i>').join('')}${DECIDED.includes(q.st) ? `<em style="--c:${STC[q.st]}"></em>` : ''}</span>
+    <span class="qm2"><span class="t"><b>${q.id}</b><span>${esc(a[0])}</span></span><small>${q.deal ? esc(DEALS[q.deal][0]) : 'No deal'} · ${plural(q.lines.length, 'line')} · ${USERS[q.own][0]}</small></span>
+    ${validity(q)}
+    <span class="amt"><b>${short(fyOf(q))}</b><small>first-year value</small></span>
+    <span class="stc2">${pill(q.st)}${ap}</span></div>`;
+}
+function quotesView() {
+  const s = qs.trim().toLowerCase();
+  const base = Q.filter((q) => !s || (q.id + ' ' + ACC[q.acc][0] + ' ' + (q.deal ? DEALS[q.deal][0] : '')).toLowerCase().includes(s));
+  const waiting = Q.filter((q) => q.st === 'Draft' && needsAppr(q) && q.appr !== 'approved'), soon = Q.filter((q) => q.st === 'Sent' && q.valid <= 7).sort((a, b) => a.valid - b.valid);
+  const openV = Q.filter((q) => !DECIDED.includes(q.st)).reduce((t, q) => t + fyOf(q), 0);
+  let body, n = 0;
+  const fl = { all: null, appr: ['Waiting for approval', (q) => q.st === 'Draft' && needsAppr(q) && q.appr !== 'approved'], soon: ['Expiring within 7 days', (q) => q.st === 'Sent' && q.valid <= 7] };
+  if (qf !== 'all') {
+    const [title, fn] = fl[qf] || [qf, (q) => q.st === qf];
+    const list = base.filter(fn);
+    body = `<div class="grp"><div class="grp-h"><h3>${esc(title)}</h3><span>${list.length}</span><button class="link" data-a="qf" data-f="all" style="margin-left:auto">Show all quotes</button></div><div class="card q">${list.map((q) => qrow(q, n++)).join('') || '<div class="empty"><b>No quotes here</b></div>'}</div></div>`;
+  } else {
+    const groups = [['Needs you', 'Drafts to finish, approve or send', base.filter((q) => q.st === 'Draft').sort((a, b) => b.c - a.c)], ['With the customer', 'Sent, waiting for an answer', base.filter((q) => q.st === 'Sent').sort((a, b) => a.valid - b.valid)], ['Decided', 'Accepted, rejected or expired', base.filter((q) => DECIDED.includes(q.st)).sort((a, b) => b.dec - a.dec)]];
+    body = groups.filter((g) => g[2].length).map(([t, sub, list]) => `<div class="grp"><div class="grp-h"><h3>${t}</h3><span>${sub}</span><span class="gv muted">${list.length} · <b style="color:var(--text)">${short(list.reduce((x, q) => x + fyOf(q), 0))}</b></span></div><div class="card q">${list.map((q) => qrow(q, n++)).join('')}</div></div>`).join('') || `<div class="card empty"><b>No quotes match “${esc(qs)}”</b></div>`;
+  }
+  const wl = (list, fmt) => list.slice(0, 3).map((q) => `<button class="witem" data-a="openQ" data-id="${q.id}"><b>${q.id}</b><span>${esc(ACC[q.acc][0])}</span>${fmt(q)}</button>`).join('') || '<div class="muted" style="font-size:13px">Nothing right now.</div>';
+  return `<div class="ph"><div><h2>Quotes</h2><p>${short(openV)} first-year value still open across ${plural(Q.filter((q) => !DECIDED.includes(q.st)).length, 'quote')}.</p></div>
+    <div class="acts">${toolbox('quotes')}<button class="btn pri" data-a="newQuote">${ic('plus')}New quote</button></div></div>
+  <div class="qtop">
+    <div class="card fanc"><div class="box-h"><h3>Where quotes stand</h3><span class="muted" style="font-size:12.5px">by first-year value · click a status to filter</span></div>${fanSVG()}</div>
+    <div class="watch">
+      <div class="card wcard"><button class="wh" data-a="qf" data-f="appr"><i class="ico" style="--c-bg:var(--warn-bg);--c-fg:var(--warn-text)">${ic('shield', 17)}</i><span>Waiting for approval</span><b>${waiting.length}</b></button>${wl(waiting, (q) => `<em style="color:var(--warn-text)">${Math.max(...q.lines.map((l) => l.d))}% off</em>`)}</div>
+      <div class="card wcard"><button class="wh" data-a="qf" data-f="soon"><i class="ico" style="--c-bg:var(--danger-bg);--c-fg:var(--danger-text)">${ic('hourglass', 17)}</i><span>Expiring within 7 days</span><b>${soon.length}</b></button>${wl(soon, (q) => `<em style="color:${q.valid <= 2 ? 'var(--danger-text)' : 'var(--warn-text)'}">${plural(q.valid, 'day')}</em>`)}</div>
+    </div>
+  </div>
+  <div class="tools"><label class="search">${ic('search', 16)}<input data-i="qs" value="${esc(qs)}" placeholder="Search quote number, account or deal" aria-label="Search quotes"></label>${qf !== 'all' ? `<button class="fchip set" data-a="qf" data-f="all">${esc((fl[qf] || [qf])[0])}${ic('x', 14)}</button>` : ''}</div>
+  ${body}
+  ${sel.size ? `<div class="selbar"><b>${sel.size} selected</b><button class="btn" data-a="selNone">Clear</button><button class="btn danger" data-a="bulkDel">${ic('trash', 16)}Delete</button></div>` : ''}`;
+}
+
+/* ---------- the paper ---------- */
+function paper(q, live) {
+  const a = q.acc ? ACC[q.acc] : null, c = calc(q.lines), deal = q.deal ? DEALS[q.deal] : null;
+  const rows = q.lines.map((l, i) => `<tr class="${live && S.fresh === l.k ? 'new' : ''}"><td>${i + 1}</td><td><b>${esc(l.nm)}</b><small>${esc(l.sku)} · ${esc(l.un)}</small></td><td class="r">${l.q}</td><td class="r">${money(l.u)}</td><td class="r dc ${l.d > SET.limit ? 'dover' : ''}">${l.d ? l.d + '%' : '—'}</td><td class="r">${money(l.q * l.u * (1 - l.d / 100))}</td></tr>`).join('');
+  const groups = Object.keys(UNITS).filter((u) => c.g[u] > 0).map((u) => `<div><dt>${UNITS[u][1]}</dt><dd>${money(c.g[u] * c.t)}</dd></div>`).join('');
+  const stamp = DECIDED.includes(q.st) && !live ? `<div class="stamp ${stampNew === q.id ? 'fresh' : ''}" style="--sc:${STC[q.st]}">${q.st.toUpperCase()}<small>${day(q.dec).toUpperCase()}</small></div>` : '';
+  return `<article class="paper ${stampNew === q.id && !live ? 'thud' : ''}" aria-label="Quote document">
+    <div class="lh"><i class="blogo">${'HMC'[BI]}</i><div class="bn"><b>${BANKNAME[BI]}</b><small>${BRANCH[BI]}</small></div><div class="qn"><span class="lab">Quotation</span><b>${q.id || 'New quote'}</b><small>${day(q.c || 0)}</small></div></div>
+    <div class="bill"><div><span class="lab">Prepared for</span>${a ? `<b>${esc(a[0])}</b><small>Attn. ${esc(a[1])} · ${esc(a[2])}</small>` : '<b class="ph0">Choose an account</b>'}</div><div><span class="lab">Valid until</span><b>${day(q.valid)}</b></div><div><span class="lab">For</span><b>${deal ? esc(deal[0]) : '—'}</b></div></div>
+    <table class="lines"><thead><tr><th>#</th><th>Product</th><th class="r">Qty</th><th class="r">Price</th><th class="r dc">Disc.</th><th class="r">Amount</th></tr></thead><tbody>${rows || (live ? '<tr class="ph-row"><td colspan="6">Drag products here, or click them on the left</td></tr>' : '')}</tbody></table>
+    <div class="ptot"><div class="terms"><b>Terms</b>Prices are before ${SET.taxName}, which is added at ${SET.tax}%. Monthly and yearly charges continue until the service is closed. This quote is valid until ${day(q.valid)}.</div>
+      <dl>${c.disc ? `<div><dt>Discount</dt><dd>−${money(c.disc)}</dd></div>` : ''}<div><dt>${SET.taxName} ${SET.tax}%</dt><dd>${money(c.tax)}</dd></div>${groups}<div class="fy"><dt>First-year value</dt><dd id="${live ? 'pfy' : ''}">${money(c.fy)}</dd></div></dl></div>
+    <div class="sig"><div><span class="hand2">${USERS[q.own || ME][0]}</span>${USERS[q.own || ME][0]}, ${USERS[q.own || ME][2]}</div><div>Page 1 of 1</div></div>
+    ${stamp}</article>`;
+}
+
+/* ---------- Quote page ---------- */
+function quoteView() {
+  const q = QBI(curQ); if (!q) return back('quotes', 'All quotes') + '<div class="card empty"><b>This quote was deleted</b></div>';
+  const na = needsAppr(q), steps = [['Draft', q.c, 'Created'], ['Sent', q.sent, 'Sent to ' + ACC[q.acc][1]], [DECIDED.includes(q.st) ? q.st : 'Answer', q.dec, DECIDED.includes(q.st) ? (q.st === 'Rejected' ? q.reason : q.st === 'Accepted' ? 'Customer said yes' : 'No answer in time') : 'Accepted, rejected or expired']];
+  const reached = { Draft: 0, Sent: 1, Accepted: 2, Rejected: 2, Expired: 2 }[q.st];
+  const track = steps.map(([s, d, sub], i) => `<div class="st ${i < reached ? 'done' : ''} ${i === reached ? 'done now' : ''} ${i > reached ? 'off' : ''}" style="--c:${STC[s] || '#8a93a6'}"><i>${i <= reached ? ic(i === 2 && q.st !== 'Accepted' ? 'x' : 'check', 13) : ''}</i><div><b>${s}</b><small>${i <= reached && d != null ? dayS(d) + ' · ' : ''}${esc(sub)}</small></div></div>`).join('');
+  let acts = '';
+  if (q.st === 'Draft') {
+    if (na && q.appr !== 'approved') acts = q.appr === 'waiting' ? `<button class="btn pri" disabled>${ic('send')}Send to customer</button><div class="demo">Sending opens once ${USERS[SET.approver][0]} approves.</div>` : `<button class="btn pri" data-a="askAppr">${ic('shield')}Ask ${USERS[SET.approver][0].split(' ')[0]} to approve</button>`;
+    else acts = `<button class="btn pri" data-a="send">${ic('send')}Send to customer</button>`;
+  } else if (q.st === 'Sent') acts = `<button class="btn pri" data-a="accept">${ic('check')}Mark accepted</button><div class="two"><button class="btn" data-a="reject">${ic('x')}Rejected</button><button class="btn" data-a="expire">${ic('hourglass')}Expired</button></div>`;
+  else if (q.st === 'Accepted') acts = `<div class="note ok">${ic('check', 16)}<span>Accepted ${day(q.dec)}.${q.deal ? ` The deal “${esc(DEALS[q.deal][0])}” is Closed Won.` : ''} An accepted quote cannot change; duplicate it to quote again.</span></div>`;
+  else acts = `<button class="btn pri" data-a="revise">${ic('undo')}Revise and send again</button><div class="demo">Goes back to Draft with a new validity date.</div>`;
+  const overLines = q.lines.filter((l) => l.d > SET.limit);
+  const apprCard = na ? `<div class="card box appr"><div class="box-h"><h3>Discount approval</h3>${q.appr === 'approved' ? `<span class="apb ok">${ic('shield', 14)}Approved</span>` : q.appr === 'waiting' ? `<span class="apb">${ic('shield', 14)}Waiting</span>` : ''}</div>
+    <ul>${overLines.map((l) => `<li><span>${esc(l.nm)}</span><span class="dz over">−${l.d}%</span></li>`).join('')}</ul>
+    <div class="who2">${face(SET.approver, 'lg')}<div><b>${USERS[SET.approver][0]}</b><small>${USERS[SET.approver][2]} · approves discounts above ${SET.limit}%</small></div></div>
+    ${q.appr === 'waiting' && q.st === 'Draft' ? `<div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" data-a="apprYes">${ic('check')}Approve</button><button class="btn" data-a="apprNo">${ic('undo')}Send back</button></div><div class="demo">These two buttons show only for ${USERS[SET.approver][0]}; they are here so you can try it.</div>` : ''}</div>` : '';
+  return `${back('quotes', 'All quotes')}
+  <div class="qph" data-testid="quote-detail-page"><div><h2>${q.id} ${pill(q.st)}</h2><p>${esc(ACC[q.acc][0])} · ${short(fyOf(q))} first-year value · ${USERS[q.own][0]}</p></div>
+    <div class="acts"><button class="btn" data-a="print">${ic('printer')}Print or PDF</button><button class="btn" data-a="dup">${ic('copy')}Duplicate</button>${q.st === 'Draft' ? `<button class="btn" data-a="editQ" data-testid="edit-quote-btn">${ic('edit')}Edit</button>` : ''}
+    <div class="pop-wrap"><button class="btn sq" data-a="pop" data-p="qmore" aria-label="More">${ic('more')}</button>${pop === 'qmore' ? `<div class="pop right"><button class="opt" data-a="delQ" data-testid="delete-quote-btn" style="color:var(--danger-text)">${ic('trash', 16)}Delete quote</button></div>` : ''}</div></div></div>
+  <div class="qp">
+    <div>${paper(q)}</div>
+    <aside class="stack">
+      <div class="card box"><h3>Status</h3><div class="trk">${track}</div><div class="sacts">${acts}</div></div>
+      ${apprCard}
+      <div class="card box"><h3>Linked</h3><dl class="kv"><div><dt>Account</dt><dd><button class="link" data-a="toast" data-m="Opens ${esc(ACC[q.acc][0])}">${esc(ACC[q.acc][0])}</button></dd></div><div><dt>Deal</dt><dd>${q.deal ? `<button class="link" data-a="toast" data-m="Opens the deal room">${esc(DEALS[q.deal][0])}</button><span class="tg">${esc(DEALS[q.deal][2])}</span>` : '<span class="muted">None</span>'}</dd></div><div><dt>Owner</dt><dd>${face(q.own)}${USERS[q.own][0]}</dd></div></dl></div>
+      <div class="card box"><h3>History</h3><div class="hist">${q.hist.slice().reverse().map(([d, t]) => `<div><time>${dayS(d)}</time><span>${esc(t)}</span></div>`).join('')}</div></div>
+    </aside>
+  </div>`;
+}
+
+/* ---------- Quote builder ---------- */
+function newS(from) {
+  if (from) S = { id: from.id, acc: from.acc, deal: from.deal, valid: from.valid, vd: SET.validity, c: from.c, own: from.own, lines: from.lines.map((l) => ({ ...l })), err: {}, ss: '' };
+  else S = { id: null, acc: null, deal: null, valid: SET.validity, vd: SET.validity, c: 0, own: ME, lines: [], err: {}, ss: '' };
+}
+function lineHTML(l) {
+  const lim = (SET.limit / 30) * 100;
+  return `<div class="ln ${l.d > SET.limit ? 'over' : ''}" data-k="${l.k}" style="--fc:${famC(PBI(l.p).fam)}"><span class="sw2"></span>
+    <span class="lm"><b>${esc(l.nm)}</b><small>${money(l.u)} ${UNITS[l.un][0] || 'one-time'}</small></span>
+    <span class="step"><button data-a="qty" data-k="${l.k}" data-v="-1" aria-label="Less">${ic('minus', 14)}</button><input data-i="qty" data-k="${l.k}" value="${l.q}" inputmode="numeric" aria-label="Quantity"><button data-a="qty" data-k="${l.k}" data-v="1" aria-label="More">${ic('plus', 14)}</button></span>
+    <button class="rm" data-a="rmLine" data-k="${l.k}" aria-label="Remove line">${ic('x', 16)}</button>
+    <span class="dsl"><span>Discount <b data-dl="${l.k}">${l.d}%</b></span><span class="dtrack" style="--lim:${lim}%"><input type="range" min="0" max="30" step="1" value="${l.d}" data-i="disc" data-k="${l.k}" aria-label="Discount for ${esc(l.nm)}"></span><span class="dnote">${ic('shield', 13)}Over ${SET.limit}%: ${USERS[SET.approver][0]} must approve before it is sent</span></span>
+    <span class="la" data-la="${l.k}">${money(l.q * l.u * (1 - l.d / 100))}</span></div>`;
+}
+function studioView() {
+  const e = S.err, s = S.ss.trim().toLowerCase();
+  const avail = P.filter((p) => p.active && (!s || (p.name + ' ' + p.sku + ' ' + p.fam).toLowerCase().includes(s))), hidden = P.filter((p) => !p.active).length;
+  const deals = Object.entries(DEALS).filter(([, d]) => d[1] === S.acc && d[2] !== 'Closed Won');
+  const c = calc(S.lines), na = needsAppr(S);
+  return `${back(S.id ? 'quote' : 'quotes', S.id ? 'Back to quote' : 'All quotes')}
+  <div class="ph"><div><h2>${S.id ? 'Edit ' + S.id : 'New quote'}</h2><p>Pick products on the left. The quote on the right is exactly what the customer will get.</p></div></div>
+  <div class="studio" data-testid="quote-form-page">
+    <div class="stack">
+      <div class="card box"><h3>Customer</h3><div class="fg">
+        <div class="f ${e.acc ? 'bad' : ''}"><span class="flab">Account</span><div class="pop-wrap"><button class="fake" data-a="pop" data-p="sacc">${S.acc ? esc(ACC[S.acc][0]) : '<span class="muted">Choose an account</span>'}<span class="dn">${ic('down', 15)}</span></button>${pop === 'sacc' ? picker('sacc', Object.entries(ACC).map(([k, a]) => [k, a[0], null, a[2]]), S.acc) : ''}</div>${e.acc ? `<div class="err">${e.acc}</div>` : ''}</div>
+        <div class="f"><span class="flab">Deal</span><div class="pop-wrap"><button class="fake" data-a="pop" data-p="sdeal" ${S.acc ? '' : 'disabled'}>${S.deal ? esc(DEALS[S.deal][0]) : `<span class="muted">${S.acc ? (deals.length ? 'No deal' : 'No open deals') : 'Choose the account first'}</span>`}<span class="dn">${ic('down', 15)}</span></button>${pop === 'sdeal' ? picker('sdeal', [['', 'No deal'], ...deals.map(([k, d]) => [k, d[0], null, d[2]])], S.deal || '') : ''}</div></div>
+        <div class="f full"><span class="flab">Valid for</span><div class="vchips">${[15, 30, 45, 60].map((n) => `<button data-a="vd" data-v="${n}" aria-pressed="${S.vd === n}">${n} days</button>`).join('')}<span class="muted" style="align-self:center;font-size:12.5px">until ${day(S.valid)}</span></div></div>
+      </div></div>
+      <div class="card box"><div class="box-h"><h3>Products</h3><span class="muted" style="font-size:12.5px">${hidden ? plural(hidden, 'retired product') + ' hidden' : ''}</span></div>
+        <label class="search" style="max-width:none;margin-bottom:10px">${ic('search', 16)}<input data-i="ss" value="${esc(S.ss)}" placeholder="Search products" aria-label="Search products"></label>
+        <div class="chips2">${avail.map((p) => `<button class="pchip" data-a="addLine" data-id="${p.id}" title="Click or drag onto the quote">${mini(p, 12)}<div><b>${esc(p.name)}</b><small>${priceTxt(p)}</small></div><span class="add">${ic('plus', 16)}</span></button>`).join('') || '<div class="muted">No product matches.</div>'}</div>
+      </div>
+      <div class="card box ${e.lines ? 'bad' : ''}"><div class="box-h"><h3>Lines</h3><span class="muted">${S.lines.length}</span></div>${S.lines.map(lineHTML).join('') || `<div class="muted">No lines yet. Click a product above or drag it onto the quote.</div>`}${e.lines ? `<div class="ferr" style="margin-top:8px">${ic('alert', 15)}${e.lines}</div>` : ''}</div>
+    </div>
+    <div class="paperbox" id="paperbox">${paper({ ...S, id: S.id || nextId(), st: 'Draft' }, true)}</div>
+  </div>
+  <div class="dock"><div class="tot2"><small>First-year value incl. ${SET.taxName}</small><b id="dockfy" data-v="${c.fy}">${money(c.fy)}</b></div>
+    <div class="acts"><button class="btn ghost" data-a="go" data-s="${S.id ? 'quote' : 'quotes'}">Cancel</button><button class="btn" data-a="saveQ" data-v="draft" data-testid="save-quote-btn">Save draft</button><button class="btn pri" data-a="saveQ" data-v="send" id="sendBtn">${na ? ic('shield') + 'Save and ask for approval' : ic('send') + 'Save and send'}</button></div></div>`;
+}
+const nextId = () => 'Q-2026-' + String(Math.max(...Q.map((q) => +q.id.slice(-4)), 52) + 1).padStart(4, '0');
+function refreshStudio(k) {
+  /* small updates while a slider moves, so the slider keeps the pointer */
+  const l = S.lines.find((x) => x.k === k);
+  if (l) {
+    const row = document.querySelector(`.ln[data-k="${k}"]`); if (row) row.classList.toggle('over', l.d > SET.limit);
+    const dl = document.querySelector(`[data-dl="${k}"]`); if (dl) dl.textContent = l.d + '%';
+    const la = document.querySelector(`[data-la="${k}"]`); if (la) la.textContent = money(l.q * l.u * (1 - l.d / 100));
+  }
+  S.fresh = null;
+  $('paperbox').innerHTML = paper({ ...S, id: S.id || nextId(), st: 'Draft' }, true);
+  tween($('dockfy'), calc(S.lines).fy);
+  $('sendBtn').innerHTML = needsAppr(S) ? ic('shield') + 'Save and ask for approval' : ic('send') + 'Save and send';
+}
+function tween(el, to) {
+  if (!el) return; const from = +el.dataset.v || 0; el.dataset.v = to;
+  if (reduced || document.hidden || from === to) { el.textContent = money(to); return; }
+  const t0 = performance.now();
+  const step = (t) => { const k = Math.min(1, (t - t0) / 450), e = 1 - Math.pow(1 - k, 3); el.textContent = money(from + (to - from) * e); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function addLine(pid) {
+  const ex = S.lines.find((l) => l.p === pid);
+  if (ex) { ex.q++; S.fresh = ex.k; } else { const l = mkLine(pid, 1, 0, 0); S.lines.push(l); S.fresh = l.k; }
+  S.err.lines = null; render();
+  setTimeout(() => { if (S) S.fresh = null; }, 1700);
+}
+
+/* ---------- dialogs ---------- */
+function overlay() {
+  const o = $('ovl'); if (!dlg) { o.innerHTML = ''; return; }
+  const close = `<button class="btn ghost sq" data-a="close" aria-label="Close">${ic('x')}</button>`;
+  let h = '';
+  if (dlg.k === 'layout') h = `<div class="scrim edge" data-a="scrim"><div class="sheet" role="dialog" aria-label="Choose a layout"><div class="dlg-head"><h3>Choose a layout</h3>${close}</div><div class="sheet-body"><p class="muted" style="margin:0">Each layout shows a different set of fields. Admins change them in Customise page layout.</p>${LAYOUTS.products.map(([n, s, i], j) => `<button class="pick-item" data-a="pickLayout" data-v="${n}" style="--d:${j * 60}ms"><span class="ext">${ic(i, 18)}</span><div><b>${n}</b><small>${s}</small></div>${ic('left', 16).replace('M15 18l-6-6 6-6', 'M9 18l6-6-6-6')}</button>`).join('')}</div></div></div>`;
+  if (dlg.k === 'delP') {
+    const p = PBI(curP), used = pstats(p).qs.length;
+    h = used ? `<div class="scrim" data-a="scrim"><div class="dlg" role="dialog"><div class="dlg-head"><h3>This product is on ${plural(used, 'quote')}</h3>${close}</div><div class="dlg-body">Deleting it would leave those quotes with a missing product. Retire it instead: it stays on old quotes and cannot be added to new ones.</div><div class="dlg-foot"><span class="sp"></span><button class="btn ghost" data-a="close">Cancel</button>${p.active ? `<button class="btn pri" data-a="toggleP" data-id="${p.id}">Retire it</button>` : ''}</div></div></div>`
+      : `<div class="scrim" data-a="scrim"><div class="dlg" role="dialog"><div class="dlg-head"><h3>Delete ${esc(p.name)}?</h3>${close}</div><div class="dlg-body">This cannot be undone. Type the product name to confirm.<div class="f" style="margin-top:10px"><input data-i="dlg.txt" data-testid="delete-confirm-input" value="${esc(dlg.txt || '')}"></div></div><div class="dlg-foot"><span class="sp"></span><button class="btn ghost" data-a="close">Cancel</button><button class="btn danger" data-a="delPYes" data-testid="confirm-delete-btn" ${dlg.txt === p.name ? '' : 'disabled'}>Delete</button></div></div></div>`;
+  }
+  if (dlg.k === 'delQ' || dlg.k === 'bulk') {
+    const ids = dlg.k === 'bulk' ? [...sel] : [curQ];
+    h = `<div class="scrim" data-a="scrim"><div class="dlg" role="dialog"><div class="dlg-head"><h3>Delete ${ids.length === 1 ? ids[0] : plural(ids.length, 'quote')}?</h3>${close}</div><div class="dlg-body">${ids.length > 1 ? ids.join(', ') + '. ' : ''}This cannot be undone. The linked deals keep their history.</div><div class="dlg-foot"><span class="sp"></span><button class="btn ghost" data-a="close">Cancel</button><button class="btn danger" data-a="delQYes" data-testid="confirm-delete-btn">Delete</button></div></div></div>`;
+  }
+  if (dlg.k === 'reject') {
+    const f = (dlg.pf || '').toLowerCase(), rs = REASONS.filter((r) => r.toLowerCase().includes(f));
+    h = `<div class="scrim" data-a="scrim"><div class="dlg" role="dialog"><div class="dlg-head"><h3>Why did ${esc(ACC[QBI(curQ).acc][1])} say no?</h3>${close}</div><div class="dlg-body"><label class="search">${ic('search', 16)}<input data-i="dlg.pf" value="${esc(dlg.pf || '')}" placeholder="Search reasons" aria-label="Search reasons"></label><div class="rlist">${rs.map((r) => `<button role="radio" aria-checked="${dlg.reason === r}" data-a="reason" data-v="${esc(r)}">${dlg.reason === r ? ic('check', 15) : '<span style="width:15px"></span>'}${esc(r)}</button>`).join('') || '<div class="none">No reason matches</div>'}</div><textarea data-i="dlg.note" placeholder="Note (optional)">${esc(dlg.note || '')}</textarea></div><div class="dlg-foot"><span class="sp"></span><button class="btn ghost" data-a="close">Cancel</button><button class="btn pri" data-a="rejectYes" ${dlg.reason ? '' : 'disabled'}>Mark rejected</button></div></div></div>`;
+  }
+  o.innerHTML = h;
+}
+
+/* ---------- render ---------- */
+const VIEWS = { catalogue: catalogueView, product: productView, pform: pformView, quotes: quotesView, quote: quoteView, studio: studioView };
+function rail() { $('rail').innerHTML = '<i class="logo" id="logo">' + 'HMC'[BI] + '</i>' + ['dashboard', 'pulse', 'target', 'user', 'building', 'deal', 'checksq', 'calendar', 'ticket', 'box', 'file'].map((n) => `<span class="${(n === 'box' && ['catalogue', 'product', 'pform'].includes(screen)) || (n === 'file' && ['quotes', 'quote', 'studio'].includes(screen)) ? 'on' : ''}">${ic(n, 18)}</span>`).join(''); }
+function render(quiet) {
+  const ae = document.activeElement, fk = ae && ae.dataset ? ae.dataset.i : null, fkk = ae && ae.dataset ? ae.dataset.k : null;
+  let pos = null; try { pos = ae.selectionStart; } catch (e) {}
+  const y = $('main').scrollTop, pg = $('page');
+  pg.classList.toggle('quiet', !!quiet);
+  pg.innerHTML = VIEWS[screen]();
+  const isP = ['catalogue', 'product', 'pform'].includes(screen);
+  $('crumbA').textContent = isP ? 'Products' : 'Quotes';
+  const crumb = { catalogue: '', product: PBI(curP) ? PBI(curP).name : '', pform: F && F.id ? 'Edit' : 'New product', quotes: '', quote: curQ, studio: S && S.id ? 'Edit ' + S.id : 'New quote' }[screen];
+  $('crumb').textContent = crumb; $('crumbS').hidden = !crumb;
+  document.querySelectorAll('#screens button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.s === screen));
+  rail();
+  if (fk && ae.closest('#page')) { const el = pg.querySelector(`[data-i="${fk}"]` + (fkk ? `[data-k="${fkk}"]` : '')); if (el) { el.focus(); try { if (pos != null) el.setSelectionRange(pos, pos); } catch (e) {} } }
+  $('main').scrollTop = y;
+  const pf = pg.querySelector('.pop input[data-pf]'); if (pf) pf.focus();
+  overlay();
+  if (stampNew) setTimeout(() => { stampNew = null; }, 900);
+}
+function show(s) {
+  screen = s; pop = null; dlg = null;
+  const pg = $('page'); pg.style.animation = 'none'; void pg.offsetWidth; pg.style.animation = '';
+  render(); $('main').scrollTop = 0;
+}
+let tt;
+function toast(m) { const el = $('toast'); el.innerHTML = ic('check', 15) + esc(m); el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), 2800); }
+const hist = (q, t) => q.hist.push([0, t]);
+
+/* ---------- actions ---------- */
+const A = {
+  go: (t) => show(t.dataset.s),
+  pop: (t) => { pop = pop === t.dataset.p ? null : t.dataset.p; render(true); },
+  tbl: (t) => { pop = null; render(true); toast('Opens ' + t.dataset.l); },
+  toast: (t) => { pop = null; render(true); toast(t.dataset.m); },
+  close: () => { dlg = null; overlay(); },
+  scrim: (t, e) => { if (e.target === t) { dlg = null; overlay(); } },
+  pick: (t) => {
+    const p = t.dataset.p, v = t.dataset.v;
+    if (p === 'fam') { famSel = famSel.includes(v) ? famSel.filter((x) => x !== v) : [...famSel, v]; render(true); return; }
+    pop = null;
+    if (p === 'pst') pstat = v;
+    if (p === 'famF') { F.fam = v; F.err.fam = null; }
+    if (p === 'unitF') F.unit = v;
+    if (p === 'sacc') { if (S.acc !== v) S.deal = null; S.acc = v; S.err.acc = null; const ds = Object.entries(DEALS).filter(([, d]) => d[1] === v && d[2] !== 'Closed Won'); if (ds.length === 1) S.deal = ds[0][0]; }
+    if (p === 'sdeal') S.deal = v || null;
+    render(true);
+  },
+  clearP: () => { famSel = []; pstat = 'all'; pq = ''; render(); },
+  view: (t) => { view = t.dataset.v; render(); },
+  openP: (t) => { curP = t.dataset.id; show('product'); },
+  toggleP: (t) => { const p = PBI(t.dataset.id); p.active = !p.active; pop = null; dlg = null; render(true); toast(p.active ? `${p.name} is on sale again` : `${p.name} retired. Old quotes keep it.`); },
+  newProduct: () => { pop = null; dlg = { k: 'layout' }; render(true); },
+  layout: () => { dlg = { k: 'layout', change: true }; overlay(); },
+  pickLayout: (t) => { const ch = dlg && dlg.change; dlg = null; if (ch && F) { F.layout = t.dataset.v; render(true); overlay(); return; } newF(t.dataset.v); show('pform'); },
+  editP: () => { const p = PBI(curP); F = { ...p, price: String(p.price), layout: 'Standard product', err: {} }; show('pform'); },
+  useSku: () => { F.sku = skuSuggest(); F.err.sku = null; render(true); },
+  fActive: () => { F.active = !F.active; render(true); },
+  saveP: () => {
+    const e = {}, price = +String(F.price).replace(/[,\s₹]/g, '');
+    if (!F.name.trim()) e.name = 'Give the product a name';
+    if (!F.fam) e.fam = 'Choose a family';
+    if (!F.sku.trim()) e.sku = 'Add a SKU'; else if (P.some((p) => p.sku.toUpperCase() === F.sku.trim().toUpperCase() && p.id !== F.id)) e.sku = 'Another product already uses this SKU';
+    if (!(price > 0)) e.price = 'Enter a price above zero';
+    F.err = e; if (Object.keys(e).length) { render(true); return; }
+    const data = { name: F.name.trim(), sku: F.sku.trim().toUpperCase(), fam: F.fam, price, unit: F.unit, desc: F.desc.trim(), active: F.active };
+    if (F.id) { const p = PBI(F.id); const changed = p.price !== price; Object.assign(p, data); if (changed) p.hist.push([0, price, ME]); curP = p.id; toast(changed ? 'Saved. New price applies to new quotes.' : 'Product saved'); }
+    else { const p = { id: 'p' + (P.length + 1) + Date.now() % 1000, c: 0, hist: [[0, price, ME]], ...data }; P.push(p); curP = p.id; toast('Product created'); }
+    show('product');
+  },
+  delP: () => { pop = null; dlg = { k: 'delP', txt: '' }; render(true); },
+  delPYes: () => { const p = PBI(curP); P = P.filter((x) => x !== p); dlg = null; toast(p.name + ' deleted'); show('catalogue'); },
+  quoteWith: (t) => { newS(); addLine(t.dataset.id); show('studio'); },
+  /* quotes */
+  qf: (t) => { qf = qf === t.dataset.f && t.dataset.f !== 'all' ? 'all' : t.dataset.f; render(); },
+  openQ: (t) => { curQ = t.dataset.id; show('quote'); },
+  sel: (t, e) => { e.preventDefault(); const id = t.dataset.id; sel.has(id) ? sel.delete(id) : sel.add(id); render(true); },
+  selNone: () => { sel.clear(); render(true); },
+  bulkDel: () => { dlg = { k: 'bulk' }; overlay(); },
+  delQ: () => { pop = null; dlg = { k: 'delQ' }; render(true); },
+  delQYes: () => { const ids = dlg.k === 'bulk' ? [...sel] : [curQ]; Q = Q.filter((q) => !ids.includes(q.id)); sel.clear(); dlg = null; toast(ids.length === 1 ? ids[0] + ' deleted' : plural(ids.length, 'quote') + ' deleted'); show('quotes'); },
+  newQuote: () => { newS(); show('studio'); },
+  editQ: () => { newS(QBI(curQ)); show('studio'); },
+  dup: () => { const q = QBI(curQ); newS(); S.acc = q.acc; S.deal = q.deal && DEALS[q.deal][2] !== 'Closed Won' ? q.deal : null; S.lines = q.lines.map((l) => mkLine(l.p, l.q, l.d, 0)); show('studio'); toast('Copied with today’s prices'); },
+  print: () => { toast('In the CRM this opens the print dialog; choose Save as PDF there'); try { window.print(); } catch (e) {} },
+  askAppr: () => { const q = QBI(curQ); q.appr = 'waiting'; hist(q, `Approval asked from ${USERS[SET.approver][0]}`); render(true); toast(`${USERS[SET.approver][0]} has been asked to approve`); },
+  apprYes: () => { const q = QBI(curQ); q.appr = 'approved'; hist(q, `${USERS[SET.approver][0]} approved the discounts`); render(true); toast('Approved. It can be sent now.'); },
+  apprNo: () => { const q = QBI(curQ); q.appr = null; hist(q, `${USERS[SET.approver][0]} sent it back: lower the discount`); render(true); toast('Sent back to Priya'); },
+  send: () => { const q = QBI(curQ); q.st = 'Sent'; q.sent = 0; if (q.valid <= 0) q.valid = SET.validity; hist(q, `Sent to ${ACC[q.acc][1]} by email with the PDF`); render(true); toast(`${q.id} sent to ${ACC[q.acc][1]}`); },
+  accept: () => {
+    const q = QBI(curQ); q.st = 'Accepted'; q.dec = 0; stampNew = q.id;
+    let m = `${q.id} accepted`;
+    if (q.deal) { const d = DEALS[q.deal]; if (d[2] !== 'Closed Won') { d[2] = 'Closed Won'; m += '; deal moved to Closed Won'; } else m += '; the deal was already Closed Won'; }
+    hist(q, `${ACC[q.acc][1]} accepted` + (q.deal ? '; deal moved to Closed Won' : '')); render(true); toast(m);
+  },
+  reject: () => { dlg = { k: 'reject', reason: null, note: '', pf: '' }; overlay(); },
+  reason: (t) => { dlg.reason = t.dataset.v; overlay(); },
+  rejectYes: () => { const q = QBI(curQ); q.st = 'Rejected'; q.dec = 0; q.reason = dlg.reason; stampNew = q.id; hist(q, 'Rejected: ' + dlg.reason + (dlg.note ? ' (' + dlg.note + ')' : '')); dlg = null; render(true); toast(q.id + ' marked rejected'); },
+  expire: () => { const q = QBI(curQ); q.st = 'Expired'; q.dec = 0; stampNew = q.id; hist(q, 'Marked expired'); render(true); toast(q.id + ' marked expired'); },
+  revise: () => { const q = QBI(curQ); q.st = 'Draft'; q.sent = null; q.dec = null; q.reason = null; q.valid = SET.validity; hist(q, 'Back to draft to revise'); newS(q); show('studio'); },
+  /* builder */
+  addLine: (t) => addLine(t.dataset.id),
+  rmLine: (t) => { S.lines = S.lines.filter((l) => l.k !== t.dataset.k); render(true); },
+  qty: (t) => { const l = S.lines.find((x) => x.k === t.dataset.k); l.q = Math.max(1, l.q + +t.dataset.v); render(true); },
+  vd: (t) => { S.vd = +t.dataset.v; S.valid = S.vd; render(true); },
+  saveQ: (t) => {
+    const e = {}; if (!S.acc) e.acc = 'Choose who the quote is for'; if (!S.lines.length) e.lines = 'Add at least one product';
+    S.err = e; if (Object.keys(e).length) { render(true); return; }
+    let q = S.id ? QBI(S.id) : null;
+    if (q) { const changed = JSON.stringify(q.lines.map((l) => [l.p, l.q, l.d])) !== JSON.stringify(S.lines.map((l) => [l.p, l.q, l.d])); Object.assign(q, { acc: S.acc, deal: S.deal, valid: S.valid, lines: S.lines }); if (changed) { hist(q, 'Lines changed'); if (q.appr === 'approved' && needsAppr(q)) { q.appr = null; hist(q, 'Discounts changed, approval needed again'); } } }
+    else { q = { id: nextId(), acc: S.acc, deal: S.deal, st: 'Draft', c: 0, valid: S.valid, sent: null, dec: null, own: ME, appr: null, reason: null, lines: S.lines, hist: [[0, `Created by ${USERS[ME][0]}`]] }; Q.unshift(q); }
+    curQ = q.id;
+    if (t.dataset.v === 'send') { if (needsAppr(q) && q.appr !== 'approved') { q.appr = 'waiting'; hist(q, `Approval asked from ${USERS[SET.approver][0]}`); toast(`Saved. ${USERS[SET.approver][0]} has been asked to approve.`); } else { q.st = 'Sent'; q.sent = 0; hist(q, `Sent to ${ACC[q.acc][1]} by email with the PDF`); toast(`${q.id} sent to ${ACC[q.acc][1]}`); } }
+    else toast(q.id + ' saved as draft');
+    S = null; show('quote');
+  }
+};
+document.addEventListener('click', (e) => {
+  if (suppress) { suppress = false; return; }
+  const t = e.target.closest('[data-a]');
+  if (pop && !e.target.closest('.pop') && !(t && t.dataset.a === 'pop')) { pop = null; if (!t || !t.closest('#page')) { render(true); if (!t) return; } }
+  if (!t) return;
+  if (t.disabled) return;
+  const f = A[t.dataset.a]; if (f) f(t, e);
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { if (pop) { pop = null; render(true); } else if (dlg) { dlg = null; overlay(); } }
+  if (e.key === 'Enter' && e.target.matches('[role="link"]')) e.target.click();
+});
+document.addEventListener('input', (e) => {
+  const el = e.target, k = el.dataset.i;
+  if (el.hasAttribute('data-pf')) { const f = el.value.toLowerCase(), box = el.closest('.pop'); let any = false; box.querySelectorAll('.opt').forEach((o) => { const m = o.textContent.toLowerCase().includes(f); o.hidden = !m; any = any || m; }); box.querySelector('.none').hidden = any; return; }
+  if (!k) return;
+  if (k === 'pq') { pq = el.value; render(true); }
+  else if (k === 'qs') { qs = el.value; render(true); }
+  else if (k === 'ss') { S.ss = el.value; render(true); }
+  else if (k.startsWith('F.')) { F[k.slice(2)] = el.value; if (F.err) F.err[k.slice(2)] = null; const pv = $('fprev'); if (pv) pv.innerHTML = prevHTML(); if (k === 'F.name' || k === 'F.sku') { const hint = el.closest('.f'); if (hint && hint.classList.contains('bad')) { hint.classList.remove('bad'); const er = hint.querySelector('.err'); if (er) er.remove(); } } }
+  else if (k.startsWith('dlg.')) { dlg[k.slice(4)] = el.value; if (k === 'dlg.txt') { const b = document.querySelector('[data-a="delPYes"]'); if (b) b.disabled = el.value !== PBI(curP).name; } if (k === 'dlg.pf') { overlay(); const i = document.querySelector('[data-i="dlg.pf"]'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
+  else if (k === 'disc') { const l = S.lines.find((x) => x.k === el.dataset.k); l.d = +el.value; refreshStudio(l.k); }
+  else if (k === 'qty') { const l = S.lines.find((x) => x.k === el.dataset.k); const v = parseInt(el.value, 10); if (v > 0) { l.q = v; refreshStudio(l.k); } }
+});
+$('screens').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.s === 'pform') newF();
+  if (b.dataset.s === 'studio') newS(QBI('Q-2026-0051') || Q[0]);
+  if (b.dataset.s === 'product' && !PBI(curP)) curP = P[0].id;
+  if (b.dataset.s === 'quote' && !QBI(curQ)) curQ = Q[0].id;
+  show(b.dataset.s);
+});
+
+/* tilt: product cards lean towards the pointer */
+let tiltEl = null;
+document.addEventListener('pointermove', (e) => {
+  if (reduced || e.pointerType === 'touch' || drag) return;
+  const c = e.target.closest ? e.target.closest('.tilt') : null;
+  if (tiltEl && tiltEl !== c) { tiltEl.classList.remove('live'); tiltEl.style.cssText = tiltEl.style.cssText.replace(/--(rx|ry|mx|my):[^;]+;?/g, ''); }
+  tiltEl = c; if (!c) return;
+  const r = c.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+  c.classList.add('live'); c.style.setProperty('--ry', ((px - 0.5) * 16).toFixed(2) + 'deg'); c.style.setProperty('--rx', ((0.5 - py) * 12).toFixed(2) + 'deg'); c.style.setProperty('--mx', (px * 100).toFixed(0) + '%'); c.style.setProperty('--my', (py * 100).toFixed(0) + '%');
+});
+
+/* drag a product chip onto the quote (mouse and pen; on touch a tap adds it) */
+let drag = null;
+document.addEventListener('pointerdown', (e) => { const ch = e.target.closest('.pchip'); if (!ch || e.button !== 0 || e.pointerType === 'touch') return; drag = { id: ch.dataset.id, x: e.clientX, y: e.clientY, el: ch, on: false }; });
+window.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  if (!drag.on) { if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return; drag.on = true; drag.fly = drag.el.cloneNode(true); drag.fly.classList.add('fly'); $('app').appendChild(drag.fly); drag.el.classList.add('lifted'); document.body.classList.add('dragging'); }
+  const r = $('app').getBoundingClientRect(); drag.fly.style.left = e.clientX - r.left - 24 + 'px'; drag.fly.style.top = e.clientY - r.top - 20 + 'px';
+  const pb = $('paperbox'), hit = document.elementFromPoint(e.clientX, e.clientY);
+  drag.over = !!(pb && hit && pb.contains(hit)); if (pb) pb.classList.toggle('over', drag.over);
+});
+window.addEventListener('pointerup', () => {
+  if (!drag) return; const d = drag; drag = null; if (!d.on) return;
+  d.fly.remove(); d.el.classList.remove('lifted'); document.body.classList.remove('dragging');
+  const pb = $('paperbox'); if (pb) pb.classList.remove('over');
+  suppress = true; setTimeout(() => { suppress = false; }, 0);
+  if (d.over) addLine(d.id);
+});
+
+const isDark = () => (document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
+$('themeBtn').addEventListener('click', () => { document.documentElement.dataset.theme = isDark() ? 'light' : 'dark'; });
+const BANKS = [['#1d3a6e', '#1d3a6e', '#9db8ee'], ['#9b1c3a', '#8a1933', '#f2a3b5'], ['#0f6b52', '#0d5c47', '#7fd6b9']];
+$('banks').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  BI = +b.dataset.bank; const [primary, inkL, inkD] = BANKS[BI], r = document.documentElement.style;
+  r.setProperty('--bank-primary', primary); r.setProperty('--bank-ink-light', inkL); r.setProperty('--bank-ink-dark', inkD);
+  USERS.PN[1] = primary; render(true);
+  $('banks').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+});
+render();
+</script>
