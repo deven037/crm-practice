@@ -119,11 +119,11 @@ function seedAccounts(): Account[] {
 // Banking products: name, family, SKU, charge type, earlier prices as [days ago, price] (the last one is today's price),
 // on sale, description. Twelve, in a fixed order: later seed data picks from this list with rand().
 const PRODUCT_CATALOG: [string, string, string, ChargeType, [number, number][], boolean, string][] = [
-  ['Business Current Account Premium', 'Accounts', 'ACC-PRM', 'Monthly', [[410, 1800], [212, 2200], [60, 2500]], true, 'Current account with unlimited NEFT and RTGS, free cash deposits up to ₹10 lakh a month and a named relationship manager.'],
+  ['Business Current Account Premium', 'Accounts', 'ACC-PRM', 'Monthly', [[410, 1800], [212, 2200], [60, 2500]], true, 'Current account with unlimited domestic transfers, high free cash deposit limits and a named relationship manager.'],
   ['Payroll Account Bundle', 'Accounts', 'ACC-PAY', 'Monthly', [[380, 150]], true, 'Salary accounts for a company’s staff, priced per employee each month. Includes debit cards and bulk salary upload.'],
   ['Corporate Credit Card', 'Cards', 'CRD-CORP', 'Yearly', [[520, 1499], [150, 1999]], true, 'Credit cards for employees with spend limits per card, monthly central billing and expense export.'],
   ['Fleet Fuel Card', 'Cards', 'CRD-FLT', 'Yearly', [[300, 499]], true, 'Fuel cards for vehicles with per-vehicle limits and cashback at partner pumps.'],
-  ['POS Terminal Rental', 'Payments', 'PAY-POS', 'Monthly', [[460, 799], [240, 699]], true, 'Card and UPI terminal for shops, priced per terminal each month. Next-day settlement.'],
+  ['POS Terminal Rental', 'Payments', 'PAY-POS', 'Monthly', [[460, 799], [240, 699]], true, 'Card and contactless terminal for shops, priced per terminal each month. Next-day settlement.'],
   ['Payment Gateway Setup', 'Payments', 'PAY-PG', 'One-time', [[350, 15000]], true, 'Online payment gateway set up and tested on the customer’s website or app.'],
   ['Cash Management Service', 'Payments', 'PAY-CMS', 'Monthly', [[600, 10000], [330, 12000]], true, 'Collections, cash pick-up and payouts with daily reports for companies with many branches.'],
   ['Working Capital Processing', 'Lending', 'LND-WC', 'One-time', [[700, 25000]], true, 'Processing fee for a working capital limit: appraisal, documents and set-up.'],
