@@ -50,6 +50,7 @@ bootstrapRouter.get('/', requireAuth, (req, res) => {
     statusCodeSets: store.statusCodeSets.all(),
     slaConfigs: store.slaConfigs.all(),
     slaRules: store.slaRules.all(),
+    quoteSettings: store.quoteSettings.all(),
     pageLayouts: store.pageLayouts.all(),
     autoFlowProcesses: store.autoFlowProcesses.all(),
     audit: store.audit.all(),

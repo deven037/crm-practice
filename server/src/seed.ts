@@ -26,13 +26,17 @@ import {
   LEAD_SOURCES,
   LEAD_STATUSES,
   PageLayout,
+  ChargeType,
   Product,
+  PRODUCT_CATEGORIES,
   Quote,
   QuoteLineItem,
+  QUOTE_REJECT_REASONS,
   QUOTE_STATUSES,
   RoleDef,
   SlaConfig,
   SlaRules,
+  QuoteSettings,
   StatusCodeSet,
   TaskItem,
   Meeting,
@@ -112,32 +116,40 @@ function seedAccounts(): Account[] {
   }));
 }
 
-const PRODUCT_CATALOG: [string, string, number][] = [
-  ['CRM Starter Plan', 'Subscription', 4900],
-  ['CRM Professional Plan', 'Subscription', 14900],
-  ['CRM Enterprise Plan', 'Subscription', 49900],
-  ['Onboarding Package', 'Service', 25000],
-  ['Data Migration Service', 'Service', 40000],
-  ['Premium Support (Annual)', 'Service', 18000],
-  ['API Access Add-on', 'Add-on', 9900],
-  ['Analytics Module', 'Add-on', 19900],
-  ['Marketing Automation Add-on', 'Add-on', 29900],
-  ['Mobile App License', 'License', 7900],
-  ['Admin Training Workshop', 'Training', 12000],
-  ['Custom Integration Build', 'Service', 75000],
+// Banking products: name, family, SKU, charge type, earlier prices as [days ago, price] (the last one is today's price),
+// on sale, description. Twelve, in a fixed order: later seed data picks from this list with rand().
+const PRODUCT_CATALOG: [string, string, string, ChargeType, [number, number][], boolean, string][] = [
+  ['Business Current Account Premium', 'Accounts', 'ACC-PRM', 'Monthly', [[410, 1800], [212, 2200], [60, 2500]], true, 'Current account with unlimited NEFT and RTGS, free cash deposits up to ₹10 lakh a month and a named relationship manager.'],
+  ['Payroll Account Bundle', 'Accounts', 'ACC-PAY', 'Monthly', [[380, 150]], true, 'Salary accounts for a company’s staff, priced per employee each month. Includes debit cards and bulk salary upload.'],
+  ['Corporate Credit Card', 'Cards', 'CRD-CORP', 'Yearly', [[520, 1499], [150, 1999]], true, 'Credit cards for employees with spend limits per card, monthly central billing and expense export.'],
+  ['Fleet Fuel Card', 'Cards', 'CRD-FLT', 'Yearly', [[300, 499]], true, 'Fuel cards for vehicles with per-vehicle limits and cashback at partner pumps.'],
+  ['POS Terminal Rental', 'Payments', 'PAY-POS', 'Monthly', [[460, 799], [240, 699]], true, 'Card and UPI terminal for shops, priced per terminal each month. Next-day settlement.'],
+  ['Payment Gateway Setup', 'Payments', 'PAY-PG', 'One-time', [[350, 15000]], true, 'Online payment gateway set up and tested on the customer’s website or app.'],
+  ['Cash Management Service', 'Payments', 'PAY-CMS', 'Monthly', [[600, 10000], [330, 12000]], true, 'Collections, cash pick-up and payouts with daily reports for companies with many branches.'],
+  ['Working Capital Processing', 'Lending', 'LND-WC', 'One-time', [[700, 25000]], true, 'Processing fee for a working capital limit: appraisal, documents and set-up.'],
+  ['Letter of Credit Issuance', 'Trade', 'TRD-LC', 'One-time', [[640, 6000], [90, 7500]], true, 'Issue fee per import letter of credit, including SWIFT charges.'],
+  ['Bank Guarantee Issuance', 'Trade', 'TRD-BG', 'One-time', [[500, 5000]], true, 'Issue fee per bank guarantee, performance or financial.'],
+  ['Wealth Advisory Retainer', 'Wealth', 'WLT-ADV', 'Yearly', [[260, 35000]], true, 'Yearly advisory for promoters and their families: investments, insurance and estate planning.'],
+  ['Forex Hedging Desk', 'Trade', 'TRD-FX', 'Yearly', [[690, 20000]], false, 'Yearly access to the bank’s hedging desk for forwards and options. No longer sold.'],
 ];
 
 function seedProducts(): Product[] {
-  return PRODUCT_CATALOG.map(([name, category, price], i) => ({
-    id: `product-${i + 1}`,
-    name,
-    sku: `PRD-${String(i + 1).padStart(3, '0')}`,
-    category,
-    price,
-    description: `${name} — ${category.toLowerCase()} offering for CRM customers.`,
-    active: i % 7 !== 6,
-    createdAt: daysAgo(between(5, 300)),
-  }));
+  return PRODUCT_CATALOG.map(([name, category, sku, unit, prices, active, description], i) => {
+    // between() is still called once per product so the rand() order of later seed data stays the same.
+    const created = Math.max(between(5, 300), prices[0][0]);
+    return {
+      id: `product-${i + 1}`,
+      name,
+      sku,
+      category,
+      price: prices[prices.length - 1][1],
+      unit,
+      description,
+      active,
+      createdAt: daysAgo(created),
+      priceHistory: prices.map(([ago, price], j) => ({ price, at: daysAgo(j === 0 ? created : ago), by: 'Alex Admin' })),
+    };
+  });
 }
 
 function seedLeads(products: Product[]): Lead[] {
@@ -341,6 +353,52 @@ function attachCampaignsToLeads(leads: Lead[], campaigns: Campaign[]): Lead[] {
   return leads.map((l) => ({ ...l, campaignId: rand() > 0.4 ? pick(campaigns).id : null }));
 }
 
+/**
+ * Fills in what 3.0 quotes carry (owner, charge types, sent and decided dates, approval, history) without calling
+ * rand(), so the rest of the seed stays the same. Discounts above 15% (the default limit) carry an approval.
+ */
+function finishQuotes(quotes: Quote[], products: Product[], accounts: Account[]): Quote[] {
+  const active = OWNER_IDS.filter((id) => SEED_USERS.find((u) => u.id === id)?.active);
+  return quotes.map((q, i) => {
+    const owner = SEED_USERS.find((u) => u.id === active[i % active.length])!;
+    const account = accounts.find((a) => a.id === q.accountId);
+    const lineItems = q.lineItems.map((l) => {
+      const p = products.find((x) => x.id === l.productId);
+      return { ...l, sku: p?.sku, unit: p?.unit ?? 'One-time' };
+    });
+    const created = new Date(q.createdAt).getTime();
+    const at = (ms: number) => new Date(Math.min(ms, now() - 60_000)).toISOString();
+    const over = lineItems.some((l) => l.discountPct > 15);
+    const history: Quote['history'] = [{ at: q.createdAt, by: owner.name, text: `Created by ${owner.name}` }];
+    const out: Quote = { ...q, lineItems, ownerId: owner.id, approval: null, approvedBy: null, sentAt: null, decidedAt: null, rejectReason: null };
+    if (q.status === 'Draft') {
+      if (over && i % 2 === 0) {
+        out.approval = 'waiting';
+        history.push({ at: at(created + 3_600_000), by: owner.name, text: 'Approval asked' });
+      }
+    } else {
+      if (over) {
+        out.approval = 'approved';
+        out.approvedBy = 'Alex Admin';
+        history.push({ at: at(created + 3_600_000), by: owner.name, text: 'Approval asked' }, { at: at(created + 7_200_000), by: 'Alex Admin', text: 'Alex Admin approved the discounts' });
+      }
+      out.sentAt = at(created + DAY / 2);
+      history.push({ at: out.sentAt, by: owner.name, text: `Sent to ${account?.name ?? 'the customer'} by ${owner.name}` });
+      if (q.status === 'Expired') {
+        out.validUntil = at(Math.min(created + 30 * DAY, now() - DAY));
+        out.decidedAt = out.validUntil;
+        history.push({ at: out.decidedAt, by: owner.name, text: 'Marked expired' });
+      } else if (q.status === 'Accepted' || q.status === 'Rejected') {
+        out.decidedAt = at(created + 6 * DAY);
+        if (q.status === 'Rejected') out.rejectReason = QUOTE_REJECT_REASONS[i % 4];
+        history.push({ at: out.decidedAt, by: owner.name, text: q.status === 'Accepted' ? 'Customer accepted' : `Rejected: ${out.rejectReason}` });
+      }
+    }
+    out.history = history;
+    return out;
+  });
+}
+
 function seedQuotes(accounts: Account[], deals: Deal[], products: Product[]): Quote[] {
   const quotes: Quote[] = [];
   for (let i = 0; i < 15; i++) {
@@ -470,6 +528,8 @@ function seedStatusCodeSets(): StatusCodeSet[] {
     { id: 'status-ticket-channel', module: 'tickets', field: 'channel', name: 'Ticket Channel', options: [...TICKET_CHANNELS], isSystem: true },
     { id: 'status-ticket-category', module: 'tickets', field: 'category', name: 'Ticket Category', options: [...TICKET_CATEGORIES], isSystem: true },
     { id: 'status-ticket-canned', module: 'tickets', field: 'canned', name: 'Ticket Canned Replies', options: [...CANNED_REPLIES], isSystem: true },
+    { id: 'status-product-family', module: 'products', field: 'category', name: 'Product Family', options: [...PRODUCT_CATEGORIES], isSystem: true },
+    { id: 'status-quote-reject-reason', module: 'quotes', field: 'rejectReason', name: 'Quote Rejection Reason', options: [...QUOTE_REJECT_REASONS], isSystem: true },
     {
       id: 'status-campaign-status',
       module: 'campaigns',
@@ -768,7 +828,7 @@ export function buildSeedData() {
 
   const campaigns = seedCampaigns();
   const leadsWithCampaigns = attachCampaignsToLeads(leads, campaigns);
-  const quotes = seedQuotes(accounts, deals, products);
+  const quotes = finishQuotes(seedQuotes(accounts, deals, products), products, accounts);
   const customFieldDefs = seedCustomFieldDefs();
   const layouts = seedLayouts();
   const pageLayouts = seedPageLayouts();
@@ -806,6 +866,7 @@ export function buildSeedData() {
     statusCodeSets,
     slaConfigs,
     slaRules: [] as SlaRules[],
+    quoteSettings: [] as QuoteSettings[],
     autoFlowProcesses,
     audit: [
       { id: 'audit-1', user: 'Alex Admin', action: 'seed', detail: 'Database seeded with sample data', when: new Date().toISOString() },

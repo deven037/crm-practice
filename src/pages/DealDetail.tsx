@@ -156,7 +156,7 @@ export function DealDetail() {
       case 'account':
         return <AccountCard key={c.id} className={cls} style={style} account={account} contacts={contacts} />;
       case 'quotes':
-        return <QuotesCard key={c.id} className={cls} style={style} quotes={quotes} canWrite={canWrite} />;
+        return <QuotesCard key={c.id} className={cls} style={style} quotes={quotes} canWrite={canWrite} dealId={deal.id} />;
       case 'details':
         return <DetailsCard key={c.id} className={cls} style={style} deal={deal} owner={owner} />;
     }
@@ -394,14 +394,14 @@ function AccountCard({ className, style, account, contacts }: CardProps & { acco
   );
 }
 
-function QuotesCard({ className, style, quotes, canWrite }: CardProps & { quotes: Quote[]; canWrite: boolean }) {
+function QuotesCard({ className, style, quotes, canWrite, dealId }: CardProps & { quotes: Quote[]; canWrite: boolean; dealId: string }) {
   return (
     <section className={className} style={style} data-testid="deal-quotes">
       <div className="deal-box-h"><h2>Quotes</h2><span className="muted">{quotes.length}</span></div>
       {quotes.length === 0 ? (
         <>
           <p className="muted deal-none">No quotes for this deal yet.</p>
-          {canWrite && <Link className="btn deal-new-quote" to="/quotes/new"><Plus size={15} aria-hidden="true" /> New quote</Link>}
+          {canWrite && <Link className="btn deal-new-quote" to={`/quotes/new?deal=${dealId}`}><Plus size={15} aria-hidden="true" /> New quote</Link>}
         </>
       ) : quotes.map((q) => (
         <div className="acct-qrow" key={q.id}>

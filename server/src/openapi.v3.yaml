@@ -311,3 +311,46 @@ paths:
         - { name: kind, in: path, required: true, schema: { type: string, enum: [logo, login] } }
       responses:
         '204': { description: Removed. }
+  /quotes/{id}/approval:
+    post:
+      tags: [Quotes]
+      summary: Ask for, give or send back the approval a discount above the bank's limit needs
+      description: >
+        `ask` puts a draft quote in the approver's hands. `approve` and `return` are for the approver named in
+        quote settings, or any admin when none is named. Changing the lines of an approved quote removes the approval.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [decision], properties: { decision: { type: string, enum: [ask, approve, return] }, note: { type: string } } }
+      responses:
+        '200': { description: The quote with its new approval state. }
+        '403': { description: Only the approver can decide. }
+        '409': { description: 'Not a draft, no discount above the limit, or nobody asked (not_draft, approval_not_needed, not_waiting).' }
+  /quoteSettings:
+    get:
+      tags: [Quotes]
+      summary: The bank's quote rules, with defaults (GST 18%, 30 days, approval above 15%)
+      responses:
+        '200': { description: 'taxName, taxPercent, validityDays, discountLimit, approverId.' }
+    put:
+      tags: [Quotes]
+      summary: Save the bank's quote rules (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [taxName, taxPercent, validityDays, discountLimit, approverId]
+              properties:
+                taxName: { type: string }
+                taxPercent: { type: number }
+                validityDays: { type: integer }
+                discountLimit: { type: number }
+                approverId: { type: string, nullable: true }
+      responses:
+        '200': { description: The saved settings. }
+        '409': { description: The approver is not a user of this bank (unknown_user). }

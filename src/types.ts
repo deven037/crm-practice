@@ -39,17 +39,36 @@ export interface Lead {
   customFields?: Record<string, string | number | boolean | null>;
 }
 
-export const PRODUCT_CATEGORIES = ['Subscription', 'Service', 'Add-on', 'License', 'Training'];
+/** The standard product families; a bank edits its own list in Setup → Status codes ("Products — Family"). */
+export const PRODUCT_CATEGORIES = ['Accounts', 'Cards', 'Payments', 'Lending', 'Trade', 'Wealth'];
+/** The standard reasons a customer turns a quote down; a bank edits its own list in Setup → Status codes. */
+export const QUOTE_REJECT_REASONS = ['Price too high', 'Chose another bank', 'No longer needed', 'Terms not acceptable', 'Approval took too long', 'Customer went silent', 'Other'];
+
+/** How a price is charged. A quote's first-year value counts monthly prices 12 times. */
+export type ChargeType = 'One-time' | 'Monthly' | 'Yearly';
+export const CHARGE_TYPES: ChargeType[] = ['One-time', 'Monthly', 'Yearly'];
+
+/** One price a product had from `at` on, and who set it. */
+export interface PricePoint {
+  price: number;
+  at: string;
+  by: string;
+}
 
 export interface Product {
   id: string;
   name: string;
   sku: string;
+  /** The product family, one of the bank's "Product family" list. */
   category: string;
   price: number;
   description: string;
   active: boolean;
   createdAt: string;
+  /** Missing on products made before 3.0: they count as one-time. */
+  unit?: ChargeType;
+  /** Every price the product has had, oldest first. The server adds a point when the price changes. */
+  priceHistory?: PricePoint[];
   layoutName?: string | null;
   customFields?: Record<string, string | number | boolean | null>;
 }
@@ -281,6 +300,19 @@ export interface QuoteLineItem {
   quantity: number;
   unitPrice: number;
   discountPct: number;
+  /** Copied from the product when the line is added, so a quote never changes when the product does. */
+  sku?: string;
+  unit?: ChargeType;
+}
+
+/** null: no approval asked. Discounts above the bank's limit need 'approved' before the quote can be sent. */
+export type QuoteApproval = 'waiting' | 'approved' | null;
+
+/** One line of a quote's history, written by the server. */
+export interface QuoteEvent {
+  at: string;
+  by: string;
+  text: string;
 }
 
 export interface Quote {
@@ -293,6 +325,25 @@ export interface Quote {
   validUntil: string;
   createdAt: string;
   customFields?: Record<string, string | number | boolean | null>;
+  ownerId?: string | null;
+  approval?: QuoteApproval;
+  approvedBy?: string | null;
+  sentAt?: string | null;
+  decidedAt?: string | null;
+  rejectReason?: string | null;
+  history?: QuoteEvent[];
+}
+
+/** A bank's quote rules (Setup → Quote settings). One row; the defaults apply until an admin saves it. */
+export interface QuoteSettings {
+  id: string;
+  taxName: string;
+  taxPercent: number;
+  validityDays: number;
+  /** Discounts above this percentage need approval before the quote is sent. */
+  discountLimit: number;
+  /** Who approves; when empty, any admin can. */
+  approverId: string | null;
 }
 
 export interface Activity {
@@ -526,7 +577,7 @@ export interface DedupeRule {
 }
 
 /** Fields whose options are safe to reconfigure — never Ticket/Quote status, which have protected transition maps. */
-export type StatusCodeModule = 'leads' | 'deals' | 'campaigns' | 'activities' | 'tickets';
+export type StatusCodeModule = 'leads' | 'deals' | 'campaigns' | 'activities' | 'tickets' | 'products' | 'quotes';
 
 export interface StatusCodeSet {
   id: string;
