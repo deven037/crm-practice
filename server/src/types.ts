@@ -161,6 +161,9 @@ export interface Campaign {
 export type TaskPriority = 'Low' | 'Medium' | 'High';
 export const TASK_PRIORITIES: TaskPriority[] = ['Low', 'Medium', 'High'];
 
+/** The kinds of record a task, meeting or activity can be about. */
+export type LinkedModule = 'deals' | 'contacts' | 'accounts' | 'leads';
+
 export interface TaskItem {
   id: string;
   title: string;
@@ -168,6 +171,34 @@ export interface TaskItem {
   priority: TaskPriority;
   completed: boolean;
   order: number;
+  /** Who does it. Tasks saved before 3.0 have none and show for everyone. */
+  ownerId?: string | null;
+  /** "HH:MM" when the task is due at a set time of day. */
+  dueTime?: string | null;
+  recordModule?: LinkedModule | null;
+  recordId?: string | null;
+}
+
+/** A meeting, call or visit on the calendar. */
+export interface Meeting {
+  id: string;
+  title: string;
+  /** One of the bank's activity types (Setup, status codes), for example Meeting, Call or Visit. */
+  type: string;
+  /** Start as an ISO date-time. */
+  start: string;
+  durationMin: number;
+  ownerId: string;
+  /** Colleagues taking part (user ids), the owner included. */
+  attendeeIds: string[];
+  /** Customers taking part (contact ids). */
+  contactIds: string[];
+  recordModule?: LinkedModule | null;
+  recordId?: string | null;
+  location: string;
+  reminder: string;
+  notes: string;
+  createdAt: string;
 }
 
 export type TicketStatus = 'Open' | 'In Progress' | 'Resolved' | 'Closed';
@@ -238,9 +269,23 @@ export interface Quote {
 
 export interface Activity {
   id: string;
+  /** A sentence that reads on its own ("Priya Nair called Kavya Anand"), written when the activity is saved. */
   text: string;
+  /** Older activities carry an emoji here instead of a type; new ones repeat the type. */
   icon: string;
   when: string;
+  /** One of the bank's activity types, or "Deal update" / "Task done" for ones the CRM records itself. */
+  type?: string;
+  userId?: string;
+  userName?: string;
+  recordModule?: LinkedModule | null;
+  recordId?: string | null;
+  recordName?: string;
+  outcome?: string;
+  durationMin?: number | null;
+  notes?: string;
+  /** Recorded by the CRM itself (a stage change, a finished task), not logged by a person. */
+  system?: boolean;
 }
 
 export interface AuditEntry {
@@ -422,7 +467,7 @@ export interface DedupeRule {
   matchType: DedupeMatchType;
 }
 
-export type StatusCodeModule = 'leads' | 'deals' | 'campaigns';
+export type StatusCodeModule = 'leads' | 'deals' | 'campaigns' | 'activities';
 
 export interface StatusCodeSet {
   id: string;

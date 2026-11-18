@@ -7,7 +7,7 @@ import { matchPages } from '../CommandBar';
 describe('side menu', () => {
   it('holds only module pages: no Settings, Setup, Test Cases or create links', () => {
     const links = NAV_GROUPS.flatMap((g) => g.items.map((i) => i.to));
-    expect(links).toEqual(['/', '/activity', '/leads', '/contacts', '/accounts', '/deals', '/quotes', '/products', '/campaigns', '/tasks', '/tickets', '/data-studio']);
+    expect(links).toEqual(['/', '/activity', '/leads', '/contacts', '/accounts', '/deals', '/quotes', '/products', '/campaigns', '/tasks', '/calendar', '/tickets', '/data-studio']);
     expect(links.some((to) => to.endsWith('/new'))).toBe(false);
   });
 

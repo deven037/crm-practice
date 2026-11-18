@@ -6,6 +6,7 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 import { notFound, conflict } from '../errors.js';
 import { autoCloseDate } from '../utils.js';
 import { Deal, DealStageEvent } from '../types.js';
+import { recordSystemActivity } from './activities.js';
 
 /** Enough history for any real deal while keeping each row small (storage rule: no growing logs on records). */
 export const STAGE_HISTORY_LIMIT = 50;
@@ -62,6 +63,9 @@ export const dealsRouter: Router = crudRouter<Deal>({
       createdAt: existing?.createdAt ?? new Date().toISOString(),
     };
     const stamped = existing ? autoCloseDate(existing.stage, built) : built;
+    if (existing && existing.stage !== stamped.stage) {
+      recordSystemActivity(req, 'Deal update', `${req.user?.name ?? 'Someone'} moved ${stamped.name} to ${stamped.stage}`, 'deals', id);
+    }
     return withStageHistory(stamped, existing, req);
   },
 });

@@ -1,5 +1,5 @@
 import {
-  Activity as ActivityIcon, Building2, CheckSquare, Database, LayoutDashboard, Megaphone, Package, Receipt, Target, Ticket, TrendingUp, User,
+  Activity as ActivityIcon, Building2, CalendarDays, CheckSquare, Database, LayoutDashboard, Megaphone, Package, Receipt, Target, Ticket, TrendingUp, User,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -38,6 +38,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Service',
     items: [
       { to: '/tasks', label: 'Tasks', icon: CheckSquare },
+      { to: '/calendar', label: 'Calendar', icon: CalendarDays },
       { to: '/tickets', label: 'Tickets', icon: Ticket },
     ],
   },

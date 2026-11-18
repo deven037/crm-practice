@@ -14,6 +14,9 @@ const MODULE_FIELD_OPTIONS: { value: string; label: string; module: StatusCodeMo
   { value: 'deals.stage', label: 'Deals — Stage', module: 'deals', field: 'stage' },
   { value: 'campaigns.status', label: 'Campaigns — Status', module: 'campaigns', field: 'status' },
   { value: 'campaigns.channel', label: 'Campaigns — Channel', module: 'campaigns', field: 'channel' },
+  { value: 'deals.lostReason', label: 'Deals — Lost reason', module: 'deals', field: 'lostReason' },
+  { value: 'activities.type', label: 'Activities — Type', module: 'activities', field: 'type' },
+  { value: 'activities.outcome', label: 'Activities — Call outcome', module: 'activities', field: 'outcome' },
 ];
 
 function emptySet(): StatusCodeSet {
