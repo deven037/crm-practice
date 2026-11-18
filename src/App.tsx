@@ -37,6 +37,10 @@ import { DealForm } from './pages/DealForm';
 import { DealDetail } from './pages/DealDetail';
 import { DealEdit } from './pages/DealEdit';
 import { Tasks } from './pages/Tasks';
+import { TaskEdit, TaskForm } from './pages/TaskForm';
+import { Calendar } from './pages/Calendar';
+import { MeetingEdit, MeetingForm } from './pages/MeetingForm';
+import { LogActivity } from './pages/LogActivity';
 import { Tickets } from './pages/Tickets';
 import { TicketForm } from './pages/TicketForm';
 import { TicketDetail } from './pages/TicketDetail';
@@ -116,6 +120,7 @@ export function App() {
             <Route path="/" element={<Protected><Dashboard /></Protected>} />
             <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
             <Route path="/activity" element={<Protected><ActivityPage /></Protected>} />
+            <Route path="/activity/new" element={<Protected roles={['admin', 'rep']}><LogActivity /></Protected>} />
             <Route path="/leads" element={<Protected><Leads /></Protected>} />
             <Route path="/leads/new" element={<Protected><LeadForm /></Protected>} />
             <Route path="/leads/:id" element={<Protected><LeadDetail /></Protected>} />
@@ -140,6 +145,11 @@ export function App() {
             <Route path="/deals/:id" element={<Protected><DealDetail /></Protected>} />
             <Route path="/deals/:id/edit" element={<Protected roles={['admin', 'rep']}><DealEdit /></Protected>} />
             <Route path="/tasks" element={<Protected><Tasks /></Protected>} />
+            <Route path="/tasks/new" element={<Protected roles={['admin', 'rep']}><TaskForm /></Protected>} />
+            <Route path="/tasks/:id/edit" element={<Protected roles={['admin', 'rep']}><TaskEdit /></Protected>} />
+            <Route path="/calendar" element={<Protected><Calendar /></Protected>} />
+            <Route path="/calendar/new" element={<Protected roles={['admin', 'rep']}><MeetingForm /></Protected>} />
+            <Route path="/calendar/:id/edit" element={<Protected roles={['admin', 'rep']}><MeetingEdit /></Protected>} />
             <Route path="/tickets" element={<Protected><Tickets /></Protected>} />
             <Route path="/tickets/new" element={<Protected><TicketForm /></Protected>} />
             <Route path="/tickets/:id" element={<Protected><TicketDetail /></Protected>} />

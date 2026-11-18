@@ -33,6 +33,7 @@ import {
   SlaConfig,
   StatusCodeSet,
   TaskItem,
+  Meeting,
   Ticket,
   User,
 } from './types.js';
@@ -454,6 +455,8 @@ function seedStatusCodeSets(): StatusCodeSet[] {
     { id: 'status-lead-status', module: 'leads', field: 'status', name: 'Lead Status', options: [...LEAD_STATUSES], isSystem: true },
     { id: 'status-deal-stage', module: 'deals', field: 'stage', name: 'Deal Stage', options: [...DEAL_STAGES], isSystem: true },
     { id: 'status-deal-lost-reason', module: 'deals', field: 'lostReason', name: 'Deal Lost Reason', options: [...DEAL_LOST_REASONS], isSystem: true },
+    { id: 'status-activity-type', module: 'activities', field: 'type', name: 'Activity Type', options: [...ACTIVITY_TYPES], isSystem: true },
+    { id: 'status-activity-outcome', module: 'activities', field: 'outcome', name: 'Call Outcome', options: [...CALL_OUTCOMES], isSystem: true },
     {
       id: 'status-campaign-status',
       module: 'campaigns',
@@ -647,6 +650,64 @@ function applyCustomFieldExamples(leads: Lead[], accounts: Account[]) {
   }
 }
 
+export const ACTIVITY_TYPES = ['Call', 'Meeting', 'Visit', 'Email', 'Note'];
+export const CALL_OUTCOMES = ['Connected', 'Left a voicemail', 'No answer', 'Asked to call back', 'Wrong number'];
+const TEAM = ['user-1', 'user-2', 'user-4'];
+
+/** Gives the seeded tasks an owner, a linked customer and, for some, a time of day. Uses the row number, not chance. */
+function enrichTasks(tasks: TaskItem[], deals: Deal[], contacts: Contact[], accounts: Account[]): void {
+  tasks.forEach((task, i) => {
+    task.ownerId = TEAM[i % TEAM.length];
+    task.dueTime = i % 4 === 1 ? '15:00' : i % 4 === 3 ? '10:30' : null;
+    const kind = i % 3;
+    const record = kind === 0 ? deals[i % deals.length] : kind === 1 ? contacts[i % contacts.length] : accounts[i % accounts.length];
+    task.recordModule = kind === 0 ? 'deals' : kind === 1 ? 'contacts' : 'accounts';
+    task.recordId = record?.id ?? null;
+  });
+}
+
+/** This week's meetings, calls and visits, placed on the current Monday-to-Friday so the calendar never starts empty. */
+function seedMeetings(deals: Deal[], contacts: Contact[], accounts: Account[]): Meeting[] {
+  const monday = new Date();
+  monday.setHours(0, 0, 0, 0);
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  const at = (day: number, minutes: number) => new Date(monday.getTime() + day * DAY + minutes * 60 * 1000).toISOString();
+  const plan: [string, string, number, number, number, 'deals' | 'contacts' | 'accounts' | null, number, string[], string][] = [
+    ['Pipeline review', 'Meeting', 0, 570, 45, null, 0, TEAM, 'Board room 2'],
+    ['Lunch with {c}', 'Meeting', 0, 780, 60, 'contacts', 3, ['user-2'], 'Café near the branch'],
+    ['Credit committee', 'Meeting', 1, 600, 60, 'deals', 2, ['user-1', 'user-2'], 'Board room 1'],
+    ['Call: {c}', 'Call', 1, 690, 30, 'contacts', 0, ['user-2'], 'Phone'],
+    ['Site visit: {a}', 'Visit', 1, 900, 90, 'accounts', 4, ['user-2'], 'Customer office'],
+    ['{d} review', 'Meeting', 2, 660, 60, 'deals', 6, ['user-2', 'user-4'], 'Video call'],
+    ['Call: {c}', 'Call', 2, 840, 30, 'contacts', 5, ['user-2'], 'Phone'],
+    ['Call: {c}', 'Call', 2, 855, 30, 'contacts', 7, ['user-4'], 'Phone'],
+    ['Branch huddle', 'Meeting', 3, 540, 30, null, 0, TEAM, 'Floor 3'],
+    ['Visit: {a}', 'Visit', 3, 720, 120, 'accounts', 9, ['user-1', 'user-2'], 'Customer site'],
+    ['{d} demo', 'Meeting', 4, 960, 60, 'deals', 10, ['user-2'], 'Video call'],
+    ['Portfolio review', 'Meeting', 4, 600, 60, null, 0, ['user-1'], 'Board room 2'],
+  ];
+  return plan.map(([title, type, day, start, dur, module, index, who, location], i) => {
+    const deal = deals[index % deals.length], contact = contacts[index % contacts.length], account = accounts[index % accounts.length];
+    const record = module === 'deals' ? deal : module === 'contacts' ? contact : module === 'accounts' ? account : null;
+    return {
+      id: `meeting-${i + 1}`,
+      title: title.replace('{c}', contact?.name ?? 'customer').replace('{a}', account?.name ?? 'customer').replace('{d}', deal?.name ?? 'Deal'),
+      type,
+      start: at(day, start),
+      durationMin: dur,
+      ownerId: who[0],
+      attendeeIds: who,
+      contactIds: module === 'contacts' && contact ? [contact.id] : [],
+      recordModule: record ? module : null,
+      recordId: record?.id ?? null,
+      location,
+      reminder: '15 minutes before',
+      notes: '',
+      createdAt: new Date(monday.getTime() - 3 * DAY).toISOString(),
+    };
+  });
+}
+
 export function buildSeedData() {
   rand = mulberry32(42);
   const accounts = seedAccounts();
@@ -672,6 +733,8 @@ export function buildSeedData() {
   const slaConfigs = seedSlaConfigs();
   const autoFlowProcesses = seedAutoFlowProcesses(products);
   applyCustomFieldExamples(leadsWithCampaigns, accounts);
+  enrichTasks(tasks, deals, contacts, accounts);
+  const meetings = seedMeetings(deals, contacts, accounts);
 
   return {
     users: [...SEED_USERS], // copy — SEED_USERS is a shared module-level constant, never hand out the live reference
@@ -681,6 +744,7 @@ export function buildSeedData() {
     contacts,
     deals,
     tasks,
+    meetings,
     tickets,
     activities,
     notifications,

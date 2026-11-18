@@ -1,0 +1,1209 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Harbor Activity 3.0</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Activity, Tasks and Calendar 3.0. Shared tokens and pieces below are the same as design/v3/deals.html; the module styles follow. */
+
+/* Layout: Deals is a pipeline. Chevron stage gates over a board you drag on, with Won and Lost bins; a forecast runway that plots every open deal by close date and win chance; a deal room with a clickable stage path; a full page form that shows where the deal lands on the runway. Tokens mirror src/styles/v3.css. */
+:root {
+  --bank-primary: #1d3a6e; --bank-on: #ffffff; --bank-ink-light: #1d3a6e; --bank-ink-dark: #9db8ee;
+  --bank-ink: var(--bank-ink-light);
+  --bg: color-mix(in srgb, var(--bank-primary) 4%, #f5f6f8);
+  --surface: #ffffff;
+  --surface-2: color-mix(in srgb, var(--bank-primary) 4%, #f3f4f6);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 7%, #e8eaee);
+  --border: color-mix(in srgb, var(--bank-primary) 8%, #e2e5ea);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 10%, #cfd4dc);
+  --text: #171b26; --text-muted: #5a6272;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 10%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 26%, var(--surface));
+  --chrome-bg: color-mix(in srgb, var(--bank-primary) 26%, #0a0d15);
+  --chrome-hover: color-mix(in srgb, var(--bank-primary) 34%, #151a26);
+  --chrome-line: color-mix(in srgb, var(--bank-primary) 30%, #1c2331);
+  --chrome-active: color-mix(in srgb, var(--bank-primary) 55%, #1a2030);
+  --chrome-text: #cfd5e3; --chrome-muted: #98a1b6; --chrome-strong: #ffffff;
+  --glass: color-mix(in srgb, var(--surface) 72%, transparent);
+  --glass-line: color-mix(in srgb, var(--text) 9%, transparent);
+  --scrim: color-mix(in srgb, var(--bank-primary) 18%, rgba(9, 12, 20, 0.5));
+  --warn-bg: #fdf0d5; --warn-text: #8a5300; --danger-bg: #fde7e7; --danger-text: #a12626; --ok-bg: #dcf5ea; --ok-text: #0c6b47;
+  --shadow: 0 1px 2px rgba(16, 22, 38, 0.05), 0 4px 12px -2px rgba(16, 22, 38, 0.07);
+  --shadow-lg: 0 4px 8px rgba(16, 22, 38, 0.05), 0 24px 48px -12px rgba(16, 22, 38, 0.24);
+  --shadow-dock: 0 18px 40px -16px color-mix(in srgb, var(--bank-primary) 70%, rgba(0, 0, 0, 0.6));
+  --shadow-bank: 0 6px 18px -6px color-mix(in srgb, var(--bank-primary) 60%, transparent);
+  --font-sans: 'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --fast: 150ms; --base: 220ms; --slow: 350ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bank-ink: var(--bank-ink-dark);
+  --bg: color-mix(in srgb, var(--bank-primary) 7%, #0d1119);
+  --surface: color-mix(in srgb, var(--bank-primary) 5%, #171c28);
+  --surface-2: color-mix(in srgb, var(--bank-primary) 7%, #1f2533);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 9%, #293041);
+  --border: color-mix(in srgb, var(--bank-primary) 10%, #2c3445);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 12%, #3a4358);
+  --text: #e9ecf3; --text-muted: #9aa3b6;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 22%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 42%, var(--surface));
+  --glass: color-mix(in srgb, var(--surface) 68%, transparent);
+  --glass-line: color-mix(in srgb, #fff 9%, transparent);
+  --warn-bg: #3d2c0b; --warn-text: #f7cf7d; --danger-bg: #431417; --danger-text: #ffb1b1; --ok-bg: #0f3327; --ok-text: #86e3b9;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bank-ink: var(--bank-ink-dark);
+  --bg: color-mix(in srgb, var(--bank-primary) 7%, #0d1119);
+  --surface: color-mix(in srgb, var(--bank-primary) 5%, #171c28);
+  --surface-2: color-mix(in srgb, var(--bank-primary) 7%, #1f2533);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 9%, #293041);
+  --border: color-mix(in srgb, var(--bank-primary) 10%, #2c3445);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 12%, #3a4358);
+  --text: #e9ecf3; --text-muted: #9aa3b6;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 22%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 42%, var(--surface));
+  --glass: color-mix(in srgb, var(--surface) 68%, transparent);
+  --glass-line: color-mix(in srgb, #fff 9%, transparent);
+  --warn-bg: #3d2c0b; --warn-text: #f7cf7d; --danger-bg: #431417; --danger-text: #ffb1b1; --ok-bg: #0f3327; --ok-text: #86e3b9;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.45;
+  padding-block: 16px 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-font-smoothing: antialiased;
+}
+body.dragging { cursor: grabbing; -webkit-user-select: none; user-select: none; }
+button, input, select { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--bank-ink); outline-offset: 2px; border-radius: 6px; }
+svg { flex: none; display: block; }
+h2, h3 { font-family: var(--font-display); margin: 0; letter-spacing: -0.01em; }
+i { font-style: normal; }
+
+.deck { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; max-width: 1280px; margin: 0 auto 14px; }
+.deck h1 { font-family: var(--font-display); font-size: 20px; font-weight: 650; margin: 0; flex: 1 1 200px; }
+.deck h1 small { display: block; font-family: var(--font-sans); font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.pick { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); }
+.seg { display: flex; flex-wrap: wrap; padding: 3px; gap: 2px; background: var(--surface-3); border-radius: 999px; }
+.seg button { padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--text-muted); display: flex; align-items: center; gap: 6px; transition: background var(--fast), color var(--fast); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.sw { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
+
+.stage { container-type: inline-size; max-width: 1280px; margin: 0 auto; }
+.app { position: relative; overflow: hidden; display: grid; grid-template-columns: auto minmax(0, 1fr); height: clamp(640px, 86vh, 840px); border-radius: 20px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg);
+  background: radial-gradient(60% 50% at 100% 0%, color-mix(in srgb, var(--bank-primary) 13%, transparent), transparent 70%), radial-gradient(50% 50% at 0% 100%, color-mix(in srgb, var(--bank-primary) 8%, transparent), transparent 70%), var(--bg); }
+.rail { width: 60px; margin: 10px 0 10px 10px; border-radius: 18px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; color: var(--chrome-muted); border: 1px solid var(--chrome-line); box-shadow: var(--shadow-dock);
+  background: radial-gradient(130% 42% at 0% 0%, color-mix(in srgb, var(--bank-primary) 62%, transparent), transparent 72%), var(--chrome-bg); }
+.rail .logo { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 8px; background: var(--bank-primary); color: var(--bank-on); font-family: var(--font-display); font-weight: 700; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+.rail span { width: 40px; height: 36px; border-radius: 10px; display: grid; place-items: center; }
+.rail span.on { color: var(--chrome-strong); background: var(--chrome-active); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+.main { position: relative; min-width: 0; overflow-y: auto; display: flex; flex-direction: column; }
+.tb { position: sticky; top: 0; z-index: 4; display: flex; align-items: center; gap: 10px; margin: 10px 12px 0; padding: 8px 10px 8px 16px; border-radius: 16px; background: var(--glass); -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px); border: 1px solid var(--glass-line); box-shadow: var(--shadow); }
+.crumb { display: flex; gap: 7px; color: var(--text-muted); font-size: 13px; white-space: nowrap; min-width: 0; overflow: hidden; }
+.crumb b { color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.chip-me { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 5px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-weight: 600; font-size: 13px; white-space: nowrap; }
+.av { width: 30px; height: 30px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 11.5px; font-weight: 600; background: var(--bank-primary); color: var(--bank-on); }
+.av.sm { width: 24px; height: 24px; font-size: 9.5px; }
+.av.soft { background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.page { flex: 1; padding: 22px 24px 90px; animation: enter var(--slow) var(--ease-out); }
+@keyframes enter { from { opacity: 0; transform: translateY(10px); } }
+@keyframes pop { from { opacity: 0; transform: scale(.9) translateY(8px); } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes grow { from { transform: scaleX(0); } }
+
+/* shared pieces */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 14px; border-radius: 12px; font-weight: 550; white-space: nowrap; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow);
+  transition: transform var(--fast) var(--ease-spring), border-color var(--fast), filter var(--fast), background var(--fast), color var(--fast); }
+.btn:hover { transform: translateY(-1px); border-color: var(--bank-soft-line); }
+.btn:active { transform: scale(.97); }
+.btn.pri { color: var(--bank-on); border-color: transparent; background: linear-gradient(180deg, color-mix(in srgb, var(--bank-primary) 90%, #fff), var(--bank-primary)); box-shadow: inset 0 1px 0 rgba(255,255,255,.22), var(--shadow-bank); }
+.btn.pri:hover { filter: brightness(1.08); }
+.btn.ghost { background: none; border-color: transparent; box-shadow: none; color: var(--text-muted); }
+.btn.ghost:hover { background: var(--surface-2); color: var(--text); }
+.btn.danger { color: var(--danger-text); }
+.btn.sq { width: 38px; padding: 0; }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap;
+  background: color-mix(in srgb, var(--c) 14%, var(--surface)); color: color-mix(in srgb, var(--c) 62%, var(--text)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 26%, transparent); }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.ph { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 18px; }
+.ph h2 { font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.02em; }
+.ph p { margin: 2px 0 0; color: var(--text-muted); }
+.ph .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+.lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.muted { color: var(--text-muted); }
+.num { font-variant-numeric: tabular-nums; }
+.link { color: var(--bank-ink); font-weight: 550; } .link:hover { text-decoration: underline; }
+.tg { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 500; white-space: nowrap; background: var(--surface-2); color: var(--text-muted); box-shadow: inset 0 0 0 1px var(--border); }
+.tg.add { border: 1px dashed var(--border-strong); background: none; box-shadow: none; }
+.tg.add:hover { color: var(--bank-ink); border-color: var(--bank-soft-line); background: var(--bank-soft); }
+
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; }
+.search { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; flex: 1 1 220px; max-width: 320px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-muted); transition: box-shadow var(--fast), border-color var(--fast); }
+.search:focus-within { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--text); }
+.fchip { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border-radius: 12px; border: 1px dashed var(--border-strong); color: var(--text-muted); font-weight: 500; white-space: nowrap; transition: background var(--fast), border-color var(--fast), color var(--fast); }
+.fchip:hover { background: var(--surface); color: var(--text); }
+.fchip.set { border-style: solid; border-color: var(--bank-soft-line); background: var(--bank-soft); color: var(--bank-ink); }
+.pop-wrap { position: relative; }
+.pop { position: absolute; z-index: 9; top: 44px; left: 0; width: 250px; padding: 6px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg); transform-origin: top left; animation: pop var(--base) var(--ease-spring); }
+.pop.right { left: auto; right: 0; transform-origin: top right; }
+.pop input { width: 100%; height: 34px; padding: 0 10px; margin-bottom: 4px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); outline: 0; }
+.pop input:focus { border-color: var(--bank-ink); }
+.pop .opt { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 10px; border-radius: 10px; text-align: left; font-weight: 500; }
+.pop .opt:hover { background: var(--bank-soft); }
+.pop .opt i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.pop .opt .tick { margin-left: auto; color: var(--bank-ink); opacity: 0; }
+.pop .opt[aria-checked="true"] .tick { opacity: 1; }
+.pop .opt small { margin-left: auto; color: var(--text-muted); font-size: 12px; }
+.pop .none { padding: 10px; color: var(--text-muted); font-size: 12.5px; }
+.empty { padding: 44px 20px; text-align: center; color: var(--text-muted); }
+.empty b { display: block; font-family: var(--font-display); font-size: 17px; color: var(--text); }
+.back { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-weight: 500; margin-bottom: 12px; }
+.back:hover { color: var(--bank-ink); }
+.box { padding: 18px 20px; }
+.box h3 { font-size: 16px; font-weight: 650; margin-bottom: 12px; }
+.box-h { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; } .box-h h3 { margin: 0; flex: 1; }
+.cols { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.stack { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.kv { display: grid; gap: 10px; margin: 0; }
+.kv div { display: flex; gap: 10px; align-items: center; }
+.kv dt { width: 96px; flex: none; font-size: 12.5px; color: var(--text-muted); } .kv dd { margin: 0; min-width: 0; flex: 1; overflow-wrap: anywhere; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.qrow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); } .qrow:last-child { border-bottom: 0; padding-bottom: 0; } .qrow:first-child { padding-top: 0; }
+.qrow b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.mate { display: flex; align-items: center; gap: 10px; padding: 6px; margin: 0 -6px; border-radius: 12px; text-align: left; min-width: 0; width: calc(100% + 12px); transition: background var(--fast); }
+.mate:hover { background: var(--bank-soft); }
+.mate div { min-width: 0; } .mate b, .mate small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .mate b { font-weight: 550; } .mate small { color: var(--text-muted); font-size: 12.5px; }
+.face { --h: var(--bank-primary); width: 30px; height: 30px; border-radius: 10px; flex: none; display: grid; place-items: center; font-family: var(--font-display); font-weight: 650; font-size: 11.5px;
+  background: color-mix(in srgb, var(--h) 20%, var(--surface)); color: color-mix(in srgb, var(--h) 66%, var(--text)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--h) 30%, transparent); }
+.crest { --h: var(--bank-primary); position: relative; width: 38px; height: 38px; flex: none; display: grid; place-items: center; border-radius: 11px 11px 4px 4px; font-family: var(--font-display); font-weight: 700; font-size: 13px; letter-spacing: .02em;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--h) 34%, var(--surface)), color-mix(in srgb, var(--h) 14%, var(--surface))); color: color-mix(in srgb, var(--h) 68%, var(--text)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--h) 32%, transparent), inset 0 -4px 0 color-mix(in srgb, var(--h) 40%, transparent); }
+.crest.sm { width: 22px; height: 22px; font-size: 9px; border-radius: 7px 7px 3px 3px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--h) 32%, transparent), inset 0 -2px 0 color-mix(in srgb, var(--h) 40%, transparent); }
+
+/* dialogs, sheet, form basics (shared with Contacts and Accounts) */
+.scrim { position: absolute; inset: 0; z-index: 10; background: var(--scrim); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); display: grid; place-items: center; padding: 14px; animation: fade var(--base); }
+.dlg { width: min(460px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 22px; background: var(--surface); border: 1px solid var(--glass-line); box-shadow: var(--shadow-lg); animation: pop var(--slow) var(--ease-spring); overflow: hidden; }
+.dlg-head { padding: 18px 22px 0; display: flex; align-items: center; gap: 10px; }
+.dlg-head h3 { font-size: 19px; font-weight: 650; flex: 1; overflow-wrap: anywhere; }
+.dlg-body { padding: 14px 22px 18px; overflow-y: auto; color: var(--text-muted); }
+.dlg-foot { display: flex; gap: 8px; padding: 14px 22px; background: var(--surface-2); border-top: 1px solid var(--border); }
+.dlg-foot .sp { flex: 1; }
+.scrim.edge { place-items: stretch end; padding: 10px; }
+.sheet { width: min(400px, 100%); display: flex; flex-direction: column; border-radius: 20px; background: var(--surface); border: 1px solid var(--glass-line); box-shadow: var(--shadow-lg); overflow: hidden; animation: slide var(--slow) var(--ease-out); }
+@keyframes slide { from { transform: translateX(40px); opacity: 0; } }
+.sheet-body { flex: 1; overflow-y: auto; padding: 16px 22px 20px; display: grid; gap: 14px; align-content: start; }
+.pick-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border-radius: 14px; text-align: left; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); transition: transform var(--fast) var(--ease-spring), border-color var(--fast), background var(--fast), box-shadow var(--fast); }
+.pick-item:hover { transform: translateX(-3px); border-color: var(--bank-ink); background: var(--bank-soft); box-shadow: 0 0 0 3px var(--bank-soft); color: var(--bank-ink); }
+.pick-item .ext { width: 38px; height: 38px; flex: none; border-radius: 11px; display: grid; place-items: center; background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.pick-item div { flex: 1; min-width: 0; } .pick-item b { display: block; font-weight: 600; color: var(--text); } .pick-item small { font-size: 12.5px; }
+.ltabs { display: flex; gap: 4px; padding: 0 16px; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; }
+.ltabs button { position: relative; padding: 10px 12px 12px; font-weight: 550; color: var(--text-muted); white-space: nowrap; transition: color var(--fast); }
+.ltabs button:hover { color: var(--text); }
+.ltabs button::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--bank-primary); transform: scaleX(0); transition: transform var(--base) var(--ease-out); }
+.ltabs button[aria-selected="true"] { color: var(--bank-ink); } .ltabs button[aria-selected="true"]::after { transform: scaleX(1); }
+.sect { padding: 20px 22px; animation: enter var(--base) var(--ease-out); }
+.fg { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.fg .full { grid-column: 1 / -1; }
+.f label, .f .flab { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; font-weight: 500; margin-bottom: 5px; }
+.f label .tg { font-size: 10.5px; padding: 0 6px; }
+.f input, .f select, .f .fake { width: 100%; height: 40px; padding: 0 12px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); outline: 0; transition: border-color var(--fast), box-shadow var(--fast); display: flex; align-items: center; gap: 8px; text-align: left; }
+.f input:focus, .f select:focus, .f .fake:focus-visible { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.f .fake .dn { margin-left: auto; color: var(--text-muted); }
+.f .fake i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.f input[type="range"] { height: 28px; padding: 0; border: 0; box-shadow: none; background: none; accent-color: var(--bank-primary); }
+.f label b { color: var(--bank-ink); font-variant-numeric: tabular-nums; }
+.f.bad input, .f.bad .fake { border-color: var(--danger-text); }
+.f .err { color: var(--danger-text); font-size: 12px; margin-top: 4px; }
+.fpop { width: 100%; min-width: 240px; max-height: 300px; overflow-y: auto; }
+.savebar { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; background: var(--surface-2); border-top: 1px solid var(--border); border-radius: 0 0 18px 18px; }
+.toast { position: absolute; z-index: 12; left: 50%; bottom: 18px; transform: translate(-50%, 80px); padding: 10px 16px; border-radius: 14px; display: flex; align-items: center; gap: 8px; font-weight: 500; white-space: nowrap; color: var(--chrome-strong); background: var(--chrome-bg); border: 1px solid var(--chrome-line); box-shadow: var(--shadow-lg); transition: transform var(--slow) var(--ease-spring); }
+.toast.on { transform: translate(-50%, 0); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 12px 6px 2px 46px; font-size: 12.5px; color: var(--text-muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; } .legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.legend em { margin-left: auto; font-style: normal; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; } }
+/* ---- Activity module: shared bits ---- */
+.eyebrow { display: block; font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.face { --h: var(--bank-primary); width: 26px; height: 26px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 10px; font-weight: 650; font-style: normal;
+  background: color-mix(in srgb, var(--h) 18%, var(--surface)); color: color-mix(in srgb, var(--h) 70%, var(--text)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--h) 30%, transparent); }
+.face.sm { width: 22px; height: 22px; font-size: 9px; }
+.faces { display: flex; } .faces .face { margin-left: -6px; box-shadow: 0 0 0 2px var(--surface); } .faces .face:first-child { margin-left: 0; }
+.rec { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-width: 0; padding: 2px 9px 2px 3px; border-radius: 999px; font-size: 12px; font-weight: 550; color: var(--text); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); white-space: nowrap; transition: background var(--fast); }
+.rec:hover { background: var(--bank-soft); }
+.rec span { overflow: hidden; text-overflow: ellipsis; }
+.rec .k { width: 18px; height: 18px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 8.5px; font-weight: 700; background: var(--c); color: #fff; }
+.ty { --c: var(--bank-primary); display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: color-mix(in srgb, var(--c) 66%, var(--text)); }
+.ty i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.ph .hello { margin: 0 0 2px; }
+.sw-row { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.switch { position: relative; width: 38px; height: 22px; flex: none; border-radius: 999px; background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--border-strong); transition: background var(--base); }
+.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform var(--base) var(--ease-spring); }
+.switch[aria-checked="true"] { background: var(--bank-primary); } .switch[aria-checked="true"]::after { transform: translateX(16px); }
+textarea { font: inherit; color: inherit; }
+.f textarea { width: 100%; min-height: 96px; padding: 10px 12px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); outline: 0; resize: vertical; transition: border-color var(--fast), box-shadow var(--fast); }
+.f textarea:focus { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.pop .opt i.face, .fake i.face { width: 22px; height: 22px; border-radius: 50%; background: color-mix(in srgb, var(--h) 18%, var(--surface)); }
+.cf { position: fixed; z-index: 1001; width: 7px; height: 11px; border-radius: 2px; pointer-events: none; animation: cf 1000ms var(--ease-out) forwards; }
+@keyframes cf { from { transform: translate(-50%, -50%); } 75% { opacity: 1; } to { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--r)); opacity: 0; } }
+.reveal { animation: enter var(--base) var(--ease-out); }
+
+/* ---- My day ---- */
+.dayband { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px 22px; align-items: center; padding: 16px 20px; margin-bottom: 14px; }
+.dayring { display: flex; align-items: center; gap: 12px; padding-right: 22px; border-right: 1px solid var(--border); }
+.dayring b { display: block; font-family: var(--font-display); font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dayring small { color: var(--text-muted); font-size: 12.5px; }
+.ring circle + circle { transition: stroke-dashoffset var(--slow) var(--ease-out); }
+.ribbon { position: relative; height: 78px; min-width: 0; }
+.nextup { display: none; margin: 0; align-items: center; gap: 6px; color: var(--text-muted); } .nextup b { color: var(--text); }
+.ribbon .hr { position: absolute; top: 0; bottom: 18px; width: 0; border-left: 1px dashed var(--border); }
+.ribbon .hr span { position: absolute; bottom: -19px; left: -12px; width: 24px; text-align: center; font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.ribbon .past { position: absolute; left: 0; top: 0; bottom: 18px; border-radius: 8px 0 0 8px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--bank-primary) 6%, transparent)); }
+.rb { --c: var(--bank-primary); position: absolute; top: 6px; height: 36px; display: flex; flex-direction: column; justify-content: center; padding: 0 8px; overflow: hidden; border-radius: 9px; text-align: left; font-size: 11.5px; line-height: 1.2;
+  background: color-mix(in srgb, var(--c) 16%, var(--surface)); box-shadow: inset 3px 0 0 var(--c), inset 0 0 0 1px color-mix(in srgb, var(--c) 24%, transparent);
+  animation: grow-x var(--slow) var(--ease-out) backwards; animation-delay: var(--d); transform-origin: left; transition: transform var(--fast) var(--ease-spring), box-shadow var(--fast); }
+@keyframes grow-x { from { transform: scaleX(.2); opacity: 0; } }
+.rb:hover { transform: translateY(-2px); box-shadow: inset 3px 0 0 var(--c), 0 6px 14px -6px var(--c); }
+.rb b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .rb small { color: var(--text-muted); white-space: nowrap; }
+.rt { --c: var(--bank-ink); position: absolute; top: 47px; width: 11px; height: 11px; margin-left: -5px; transform: rotate(45deg); border-radius: 2px; background: var(--c); box-shadow: 0 0 0 2px var(--surface); }
+.rt.done { background: var(--ok-text); }
+.rnow { position: absolute; top: -4px; bottom: 14px; width: 2px; margin-left: -1px; background: var(--danger-text); border-radius: 2px; }
+.rnow::before { content: ''; position: absolute; top: -3px; left: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--danger-text); animation: beat 2s var(--ease-out) infinite; }
+@keyframes beat { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger-text) 45%, transparent); } 70%, 100% { box-shadow: 0 0 0 8px transparent; } }
+.qadd { padding: 12px 14px; margin-bottom: 14px; }
+.qrow { display: flex; align-items: center; gap: 10px; }
+.qrow .plus { width: 34px; height: 34px; border-radius: 11px; flex: none; display: grid; place-items: center; background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.qrow input { flex: 1; min-width: 0; height: 38px; border: 0; outline: 0; background: none; font-size: 15px; }
+.qchips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 0 44px; min-height: 26px; font-size: 12.5px; color: var(--text-muted); }
+.qc { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-weight: 600; background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); animation: pop var(--base) var(--ease-spring); }
+.tasks { overflow: hidden; }
+.tg-h { display: flex; align-items: center; gap: 8px; padding: 12px 16px 8px; font-weight: 650; }
+.tg-h i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.tg-h small { color: var(--text-muted); font-weight: 500; }
+.tg-h .link { margin-left: auto; font-size: 12.5px; }
+.tgrp + .tgrp { border-top: 1px solid var(--border); }
+.tgrp.late .tg-h { color: var(--danger-text); }
+.trow { display: grid; grid-template-columns: 16px 24px minmax(0, 1fr) auto auto 26px 60px; align-items: center; gap: 10px; padding: 9px 16px; transition: background var(--fast), opacity var(--base); animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); }
+.trow:hover { background: color-mix(in srgb, var(--bank-primary) 4%, var(--surface)); }
+.trow .grip { color: var(--text-muted); opacity: 0; cursor: grab; transition: opacity var(--fast); }
+.trow:hover .grip { opacity: .7; }
+.chk { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: #fff; border: 2px solid var(--border-strong); background: var(--surface); transition: background var(--fast), border-color var(--fast), transform var(--base) var(--ease-spring); }
+.chk svg { opacity: 0; transform: scale(.4); transition: opacity var(--fast), transform var(--base) var(--ease-spring); }
+.chk:hover { border-color: var(--ok-text); }
+.chk[aria-checked="true"] { background: #17936a; border-color: #17936a; transform: scale(1.08); }
+.chk[aria-checked="true"] svg { opacity: 1; transform: scale(1); }
+.tmain { min-width: 0; display: grid; gap: 3px; }
+.tmain b { font-weight: 550; overflow-wrap: anywhere; position: relative; width: fit-content; max-width: 100%; }
+.tmain b::after { content: ''; position: absolute; left: 0; right: 0; top: 52%; height: 1.5px; background: var(--text-muted); transform: scaleX(0); transform-origin: left; transition: transform var(--slow) var(--ease-out); }
+.trow.done .tmain b { color: var(--text-muted); } .trow.done .tmain b::after { transform: scaleX(1); }
+.tmain .rec { justify-self: start; }
+.due { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; white-space: nowrap; color: var(--text-muted); }
+.due.late { color: var(--danger-text); font-weight: 600; } .due.soon { color: var(--warn-text); font-weight: 600; }
+.prio { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; white-space: nowrap; color: color-mix(in srgb, var(--c) 70%, var(--text)); }
+.prio i { width: 7px; height: 7px; border-radius: 2px; transform: rotate(45deg); background: var(--c); }
+.tacts { display: flex; gap: 2px; justify-content: flex-end; opacity: 0; transition: opacity var(--fast); }
+.trow:hover .tacts, .trow:focus-within .tacts { opacity: 1; }
+.tacts button { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; color: var(--text-muted); }
+.tacts button:hover { background: var(--surface-3); color: var(--text); }
+.trow.leaving { animation: leave 420ms var(--ease-out) forwards; }
+@keyframes leave { to { opacity: 0; transform: translateX(24px); } }
+.trow.land { animation: land 600ms var(--ease-spring); }
+@keyframes land { 0% { background: var(--bank-soft); transform: scale(.97); } 100% { background: transparent; } }
+.tg-none { padding: 4px 16px 14px 66px; color: var(--text-muted); font-size: 13px; }
+.cele { padding: 20px 16px; text-align: center; color: var(--text-muted); }
+.cele b { display: block; font-family: var(--font-display); font-size: 17px; color: var(--text); }
+
+/* ---- Calendar ---- */
+.calbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.calbar h3 { font-size: 18px; font-weight: 650; margin: 0 6px; white-space: nowrap; }
+.week { overflow: hidden; }
+.wk-head, .wk-all, .wk-body { display: grid; grid-template-columns: 54px repeat(7, minmax(0, 1fr)); }
+.wk-head { border-bottom: 1px solid var(--border); }
+.wk-head div { padding: 10px 8px 8px; text-align: center; font-size: 12px; color: var(--text-muted); font-weight: 600; }
+.wk-head b { display: block; margin: 2px auto 0; width: 32px; height: 32px; line-height: 32px; border-radius: 50%; font-family: var(--font-display); font-size: 17px; color: var(--text); }
+.wk-head .today b { background: var(--bank-primary); color: var(--bank-on); box-shadow: var(--shadow-bank); }
+.wk-all { border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.wk-all > div { min-height: 34px; padding: 5px 4px; display: flex; flex-direction: column; gap: 3px; border-left: 1px solid var(--border); min-width: 0; }
+.wk-all > div:first-child { border-left: 0; justify-content: center; align-items: flex-end; padding-right: 8px; font-size: 11px; color: var(--text-muted); }
+.wk-task { display: flex; align-items: center; gap: 5px; padding: 2px 6px; border-radius: 6px; font-size: 11.5px; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); text-align: left; }
+.wk-task::before { content: ''; flex: none; width: 7px; height: 7px; border-radius: 2px; transform: rotate(45deg); background: var(--c, var(--bank-ink)); }
+.wk-task.done { color: var(--text-muted); text-decoration: line-through; }
+.wk-body { position: relative; }
+.wk-hours div { height: var(--hp); position: relative; }
+.wk-hours span { position: absolute; top: -8px; right: 8px; font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.wk-col { position: relative; border-left: 1px solid var(--border); background: repeating-linear-gradient(180deg, transparent 0 calc(var(--hp) - 1px), var(--border) calc(var(--hp) - 1px) var(--hp)); cursor: cell; }
+.wk-col.weekend { background-color: color-mix(in srgb, var(--surface-2) 70%, transparent); }
+.wk-col.today { background-color: color-mix(in srgb, var(--bank-primary) 4%, transparent); }
+.ev { --c: var(--bank-primary); position: absolute; left: calc(var(--l) * 100% + 3px); width: calc(var(--w) * 100% - 6px); z-index: 1; display: flex; flex-direction: column; gap: 1px; padding: 5px 7px; overflow: hidden; border-radius: 9px; text-align: left; font-size: 12px; line-height: 1.25; cursor: grab;
+  background: color-mix(in srgb, var(--c) 17%, var(--surface)); box-shadow: inset 3px 0 0 var(--c), inset 0 0 0 1px color-mix(in srgb, var(--c) 26%, transparent);
+  animation: pop var(--base) var(--ease-spring) backwards; animation-delay: var(--d); transition: box-shadow var(--fast), transform var(--fast) var(--ease-spring); touch-action: none; user-select: none; -webkit-user-select: none; }
+.ev:hover { box-shadow: inset 3px 0 0 var(--c), inset 0 0 0 1px color-mix(in srgb, var(--c) 50%, transparent), 0 8px 18px -10px var(--c); z-index: 2; }
+.ev b, .ev small { flex: none; }
+.ev b { font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ev small { color: color-mix(in srgb, var(--c) 60%, var(--text)); font-size: 11px; font-variant-numeric: tabular-nums; }
+.ev.short { flex-direction: row; align-items: center; gap: 6px; padding-top: 2px; padding-bottom: 2px; }
+.ev.moving { z-index: 6; cursor: grabbing; opacity: .92; transform: scale(1.02); box-shadow: inset 3px 0 0 var(--c), var(--shadow-lg); transition: none; }
+.ev.ghosted { opacity: .35; }
+.wk-now { position: absolute; left: 0; right: 0; height: 2px; z-index: 3; background: var(--danger-text); pointer-events: none; }
+.wk-now::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--danger-text); animation: beat 2s var(--ease-out) infinite; }
+.slot-hint { position: absolute; left: 3px; right: 3px; z-index: 0; border-radius: 9px; border: 1.5px dashed var(--bank-soft-line); background: color-mix(in srgb, var(--bank-primary) 6%, transparent); display: grid; place-items: center; font-size: 11.5px; font-weight: 600; color: var(--bank-ink); pointer-events: none; animation: fade var(--fast); }
+.month { overflow: hidden; }
+.mo-head, .mo-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.mo-head div { padding: 9px 10px; font-size: 12px; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+.mo-cell { min-height: 98px; padding: 6px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 3px; min-width: 0; animation: fade var(--slow) backwards; animation-delay: var(--d); }
+.mo-cell:nth-child(7n) { border-right: 0; }
+.mo-cell.out { background: var(--surface-2); } .mo-cell.out .n { color: var(--text-muted); opacity: .6; }
+.mo-cell .n { font-size: 12.5px; font-weight: 600; width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 50%; }
+.mo-cell.today .n { background: var(--bank-primary); color: var(--bank-on); }
+.mo-ev { --c: var(--bank-primary); display: flex; align-items: center; gap: 5px; padding: 2px 6px; border-radius: 6px; font-size: 11.5px; font-weight: 550; text-align: left; white-space: nowrap; overflow: hidden; background: color-mix(in srgb, var(--c) 14%, var(--surface)); }
+.mo-ev i { width: 6px; height: 6px; border-radius: 50%; flex: none; background: var(--c); }
+.mo-ev span { overflow: hidden; text-overflow: ellipsis; }
+.mo-more { font-size: 11.5px; font-weight: 600; color: var(--bank-ink); text-align: left; padding-left: 6px; }
+.evpop { position: absolute; z-index: 9; width: 310px; max-width: calc(100% - 20px); padding: 16px; border-radius: 18px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg); animation: pop var(--base) var(--ease-spring); }
+.evpop h3 { font-size: 17px; font-weight: 650; margin: 6px 26px 6px 0; overflow-wrap: anywhere; }
+.evpop .x { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: var(--text-muted); }
+.evpop .x:hover { background: var(--surface-2); color: var(--text); }
+.evpop dl { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px 8px; margin: 12px 0 14px; align-items: center; color: var(--text-muted); font-size: 13px; }
+.evpop dd { margin: 0; color: var(--text); min-width: 0; overflow-wrap: anywhere; }
+.evpop .acts { display: flex; gap: 8px; }
+.evpop .acts .btn { flex: 1; height: 34px; }
+.agenda .ag-day { padding: 10px 14px 6px; font-weight: 650; display: flex; align-items: baseline; gap: 8px; }
+.agenda .ag-day small { color: var(--text-muted); font-weight: 500; }
+.agenda .ag-day.today { color: var(--bank-ink); }
+.ag-ev { --c: var(--bank-primary); display: grid; grid-template-columns: 52px 3px minmax(0, 1fr); gap: 10px; align-items: center; width: 100%; padding: 8px 14px; text-align: left; }
+.ag-ev time { font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ag-ev i { align-self: stretch; border-radius: 2px; background: var(--c); }
+.ag-ev b { display: block; font-weight: 600; } .ag-ev small { color: var(--text-muted); font-size: 12px; }
+.ag-ev:hover { background: var(--bank-soft); }
+
+/* ---- Activity pulse ---- */
+.pulse-top { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 14px; margin-bottom: 14px; }
+.heatcard { padding: 16px 18px; min-width: 0; }
+.heatwrap { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; padding-bottom: 4px; }
+.heatdays { display: grid; grid-template-rows: repeat(7, 15px); gap: 4px; font-size: 10.5px; color: var(--text-muted); }
+.heatdays span { line-height: 15px; }
+.heat { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 15px); grid-auto-columns: 15px; gap: 4px; }
+.hc { width: 15px; height: 15px; border-radius: 4px; background: var(--surface-3); transition: transform var(--fast) var(--ease-spring), box-shadow var(--fast); animation: fade var(--slow) backwards; animation-delay: var(--d); }
+.hc.l1 { background: color-mix(in srgb, var(--bank-ink) 25%, var(--surface-3)); }
+.hc.l2 { background: color-mix(in srgb, var(--bank-ink) 48%, var(--surface-3)); }
+.hc.l3 { background: color-mix(in srgb, var(--bank-ink) 72%, var(--surface-3)); }
+.hc.l4 { background: var(--bank-ink); }
+.hc.fut { background: transparent; box-shadow: inset 0 0 0 1px var(--border); pointer-events: none; }
+.hc:hover { transform: scale(1.3); z-index: 1; }
+.hc[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--bank-ink); }
+.heatlegend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 10px; font-size: 12.5px; color: var(--text-muted); }
+.heatlegend .scale { display: inline-flex; align-items: center; gap: 3px; margin-left: auto; }
+.heatlegend .scale .hc { width: 11px; height: 11px; border-radius: 3px; animation: none; }
+.heatlegend .scale .hc:hover { transform: none; }
+.mixcard { padding: 16px 18px; min-width: 0; }
+.mixbar { display: flex; height: 12px; margin: 12px 0 14px; overflow: hidden; border-radius: 6px; background: var(--surface-3); }
+.mixbar i { display: block; height: 100%; background: var(--c); transform-origin: left; animation: grow-x var(--slow) var(--ease-out) backwards; animation-delay: var(--d); }
+.mixbar i + i { box-shadow: -2px 0 0 var(--surface); }
+.mixlist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
+.mixlist button { display: flex; align-items: center; gap: 8px; text-align: left; padding: 4px 6px; margin: -4px -6px; border-radius: 8px; min-width: 0; }
+.mixlist button:hover { background: var(--surface-2); }
+.mixlist button[aria-pressed="true"] { background: var(--bank-soft); }
+.mixlist i { width: 9px; height: 9px; border-radius: 3px; background: var(--c); flex: none; }
+.mixlist span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mixlist b { font-variant-numeric: tabular-nums; }
+.ppl { display: grid; gap: 6px; margin-top: 8px; }
+.ppl button { display: grid; grid-template-columns: 22px 92px minmax(0, 1fr) 24px; align-items: center; gap: 8px; padding: 4px 6px; margin: 0 -6px; border-radius: 8px; text-align: left; font-size: 13px; }
+.ppl button:hover { background: var(--surface-2); } .ppl button[aria-pressed="true"] { background: var(--bank-soft); }
+.ppl span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ppl i { height: 8px; border-radius: 4px; background: var(--surface-3); position: relative; overflow: hidden; }
+.ppl i::before { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--w); border-radius: 4px; background: var(--bank-ink); }
+.ppl b { text-align: right; font-variant-numeric: tabular-nums; }
+.feed { overflow: hidden; }
+.fday { position: sticky; top: 0; z-index: 1; display: flex; align-items: baseline; gap: 8px; padding: 12px 18px 8px; font-weight: 650; background: color-mix(in srgb, var(--surface) 92%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.fday small { color: var(--text-muted); font-weight: 500; }
+.fday + .fe { padding-top: 4px; }
+.fe { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; padding: 8px 18px 12px; animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); }
+.fe::before { content: ''; position: absolute; left: 35px; top: 44px; bottom: -8px; width: 2px; background: var(--border); }
+.fe.last::before { display: none; }
+.fbub { --c: var(--bank-primary); position: relative; z-index: 1; width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; color: color-mix(in srgb, var(--c) 72%, var(--text)); background: color-mix(in srgb, var(--c) 18%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 30%, transparent), 0 0 0 3px var(--surface); }
+.fe.sys .fbub { width: 26px; height: 26px; margin: 5px; border-radius: 50%; }
+.fbody { min-width: 0; padding-top: 2px; }
+.fbody p { margin: 0; overflow-wrap: anywhere; }
+.fbody p b { font-weight: 600; }
+.fbody .fdet { margin-top: 6px; padding: 8px 12px; border-radius: 12px; background: var(--surface-2); color: var(--text); font-size: 13px; overflow-wrap: anywhere; }
+.fbody .fmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 6px; font-size: 12.5px; color: var(--text-muted); }
+.fe.sys .fbody { padding-top: 6px; font-size: 13px; color: var(--text-muted); }
+.fe.sys .fbody b { color: var(--text); }
+.ftime { padding-top: 3px; font-size: 12px; color: var(--text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.daychip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 6px 0 12px; border-radius: 999px; font-weight: 600; font-size: 12.5px; background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.daychip button { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; }
+.daychip button:hover { background: var(--surface); }
+
+/* ---- forms and their previews ---- */
+.fcols { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 14px; align-items: start; max-width: 1080px; }
+.fhead { padding: 20px 22px 6px; } .fhead h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; } .fhead p { margin: 4px 0 0; color: var(--text-muted); }
+.sect { padding: 18px 22px 22px; }
+.sect .fg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.fake { cursor: pointer; }
+.fake .dn { margin-left: auto; color: var(--text-muted); }
+.fake i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.fake .faces { margin-right: 2px; }
+.fpop { width: 100%; min-width: 250px; max-height: 300px; overflow-y: auto; }
+.pop .opt .kind { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.durs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.durs button { height: 30px; padding: 0 11px; border-radius: 999px; font-size: 12.5px; font-weight: 550; color: var(--text-muted); box-shadow: inset 0 0 0 1px var(--border-strong); transition: background var(--fast), color var(--fast); }
+.durs button[aria-pressed="true"] { background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.followup { margin-top: 4px; padding: 14px; border-radius: 14px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); }
+.prev { position: sticky; top: 74px; padding: 16px; }
+.prev h4 { margin: 14px 0 8px; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+.prev .fe { padding: 6px 0 0; animation: none; } .prev .fe::before { display: none; }
+.minirec { padding: 10px 12px; border-radius: 14px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); font-size: 13px; }
+.minirec b { display: block; font-weight: 600; }
+.minirec ol { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.minirec li { display: flex; gap: 8px; align-items: baseline; color: var(--text-muted); }
+.minirec li::before { content: ''; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--border-strong)); transform: translateY(1px); }
+.minirec li.new { color: var(--text); font-weight: 550; animation: pop var(--base) var(--ease-spring); }
+.dcol { position: relative; height: 330px; margin-top: 10px; border-radius: 14px; background: repeating-linear-gradient(180deg, transparent 0 29px, var(--border) 29px 30px), var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); overflow: hidden; }
+.dcol .hl { position: absolute; left: 6px; font-size: 10.5px; color: var(--text-muted); transform: translateY(-50%); font-variant-numeric: tabular-nums; }
+.dcol .ev { left: 42px; right: 6px; width: auto; cursor: default; animation: none; }
+.dcol .ev.new { box-shadow: inset 3px 0 0 var(--c), 0 0 0 2px var(--c), var(--shadow); transition: top var(--slow) var(--ease-out), height var(--slow) var(--ease-out); z-index: 2; }
+.dcol .ev.clash { animation: shake 360ms var(--ease-out); }
+@keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.clashnote { display: flex; gap: 8px; margin-top: 10px; padding: 9px 11px; border-radius: 12px; font-size: 12.5px; background: var(--warn-bg); color: var(--warn-text); animation: pop var(--base) var(--ease-spring); }
+.okline { display: flex; gap: 8px; margin-top: 10px; font-size: 12.5px; color: var(--ok-text); }
+
+@container (max-width: 980px) { .pulse-top { grid-template-columns: minmax(0, 1fr); } .trow { grid-template-columns: 16px 24px minmax(0, 1fr) auto 26px 60px; } .trow .prio { display: none; } }
+@container (max-width: 760px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .rail, .chip-me span { display: none; }
+  .page { padding: 18px 14px 90px; }
+  .ph h2 { font-size: 24px; }
+  .ph .acts { width: 100%; } .ph .acts > * { flex: 1; } .ph .acts .btn { width: 100%; }
+  .dayband { grid-template-columns: minmax(0, 1fr); padding: 14px; } .dayring { border-right: 0; padding-right: 0; }
+  .ribbon { display: none; } .nextup { display: flex; flex-wrap: wrap; }
+  .trow { grid-template-columns: 24px minmax(0, 1fr) auto; padding: 10px 14px; gap: 10px; }
+  .trow .grip, .trow .face, .trow .tacts { display: none; }
+  .trow .due { grid-column: 2; justify-self: start; }
+  .tg-none { padding-left: 48px; }
+  .fcols { grid-template-columns: minmax(0, 1fr); }
+  .prev { position: static; order: -1; } .dcol { height: 220px; }
+  .sect { padding: 16px 14px 18px; } .sect .fg { grid-template-columns: minmax(0, 1fr); } .fhead { padding: 16px 14px 6px; }
+  .calbar h3 { width: 100%; order: -1; margin: 0; }
+  .fe { padding-left: 14px; padding-right: 14px; } .fe::before { left: 31px; }
+  .scrim.edge { padding: 0; place-items: end stretch; } .sheet { width: 100%; max-height: 94%; border-radius: 20px 20px 0 0; }
+}
+</style>
+
+<div class="deck">
+  <h1>Activity, Tasks and Calendar <small>Harbor CRM 3.0, design for your review. Five screens, all clickable. Tick tasks, type in the quick-add box, drag meetings.</small></h1>
+  <div class="pick">Screen
+    <div class="seg" id="screens">
+      <button aria-pressed="true" data-s="today">Tasks</button>
+      <button aria-pressed="false" data-s="calendar">Calendar</button>
+      <button aria-pressed="false" data-s="pulse">Activity</button>
+      <button aria-pressed="false" data-s="log">Log activity</button>
+      <button aria-pressed="false" data-s="meeting">New meeting</button>
+    </div>
+  </div>
+  <div class="pick">Bank
+    <div class="seg" id="banks">
+      <button aria-pressed="true" data-bank="0"><i class="sw" style="--c:#1d3a6e"></i>Harbor</button>
+      <button aria-pressed="false" data-bank="1"><i class="sw" style="--c:#9b1c3a"></i>Meridian</button>
+      <button aria-pressed="false" data-bank="2"><i class="sw" style="--c:#0f6b52"></i>Cedar</button>
+    </div>
+  </div>
+  <div class="pick"><div class="seg"><button id="themeBtn" aria-pressed="false">Light / dark</button></div></div>
+</div>
+
+<div class="stage">
+  <div class="app" id="app">
+    <aside class="rail" aria-hidden="true" id="rail"></aside>
+    <div class="main" id="main">
+      <header class="tb">
+        <div class="crumb"><span id="crumbA">Service</span><span>/</span><b id="crumb">Tasks</b></div>
+        <div class="chip-me"><i class="av">PN</i><span>Priya Nair</span></div>
+      </header>
+      <main class="page" id="page"></main>
+    </div>
+    <div id="overlay"></div>
+    <div class="toast" id="toast" role="status"></div>
+  </div>
+</div>
+
+<script>
+const I = {
+  dashboard: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  pulse: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/>',
+  deal: '<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+  checksq: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12l3 3 5-6"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>',
+  plus: '<path d="M5 12h14M12 5v14"/>',
+  x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  down: '<path d="M6 9l6 6 6-6"/>',
+  left: '<path d="M15 18l-6-6 6-6"/>',
+  right: '<path d="M9 18l6-6-6-6"/>',
+  tool: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>',
+  edit: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  trash: '<path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>',
+  mail: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 6L2 7"/>',
+  pin: '<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
+  note: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
+  users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+  grip: '<circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>',
+  bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/>',
+  alert: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+  out: '<path d="M7 17L17 7M8 7h9v9"/>'
+};
+const ic = (n, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const init = (n) => n.split(' ').filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+const hm = (m) => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+const span = (m) => (m >= 60 ? Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' m' : '') : m + ' min');
+// The week of Monday 16 November 2026; today is Tuesday 17th, and it is 14:20.
+const TODAY = new Date(2026, 10, 17), TODAY_IDX = 1, NOW = 14 * 60 + 20;
+const dateOf = (off) => new Date(2026, 10, 17 + off);
+const dLabel = (off) => dateOf(off).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+const dLong = (off) => dateOf(off).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+const isoOf = (off) => { const d = dateOf(off); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const offOf = (iso) => Math.round((new Date(iso + 'T00:00') - TODAY) / 864e5);
+
+const USERS = { PN: ['Priya Nair', '#1d3a6e'], AD: ['Arjun Das', '#d9642b'], SI: ['Sana Iyer', '#0f97a8'] };
+const face = (u, cls = '') => `<i class="face ${cls}" style="--h:${USERS[u] ? USERS[u][1] : '#6d4fd6'}" title="${esc(USERS[u] ? USERS[u][0] : u)}">${init(USERS[u] ? USERS[u][0] : u)}</i>`;
+const KIND = { Deal: '#c98a12', Contact: '#2f6fe0', Account: '#6d4fd6' };
+const R = {
+  d1: ['Deal', 'Dealer floor-plan finance'], d2: ['Deal', 'Fleet leasing line'], d3: ['Deal', 'Payroll and escrow accounts'], d4: ['Deal', 'Hospital wing term loan'],
+  d5: ['Deal', 'Export credit limit review'], d6: ['Deal', 'Production overdraft'], d7: ['Deal', 'Treasury sweep set-up'],
+  c1: ['Contact', 'Kavya Anand'], c2: ['Contact', 'Neha Joshi'], c3: ['Contact', 'Rohan Mehta'], c4: ['Contact', 'Dev Malhotra'], c5: ['Contact', 'Ishaan Kapoor'], c6: ['Contact', 'Leela Thomas'], c7: ['Contact', 'Aditi Rao'],
+  a1: ['Account', 'Verma Textiles Pvt Ltd'], a2: ['Account', 'Lumen Cloud Systems'], a3: ['Account', 'Joshi Clinics LLP'], a4: ['Account', 'Coastal Health Network'],
+  a5: ['Account', 'Shetty Foods'], a6: ['Account', 'Northwind Power'], a7: ['Account', 'Sheikh Traders'], a8: ['Account', 'Anand Motors']
+};
+const rec = (k) => (R[k] ? `<button type="button" class="rec" data-rec="${k}" title="Open ${R[k][0].toLowerCase()}"><span class="k" style="--c:${KIND[R[k][0]]}">${R[k][0][0]}</span><span>${esc(R[k][1])}</span></button>` : '');
+// Activity types, task priorities, call outcomes and reminders are lists the bank keeps in Setup.
+const TYPES = [['Call', '#2f6fe0', 'phone'], ['Meeting', '#6d4fd6', 'users'], ['Visit', '#d9642b', 'pin'], ['Email', '#0f97a8', 'mail'], ['Note', '#8a93a6', 'note']];
+const SYS = { 'Deal update': ['#c98a12', 'deal'], 'Task done': ['#17936a', 'check'] };
+const tyOf = (n) => TYPES.find((t) => t[0] === n) || (SYS[n] ? [n, SYS[n][0], SYS[n][1]] : TYPES[0]);
+const PRIO = { High: '#c2384f', Medium: '#c98a12', Low: '#8a93a6' };
+const OUTCOMES = ['Connected', 'Left a voicemail', 'No answer', 'Asked to call back', 'Wrong number'];
+const REMIND = ['No reminder', '5 minutes before', '15 minutes before', '1 hour before', '1 day before'];
+const VERB = { Call: 'called', Meeting: 'met with', Visit: 'visited', Email: 'emailed', Note: 'added a note on' };
+
+let seq = 0;
+const T = [
+  ['Send revised pricing to Kavya Anand', 0, 15 * 60, 'High', false, 'PN', 'c1'],
+  ['Collect audited financials for FY26', 0, null, 'Medium', false, 'PN', 'a1'],
+  ['Call back Neha Joshi about equipment quotes', 0, 17 * 60, 'Medium', true, 'PN', 'c2'],
+  ['Draft the credit memo', 0, null, 'High', true, 'PN', 'd4'],
+  ['Book the Pune plant site visit', 0, null, 'Low', false, 'PN', 'd2'],
+  ['Check escrow deed comments', -2, null, 'High', false, 'PN', 'd3'],
+  ['Chase the signed term sheet', -1, null, 'Medium', false, 'SI', 'd6'],
+  ['Email onboarding documents', 1, 10 * 60, 'Medium', false, 'PN', 'a2'],
+  ['Review limit agreement with Aditi Rao', 1, null, 'High', false, 'PN', 'd5'],
+  ['Follow up with Dev Malhotra', 2, null, 'Low', false, 'PN', 'c4'],
+  ['Schedule a product demo', 3, null, 'Medium', false, 'AD', 'a4'],
+  ['Renewal check before December', 4, null, 'Low', false, 'PN', 'a5'],
+  ['Quarterly review pack', 9, null, 'Medium', false, 'PN', 'a6'],
+  ['Update KYC documents', 12, null, 'Low', false, 'SI', 'a7'],
+  ['Log call notes from Friday', -1, null, 'Low', true, 'PN', 'a8']
+].map((t, i) => ({ id: 't' + seq++, title: t[0], due: t[1], time: t[2], prio: t[3], done: t[4], owner: t[5], rec: t[6], order: i }));
+const M = [
+  ['Pipeline review', 'Meeting', 0, 570, 45, null, ['PN', 'AD', 'SI'], 'Board room 2'],
+  ['Lunch with Dev Malhotra', 'Meeting', 0, 780, 60, 'c4', ['PN'], 'The Bombay Canteen'],
+  ['Credit committee', 'Meeting', 1, 600, 60, 'd4', ['PN', 'AD'], 'Board room 1'],
+  ['Call: Kavya Anand, pricing', 'Call', 1, 690, 30, 'c1', ['PN'], 'Phone'],
+  ['Site visit: Joshi Clinics', 'Visit', 1, 900, 90, 'a3', ['PN'], 'Baner, Pune'],
+  ['Escrow deed legal review', 'Meeting', 2, 660, 60, 'd3', ['PN', 'SI'], 'Video call'],
+  ['Call: Rohan Mehta', 'Call', 2, 840, 30, 'c3', ['PN'], 'Phone'],
+  ['Call: Aditi Rao, limit margin', 'Call', 2, 855, 30, 'c7', ['PN'], 'Phone'],
+  ['Branch huddle', 'Meeting', 3, 540, 30, null, ['PN', 'AD', 'SI'], 'Floor 3'],
+  ['Visit: Northwind Power site', 'Visit', 3, 720, 120, 'a6', ['PN', 'AD'], 'Whitefield'],
+  ['Treasury sweep demo', 'Meeting', 4, 960, 60, 'd7', ['PN'], 'Video call'],
+  ['Portfolio review with Arjun', 'Meeting', 4, 600, 60, null, ['AD'], 'Board room 2']
+].map((m) => ({ id: 'm' + seq++, title: m[0], type: m[1], day: m[2], start: m[3], dur: m[4], rec: m[5], who: m[6], where: m[7] }));
+const MX = [[3, 'Board pack review', 'Meeting'], [5, 'Call: Farah Khan', 'Call'], [6, 'Visit: Shetty Foods', 'Visit'], [10, 'Quarterly planning', 'Meeting'], [12, 'Call: Tara Bose', 'Call'], [12, 'Credit committee', 'Meeting'], [24, 'Visit: Anand Motors plant', 'Visit'], [25, 'Credit committee', 'Meeting'], [26, 'Call: Ishaan Kapoor', 'Call'], [27, 'Year-end targets', 'Meeting'], [30, 'Call: Leela Thomas', 'Call'], [2, 'Branch huddle', 'Meeting'], [9, 'Branch huddle', 'Meeting'], [23, 'Branch huddle', 'Meeting']];
+const F = [
+  [0, 785, 'PN', 'Call', 'c1', 'a8', 'Connected · 12 min', 'Agreed to review the revised pricing by Friday. Wants the floor-plan limit split across two dealers.'],
+  [0, 700, 'SI', 'Email', 'c5', 'a2', '', 'Sent version 3 of the escrow deed with the legal team’s changes.'],
+  [0, 615, 'PN', 'Deal update', 'd1', 'Negotiation'],
+  [0, 570, 'AD', 'Task done', 'Draft the credit memo'],
+  [-1, 1040, 'PN', 'Note', 'a1', '', '', 'Audit expected on 25 November. FY26 numbers look stronger than last year.'],
+  [-1, 900, 'PN', 'Visit', 'a3', '', '1 h 30 m', 'Walked through the Baner clinic floor plan with Neha. Equipment list to follow.'],
+  [-1, 730, 'SI', 'Call', 'c3', 'a1', 'No answer', ''],
+  [-1, 585, 'AD', 'Meeting', 'c6', 'a6', '1 h', 'Due diligence scope agreed. Technical team visits on Thursday.'],
+  [-3, 1010, 'PN', 'Task done', 'Log call notes from Friday'],
+  [-3, 960, 'AD', 'Deal update', 'd4', 'Qualification'],
+  [-3, 690, 'PN', 'Call', 'c4', 'a4', 'Connected · 20 min', 'Partners want a pitch on custody and escrow next week.'],
+  [-4, 905, 'SI', 'Email', 'c7', '', '', 'Shared the export credit limit renewal checklist.'],
+  [-4, 640, 'PN', 'Meeting', 'c2', 'a3', '45 min', 'First meeting on clinic equipment finance.']
+].map((f) => ({ id: 'f' + seq++, day: f[0], t: f[1], who: f[2], type: f[3], obj: f[4], extra: f[5], meta: f[6] || '', det: f[7] || '' }));
+
+let screen = 'today', q = '', owners = new Set(['PN']), prioF = new Set(), doneOpen = false, pop = null, popQ = '', fp = null, landed = null, delTask = null, toastT;
+let calView = 'week', weekOff = 0, evPop = null, drag = null, calWho = new Set(['PN']);
+let fq = '', fType = new Set(), fWho = new Set(), fDay = null;
+let LF = null, MF = null, editMeeting = null, followDue = 1;
+const page = $('page'), app = $('app');
+const narrow = () => app.clientWidth < 760;
+const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function toast(msg) { const t = $('toast'); t.innerHTML = ic('check', 15) + esc(msg); t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2000); }
+function ring(v, s = 60, w = 6, c = 'var(--bank-primary)') { const r = (s - w) / 2, L = 2 * Math.PI * r, o = s / 2; return `<svg class="ring" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" aria-hidden="true"><circle cx="${o}" cy="${o}" r="${r}" fill="none" stroke="var(--surface-3)" stroke-width="${w}"/><circle cx="${o}" cy="${o}" r="${r}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="${L}" stroke-dashoffset="${L * (1 - v)}" transform="rotate(-90 ${o} ${o})"/></svg>`; }
+
+const NAV = { today: 'checksq', calendar: 'calendar', pulse: 'pulse', log: 'pulse', meeting: 'calendar' };
+let LOGO = 'H';
+function rail() { $('rail').innerHTML = '<i class="logo" id="logo">' + LOGO + '</i>' + ['dashboard', 'pulse', 'target', 'user', 'building', 'deal', 'checksq', 'calendar', 'ticket'].map((n) => `<span class="${n === NAV[screen] ? 'on' : ''}">${ic(n, 18)}</span>`).join(''); }
+function show(s, keep) {
+  screen = s; pop = null; popQ = ''; fp = null; evPop = null; delTask = null; drag = null;
+  if (s === 'log' && !keep) LF = { type: 'Call', rec: '', date: isoOf(0), time: hm(NOW), dur: 15, outcome: 'Connected', notes: '', follow: false, ftitle: '' };
+  if (s === 'meeting' && !keep) { editMeeting = null; MF = { title: '', type: 'Meeting', date: isoOf(1), start: 600, dur: 60, rec: '', att: ['PN'], where: '', remind: '15 minutes before', notes: '' }; }
+  render(true);
+}
+function render(fresh) {
+  document.querySelectorAll('#screens button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.s === screen));
+  const crumbs = { today: ['Service', 'Tasks'], calendar: ['Service', 'Calendar'], pulse: ['Home', 'Activity'], log: ['Home', 'Activity / Log activity'], meeting: ['Service', editMeeting ? 'Calendar / Edit meeting' : 'Calendar / New meeting'] }[screen];
+  $('crumbA').textContent = crumbs[0]; $('crumb').textContent = crumbs[1];
+  rail();
+  ({ today: dayView, calendar: calViewFn, pulse: pulseView, log: logView, meeting: meetView })[screen](fresh);
+  if (fresh) { page.style.animation = 'none'; void page.offsetWidth; page.style.animation = ''; $('main').scrollTop = 0; }
+  landed = null;
+  overlay();
+}
+const tools = () => `<span class="pop-wrap"><button class="btn" data-pop="tools">${ic('tool')}ToolBox${ic('down', 14)}</button>${pop === 'tools' ? `<div class="pop right" id="pop">${['Activity types', 'Task priorities', 'Call outcomes', 'Calendar settings', 'Import data'].map((t) => `<button class="opt" data-tool>${t}</button>`).join('')}</div>` : ''}</span>`;
+function pickerPop(kind, items, multiSet, find) {
+  const shown = items.filter((x) => x[1].toLowerCase().includes(popQ.toLowerCase()));
+  return `<div class="pop" id="pop">${find ? `<input id="popQ" placeholder="${find}" value="${esc(popQ)}" aria-label="${find}">` : ''}` +
+    shown.map((x) => `<button class="opt" role="menuitemcheckbox" aria-checked="${multiSet.has(x[0])}" data-pick="${kind}:${x[0]}">${x[2] || ''}${esc(x[1])}<span class="tick">${ic('check', 15)}</span></button>`).join('') + (shown.length ? '' : '<div class="none">Nothing matches.</div>') + '</div>';
+}
+const people = () => Object.keys(USERS).map((u) => [u, USERS[u][0] + (u === 'PN' ? ' (me)' : ''), face(u, 'sm')]);
+const chipLabel = (name, set, all) => name + (set.size && set.size < all ? ' · ' + set.size : '');
+
+/* ---------- Tasks: my day ---------- */
+function taskDue(t) {
+  if (t.done) return { t: t.due === 0 ? 'Done today' : 'Done', c: '' };
+  if (t.due < 0) return { t: plural(-t.due, 'day') + ' late', c: 'late' };
+  if (t.due === 0) return { t: t.time != null ? 'Today ' + hm(t.time) : 'Today', c: 'soon' };
+  if (t.due === 1) return { t: 'Tomorrow' + (t.time != null ? ' ' + hm(t.time) : ''), c: '' };
+  return { t: dLabel(t.due), c: '' };
+}
+function visibleTasks() {
+  const s = q.trim().toLowerCase();
+  return T.filter((t) => (!owners.size || owners.has(t.owner)) && (!prioF.size || prioF.has(t.prio)) && (!s || (t.title + ' ' + (R[t.rec] ? R[t.rec][1] : '')).toLowerCase().includes(s)));
+}
+function taskRow(t, k, fresh) {
+  const d = taskDue(t);
+  return `<div class="trow ${t.done ? 'done' : ''} ${landed === t.id ? 'land' : ''}" data-row="${t.id}" draggable="${!t.done}" style="--d:${fresh ? Math.min(k, 12) * 30 : 0}ms${fresh ? '' : ';animation:none'}">
+    <span class="grip" title="Drag to reorder">${ic('grip', 15)}</span>
+    <button class="chk" role="checkbox" aria-checked="${t.done}" aria-label="Done: ${esc(t.title)}" data-tick="${t.id}">${ic('check', 13)}</button>
+    <div class="tmain"><b>${esc(t.title)}</b>${rec(t.rec)}</div>
+    <span class="due ${d.c}">${d.c === 'late' ? ic('alert', 13) : ic('clock', 13)}${d.t}</span>
+    <span class="prio" style="--c:${PRIO[t.prio]}"><i></i>${t.prio}</span>
+    ${face(t.owner, 'sm')}
+    <span class="tacts"><button data-tedit="${t.id}" aria-label="Edit ${esc(t.title)}">${ic('edit', 15)}</button><button data-tdel="${t.id}" aria-label="Delete ${esc(t.title)}">${ic('trash', 15)}</button></span>
+  </div>`;
+}
+function dayView(fresh) {
+  const v = visibleTasks(), byOrder = (a, b) => a.order - b.order;
+  const open = v.filter((t) => !t.done);
+  const groups = [
+    ['late', 'Overdue', 'var(--danger-text)', open.filter((t) => t.due < 0)],
+    ['today', 'Today', 'var(--bank-primary)', open.filter((t) => t.due === 0)],
+    ['tomorrow', 'Tomorrow', '#2f6fe0', open.filter((t) => t.due === 1)],
+    ['week', 'Later this week', '#6d4fd6', open.filter((t) => t.due > 1 && t.due <= 5)],
+    ['later', 'Later', '#8a93a6', open.filter((t) => t.due > 5)]
+  ];
+  const done = v.filter((t) => t.done);
+  const todayAll = v.filter((t) => t.due === 0 || (t.done && t.due === 0)), todayDone = todayAll.filter((t) => t.done).length;
+  const meetsToday = M.filter((m) => m.day === TODAY_IDX && m.who.includes('PN')).sort((a, b) => a.start - b.start);
+  const x = (m) => ((m - 480) / 660) * 100;
+  let k = 0;
+  page.innerHTML = `
+  <div class="ph"><div><span class="eyebrow hello">${dLong(0)} · Good afternoon, Priya</span><h2>Tasks</h2><p>What needs doing, by when, and for which customer.</p></div>
+    <div class="acts">${tools()}<button class="btn" data-go="log">${ic('pulse')}Log activity</button><button class="btn pri" data-newtask>${ic('plus')}New task</button></div></div>
+  <section class="card dayband" aria-label="Your day">
+    <div class="dayring">${ring(todayAll.length ? todayDone / todayAll.length : 0)}<div><b>${todayDone} of ${todayAll.length}</b><small>done today${groups[0][3].length ? ` · <span style="color:var(--danger-text);font-weight:600">${groups[0][3].length} overdue</span>` : ''}</small></div></div>
+    <div class="ribbon" aria-label="Today’s meetings and timed tasks">
+      <div class="past" style="width:${x(NOW)}%"></div>
+      ${Array.from({ length: 12 }, (_, i) => `<div class="hr" style="left:${(i / 11) * 100}%"><span>${String(8 + i).padStart(2, '0')}</span></div>`).join('')}
+      ${meetsToday.map((m, i) => `<button class="rb" data-ev="${m.id}" style="--c:${tyOf(m.type)[1]};left:${x(m.start)}%;width:${(m.dur / 660) * 100}%;--d:${fresh ? 200 + i * 90 : 0}ms" title="${esc(m.title)} · ${hm(m.start)}–${hm(m.start + m.dur)}"><b>${esc(m.title)}</b><small>${hm(m.start)}</small></button>`).join('')}
+      ${T.filter((t) => t.due === 0 && t.time != null && owners.has(t.owner)).map((t) => `<i class="rt ${t.done ? 'done' : ''}" style="left:${x(t.time)}%" title="${esc(t.title)} · ${hm(t.time)}"></i>`).join('')}
+      <i class="rnow" style="left:${x(NOW)}%" title="Now ${hm(NOW)}"></i>
+    </div>
+    ${(() => { const nx = meetsToday.find((m) => m.start + m.dur > NOW); return `<p class="nextup">${nx ? `${ic('clock', 15)}Next: <b>${esc(nx.title)}</b> at ${hm(nx.start)}` : 'Nothing else on your calendar today.'}</p>`; })()}
+  </section>
+  <section class="card qadd">
+    <div class="qrow"><span class="plus">${ic('plus', 18)}</span><input id="qa" autocomplete="off" placeholder="Add a task. Try “Call Kavya tomorrow 3pm high”" aria-label="Add a task"></div>
+    <div class="qchips" id="qchips" aria-live="polite"><span>Type a task and press Enter. Dates, times, priority and the customer are picked up as you type.</span></div>
+  </section>
+  <div class="tools">
+    <label class="search">${ic('search', 16)}<input id="q" placeholder="Search tasks or customers" value="${esc(q)}" aria-label="Search tasks"></label>
+    <span class="pop-wrap"><button class="fchip ${owners.size ? 'set' : ''}" data-pop="owners">${owners.size === 1 && owners.has('PN') ? 'Mine' : chipLabel('Owner', owners, 3) || 'Everyone'}${ic('down', 14)}</button>${pop === 'owners' ? pickerPop('owner', people(), owners, 'Find a person') : ''}</span>
+    <span class="pop-wrap"><button class="fchip ${prioF.size ? 'set' : ''}" data-pop="prio">${chipLabel('Priority', prioF, 3)}${ic('down', 14)}</button>${pop === 'prio' ? pickerPop('prio', Object.keys(PRIO).map((p) => [p, p, `<i style="--c:${PRIO[p]}"></i>`]), prioF, 'Find a priority') : ''}</span>
+    ${q || prioF.size || !(owners.size === 1 && owners.has('PN')) ? '<button class="btn ghost" id="clear">Reset</button>' : ''}
+  </div>
+  <section class="card tasks" id="tasks">
+    ${open.length === 0 ? `<div class="cele"><b>All clear</b>Nothing open${q || prioF.size ? ' matches these filters' : ''}. Add a task above.</div>` : ''}
+    ${groups.filter((g) => g[3].length || g[0] === 'today').map((g) => `<div class="tgrp ${g[0] === 'late' ? 'late' : ''}" data-group="${g[0]}"><div class="tg-h" style="--c:${g[2]}"><i></i>${g[1]}<small>${g[3].length}</small></div>
+      ${g[3].length ? g[3].sort(byOrder).map((t) => taskRow(t, k++, fresh)).join('') : '<div class="tg-none">Nothing else due today.</div>'}</div>`).join('')}
+    ${done.length ? `<div class="tgrp" data-group="done"><div class="tg-h" style="--c:#17936a"><i></i>Done<small>${done.length}</small><button class="link" data-donetoggle>${doneOpen ? 'Hide' : 'Show'}</button></div>${doneOpen ? done.map((t) => taskRow(t, k++, fresh)).join('') : ''}</div>` : ''}
+  </section>`;
+}
+function parseQuick(text) {
+  const out = { title: text, due: null, time: null, prio: null, rec: null };
+  let s = ' ' + text + ' ';
+  const take = (re, fn) => { const m = s.match(re); if (m) { fn(m); s = s.replace(m[0], ' '); } };
+  take(/\s(today|tonight)\s/i, () => (out.due = 0));
+  take(/\s(tomorrow|tmrw)\s/i, () => (out.due = 1));
+  take(/\snext week\s/i, () => (out.due = 6));
+  take(/\s(?:on\s)?(mon|tue|wed|thu|fri|sat|sun)[a-z]*\s/i, (m) => { const idx = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].indexOf(m[1].toLowerCase()); out.due = ((idx - TODAY_IDX + 7) % 7) || 7; });
+  take(/\s(?:at\s)?(\d{1,2})(?:[:.](\d{2}))?\s?(am|pm)\s/i, (m) => { let h = +m[1] % 12; if (m[3].toLowerCase() === 'pm') h += 12; out.time = h * 60 + (+m[2] || 0); });
+  take(/\s(?:at\s)?(\d{1,2})[:.](\d{2})\s/, (m) => (out.time = +m[1] * 60 + +m[2]));
+  take(/\s(high|urgent|important)(?:\s+priority)?\s/i, () => (out.prio = 'High'));
+  take(/\slow(?:\s+priority)?\s/i, () => (out.prio = 'Low'));
+  const low = s.toLowerCase();
+  for (const k of Object.keys(R)) { const first = R[k][1].split(' ')[0].toLowerCase(); if (first.length > 3 && low.includes(' ' + first)) { out.rec = k; break; } }
+  out.title = s.replace(/\s+/g, ' ').trim();
+  if (out.time != null && out.due == null) out.due = 0;
+  return out;
+}
+function quickChips() {
+  const v = $('qa').value.trim(), el = $('qchips');
+  if (!v) { el.innerHTML = '<span>Type a task and press Enter. Dates, times, priority and the customer are picked up as you type.</span>'; return; }
+  const p = parseQuick(v), due = p.due == null ? 0 : p.due;
+  el.innerHTML = `<span class="qc">${ic('calendar', 13)}${due === 0 ? 'Today' : due === 1 ? 'Tomorrow' : dLabel(due)}</span>` + (p.time != null ? `<span class="qc">${ic('clock', 13)}${hm(p.time)}</span>` : '') +
+    `<span class="qc" style="background:color-mix(in srgb, ${PRIO[p.prio || 'Medium']} 14%, var(--surface));color:color-mix(in srgb, ${PRIO[p.prio || 'Medium']} 70%, var(--text));box-shadow:none">${p.prio || 'Medium'} priority</span>` +
+    (p.rec ? `<span class="qc">${ic('link', 13)}${esc(R[p.rec][1])}</span>` : '') + '<span>· Enter to add</span>';
+}
+function addQuick() {
+  const v = $('qa').value.trim(); if (!v) return;
+  const p = parseQuick(v);
+  const t = { id: 't' + seq++, title: p.title || v, due: p.due == null ? 0 : p.due, time: p.time, prio: p.prio || 'Medium', done: false, owner: 'PN', rec: p.rec, order: -seq };
+  T.push(t); landed = t.id; render(); $('qa').focus();
+  toast('Task added to ' + (t.due === 0 ? 'Today' : t.due === 1 ? 'Tomorrow' : dLabel(t.due)));
+}
+function tick(id, el) {
+  const t = T.find((x) => x.id === id); if (!t) return;
+  if (t.done) { t.done = false; landed = id; render(); return toast('Task reopened'); }
+  el.setAttribute('aria-checked', 'true');
+  const row = el.closest('.trow'); row.classList.add('done');
+  if (!reduced()) burstSmall(el);
+  setTimeout(() => { row.classList.add('leaving'); }, 450);
+  setTimeout(() => { t.done = true; render(); toast('Done: ' + t.title); }, 820);
+}
+function burstSmall(el) {
+  const r = el.getBoundingClientRect();
+  for (let i = 0; i < 10; i++) {
+    const p = document.createElement('i'), a = (i / 10) * Math.PI * 2;
+    p.className = 'cf'; p.style.cssText = `left:${r.left + r.width / 2}px;top:${r.top + r.height / 2}px;width:5px;height:5px;border-radius:50%;--dx:${Math.cos(a) * 26}px;--dy:${Math.sin(a) * 26}px;--r:0deg;background:${['#17936a', '#c98a12', '#2f6fe0'][i % 3]};animation-duration:520ms`;
+    document.body.appendChild(p); setTimeout(() => p.remove(), 700);
+  }
+}
+
+/* ---------- Calendar ---------- */
+const HP = 52;
+function lanes(list) {
+  const sorted = [...list].sort((a, b) => a.start - b.start || b.dur - a.dur), out = new Map();
+  let cluster = [], end = -1;
+  const flush = () => { const cols = []; cluster.forEach((m) => { let c = cols.findIndex((last) => last <= m.start); if (c < 0) { c = cols.length; cols.push(0); } cols[c] = m.start + m.dur; out.set(m.id, { l: c }); }); cluster.forEach((m) => (out.get(m.id).n = cols.length)); };
+  sorted.forEach((m) => { if (m.start >= end && cluster.length) { flush(); cluster = []; } cluster.push(m); end = Math.max(end, m.start + m.dur); });
+  if (cluster.length) flush();
+  return out;
+}
+const meetingsShown = () => M.filter((m) => !calWho.size || m.who.some((u) => calWho.has(u)));
+function calViewFn(fresh) {
+  const wkStart = -TODAY_IDX + weekOff * 7, label = weekOff === 0 && calView === 'week' ? `${dateOf(wkStart).getDate()} – ${dLabel(wkStart + 6).split(' ').slice(1).join(' ')} 2026` : calView === 'month' ? 'November 2026' : `${dLabel(wkStart)} – ${dLabel(wkStart + 6)}`;
+  const mobile = narrow();
+  page.innerHTML = `
+  <div class="ph"><div><h2>Calendar</h2><p>Meetings, calls and visits, with tasks on the days they are due.</p></div>
+    <div class="acts">${tools()}<button class="btn pri" data-go="meeting">${ic('plus')}New meeting</button></div></div>
+  <div class="calbar">
+    <button class="btn" data-wk="today">Today</button><button class="btn sq" data-wk="-1" aria-label="Previous">${ic('left')}</button><button class="btn sq" data-wk="1" aria-label="Next">${ic('right')}</button>
+    <h3>${label}</h3><span style="flex:1"></span>
+    <span class="pop-wrap"><button class="fchip ${calWho.size ? 'set' : ''}" data-pop="calwho">${calWho.size === 1 && calWho.has('PN') ? 'My calendar' : chipLabel('People', calWho, 3) || 'Everyone'}${ic('down', 14)}</button>${pop === 'calwho' ? pickerPop('calwho', people(), calWho, 'Find a person') : ''}</span>
+    ${mobile ? '' : `<div class="seg" role="group" aria-label="View"><button aria-pressed="${calView === 'week'}" data-cv="week">Week</button><button aria-pressed="${calView === 'month'}" data-cv="month">Month</button></div>`}
+  </div>
+  ${mobile ? agendaHtml() : calView === 'month' ? monthHtml(fresh) : weekHtml(fresh)}
+  <div class="legend" style="padding-left:6px">${TYPES.slice(0, 3).map((t) => `<span><i style="--c:${t[1]}"></i>${t[0]}</span>`).join('')}<span><i style="--c:var(--bank-ink);border-radius:2px;transform:rotate(45deg)"></i>Task due</span><em>${mobile ? '' : 'Drag a meeting to move it. Click an empty slot to add one.'}</em></div>`;
+}
+function weekHtml(fresh) {
+  const wkStart = -TODAY_IDX + weekOff * 7, days = Array.from({ length: 7 }, (_, i) => wkStart + i), list = weekOff === 0 ? meetingsShown() : [];
+  return `<section class="card week" style="--hp:${HP}px">
+    <div class="wk-head"><div></div>${days.map((o, i) => `<div class="${o === 0 ? 'today' : ''}">${dateOf(o).toLocaleDateString('en-GB', { weekday: 'short' })}<b>${dateOf(o).getDate()}</b></div>`).join('')}</div>
+    <div class="wk-all"><div>Tasks</div>${days.map((o) => { const ts = T.filter((t) => t.due === o && (!owners.size || owners.has(t.owner))); return `<div>${ts.slice(0, 2).map((t) => `<button class="wk-task ${t.done ? 'done' : ''}" data-taskgo="${t.id}" style="--c:${PRIO[t.prio]}" title="${esc(t.title)}">${esc(t.title)}</button>`).join('')}${ts.length > 2 ? `<button class="mo-more" data-taskgo="${ts[2].id}">+${ts.length - 2} more</button>` : ''}</div>`; }).join('')}</div>
+    <div class="wk-body">
+      <div class="wk-hours">${Array.from({ length: 11 }, (_, i) => `<div>${i ? `<span>${String(8 + i).padStart(2, '0')}:00</span>` : ''}</div>`).join('')}</div>
+      ${days.map((o, i) => {         const shownHere = list.map((m) => (drag && drag.id === m.id && drag.on ? { ...m, day: drag.day, start: drag.start } : m)).filter((m) => m.day === i);
+        const ln2 = lanes(shownHere);
+        return `<div class="wk-col ${i > 4 ? 'weekend' : ''} ${o === 0 ? 'today' : ''}" data-col="${i}" style="height:${11 * HP}px">
+          ${shownHere.map((m, k) => { const L = ln2.get(m.id) || { l: 0, n: 1 }, top = ((m.start - 480) / 60) * HP, h = Math.max(22, (m.dur / 60) * HP - 3), c = tyOf(m.type)[1];
+            return `<button class="ev ${m.dur < 45 ? 'short' : ''} ${drag && drag.id === m.id && drag.on ? 'moving' : ''}" data-ev="${m.id}" style="--c:${c};--l:${L.l / L.n};--w:${1 / L.n};top:${top}px;height:${h}px;--d:${fresh ? 120 + (i * 3 + k) * 40 : 0}ms${fresh ? '' : ';animation:none'}"><b>${esc(m.title)}</b><small>${hm(m.start)}${m.dur >= 45 ? '–' + hm(m.start + m.dur) : ''}</small></button>`; }).join('')}
+          ${o === 0 ? `<i class="wk-now" style="top:${((NOW - 480) / 60) * HP}px"></i>` : ''}
+        </div>`; }).join('')}
+    </div>
+  </section>`;
+}
+function monthHtml(fresh) {
+  const first = new Date(2026, 9, 26), cells = [];
+  for (let i = 0; i < 42; i++) cells.push(new Date(first.getFullYear(), first.getMonth(), first.getDate() + i));
+  const evs = (d) => {
+    const out = [];
+    if (d.getMonth() === 10) {
+      const dom = d.getDate();
+      if (dom >= 16 && dom <= 22) meetingsShown().filter((m) => m.day === dom - 16).sort((a, b) => a.start - b.start).forEach((m) => out.push([m.title, m.type, m.id]));
+      else MX.filter((x) => x[0] === dom).forEach((x) => out.push([x[1], x[2]]));
+    }
+    return out;
+  };
+  return `<section class="card month"><div class="mo-head">${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => `<div>${d}</div>`).join('')}</div><div class="mo-grid">
+    ${cells.map((d, i) => { const e = evs(d), today = d.getMonth() === 10 && d.getDate() === 17; return `<div class="mo-cell ${d.getMonth() !== 10 ? 'out' : ''} ${today ? 'today' : ''}" style="--d:${fresh ? i * 12 : 0}ms"><span class="n">${d.getDate()}</span>
+      ${e.slice(0, 3).map((x) => `<button class="mo-ev" ${x[2] ? `data-ev="${x[2]}"` : 'data-mx'} style="--c:${tyOf(x[1])[1]}"><i></i><span>${esc(x[0])}</span></button>`).join('')}${e.length > 3 ? `<button class="mo-more" data-cv="week">+${e.length - 3} more</button>` : ''}</div>`; }).join('')}
+  </div></section>`;
+}
+function agendaHtml() {
+  const list = meetingsShown();
+  return `<section class="card agenda">${Array.from({ length: 7 }, (_, i) => { const o = i - TODAY_IDX, ms = list.filter((m) => m.day === i).sort((a, b) => a.start - b.start); if (!ms.length) return ''; return `<div class="ag-day ${o === 0 ? 'today' : ''}">${o === 0 ? 'Today' : o === 1 ? 'Tomorrow' : dLabel(o)}<small>${plural(ms.length, 'item')}</small></div>` +
+    ms.map((m) => `<button class="ag-ev" data-ev="${m.id}" style="--c:${tyOf(m.type)[1]}"><time>${hm(m.start)}</time><i></i><span><b>${esc(m.title)}</b><small>${span(m.dur)} · ${esc(m.where)}</small></span></button>`).join(''); }).join('')}</section>`;
+}
+
+/* ---------- Activity ---------- */
+function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
+const HEAT = (() => {
+  const r = rng(42), out = [];
+  for (let w = 11; w >= 0; w--) for (let d = 0; d < 7; d++) {
+    const off = -TODAY_IDX - w * 7 + d;
+    if (off > 0) { out.push({ off, n: -1 }); continue; }
+    const fromFeed = F.filter((f) => f.day === off).length;
+    const n = off >= -6 ? fromFeed : d > 4 ? Math.floor(r() * 2) : Math.floor(2 + r() * 9);
+    out.push({ off, n });
+  }
+  return out;
+})();
+const lvl = (n) => (n <= 0 ? '' : n <= 2 ? 'l1' : n <= 4 ? 'l2' : n <= 7 ? 'l3' : 'l4');
+const TEMPL = [['Call', 'c3', 'a1', 'Connected · 8 min', 'Confirmed the audit timeline.'], ['Email', 'c5', 'a2', '', 'Shared the monthly statement pack.'], ['Meeting', 'c6', 'a6', '45 min', 'Reviewed project milestones.'], ['Call', 'c7', '', 'No answer', ''], ['Visit', 'a5', '', '1 h', 'Met the founder at the bakery unit.'], ['Note', 'a7', '', '', 'GST returns received for two quarters.'], ['Call', 'c1', 'a8', 'Connected · 15 min', 'Discussed dealer onboarding.']];
+function entriesFor(off) {
+  const real = F.filter((f) => f.day === off);
+  if (off >= -6) return real;
+  const n = (HEAT.find((h) => h.off === off) || { n: 0 }).n, r = rng(1000 - off), who = ['PN', 'AD', 'SI'];
+  return Array.from({ length: n }, (_, i) => { const t = TEMPL[Math.floor(r() * TEMPL.length)]; return { id: 'g' + off + '-' + i, day: off, t: 1080 - i * 50 - Math.floor(r() * 30), who: who[Math.floor(r() * 3)], type: t[0], obj: t[1], extra: t[2], meta: t[3], det: t[4] }; });
+}
+function feedText(f) {
+  const u = `<b>${esc(USERS[f.who][0])}</b>`;
+  if (f.type === 'Deal update') return `${u} moved ${rec(f.obj)} to <b>${esc(f.extra)}</b>`;
+  if (f.type === 'Task done') return `${u} completed the task “${esc(f.obj)}”`;
+  return `${u} ${VERB[f.type]} ${rec(f.obj)}${f.extra ? ` <span class="muted">at</span> ${rec(f.extra)}` : ''}`;
+}
+function feedEntry(f, k, last, fresh) {
+  const t = tyOf(f.type), sys = !!SYS[f.type];
+  return `<div class="fe ${sys ? 'sys' : ''} ${last ? 'last' : ''}" style="--d:${fresh ? Math.min(k, 14) * 35 : 0}ms${fresh ? '' : ';animation:none'}">
+    <span class="fbub" style="--c:${t[1]}" title="${t[0]}">${ic(t[2], sys ? 13 : 17)}</span>
+    <div class="fbody"><p>${feedText(f)}</p>${f.meta && !sys ? `<div class="fmeta"><span class="ty" style="--c:${t[1]}"><i></i>${t[0]}</span><span>${esc(f.meta)}</span></div>` : ''}${f.det ? `<div class="fdet">${esc(f.det)}</div>` : ''}</div>
+    <time class="ftime">${hm(f.t)}</time>
+  </div>`;
+}
+function pulseView(fresh) {
+  const total = HEAT.reduce((s, h) => s + Math.max(0, h.n), 0);
+  const byDow = [0, 0, 0, 0, 0, 0, 0]; HEAT.forEach((h, i) => (byDow[i % 7] += Math.max(0, h.n)));
+  const busiest = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][byDow.indexOf(Math.max(...byDow))];
+  const split = [['Call', 0.34], ['Email', 0.24], ['Meeting', 0.18], ['Visit', 0.12], ['Note', 0.12]].map(([n, p]) => [n, Math.round(total * p)]);
+  const days = fDay != null ? [fDay] : [0, -1, -2, -3, -4, -5, -6];
+  const s = fq.trim().toLowerCase();
+  const match = (f) => (!fType.size || fType.has(f.type)) && (!fWho.size || fWho.has(f.who)) && (!s || (feedText(f) + ' ' + f.det).replace(/<[^>]+>/g, '').toLowerCase().includes(s));
+  const groups = days.map((o) => [o, entriesFor(o).filter(match).sort((a, b) => b.t - a.t)]).filter((g) => g[1].length);
+  let k = 0;
+  page.innerHTML = `
+  <div class="ph"><div><h2>Activity</h2><p>What your team did with customers, newest first.</p></div>
+    <div class="acts">${tools()}<button class="btn pri" data-go="log">${ic('plus')}Log activity</button></div></div>
+  <div class="pulse-top">
+    <section class="card heatcard"><span class="eyebrow">Last 12 weeks</span>
+      <div style="margin-top:4px"><b style="font-family:var(--font-display);font-size:20px">${total}</b> activities · busiest on <b>${busiest}s</b></div>
+      <div class="heatwrap"><div class="heatdays"><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span><span>Sun</span></div>
+        <div class="heat" role="group" aria-label="Activity per day">${HEAT.map((h, i) => h.n < 0 ? '<i class="hc fut"></i>' : `<button class="hc ${lvl(h.n)}" data-day="${h.off}" aria-pressed="${fDay === h.off}" style="--d:${fresh ? (i % 7) * 30 + Math.floor(i / 7) * 25 : 0}ms${fresh ? '' : ';animation:none'}" title="${dLabel(h.off)}: ${plural(h.n, 'activity').replace('activitys', 'activities')}" aria-label="${dLabel(h.off)}, ${h.n} activities"></button>`).join('')}</div></div>
+      <div class="heatlegend"><span>Click a day to see it</span><span class="scale">Less <i class="hc"></i><i class="hc l1"></i><i class="hc l2"></i><i class="hc l3"></i><i class="hc l4"></i> More</span></div>
+    </section>
+    <section class="card mixcard"><span class="eyebrow">By type</span>
+      <div class="mixbar">${split.map(([n, c], i) => `<i style="--c:${tyOf(n)[1]};width:${(c / total) * 100}%;--d:${fresh ? 150 + i * 80 : 0}ms"></i>`).join('')}</div>
+      <div class="mixlist">${split.map(([n, c]) => `<button data-pick="ftype:${n}" aria-pressed="${fType.has(n)}"><i style="--c:${tyOf(n)[1]}"></i><span>${n}s</span><b>${c}</b></button>`).join('')}</div>
+      <span class="eyebrow" style="margin-top:18px">This week by person</span>
+      <div class="ppl">${Object.keys(USERS).map((u) => { const n = F.filter((f) => f.day > -7 && f.who === u).length, most = Math.max(1, ...Object.keys(USERS).map((x) => F.filter((f) => f.day > -7 && f.who === x).length)); return `<button data-pick="fwho:${u}" aria-pressed="${fWho.has(u)}">${face(u, 'sm')}<span>${USERS[u][0]}</span><i style="--w:${(n / most) * 100}%"></i><b>${n}</b></button>`; }).join('')}</div>
+    </section>
+  </div>
+  <div class="tools">
+    <label class="search">${ic('search', 16)}<input id="fq" placeholder="Search notes, people and records" value="${esc(fq)}" aria-label="Search activity"></label>
+    <span class="pop-wrap"><button class="fchip ${fType.size ? 'set' : ''}" data-pop="ftype">${chipLabel('Type', fType, 99)}${ic('down', 14)}</button>${pop === 'ftype' ? pickerPop('ftype', TYPES.map((t) => [t[0], t[0], `<i style="--c:${t[1]}"></i>`]).concat(Object.keys(SYS).map((n) => [n, n, `<i style="--c:${SYS[n][0]}"></i>`])), fType, 'Find a type') : ''}</span>
+    <span class="pop-wrap"><button class="fchip ${fWho.size ? 'set' : ''}" data-pop="fwho">${chipLabel('People', fWho, 99)}${ic('down', 14)}</button>${pop === 'fwho' ? pickerPop('fwho', people(), fWho, 'Find a person') : ''}</span>
+    ${fDay != null ? `<span class="daychip">${dLabel(fDay)}<button data-day="clear" aria-label="Show all days">${ic('x', 13)}</button></span>` : ''}
+    ${fq || fType.size || fWho.size || fDay != null ? '<button class="btn ghost" id="fclear">Clear</button>' : ''}
+  </div>
+  <section class="card feed">
+    ${groups.length ? groups.map(([o, list]) => `<div class="fday">${o === 0 ? 'Today' : o === -1 ? 'Yesterday' : dLabel(o)}<small>${plural(list.length, 'entry').replace('entrys', 'entries')}</small></div>` + list.map((f, i) => feedEntry(f, k++, i === list.length - 1, fresh)).join('')).join('')
+      : `<div class="empty"><b>Nothing here</b>${fDay != null ? 'Nothing was logged that day.' : 'No activity matches these filters.'}</div>`}
+  </section>`;
+}
+
+/* ---------- Log activity (full page) ---------- */
+function recOptions() { return Object.keys(R).map((k) => [k, R[k][1], `<span class="k" style="--c:${KIND[R[k][0]]};width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:8.5px;font-weight:700;color:#fff;background:var(--c)">${R[k][0][0]}</span>`, R[k][0]]); }
+function fake(kind, inner, label) { return `<span class="pop-wrap" style="display:block"><button type="button" class="fake" id="fk-${kind}" data-fpop="${kind}" aria-haspopup="listbox" aria-label="${label}">${inner}<span class="dn">${ic('down', 14)}</span></button><span class="fslot" id="slot-${kind}"></span></span>`; }
+function logView() {
+  const L = LF, t = tyOf(L.type), timed = ['Call', 'Meeting', 'Visit'].includes(L.type);
+  page.innerHTML = `
+  <button class="back" data-go="pulse">${ic('left', 16)}Activity</button>
+  <div class="fcols">
+    <form class="card" id="lform" novalidate aria-label="Log activity">
+      <div class="fhead"><h2>Log activity</h2><p>Record a call, meeting, visit, email or note against a customer.</p></div>
+      <div class="sect"><div class="fg">
+        <div class="f"><label>Type</label>${fake('ltype', `<i style="--c:${t[1]}"></i><span>${L.type}</span>`, 'Type: ' + L.type)}</div>
+        <div class="f" id="f-rec"><label>With *</label>${fake('lrec', L.rec ? `<span>${esc(R[L.rec][1])}</span><span class="muted" style="font-size:12px">${R[L.rec][0]}</span>` : '<span class="muted">Pick a contact, account or deal</span>', 'Related record')}</div>
+        <div class="f"><label for="l-date">Date</label><input id="l-date" type="date" value="${L.date}"></div>
+        <div class="f"><label for="l-time">Time</label><input id="l-time" type="time" value="${L.time}"></div>
+        ${timed ? `<div class="f full"><label>How long</label><div class="durs" role="group" aria-label="Duration">${[5, 15, 30, 45, 60, 90].map((d) => `<button type="button" data-dur="${d}" aria-pressed="${L.dur === d}">${span(d)}</button>`).join('')}</div></div>` : ''}
+        ${L.type === 'Call' ? `<div class="f"><label>Outcome</label>${fake('lout', `<span>${L.outcome}</span>`, 'Outcome: ' + L.outcome)}</div>` : ''}
+        <div class="f full"><label for="l-notes">${L.type === 'Note' ? 'Note *' : 'What happened'}</label><textarea id="l-notes" placeholder="${L.type === 'Note' ? 'Write the note' : 'Key points, decisions, what was agreed'}">${esc(L.notes)}</textarea></div>
+        <div class="f full"><label class="sw-row" data-follow><span class="switch" role="switch" aria-checked="${L.follow}" tabindex="0"></span><span>Add a follow-up task</span></label>
+          ${L.follow ? `<div class="followup reveal"><div class="fg"><div class="f full"><label for="l-ftitle">Task</label><input id="l-ftitle" value="${esc(L.ftitle)}" placeholder="For example: Send the revised pricing"></div>
+            <div class="f full"><label>Due</label><div class="durs" role="group" aria-label="Follow-up due">${[[1, 'Tomorrow'], [3, 'In 3 days'], [6, 'Next week']].map(([d, n]) => `<button type="button" data-fdue="${d}" aria-pressed="${followDue === d}">${n}</button>`).join('')}</div></div></div></div>` : ''}
+        </div>
+      </div></div>
+      <div class="savebar"><button type="button" class="btn" data-go="pulse">Cancel</button><button class="btn pri">${ic('check', 16)}Log ${L.type.toLowerCase()}</button></div>
+    </form>
+    <aside class="card prev" aria-label="Preview"><span class="eyebrow">In the activity timeline</span><div id="lprev"></div>
+      <h4 id="lrecname">On the customer’s history</h4><div class="minirec" id="lrec"></div></aside>
+  </div>`;
+  logPreview();
+}
+function logPreview() {
+  const L = LF, off = offOf(L.date || isoOf(0)), [hh, mm] = (L.time || '00:00').split(':').map(Number);
+  const meta = L.type === 'Call' ? `${L.outcome}${L.outcome === 'Connected' ? ' · ' + span(L.dur) : ''}` : ['Meeting', 'Visit'].includes(L.type) ? span(L.dur) : '';
+  const f = { day: off, t: hh * 60 + mm, who: 'PN', type: L.type, obj: L.rec || 'c1', extra: '', meta, det: L.notes || '' };
+  $('lprev').innerHTML = L.rec ? feedEntry(f, 0, true, false) : '<p class="muted" style="margin:10px 0 0;font-size:13px">Pick who this was with to see the entry.</p>';
+  $('lrecname').textContent = L.rec ? 'On ' + R[L.rec][1] : 'On the customer’s history';
+  $('lrec').innerHTML = L.rec ? `<b>${esc(R[L.rec][1])}</b><ol><li class="new" style="--c:${tyOf(L.type)[1]}">${L.type} by Priya · ${off === 0 ? 'Today' : dLabel(off)} ${L.time}</li>${LF.follow ? `<li class="new" style="--c:var(--bank-ink)">Task: ${esc(LF.ftitle || 'Follow up')} · ${followDue === 1 ? 'Tomorrow' : dLabel(followDue)}</li>` : ''}<li>Called by Sana · Yesterday</li><li>Meeting with Arjun · Fri 13 Nov</li></ol>` : '<span class="muted">Their history shows here.</span>';
+}
+
+/* ---------- New meeting (full page) ---------- */
+function meetView() {
+  const F2 = MF, t = tyOf(F2.type);
+  page.innerHTML = `
+  <button class="back" data-go="calendar">${ic('left', 16)}Calendar</button>
+  <div class="fcols">
+    <form class="card" id="mform" novalidate aria-label="${editMeeting ? 'Edit meeting' : 'New meeting'}">
+      <div class="fhead"><h2>${editMeeting ? 'Edit meeting' : 'New meeting'}</h2><p>A meeting, call or visit on your calendar.</p></div>
+      <div class="sect"><div class="fg">
+        <div class="f full" id="f-title"><label for="m-title">Title *</label><input id="m-title" value="${esc(F2.title)}" autocomplete="off" placeholder="For example: Pricing review with Kavya Anand"></div>
+        <div class="f"><label>Type</label>${fake('mtype', `<i style="--c:${t[1]}"></i><span>${F2.type}</span>`, 'Type: ' + F2.type)}</div>
+        <div class="f"><label>Related to</label>${fake('mrec', F2.rec ? `<span>${esc(R[F2.rec][1])}</span><span class="muted" style="font-size:12px">${R[F2.rec][0]}</span>` : '<span class="muted">Optional</span>', 'Related record')}</div>
+        <div class="f"><label for="m-date">Date</label><input id="m-date" type="date" value="${F2.date}"></div>
+        <div class="f"><label for="m-start">Starts</label><input id="m-start" type="time" step="900" value="${hm(F2.start)}"></div>
+        <div class="f full"><label>How long</label><div class="durs" role="group" aria-label="Duration">${[15, 30, 45, 60, 90, 120].map((d) => `<button type="button" data-mdur="${d}" aria-pressed="${F2.dur === d}">${span(d)}</button>`).join('')}</div></div>
+        <div class="f full"><label>Who is coming</label>${fake('matt', `<span class="faces">${F2.att.map((a) => (USERS[a] ? face(a, 'sm') : `<i class="face sm" style="--h:#2f6fe0">${init(R[a][1])}</i>`)).join('')}</span><span>${F2.att.map((a) => (USERS[a] ? USERS[a][0].split(' ')[0] : R[a][1])).join(', ') || 'Nobody yet'}</span>`, 'Attendees')}</div>
+        <div class="f"><label for="m-where">Where</label><input id="m-where" value="${esc(F2.where)}" placeholder="Room, address or video link"></div>
+        <div class="f"><label>Reminder</label>${fake('mrem', `${ic('bell', 15)}<span>${F2.remind}</span>`, 'Reminder: ' + F2.remind)}</div>
+        <div class="f full"><label for="m-notes">Agenda</label><textarea id="m-notes" placeholder="What you want to cover">${esc(F2.notes)}</textarea></div>
+      </div></div>
+      <div class="savebar"><button type="button" class="btn" data-go="calendar">Cancel</button><button class="btn pri">${editMeeting ? 'Save changes' : 'Add to calendar'}</button></div>
+    </form>
+    <aside class="card prev" aria-label="Preview"><span class="eyebrow" id="mday"></span><div class="dcol" id="dcol"></div><div id="mclash"></div></aside>
+  </div>`;
+  meetPreview();
+}
+function meetPreview(shake) {
+  const F2 = MF, off = offOf(F2.date || isoOf(1)), idx = off + TODAY_IDX, inWeek = idx >= 0 && idx <= 6;
+  const others = inWeek ? M.filter((m) => m.day === idx && m.id !== editMeeting && m.who.includes('PN')) : [];
+  const y = (min) => ((min - 480) / 60) * 30;
+  $('mday').textContent = (off === 0 ? 'Today' : off === 1 ? 'Tomorrow' : dLong(off)) + ' · your day';
+  const clash = others.find((m) => F2.start < m.start + m.dur && m.start < F2.start + F2.dur);
+  const ln = lanes([...others, { id: 'new', start: F2.start, dur: F2.dur }]);
+  const pos = (id) => { const L = ln.get(id) || { l: 0, n: 1 }; return `left:calc(42px + (100% - 48px) * ${L.l / L.n});width:calc((100% - 48px) / ${L.n} - 3px);right:auto;`; };
+  $('dcol').innerHTML = Array.from({ length: 11 }, (_, i) => (i ? `<span class="hl" style="top:${i * 30}px">${String(8 + i).padStart(2, '0')}</span>` : '')).join('') +
+    others.map((m) => `<div class="ev ${m.dur < 45 ? 'short' : ''} ${shake && clash && clash.id === m.id ? 'clash' : ''}" style="${pos(m.id)}--c:${tyOf(m.type)[1]};top:${y(m.start)}px;height:${Math.max(18, (m.dur / 60) * 30 - 2)}px;opacity:.75"><b>${esc(m.title)}</b></div>`).join('') +
+    `<div class="ev new ${F2.dur < 45 ? 'short' : ''}" style="${pos('new')}--c:${tyOf(F2.type)[1]};top:${y(Math.max(480, F2.start))}px;height:${Math.max(18, (F2.dur / 60) * 30 - 2)}px"><b>${esc(F2.title || 'New meeting')}</b><small>${hm(F2.start)}–${hm(F2.start + F2.dur)}</small></div>`;
+  $('mclash').innerHTML = clash ? `<div class="clashnote">${ic('alert', 15)}<span>Clashes with <b>${esc(clash.title)}</b>, ${hm(clash.start)}–${hm(clash.start + clash.dur)}. You can still save it.</span></div>`
+    : `<div class="okline">${ic('check', 15)}<span>No clash with your other meetings${others.length ? '' : ' (nothing else that day)'}.</span></div>`;
+}
+
+/* ---------- form pickers ---------- */
+function fpList(kind, s = '') {
+  s = s.toLowerCase();
+  const multi = kind === 'matt';
+  const items = kind === 'ltype' || kind === 'mtype' ? TYPES.map((t) => [t[0], t[0], `<i style="--c:${t[1]}"></i>`]) : kind === 'lrec' || kind === 'mrec' ? recOptions() : kind === 'lout' ? OUTCOMES.map((o) => [o, o]) : kind === 'mrem' ? REMIND.map((o) => [o, o])
+    : people().concat(Object.keys(R).filter((k) => R[k][0] === 'Contact').map((k) => [k, R[k][1], `<i class="face sm" style="--h:#2f6fe0">${init(R[k][1])}</i>`, 'Contact']));
+  const cur = { ltype: LF && LF.type, lrec: LF && LF.rec, lout: LF && LF.outcome, mtype: MF && MF.type, mrec: MF && MF.rec, mrem: MF && MF.remind }[kind];
+  const shown = items.filter((x) => x[1].toLowerCase().includes(s));
+  return shown.map((x) => `<button type="button" class="opt" role="${multi ? 'menuitemcheckbox' : 'menuitemradio'}" aria-checked="${multi ? MF.att.includes(x[0]) : cur === x[0]}" data-fv="${kind}|${x[0]}">${x[2] || ''}${esc(x[1])}${x[3] ? `<span class="kind">${x[3]}</span>` : ''}<span class="tick">${ic('check', 15)}</span></button>`).join('') || '<div class="none">Nothing matches.</div>';
+}
+function openFpop(kind) {
+  closeFpop(); fp = kind;
+  $('slot-' + kind).innerHTML = `<div class="pop fpop" id="fpop"><input id="fpQ" placeholder="Search" aria-label="Search" autocomplete="off"><div id="fpList">${fpList(kind)}</div></div>`;
+  $('fpQ').focus();
+}
+function closeFpop() { fp = null; document.querySelectorAll('.fslot').forEach((x) => (x.innerHTML = '')); }
+function setFv(kind, v) {
+  if (kind === 'matt') { const a = MF.att; a.includes(v) ? a.splice(a.indexOf(v), 1) : a.push(v); const keep = $('fpQ').value; meetView(); openFpop('matt'); $('fpQ').value = keep; $('fpList').innerHTML = fpList('matt', keep); return; }
+  if (kind === 'ltype') LF.type = v; if (kind === 'lrec') LF.rec = v; if (kind === 'lout') LF.outcome = v;
+  if (kind === 'mtype') MF.type = v; if (kind === 'mrec') MF.rec = v; if (kind === 'mrem') MF.remind = v;
+  closeFpop();
+  if (kind[0] === 'l') logView(); else meetView();
+  const b = $('fk-' + kind); if (b) b.focus();
+}
+
+/* ---------- overlay: meeting card and task delete ---------- */
+function overlay() {
+  const o = $('overlay');
+  if (delTask) {
+    const t = T.find((x) => x.id === delTask);
+    o.innerHTML = `<div class="scrim" id="scrim"><div class="dlg" role="dialog" aria-modal="true" aria-label="Delete task"><div class="dlg-head"><h3>Delete this task?</h3></div><div class="dlg-body">“${esc(t.title)}” goes for good.</div>
+      <div class="dlg-foot"><span class="sp"></span><button class="btn" data-close>Keep task</button><button class="btn danger" id="delYes">${ic('trash')}Delete task</button></div></div></div>`;
+    return;
+  }
+  if (!evPop) { o.innerHTML = ''; return; }
+  const m = M.find((x) => x.id === evPop.id); if (!m) { o.innerHTML = ''; return; }
+  const t = tyOf(m.type), W = app.clientWidth, H = app.clientHeight;
+  const left = Math.max(10, Math.min(W - 320, evPop.x)), top = Math.max(10, Math.min(H - 330, evPop.y));
+  o.innerHTML = `<div class="evpop" role="dialog" aria-label="${esc(m.title)}" style="left:${left}px;top:${top}px">
+    <button class="x" data-close aria-label="Close">${ic('x', 16)}</button>
+    <span class="ty" style="--c:${t[1]}"><i></i>${m.type}</span><h3>${esc(m.title)}</h3>
+    <dl><dt>${ic('clock', 15)}</dt><dd>${m.day - TODAY_IDX === 0 ? 'Today' : dLabel(m.day - TODAY_IDX)} · ${hm(m.start)}–${hm(m.start + m.dur)} <span class="muted">(${span(m.dur)})</span></dd>
+      <dt>${ic('pin', 15)}</dt><dd>${esc(m.where)}</dd>
+      <dt>${ic('users', 15)}</dt><dd style="display:flex;align-items:center;gap:8px"><span class="faces">${m.who.map((u) => face(u, 'sm')).join('')}</span>${m.who.map((u) => USERS[u][0].split(' ')[0]).join(', ')}</dd>
+      ${m.rec ? `<dt>${ic('link', 15)}</dt><dd>${rec(m.rec)}</dd>` : ''}</dl>
+    <div class="acts"><button class="btn" data-editev="${m.id}">${ic('edit', 15)}Edit</button><button class="btn pri" data-logev="${m.id}">${ic('check', 15)}Log outcome</button></div>
+  </div>`;
+}
+
+/* ---------- events ---------- */
+app.addEventListener('click', (e) => {
+  if (e.target.closest('.ev') && suppressClick) { suppressClick = false; return; }
+  const t = e.target, c = (s) => t.closest(s); let el;
+  if ((el = c('[data-fv]'))) { const [k, v] = el.dataset.fv.split('|'); return setFv(k, v); }
+  if (c('#fpop')) return;
+  if ((el = c('[data-fpop]'))) { if (fp === el.dataset.fpop) closeFpop(); else openFpop(el.dataset.fpop); return; }
+  if (fp) closeFpop();
+  if ((el = c('[data-pick]'))) { const [k, v] = el.dataset.pick.split(':'); const set = { owner: owners, prio: prioF, calwho: calWho, ftype: fType, fwho: fWho }[k]; set.has(v) ? set.delete(v) : set.add(v); return render(); }
+  if (c('[data-tool]')) { pop = null; render(); return toast('Opens in Setup'); }
+  if (c('#pop')) return;
+  if ((el = c('[data-pop]'))) { pop = pop === el.dataset.pop ? null : el.dataset.pop; popQ = ''; render(); const pq = $('popQ'); if (pq) pq.focus(); return; }
+  if (pop) { pop = null; popQ = ''; render(); }
+  if (c('[data-close]') || t.id === 'scrim') { evPop = null; delTask = null; return overlay(); }
+  if (c('#delYes')) { T.splice(T.findIndex((x) => x.id === delTask), 1); delTask = null; render(); return toast('Task deleted'); }
+  if ((el = c('[data-tick]'))) return tick(el.dataset.tick, el);
+  if ((el = c('[data-tdel]'))) { delTask = el.dataset.tdel; return overlay(); }
+  if (c('[data-tedit]')) return toast('Opens the task on its full page');
+  if (c('[data-donetoggle]')) { doneOpen = !doneOpen; return render(); }
+  if (c('[data-newtask]')) { $('qa').focus(); return; }
+  if (c('#clear')) { q = ''; prioF.clear(); owners = new Set(['PN']); return render(); }
+  if (c('#fclear')) { fq = ''; fType.clear(); fWho.clear(); fDay = null; return render(true); }
+  if ((el = c('[data-day]'))) { fDay = el.dataset.day === 'clear' || fDay === +el.dataset.day ? null : +el.dataset.day; return render(); }
+  if ((el = c('[data-rec]'))) return toast('Opens ' + R[el.dataset.rec][1]);
+  if ((el = c('[data-taskgo]'))) { landed = el.dataset.taskgo; screen = 'today'; doneOpen = doneOpen || T.find((x) => x.id === landed).done; return render(true); }
+  if ((el = c('[data-editev]'))) { const m = M.find((x) => x.id === el.dataset.editev); editMeeting = m.id; MF = { title: m.title, type: m.type, date: isoOf(m.day - TODAY_IDX), start: m.start, dur: m.dur, rec: m.rec || '', att: [...m.who], where: m.where, remind: '15 minutes before', notes: '' }; return show('meeting', 1); }
+  if ((el = c('[data-logev]'))) { const m = M.find((x) => x.id === el.dataset.logev); show('log'); LF.type = m.type === 'Visit' ? 'Visit' : m.type; LF.rec = m.rec || ''; LF.dur = m.dur; LF.date = isoOf(m.day - TODAY_IDX); LF.time = hm(m.start); return logView(); }
+  if ((el = c('[data-ev]')) && !el.classList.contains('ev')) { const r = el.getBoundingClientRect(), a = app.getBoundingClientRect(); evPop = { id: el.dataset.ev, x: r.left - a.left, y: r.bottom - a.top + 8 }; return overlay(); }
+  if (c('[data-mx]')) return toast('Opens the meeting');
+  if ((el = c('[data-cv]'))) { calView = el.dataset.cv; weekOff = 0; return render(true); }
+  if ((el = c('[data-wk]'))) { weekOff = el.dataset.wk === 'today' ? 0 : weekOff + +el.dataset.wk; if (calView === 'month') return toast(weekOff ? 'Moves a month' : 'Back to this month'); return render(true); }
+  if ((el = c('[data-dur]'))) { LF.dur = +el.dataset.dur; el.parentElement.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b === el)); return logPreview(); }
+  if ((el = c('[data-fdue]'))) { followDue = +el.dataset.fdue; el.parentElement.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b === el)); return logPreview(); }
+  if ((el = c('[data-mdur]'))) { MF.dur = +el.dataset.mdur; el.parentElement.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b === el)); return meetPreview(true); }
+  if (c('[data-follow]')) { e.preventDefault(); LF.follow = !LF.follow; logView(); if (LF.follow) $('l-ftitle').focus(); return; }
+  if ((el = c('[data-go]'))) return show(el.dataset.go);
+});
+app.addEventListener('input', (e) => {
+  const t = e.target;
+  if (t.id === 'q') { q = t.value; const p = t.selectionStart; render(); const n = $('q'); n.focus(); n.setSelectionRange(p, p); }
+  else if (t.id === 'fq') { fq = t.value; const p = t.selectionStart; render(); const n = $('fq'); n.focus(); n.setSelectionRange(p, p); }
+  else if (t.id === 'popQ') { popQ = t.value; const p = t.selectionStart; render(); const n = $('popQ'); n.focus(); n.setSelectionRange(p, p); }
+  else if (t.id === 'fpQ') $('fpList').innerHTML = fpList(fp, t.value);
+  else if (t.id === 'qa') quickChips();
+  else if (t.closest('#lform')) { if (t.id === 'l-date') LF.date = t.value; if (t.id === 'l-time') LF.time = t.value; if (t.id === 'l-notes') LF.notes = t.value; if (t.id === 'l-ftitle') LF.ftitle = t.value; t.closest('.f')?.classList.remove('bad'); t.closest('.f')?.querySelector('.err')?.remove(); logPreview(); }
+  else if (t.closest('#mform')) { if (t.id === 'm-title') MF.title = t.value; if (t.id === 'm-date') MF.date = t.value; if (t.id === 'm-start' && t.value) { const [h, m] = t.value.split(':').map(Number); MF.start = h * 60 + m; } if (t.id === 'm-where') MF.where = t.value; if (t.id === 'm-notes') MF.notes = t.value; t.closest('.f')?.classList.remove('bad'); t.closest('.f')?.querySelector('.err')?.remove(); meetPreview(t.id !== 'm-title'); }
+});
+app.addEventListener('keydown', (e) => {
+  if (e.target.id === 'qa' && e.key === 'Enter') { e.preventDefault(); addQuick(); }
+  if (e.target.classList.contains('switch') && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); LF.follow = !LF.follow; logView(); }
+});
+app.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const bad = (f, msg) => { const el = $(f); el.classList.add('bad'); el.querySelector('.err')?.remove(); el.insertAdjacentHTML('beforeend', `<div class="err">${msg}</div>`); };
+  if (e.target.id === 'lform') {
+    if (!LF.rec) { bad('f-rec', 'Pick who or what this was with.'); return $('fk-lrec').focus(); }
+    const off = offOf(LF.date), [hh, mm] = LF.time.split(':').map(Number);
+    const meta = LF.type === 'Call' ? `${LF.outcome}${LF.outcome === 'Connected' ? ' · ' + span(LF.dur) : ''}` : ['Meeting', 'Visit'].includes(LF.type) ? span(LF.dur) : '';
+    F.push({ id: 'f' + seq++, day: off, t: hh * 60 + mm, who: 'PN', type: LF.type, obj: LF.rec, extra: '', meta, det: LF.notes });
+    const h = HEAT.find((x) => x.off === off); if (h) h.n++;
+    if (LF.follow) T.push({ id: 't' + seq++, title: LF.ftitle || 'Follow up with ' + R[LF.rec][1], due: followDue, time: null, prio: 'Medium', done: false, owner: 'PN', rec: LF.rec, order: -seq });
+    const extra = LF.follow; fDay = null; show('pulse'); toast('Activity logged' + (extra ? ' and follow-up task added' : ''));
+  }
+  if (e.target.id === 'mform') {
+    if (!MF.title.trim()) { bad('f-title', 'Give the meeting a title.'); return $('m-title').focus(); }
+    const idx = offOf(MF.date) + TODAY_IDX;
+    if (editMeeting) Object.assign(M.find((m) => m.id === editMeeting), { title: MF.title.trim(), type: MF.type, day: idx, start: MF.start, dur: MF.dur, rec: MF.rec || null, who: MF.att.filter((a) => USERS[a]), where: MF.where || 'To be confirmed' });
+    else if (idx >= 0 && idx <= 6) M.push({ id: 'm' + seq++, title: MF.title.trim(), type: MF.type, day: idx, start: MF.start, dur: MF.dur, rec: MF.rec || null, who: MF.att.filter((a) => USERS[a]).length ? MF.att.filter((a) => USERS[a]) : ['PN'], where: MF.where || 'To be confirmed' });
+    const was = editMeeting; calView = 'week'; weekOff = 0; show('calendar'); toast(was ? 'Meeting updated' : 'Added to your calendar');
+  }
+});
+
+/* drag a meeting to another time or day (week view); a click without a drag opens its card */
+let suppressClick = false;
+app.addEventListener('pointerdown', (e) => {
+  const ev = e.target.closest('.wk-col .ev'); const col = e.target.closest('.wk-col');
+  if (ev && e.button === 0) { const m = M.find((x) => x.id === ev.dataset.ev); const r = ev.getBoundingClientRect(); drag = { id: m.id, x: e.clientX, y: e.clientY, grab: e.clientY - r.top, day: m.day, start: m.start, on: false, el: ev }; return; }
+  if (col && !ev && e.button === 0 && screen === 'calendar') {
+    const r = col.getBoundingClientRect(), min = 480 + Math.floor(((e.clientY - r.top) / HP) * 2) * 30;
+    if (min > 1110) return;
+    col.insertAdjacentHTML('beforeend', `<div class="slot-hint" style="top:${((min - 480) / 60) * HP}px;height:${HP - 3}px">${hm(min)}</div>`);
+    setTimeout(() => { show('meeting'); MF.date = isoOf(+col.dataset.col - TODAY_IDX); MF.start = min; meetView(); $('m-title').focus(); }, 260);
+  }
+});
+document.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  if (!drag.on && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 5) return;
+  drag.on = true; evPop = null;
+  const hit = document.elementFromPoint(e.clientX, e.clientY), col = hit && hit.closest('.wk-col');
+  const m = M.find((x) => x.id === drag.id);
+  if (col) { const r = col.getBoundingClientRect(); drag.day = +col.dataset.col; drag.start = Math.max(480, Math.min(1140 - m.dur, 480 + Math.round((((e.clientY - drag.grab - r.top) / HP) * 60) / 15) * 15)); }
+  if (!drag.raf) drag.raf = requestAnimationFrame(() => { if (drag) { drag.raf = 0; render(); } });
+});
+document.addEventListener('pointerup', (e) => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (!d.on) { const a = app.getBoundingClientRect(), r = d.el.getBoundingClientRect(); evPop = { id: d.id, x: r.left - a.left, y: r.bottom - a.top + 8 }; suppressClick = true; setTimeout(() => (suppressClick = false), 0); return overlay(); }
+  suppressClick = true; setTimeout(() => (suppressClick = false), 0);
+  const m = M.find((x) => x.id === d.id), moved = m.day !== d.day || m.start !== d.start;
+  m.day = d.day; m.start = d.start; render();
+  if (moved) toast(`Moved to ${d.day - TODAY_IDX === 0 ? 'today' : dLabel(d.day - TODAY_IDX)} ${hm(d.start)}`);
+});
+
+/* reorder tasks inside a group (desktop) */
+let dragRow = null;
+app.addEventListener('dragstart', (e) => { const r = e.target.closest('.trow'); if (!r) return; dragRow = r.dataset.row; e.dataTransfer.effectAllowed = 'move'; r.style.opacity = '.4'; });
+app.addEventListener('dragend', (e) => { const r = e.target.closest('.trow'); if (r) r.style.opacity = ''; dragRow = null; });
+app.addEventListener('dragover', (e) => { const r = e.target.closest('.trow'); if (dragRow && r && r.closest('.tgrp') === document.querySelector(`[data-row="${dragRow}"]`)?.closest('.tgrp')) e.preventDefault(); });
+app.addEventListener('drop', (e) => {
+  const r = e.target.closest('.trow'); if (!dragRow || !r || r.dataset.row === dragRow) return; e.preventDefault();
+  const a = T.find((x) => x.id === dragRow), b = T.find((x) => x.id === r.dataset.row), group = [...r.closest('.tgrp').querySelectorAll('.trow')].map((x) => T.find((t) => t.id === x.dataset.row));
+  const without = group.filter((x) => x !== a); without.splice(without.indexOf(b) + (group.indexOf(a) < group.indexOf(b) ? 1 : 0), 0, a);
+  without.forEach((x, i) => (x.order = i)); landed = a.id; dragRow = null; render(); toast('Order saved');
+});
+document.addEventListener('keydown', (e) => { if (e.key !== 'Escape') return; if (fp) closeFpop(); else if (pop) { pop = null; render(); } else if (evPop || delTask) { evPop = null; delTask = null; overlay(); } });
+$('screens').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) show(b.dataset.s); });
+let rz, lastW = 0;
+new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(() => { if (app.clientWidth !== lastW) { lastW = app.clientWidth; if (screen === 'calendar' || screen === 'today') render(); } }, 120); }).observe(app);
+const isDark = () => (document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
+$('themeBtn').addEventListener('click', () => { document.documentElement.dataset.theme = isDark() ? 'light' : 'dark'; });
+const BANKS = [['H', '#1d3a6e', '#1d3a6e', '#9db8ee'], ['M', '#9b1c3a', '#8a1933', '#f2a3b5'], ['C', '#0f6b52', '#0d5c47', '#7fd6b9']];
+$('banks').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  const [letter, primary, inkL, inkD] = BANKS[+b.dataset.bank], r = document.documentElement.style;
+  r.setProperty('--bank-primary', primary); r.setProperty('--bank-ink-light', inkL); r.setProperty('--bank-ink-dark', inkD);
+  USERS.PN[1] = primary; LOGO = letter; $('logo').textContent = letter;
+  $('banks').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+});
+lastW = app.clientWidth;
+render(true);
+</script>

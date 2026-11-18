@@ -36,6 +36,7 @@ bootstrapRouter.get('/', requireAuth, (req, res) => {
     contacts: store.contacts.all(),
     deals: store.deals.all(),
     tasks: store.tasks.all(),
+    meetings: store.meetings.all(),
     tickets: store.tickets.all(),
     activities: store.activities.all(),
     notifications: store.notifications.all(),

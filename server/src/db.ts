@@ -4,6 +4,7 @@ import { demoPasswordHash } from './passwords.js';
 import {
   Account,
   Activity,
+  Meeting,
   AppNotification,
   AssignmentRule,
   AuditEntry,
@@ -145,7 +146,7 @@ export class Collection<T extends { id: string }> {
 
 /** Every collection a bank has, by name. tenancy.ts loads and saves exactly these. */
 export const COLLECTION_NAMES = [
-  'users', 'leads', 'contacts', 'accounts', 'deals', 'products', 'tickets', 'campaigns', 'quotes', 'tasks',
+  'users', 'leads', 'contacts', 'accounts', 'deals', 'products', 'tickets', 'campaigns', 'quotes', 'tasks', 'meetings',
   'activities', 'notifications', 'customFieldDefs', 'layouts', 'pageLayouts', 'roleDefs', 'assignmentRules',
   'dedupeRules', 'statusCodeSets', 'slaConfigs', 'autoFlowProcesses', 'audit',
 ] as const;
@@ -163,6 +164,7 @@ export class Store {
   campaigns = new Collection<Campaign>('campaigns', ['name']);
   quotes = new Collection<Quote>('quotes', ['quoteNumber']);
   tasks = new Collection<TaskItem>('tasks', ['title']);
+  meetings = new Collection<Meeting>('meetings', ['title']);
   activities = new Collection<Activity>('activities', []);
   notifications = new Collection<AppNotification>('notifications', []);
   customFieldDefs = new Collection<CustomFieldDef>('customFieldDefs', []);
@@ -191,6 +193,7 @@ export class Store {
     this.campaigns.seed(data.campaigns);
     this.quotes.seed(data.quotes);
     this.tasks.seed(data.tasks);
+    this.meetings.seed(data.meetings);
     this.activities.seed(data.activities);
     this.notifications.seed(data.notifications);
     this.customFieldDefs.seed(data.customFieldDefs);
