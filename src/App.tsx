@@ -44,6 +44,7 @@ import { LogActivity } from './pages/LogActivity';
 import { Tickets } from './pages/Tickets';
 import { TicketForm } from './pages/TicketForm';
 import { TicketDetail } from './pages/TicketDetail';
+import { TicketEdit } from './pages/TicketEdit';
 import { ObjectConfig } from './pages/ObjectConfig';
 import { Setup } from './pages/Setup';
 import { Users } from './pages/Users';
@@ -153,6 +154,7 @@ export function App() {
             <Route path="/tickets" element={<Protected><Tickets /></Protected>} />
             <Route path="/tickets/new" element={<Protected><TicketForm /></Protected>} />
             <Route path="/tickets/:id" element={<Protected><TicketDetail /></Protected>} />
+            <Route path="/tickets/:id/edit" element={<Protected roles={['admin', 'rep']}><TicketEdit /></Protected>} />
             <Route path="/data-studio" element={<Protected><DataStudio /></Protected>} />
             <Route path="/data-studio/analysis" element={<Protected><AnalysisResults /></Protected>} />
             <Route path="/admin" element={<Protected roles={['admin', 'rep']}><Navigate to="/setup" replace /></Protected>} />

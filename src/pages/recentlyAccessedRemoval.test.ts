@@ -1,4 +1,4 @@
-import { ComponentProps, isValidElement, ReactElement, ReactNode } from 'react';
+import { isValidElement, ReactElement, ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccountDetail } from './AccountDetail';
 import { CampaignDetail } from './CampaignDetail';
@@ -7,8 +7,6 @@ import { LeadDetail } from './LeadDetail';
 import { ProductDetail } from './ProductDetail';
 import { QuoteDetail } from './QuoteDetail';
 import { TicketDetail } from './TicketDetail';
-import { Tickets } from './Tickets';
-import { TicketReadingPane } from '../components/TicketReadingPane';
 import { Ticket } from '../types';
 
 const harness = vi.hoisted(() => ({
@@ -124,49 +122,36 @@ const closedTicket: Ticket = {
   priority: 'Medium', status: 'Closed', slaDue: '', createdAt: '', comments: [], attachments: [],
 };
 
-async function ticketDeleteButton(page: () => ReactNode) {
+async function ticketDeleteButton() {
   harness.record = closedTicket;
   harness.tickets = [closedTicket];
-  await load(page);
-  if (page === Tickets) {
-    render(page).find((node) => node.props['data-testid'] === 'ticket-inbox-row-rec-1')?.props.onClick?.();
-  }
-  const pane = render(page).find((node) => node.type === TicketReadingPane);
-  if (!isValidElement<ComponentProps<typeof TicketReadingPane>>(pane)) throw new Error('Ticket pane missing');
-  harness.states = [];
-  const renderPane = () => TicketReadingPane(pane.props);
-  render(renderPane).find((node) => node.props['data-testid'] === 'delete-ticket-btn')?.props.onClick?.();
-  const confirm = render(renderPane).find((node) => node.props['data-testid'] === 'confirm-delete-btn');
-  if (!confirm?.props.onClick) throw new Error('Ticket delete confirmation missing');
-  return confirm.props.onClick;
+  await load(TicketDetail);
+  const confirm = confirmDelete(TicketDetail);
+  if (!confirm.props.onClick) throw new Error('Ticket delete confirmation missing');
+  return confirm.props.onClick as () => Promise<void>;
 }
 
-describe('Ticket delete removes Recently Accessed from both callers (AIO-422)', () => {
-  it.each([['detail', TicketDetail], ['inbox', Tickets]] as const)(
-    'removes the row only after successful deletion from %s',
-    async (_name, page) => {
-      const confirm = await ticketDeleteButton(page);
-      let finishDelete: () => void = () => {};
-      harness.removeMany.mockImplementation(() => new Promise<void>((resolve) => { finishDelete = resolve; }));
-      const pending = confirm();
-      expect(harness.removeMany).toHaveBeenCalledWith('tickets', ['rec-1']);
-      expect(harness.removeViews).not.toHaveBeenCalled();
-      finishDelete();
-      await pending;
-      expect(harness.removeViews).toHaveBeenCalledTimes(1);
-      expect(harness.removeViews).toHaveBeenCalledWith(['rec-1']);
-      if (page === TicketDetail) expect(harness.navigate).toHaveBeenCalledWith('/tickets');
-    },
-  );
+// 3.0: tickets are deleted from the ticket room only (the queue opens the ticket instead of a reading pane).
+describe('Ticket delete removes Recently Accessed (AIO-422)', () => {
+  it('removes the row only after successful deletion', async () => {
+    const confirm = await ticketDeleteButton();
+    let finishDelete: () => void = () => {};
+    harness.removeMany.mockImplementation(() => new Promise<void>((resolve) => { finishDelete = resolve; }));
+    const pending = confirm();
+    expect(harness.removeMany).toHaveBeenCalledWith('tickets', ['rec-1']);
+    expect(harness.removeViews).not.toHaveBeenCalled();
+    finishDelete();
+    await pending;
+    expect(harness.removeViews).toHaveBeenCalledTimes(1);
+    expect(harness.removeViews).toHaveBeenCalledWith(['rec-1']);
+    expect(harness.navigate).toHaveBeenCalledWith('/tickets');
+  });
 
-  it.each([['detail', TicketDetail], ['inbox', Tickets]] as const)(
-    'keeps the row when deletion fails from %s',
-    async (_name, page) => {
-      const confirm = await ticketDeleteButton(page);
-      harness.removeMany.mockRejectedValueOnce(new Error('Delete failed'));
-      await expect(confirm()).rejects.toThrow('Delete failed');
-      expect(harness.removeViews).not.toHaveBeenCalled();
-      expect(harness.navigate).not.toHaveBeenCalled();
-    },
-  );
+  it('keeps the row and stays on the ticket when deletion fails', async () => {
+    const confirm = await ticketDeleteButton();
+    harness.removeMany.mockRejectedValueOnce(new Error('Delete failed'));
+    await confirm();
+    expect(harness.removeViews).not.toHaveBeenCalled();
+    expect(harness.navigate).not.toHaveBeenCalled();
+  });
 });

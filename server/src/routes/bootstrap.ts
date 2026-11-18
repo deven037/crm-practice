@@ -49,6 +49,7 @@ bootstrapRouter.get('/', requireAuth, (req, res) => {
     dedupeRules: store.dedupeRules.all(),
     statusCodeSets: store.statusCodeSets.all(),
     slaConfigs: store.slaConfigs.all(),
+    slaRules: store.slaRules.all(),
     pageLayouts: store.pageLayouts.all(),
     autoFlowProcesses: store.autoFlowProcesses.all(),
     audit: store.audit.all(),

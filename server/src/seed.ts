@@ -1,6 +1,7 @@
 // Server-side port of ../../src/data/seed.ts — same mulberry32 PRNG, same shapes/counts,
 // kept in sync manually. This is the server's deterministic seed generator, used both
 // on boot and by POST /api/reset.
+import { DEFAULT_SLA_RULES, duesFor } from './sla.js';
 import {
   Account,
   Activity,
@@ -31,6 +32,7 @@ import {
   QUOTE_STATUSES,
   RoleDef,
   SlaConfig,
+  SlaRules,
   StatusCodeSet,
   TaskItem,
   Meeting,
@@ -59,6 +61,14 @@ const INDUSTRIES = ['Technology', 'Finance', 'Healthcare', 'Retail', 'Manufactur
 const TITLES = ['CEO', 'CTO', 'VP Sales', 'Product Manager', 'Marketing Head', 'Procurement Lead', 'IT Director', 'Operations Manager'];
 const TAGS = ['vip', 'newsletter', 'partner', 'decision-maker', 'follow-up', 'imported'];
 const TASK_TITLES = ['Call back', 'Send proposal to', 'Schedule demo with', 'Follow up with', 'Prepare quote for', 'Review contract for', 'Email onboarding docs to', 'Check renewal for'];
+const TICKET_CHANNELS = ['Email', 'Phone', 'Branch', 'Portal', 'WhatsApp'];
+const TICKET_CATEGORIES = ['Payments', 'Cards', 'Net banking', 'Loans', 'Accounts', 'Deposits', 'Forex', 'KYC'];
+const CANNED_REPLIES = [
+  'Hello {first_name}, thank you for writing to us. I have taken this up and will update you within the hour.',
+  'Hello {first_name}, could you share the transaction reference numbers and the date of the failed payments?',
+  'Hello {first_name}, this has been fixed on our side. Please try again and tell us if anything still fails.',
+  'Hello {first_name}, please visit your home branch with an original ID proof so we can complete this request.',
+];
 const TICKET_SUBJECTS = ['Cannot login to portal', 'Invoice mismatch for last month', 'Dashboard loads slowly', 'Feature request: export to Excel', 'Password reset not working', 'Duplicate records after import', 'API rate limit questions', 'Mobile app crashes on launch', 'Billing address update', 'Report totals look wrong', 'SSO configuration help', 'Data sync delayed', 'Broken link in welcome email', 'Upgrade plan enquiry', 'Notification emails not received'];
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -457,6 +467,9 @@ function seedStatusCodeSets(): StatusCodeSet[] {
     { id: 'status-deal-lost-reason', module: 'deals', field: 'lostReason', name: 'Deal Lost Reason', options: [...DEAL_LOST_REASONS], isSystem: true },
     { id: 'status-activity-type', module: 'activities', field: 'type', name: 'Activity Type', options: [...ACTIVITY_TYPES], isSystem: true },
     { id: 'status-activity-outcome', module: 'activities', field: 'outcome', name: 'Call Outcome', options: [...CALL_OUTCOMES], isSystem: true },
+    { id: 'status-ticket-channel', module: 'tickets', field: 'channel', name: 'Ticket Channel', options: [...TICKET_CHANNELS], isSystem: true },
+    { id: 'status-ticket-category', module: 'tickets', field: 'category', name: 'Ticket Category', options: [...TICKET_CATEGORIES], isSystem: true },
+    { id: 'status-ticket-canned', module: 'tickets', field: 'canned', name: 'Ticket Canned Replies', options: [...CANNED_REPLIES], isSystem: true },
     {
       id: 'status-campaign-status',
       module: 'campaigns',
@@ -476,15 +489,48 @@ function seedStatusCodeSets(): StatusCodeSet[] {
   ];
 }
 
-// Every priority at 48h — matches today's flat `now + 48h` computation in TicketForm.tsx
-// exactly, so switching tickets to config-driven SLA hours is a no-op until edited.
+// The standard promise per priority (server/src/sla.ts DEFAULT_POLICY): Urgent and High run round the clock,
+// Medium and Low count working hours only.
 function seedSlaConfigs(): SlaConfig[] {
   return [
-    { id: 'sla-low', priority: 'Low', hours: 48 },
-    { id: 'sla-medium', priority: 'Medium', hours: 48 },
-    { id: 'sla-high', priority: 'High', hours: 48 },
-    { id: 'sla-urgent', priority: 'Urgent', hours: 48 },
+    { id: 'sla-low', priority: 'Low', hours: 48, firstReplyHours: 8, clock: 'working' },
+    { id: 'sla-medium', priority: 'Medium', hours: 24, firstReplyHours: 4, clock: 'working' },
+    { id: 'sla-high', priority: 'High', hours: 8, firstReplyHours: 1, clock: '24x7' },
+    { id: 'sla-urgent', priority: 'Urgent', hours: 4, firstReplyHours: 0.25, clock: '24x7' },
   ];
+}
+
+/**
+ * Gives the seeded tickets owners, channels, categories, first replies and due times.
+ * Uses no random numbers, so every other seeded record stays exactly as before.
+ */
+function enrichTickets(tickets: Ticket[], slaConfigs: SlaConfig[]): void {
+  const team = ['user-1', 'user-2', 'user-4'];
+  // Hours ago each open ticket was raised, so the queue shows a mix of fresh, nearly due and breached tickets.
+  const ages = [1.2, 3.6, 0.4, 7, 2.2, 30, 0.7, 5.5];
+  let open = 0;
+  tickets.forEach((t, i) => {
+    t.ownerId = i % 5 === 1 ? null : team[i % team.length];
+    t.channel = TICKET_CHANNELS[i % TICKET_CHANNELS.length];
+    t.category = TICKET_CATEGORIES[i % TICKET_CATEGORIES.length];
+    t.contactId = null;
+    t.accountId = null;
+    t.layoutName = null;
+    t.pausedAt = null;
+    t.pausedMinutes = 0;
+    t.escalation = 0;
+    t.warnedAt = null;
+    const isOpen = t.status === 'Open' || t.status === 'In Progress';
+    if (isOpen) t.createdAt = new Date(now() - ages[open++ % ages.length] * 60 * 60_000).toISOString();
+    const dues = duesFor(t, slaConfigs, DEFAULT_SLA_RULES);
+    t.slaDue = dues.slaDue;
+    t.firstReplyDue = dues.firstReplyDue;
+    const replied = t.comments.length > 0 || t.status !== 'Open';
+    t.firstReplyAt = replied ? new Date(Date.parse(t.createdAt) + 10 * 60_000).toISOString() : null;
+    t.comments = t.comments.map((c) => ({ ...c, createdAt: t.firstReplyAt ?? c.createdAt, kind: 'reply' as const }));
+    // Resolved in time, except every fourth closed ticket, which was late.
+    t.resolvedAt = isOpen ? null : new Date(Date.parse(t.slaDue) + (i % 8 === 3 ? 3 : -2) * 60 * 60_000).toISOString();
+  });
 }
 
 function seedLayouts(): LayoutDef[] {
@@ -731,6 +777,7 @@ export function buildSeedData() {
   const dedupeRules = seedDedupeRules();
   const statusCodeSets = seedStatusCodeSets();
   const slaConfigs = seedSlaConfigs();
+  enrichTickets(tickets, slaConfigs);
   const autoFlowProcesses = seedAutoFlowProcesses(products);
   applyCustomFieldExamples(leadsWithCampaigns, accounts);
   enrichTasks(tasks, deals, contacts, accounts);
@@ -758,6 +805,7 @@ export function buildSeedData() {
     dedupeRules,
     statusCodeSets,
     slaConfigs,
+    slaRules: [] as SlaRules[],
     autoFlowProcesses,
     audit: [
       { id: 'audit-1', user: 'Alex Admin', action: 'seed', detail: 'Database seeded with sample data', when: new Date().toISOString() },

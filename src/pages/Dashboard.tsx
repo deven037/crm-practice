@@ -144,7 +144,7 @@ export function Dashboard() {
   const openDeals = deals.filter((d) => !d.stage.startsWith('Closed'));
   const openPipeline = openDeals.reduce((sum, d) => sum + d.amount, 0);
   const dueToday = tasks.filter((t) => !t.completed && isDueToday(t.dueDate)).length;
-  const openTickets = tickets.filter((t) => t.status === 'Open' || t.status === 'In Progress').length;
+  const openTickets = tickets.filter((t) => t.status !== 'Resolved' && t.status !== 'Closed').length;
 
   const wonIn = (from: number, to: number) =>
     deals.filter((d) => {
