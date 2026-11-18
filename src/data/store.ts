@@ -96,6 +96,11 @@ export function getAllSync<T>(key: string): T[] {
   return (cache[key] as T[]) ?? [];
 }
 
+/** Replaces a cached collection after a save that is not a plain list (for example the quote settings row). */
+export function setCached<T>(key: string, rows: T[]): void {
+  cache[key] = rows;
+}
+
 // ---- theme/prefs: pure client/device preferences, stay on localStorage unchanged ----
 
 const PREFIX = 'crm.';

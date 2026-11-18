@@ -24,6 +24,7 @@ vi.mock('react-router-dom', () => ({
   useSearchParams: () => [new URLSearchParams()],
 }));
 vi.mock('../data/store', () => ({
+  bankProfileSync: () => null,
   getAllSync: () => [{
     module: 'products',
     isDefault: true,
@@ -45,6 +46,8 @@ import { ProductForm } from './ProductForm';
 interface FormNodeProps {
   children?: ReactNode;
   'data-testid'?: string;
+  testId?: string;
+  onPick?: (value: string) => void;
   disabled?: boolean;
   value?: string;
   onClick?: () => Promise<void>;
@@ -66,6 +69,7 @@ function submitProduct(name: string) {
   const fields = formNodes(ProductForm());
   fields.find((node) => node.props['data-testid'] === 'product-name')?.props.onChange?.({ target: { value: name } });
   fields.find((node) => node.props['data-testid'] === 'product-price')?.props.onChange?.({ target: { value: '2000' } });
+  fields.find((node) => node.props.testId === 'product-family')?.props.onPick?.('Cards');
 
   harness.cursor = 0;
   const submit = formNodes(ProductForm()).find((node) => node.props.children === 'Create product')?.props.onClick;
@@ -99,7 +103,8 @@ it('opens the product returned to each of two concurrent Default-layout submissi
     expect(path).toBe('/products');
     expect(request.method).toBe('POST');
     const body = JSON.parse(request.body);
-    expect(body).toMatchObject({ name, price: 2000, layoutName: 'Default' });
+    expect(body).toMatchObject({ name, price: 2000, layoutName: 'Default', category: 'Cards', unit: 'One-time' });
+    expect(body.sku).toMatch(/^CAR-/);
     expect(body).not.toHaveProperty('id');
   }
   expect(first.navigate).toHaveBeenCalledWith('/products/product-server-1');

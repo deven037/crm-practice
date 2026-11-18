@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { QUOTE_STATUSES } from '../types.js';
+import { CHARGE_TYPES, QUOTE_STATUSES } from '../types.js';
 
 const customFieldsSchema = z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])).optional();
 
@@ -10,6 +10,8 @@ const lineItemSchema = z.object({
   quantity: z.number().positive(),
   unitPrice: z.number().nonnegative(),
   discountPct: z.number().min(0).max(100).default(0),
+  sku: z.string().optional(),
+  unit: z.enum(CHARGE_TYPES as [string, ...string[]]).optional(),
 });
 
 export const quoteSchema = z.object({
@@ -20,9 +22,26 @@ export const quoteSchema = z.object({
   lineItems: z.array(lineItemSchema).min(1, 'At least one line item is required.'),
   status: z.enum(QUOTE_STATUSES as [string, ...string[]]).default('Draft'),
   validUntil: z.string().optional(),
+  ownerId: z.string().nullable().optional(),
   customFields: customFieldsSchema,
 });
 
 export const quoteTransitionSchema = z.object({
   status: z.enum(QUOTE_STATUSES as [string, ...string[]]),
+  /** Why the customer said no; needed when the status is Rejected. */
+  reason: z.string().trim().max(200).optional(),
+  note: z.string().trim().max(500).optional(),
+});
+
+export const quoteApprovalSchema = z.object({
+  decision: z.enum(['ask', 'approve', 'return']),
+  note: z.string().trim().max(500).optional(),
+});
+
+export const quoteSettingsSchema = z.object({
+  taxName: z.string().trim().min(1, 'Name the tax, for example GST.').max(20),
+  taxPercent: z.number().min(0).max(100),
+  validityDays: z.number().int().min(1).max(365),
+  discountLimit: z.number().min(0).max(100),
+  approverId: z.string().nullable(),
 });

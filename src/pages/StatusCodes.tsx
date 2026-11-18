@@ -19,6 +19,8 @@ const MODULE_FIELD_OPTIONS: { value: string; label: string; module: StatusCodeMo
   { value: 'activities.outcome', label: 'Activities — Call outcome', module: 'activities', field: 'outcome' },
   { value: 'tickets.channel', label: 'Tickets — Channel', module: 'tickets', field: 'channel' },
   { value: 'tickets.category', label: 'Tickets — Category', module: 'tickets', field: 'category' },
+  { value: 'products.category', label: 'Products — Family', module: 'products', field: 'category' },
+  { value: 'quotes.rejectReason', label: 'Quotes — Rejection reason', module: 'quotes', field: 'rejectReason' },
   { value: 'tickets.canned', label: 'Tickets — Canned replies (write {first_name} for the customer)', module: 'tickets', field: 'canned' },
 ];
 

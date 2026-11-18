@@ -25,12 +25,15 @@ import { AccountDetail } from './pages/AccountDetail';
 import { AccountEdit } from './pages/AccountEdit';
 import { Products } from './pages/Products';
 import { ProductForm } from './pages/ProductForm';
+import { ProductEdit } from './pages/ProductEdit';
 import { ProductDetail } from './pages/ProductDetail';
 import { Campaigns } from './pages/Campaigns';
 import { CampaignForm } from './pages/CampaignForm';
 import { CampaignDetail } from './pages/CampaignDetail';
 import { Quotes } from './pages/Quotes';
 import { QuoteForm } from './pages/QuoteForm';
+import { QuoteEdit } from './pages/QuoteEdit';
+import { QuoteSettingsPage } from './pages/QuoteSettingsPage';
 import { QuoteDetail } from './pages/QuoteDetail';
 import { Deals } from './pages/Deals';
 import { DealForm } from './pages/DealForm';
@@ -133,13 +136,15 @@ export function App() {
             <Route path="/accounts/:id/edit" element={<Protected roles={['admin', 'rep']}><AccountEdit /></Protected>} />
             <Route path="/accounts/:id" element={<Protected><AccountDetail /></Protected>} />
             <Route path="/products" element={<Protected><Products /></Protected>} />
-            <Route path="/products/new" element={<Protected><ProductForm /></Protected>} />
+            <Route path="/products/new" element={<Protected roles={['admin', 'rep']}><ProductForm /></Protected>} />
+            <Route path="/products/:id/edit" element={<Protected roles={['admin', 'rep']}><ProductEdit /></Protected>} />
             <Route path="/products/:id" element={<Protected><ProductDetail /></Protected>} />
             <Route path="/campaigns" element={<Protected><Campaigns /></Protected>} />
             <Route path="/campaigns/new" element={<Protected><CampaignForm /></Protected>} />
             <Route path="/campaigns/:id" element={<Protected><CampaignDetail /></Protected>} />
             <Route path="/quotes" element={<Protected><Quotes /></Protected>} />
-            <Route path="/quotes/new" element={<Protected><QuoteForm /></Protected>} />
+            <Route path="/quotes/new" element={<Protected roles={['admin', 'rep']}><QuoteForm /></Protected>} />
+            <Route path="/quotes/:id/edit" element={<Protected roles={['admin', 'rep']}><QuoteEdit /></Protected>} />
             <Route path="/quotes/:id" element={<Protected><QuoteDetail /></Protected>} />
             <Route path="/deals" element={<Protected><Deals /></Protected>} />
             <Route path="/deals/new" element={<Protected roles={['admin', 'rep']}><DealForm /></Protected>} />
@@ -175,6 +180,7 @@ export function App() {
             <Route path="/setup/dedupe-rules/:id/edit" element={<Protected roles={['admin', 'rep']}><DedupeRuleForm /></Protected>} />
             <Route path="/setup/dedupe-rules/:id" element={<Protected roles={['admin', 'rep']}><DedupeRuleDetail /></Protected>} />
             <Route path="/setup/status-codes" element={<Protected roles={['admin', 'rep']}><StatusCodes /></Protected>} />
+            <Route path="/setup/quote-settings" element={<Protected><QuoteSettingsPage /></Protected>} />
             <Route path="/setup/sla" element={<Protected roles={['admin', 'rep']}><SlaManagement /></Protected>} />
             <Route path="/setup/import" element={<Protected roles={['admin', 'rep']}><ImportData /></Protected>} />
             <Route path="/setup/layouts/:module" element={<Protected roles={['admin', 'rep']}><LayoutDesigner /></Protected>} />

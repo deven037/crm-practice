@@ -43,7 +43,7 @@ vi.mock('../data/store', () => ({
   getAllSync: (...args: unknown[]) => harness.cached(...args),
   saveAll: (...args: unknown[]) => harness.save(...args),
   removeMany: (...args: unknown[]) => harness.remove(...args),
-  getById: vi.fn(), upsert: vi.fn(), newId: vi.fn(),
+  getById: vi.fn(), upsert: vi.fn(), newId: vi.fn(), bankProfileSync: () => null,
 }));
 interface Props {
   children?: ReactNode;
@@ -102,7 +102,8 @@ describe('AIO-401 fresh affected-record writes', () => {
   });
 
   it.each([false, true])('product unlink preserves fresh lead fields (empty stale relation list: %s)', async (empty) => {
-    harness.states = [product, false, empty ? [] : [lead], [], false, null, true, product.name];
+    // 3.0 product page states: product, load state, leads, quotes, menu, deleting, confirm name, busy.
+    harness.states = [product, 'ready', empty ? [] : [lead], [], false, true, product.name, false];
     const fresh = { ...lead, status: 'Qualified', phone: 'new phone', customFields: { region: 'West' } };
     harness.cached.mockReturnValue([lead]);
     harness.read.mockResolvedValue([fresh, { ...lead, id: 'l2', productId: 'p2' }]);

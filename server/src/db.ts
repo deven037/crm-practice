@@ -19,6 +19,7 @@ import {
   PageLayout,
   Product,
   Quote,
+  QuoteSettings,
   RoleDef,
   SlaConfig,
   SlaRules,
@@ -149,7 +150,7 @@ export class Collection<T extends { id: string }> {
 export const COLLECTION_NAMES = [
   'users', 'leads', 'contacts', 'accounts', 'deals', 'products', 'tickets', 'campaigns', 'quotes', 'tasks', 'meetings',
   'activities', 'notifications', 'customFieldDefs', 'layouts', 'pageLayouts', 'roleDefs', 'assignmentRules',
-  'dedupeRules', 'statusCodeSets', 'slaConfigs', 'slaRules', 'autoFlowProcesses', 'audit',
+  'dedupeRules', 'statusCodeSets', 'slaConfigs', 'slaRules', 'quoteSettings', 'autoFlowProcesses', 'audit',
 ] as const;
 export type CollectionName = (typeof COLLECTION_NAMES)[number];
 
@@ -177,6 +178,7 @@ export class Store {
   statusCodeSets = new Collection<StatusCodeSet>('statusCodeSets', ['name']);
   slaConfigs = new Collection<SlaConfig>('slaConfigs', []);
   slaRules = new Collection<SlaRules>('slaRules', []);
+  quoteSettings = new Collection<QuoteSettings>('quoteSettings', []);
   autoFlowProcesses = new Collection<AutoFlowProcess>('autoFlowProcesses', ['name']);
   audit = new Collection<AuditEntry>('audit', []);
 
@@ -207,6 +209,7 @@ export class Store {
     this.statusCodeSets.seed(data.statusCodeSets);
     this.slaConfigs.seed(data.slaConfigs);
     this.slaRules.seed(data.slaRules);
+    this.quoteSettings.seed(data.quoteSettings);
     this.autoFlowProcesses.seed(data.autoFlowProcesses);
     this.audit.seed(data.audit);
     this.auditCounter = 0;
