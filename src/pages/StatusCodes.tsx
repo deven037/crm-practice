@@ -17,6 +17,9 @@ const MODULE_FIELD_OPTIONS: { value: string; label: string; module: StatusCodeMo
   { value: 'deals.lostReason', label: 'Deals — Lost reason', module: 'deals', field: 'lostReason' },
   { value: 'activities.type', label: 'Activities — Type', module: 'activities', field: 'type' },
   { value: 'activities.outcome', label: 'Activities — Call outcome', module: 'activities', field: 'outcome' },
+  { value: 'tickets.channel', label: 'Tickets — Channel', module: 'tickets', field: 'channel' },
+  { value: 'tickets.category', label: 'Tickets — Category', module: 'tickets', field: 'category' },
+  { value: 'tickets.canned', label: 'Tickets — Canned replies (write {first_name} for the customer)', module: 'tickets', field: 'canned' },
 ];
 
 function emptySet(): StatusCodeSet {

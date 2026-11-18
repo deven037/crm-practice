@@ -180,7 +180,7 @@ function seedNewBank(store: any, profile: BankProfile, admin: NewBank['admin']):
     role: 'admin',
     active: true,
   };
-  const settings = ['customFieldDefs', 'layouts', 'pageLayouts', 'roleDefs', 'statusCodeSets', 'slaConfigs'];
+  const settings = ['customFieldDefs', 'layouts', 'pageLayouts', 'roleDefs', 'statusCodeSets', 'slaConfigs', 'slaRules'];
   if (profile.sampleData) {
     const sampleUsers = (data.users as User[])
       .filter((user) => user.id !== 'user-1')

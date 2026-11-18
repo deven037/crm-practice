@@ -198,23 +198,34 @@ export interface Meeting {
   createdAt: string;
 }
 
-export type TicketStatus = 'Open' | 'In Progress' | 'Resolved' | 'Closed';
+export type TicketStatus = 'New' | 'Open' | 'In Progress' | 'Waiting on customer' | 'Resolved' | 'Closed';
+export const TICKET_STATUSES: TicketStatus[] = ['New', 'Open', 'In Progress', 'Waiting on customer', 'Resolved', 'Closed'];
+/** Statuses that end the SLA clock. */
+export const TICKET_DONE: TicketStatus[] = ['Resolved', 'Closed'];
 export type TicketPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
 export const TICKET_PRIORITIES: TicketPriority[] = ['Low', 'Medium', 'High', 'Urgent'];
 
 /** Allowed status transitions for the ticket workflow. */
 export const TICKET_TRANSITIONS: Record<TicketStatus, TicketStatus[]> = {
-  Open: ['In Progress', 'Closed'],
-  'In Progress': ['Resolved', 'Open'],
+  New: ['Open', 'In Progress', 'Closed'],
+  Open: ['In Progress', 'Waiting on customer', 'Resolved', 'Closed'],
+  'In Progress': ['Waiting on customer', 'Resolved', 'Open'],
+  'Waiting on customer': ['In Progress', 'Resolved', 'Closed'],
   Resolved: ['Closed', 'In Progress'],
   Closed: ['Open'],
 };
+
+/** reply: sent to the customer. note: only the team sees it. system: written by the CRM (status, priority, escalation). */
+export type TicketCommentKind = 'reply' | 'note' | 'system';
 
 export interface TicketComment {
   id: string;
   author: string;
   text: string;
   createdAt: string;
+  /** Missing on comments written before 3.0; those count as replies. */
+  kind?: TicketCommentKind;
+  authorId?: string | null;
 }
 
 export interface Ticket {
@@ -224,11 +235,31 @@ export interface Ticket {
   requester: string;
   priority: TicketPriority;
   status: TicketStatus;
+  /** When the ticket must be resolved. Written by the server from the SLA policy; moves on when a pause ends. */
   slaDue: string;
   createdAt: string;
   comments: TicketComment[];
   attachments: FileRef[];
   customFields?: Record<string, string | number | boolean | null>;
+  // 3.0 fields, all optional so older tickets keep working.
+  contactId?: string | null;
+  accountId?: string | null;
+  ownerId?: string | null;
+  channel?: string;
+  category?: string;
+  layoutName?: string | null;
+  /** When the first reply to the customer is due, and when it went out. */
+  firstReplyDue?: string | null;
+  firstReplyAt?: string | null;
+  /** Set while the ticket sits in a status that pauses the SLA clock. */
+  pausedAt?: string | null;
+  /** Minutes the clock has been paused in total, before the current pause. */
+  pausedMinutes?: number;
+  resolvedAt?: string | null;
+  /** 0 = not escalated, 1 to 3 = escalation level. */
+  escalation?: number;
+  /** When the "time is nearly used" warning went out, so it goes out once. */
+  warnedAt?: string | null;
 }
 
 export type QuoteStatus = 'Draft' | 'Sent' | 'Accepted' | 'Rejected' | 'Expired';
@@ -495,7 +526,7 @@ export interface DedupeRule {
 }
 
 /** Fields whose options are safe to reconfigure — never Ticket/Quote status, which have protected transition maps. */
-export type StatusCodeModule = 'leads' | 'deals' | 'campaigns' | 'activities';
+export type StatusCodeModule = 'leads' | 'deals' | 'campaigns' | 'activities' | 'tickets';
 
 export interface StatusCodeSet {
   id: string;
@@ -506,8 +537,33 @@ export interface StatusCodeSet {
   isSystem: boolean;
 }
 
+export type SlaClock = '24x7' | 'working';
+
+/** One priority's promise. `hours` is the time to resolve (named before 3.0 added the first reply). */
 export interface SlaConfig {
   id: string;
   priority: TicketPriority;
   hours: number;
+  firstReplyHours?: number;
+  clock?: SlaClock;
+}
+
+/** The bank's SLA rules: escalation, working hours and which statuses pause the clock. One record, id 'sla-rules'. */
+export interface SlaRules {
+  id: string;
+  warnPercent: number;
+  notifyOnWarn: boolean;
+  escalateOnBreach: boolean;
+  level1UserId: string | null;
+  level2: boolean;
+  level2AfterMinutes: number;
+  level2UserId: string | null;
+  autoAssign: boolean;
+  autoAssignMinutes: number;
+  pauseStatuses: TicketStatus[];
+  /** 0 = Sunday. */
+  workingDays: number[];
+  workFrom: string;
+  workTo: string;
+  timeZone: string;
 }
