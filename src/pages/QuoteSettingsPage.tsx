@@ -103,7 +103,7 @@ export function QuoteSettingsPage() {
             </div>
           </div>
           {isAdmin && (
-            <div className="form-actions deal-savebar">
+            <div className="form-actions contact-form-actions">
               <Link to="/quotes" className="btn">Cancel</Link>
               <button type="button" className="btn btn-primary contacts-primary" disabled={busy} onClick={submit} data-testid="save-quote-settings"><Check size={15} aria-hidden="true" /> {busy ? 'Saving…' : 'Save settings'}</button>
             </div>

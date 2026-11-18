@@ -180,7 +180,7 @@ export function ProductForm({ existing }: { existing?: Product } = {}) {
             <CustomFieldsSection module="products" target="form" mode="edit" values={customFields} onChange={(k, v) => setCustomFields({ ...customFields, [k]: v })} errors={customErrors} includeIds={layoutCustomIds} />
           </div>
 
-          <div className="form-actions deal-savebar">
+          <div className="form-actions contact-form-actions">
             <Link to={backTo} className="btn">Cancel</Link>
             <button type="button" className="btn btn-primary contacts-primary" disabled={busy} onClick={submit} data-testid="save-product-btn">
               {busy ? (existing ? 'Saving…' : 'Creating…') : existing ? 'Save changes' : 'Create product'}
