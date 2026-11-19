@@ -38,6 +38,7 @@ import {
   SlaRules,
   QuoteSettings,
   DashboardLayout,
+  SearchHistory,
   StatusCodeSet,
   TaskItem,
   Meeting,
@@ -943,6 +944,7 @@ export function buildSeedData() {
     slaRules: [] as SlaRules[],
     quoteSettings: [] as QuoteSettings[],
     dashboardLayouts: [] as DashboardLayout[],
+    searchHistory: [] as SearchHistory[],
     autoFlowProcesses,
     audit: [
       { id: 'audit-1', user: 'Alex Admin', action: 'seed', detail: 'Database seeded with sample data', when: new Date().toISOString() },

@@ -49,6 +49,7 @@ export const NAV_GROUPS: NavGroup[] = [
 const OTHER_PAGES: Record<string, string> = {
   setup: 'Setup',
   admin: 'Setup',
+  search: 'Search',
   settings: 'Profile settings',
   testcases: 'Test cases',
   forbidden: 'No access',

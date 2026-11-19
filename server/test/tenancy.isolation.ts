@@ -221,8 +221,8 @@ describe('one bank cannot reach another bank\'s data', () => {
       assert.equal(list.body.total, 0);
       const search = await api('GET', '/search?q=Zzyx', { token: other });
       // The response repeats the search term, so check the results themselves.
-      assert.equal(search.body.leads.total, 0);
-      assert.deepEqual(search.body.leads.items, []);
+      assert.equal(search.body.total, 0);
+      assert.deepEqual(search.body.items, []);
       const boot = await api('GET', '/bootstrap', { token: other });
       assert.ok(!JSON.stringify(boot.body).includes('Zzyx'));
     }

@@ -183,8 +183,7 @@ a { color: var(--bank-ink); text-underline-offset: 3px; }
 
 /* menus and floating panels: glass, and they grow from where they are anchored */
 .command-overlay { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); animation: v3-fade var(--duration-base) var(--ease-out); }
-.command-panel { transform-origin: top center; animation: v3-menu-in var(--duration-base) var(--ease-out); }
-.avatar-menu, .notif-panel, .select-menu, .select-menu-searchable, .datepicker-popup, .context-menu, .command-panel {
+.avatar-menu, .notif-panel, .select-menu, .select-menu-searchable, .datepicker-popup, .context-menu {
   background: var(--glass-strong);
   -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-line);
