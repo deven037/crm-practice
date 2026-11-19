@@ -598,6 +598,8 @@ const PUBLISHED = {
     { id: 'h2', name: 'Stage moves', roles: [], cards: [{ id: 'c11', k: 'stagehist', w: 12, h: 5 }] } ] },
 };
 const PAGE_KIND = { 'New/Edit': 'form' };
+/* Every layout keeps these two; any other page can be deleted. */
+const FIXED_PAGES = ['New/Edit', 'Detail'];
 let FIELDSET = { coll: { cond: ['product', 'is', 'Home loan, Gold loan'] }, ltv: { cond: ['product', 'is', 'Home loan, Gold loan'] }, purity: { cond: ['product', 'is', 'Gold loan'], help: 'Only for gold loans; read from the assay slip.' }, coapp: {}, emi: { help: 'Worked out from amount, rate and tenure.' } };
 
 let S = {
@@ -812,7 +814,7 @@ function editorView() {
   return `<div class="ed-top"><button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button><input class="nm" id="lname" value="${esc(S.name)}" aria-label="Layout name">${edits() ? `<span class="state draft">DRAFT · ${plural(edits(), 'change')}</span>` : '<span class="state live">PUBLISHED · v6</span>'}<span class="sp"></span>
       <button class="btn ghost sq" data-a="undo" aria-label="Undo" ${S.undo.length ? '' : 'disabled'}>${ic('undo', 16)}</button><button class="btn ghost sq" data-a="redo" aria-label="Redo" ${S.redo.length ? '' : 'disabled'}>${ic('redo', 16)}</button>
       <button class="btn${S.cmp ? ' pri' : ''}" data-a="cmp" aria-pressed="${S.cmp}">${ic('eye', 15)}Compare with published</button><button class="btn pri" data-a="publish" ${edits() ? '' : 'disabled'}>Publish v7</button></div>
-    <div class="ptabs" role="tablist" aria-label="Pages">${Object.keys(S.M).map((pg) => `<button class="ptab" role="tab" aria-selected="${S.page === pg}" data-a="page" data-v="${esc(pg)}">${ic(PAGE_KIND[pg] === 'form' ? 'form' : pg === 'History' ? 'history' : 'page', 15)}${esc(pg)}<span class="k">${S.M[pg].tabs.length} tab${S.M[pg].tabs.length === 1 ? '' : 's'}</span></button>`).join('')}${S.addingPage ? '<span class="ptab"><input id="newpage" placeholder="Page name"></span>' : `<button class="ptab add" data-a="addpage">${ic('plus', 14)}Page</button>`}</div>
+    <div class="ptabs" role="tablist" aria-label="Pages">${Object.keys(S.M).map((pg) => `<span class="ptab" role="tab" tabindex="0" aria-selected="${S.page === pg}" data-a="page" data-v="${esc(pg)}">${ic(PAGE_KIND[pg] === 'form' ? 'form' : pg === 'History' ? 'history' : 'page', 15)}${esc(pg)}<span class="k">${S.M[pg].tabs.length} tab${S.M[pg].tabs.length === 1 ? '' : 's'}</span>${S.page === pg && !FIXED_PAGES.includes(pg) ? `<button class="tabx" data-a="rmpage" data-v="${esc(pg)}" aria-label="Delete page ${esc(pg)}" title="Delete page">${ic('x', 12)}</button>` : ''}</span>`).join('')}${S.addingPage ? '<span class="ptab"><input id="newpage" placeholder="Page name"></span>' : `<button class="ptab add" data-a="addpage">${ic('plus', 14)}Page</button>`}</div>
     <div class="tools2"><span>Sample</span><div class="seg">${SAMPLES.map((x, i) => `<button aria-pressed="${S.sample === i}" data-a="sample" data-v="${i}">${i ? 'Gold loan' : 'Home loan'}</button>`).join('')}</div>
       <span>Preview as</span><div class="seg">${ROLES.map((r) => `<button aria-pressed="${S.as === r}" data-a="as" data-v="${r}">${r === 'Relationship manager' ? 'RM' : r}</button>`).join('')}</div>
       <div class="seg" style="margin-left:auto"><button aria-pressed="${!S.phone}" data-a="phone" data-v="0" aria-label="Desktop">${ic('monitor', 14)}</button><button aria-pressed="${S.phone}" data-a="phone" data-v="1" aria-label="Phone">${ic('phone', 14)}</button></div></div>
@@ -883,8 +885,9 @@ const A = {
   as: (t) => { S.as = t.dataset.v; render(); },
   phone: (t) => { S.phone = t.dataset.v === '1'; render(); },
   cmp: () => { S.cmp = !S.cmp; render(); },
-  undo: () => { if (!S.undo.length) return; S.redo.push(JSON.stringify({ M: S.M, FS: FIELDSET })); const s = JSON.parse(S.undo.pop()); S.M = s.M; FIELDSET = s.FS; render(); },
-  redo: () => { if (!S.redo.length) return; S.undo.push(JSON.stringify({ M: S.M, FS: FIELDSET })); const s = JSON.parse(S.redo.pop()); S.M = s.M; FIELDSET = s.FS; render(); },
+  undo: () => { if (!S.undo.length) return; S.redo.push(JSON.stringify({ M: S.M, FS: FIELDSET })); const s = JSON.parse(S.undo.pop()); S.M = s.M; FIELDSET = s.FS; A._fixPage(); render(); },
+  _fixPage: () => { if (!S.M[S.page]) { S.page = 'Detail'; S.sel = { k: null }; } if (!S.M[S.page].tabs.some((x) => x.id === S.tab[S.page])) S.tab[S.page] = S.M[S.page].tabs[0].id; },
+  redo: () => { if (!S.redo.length) return; S.undo.push(JSON.stringify({ M: S.M, FS: FIELDSET })); const s = JSON.parse(S.redo.pop()); S.M = s.M; FIELDSET = s.FS; A._fixPage(); render(); },
   publish: () => { const ck = checks(); const b = ck.filter((c) => c[0] === 'block'); if (b.length) { toast(`Fix first: ${b[0][1]}`); return; } $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Publish ${esc(S.name)} v7</h3></div><div class="dlg-body">${plural(edits(), 'change')}. ${LAYOUTS[0].used || 214} deals open with this layout; people see it on their next page load. You can roll back to v6.${ck.length ? `<br><br>${plural(ck.length, 'check')} to look at, none blocking.` : ''}<div class="f" style="margin-top:12px"><label for="pnote">What changed</label><textarea id="pnote" placeholder="For example: gold purity on the Security tab"></textarea></div></div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep editing</button><span class="sp"></span><button class="btn pri" data-a="dopub">Publish</button></div></div></div>`; },
   dopub: () => { Object.keys(PUBLISHED).forEach((k) => delete PUBLISHED[k]); Object.assign(PUBLISHED, clone(S.M)); S.undo = []; S.redo = []; $('ovl').innerHTML = ''; toast('v7 is live for every deal that uses this layout'); render(); },
   goto: (t) => { S.page = t.dataset.p; if (t.dataset.t) S.tab[S.page] = t.dataset.t; render(); },
@@ -905,6 +908,15 @@ const A = {
     $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete the “${esc(tb.name)}” tab?</h3></div><div class="dlg-body">It holds ${tb.secs ? plural(n, 'field') : plural(n, 'card')}. ${tb.secs ? 'The fields go back to the list on the left, so you can place them on another tab.' : 'The cards go back to the card library.'} Undo brings the tab back.</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="dormtab">Delete tab</button></div></div></div>`;
   },
   dormtab: () => A._rmtab && A._rmtab(),
+  rmpage: (t) => {
+    const pg = t.dataset.v; if (FIXED_PAGES.includes(pg) || !S.M[pg]) return;
+    const tabs = S.M[pg].tabs, n = tabs.reduce((k, x) => k + (x.secs ? x.secs.reduce((m, s) => m + s.f.length, 0) : x.cards.length), 0);
+    const go = () => { snap(); delete S.M[pg]; S.page = 'Detail'; S.sel = { k: null }; S.pal = 'cards'; $('ovl').innerHTML = ''; toast(`Page “${pg}” deleted. Undo brings it back.`); render(); };
+    if (!n) { go(); return; }
+    A._rmpage = go;
+    $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete the “${esc(pg)}” page?</h3></div><div class="dlg-body">It has ${plural(tabs.length, 'tab')} with ${plural(n, 'card')}. People stop seeing this page once you publish. Undo brings it back.</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="dormpage">Delete page</button></div></div></div>`;
+  },
+  dormpage: () => A._rmpage && A._rmpage(),
   scols: (t) => { snap(); curTab().secs.find((x) => x.id === S.sel.id).cols = +t.dataset.v; render(); },
   rmsec: () => { snap(); const tb = curTab(); tb.secs = tb.secs.filter((x) => x.id !== S.sel.id); S.sel = { k: null }; render(); },
 };
@@ -921,7 +933,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && t.id === 'newtab') { const v = t.value.trim(); if (v) { snap(); const id = 't' + ++cid; pageM().tabs.push(isForm() ? { id, name: v, roles: [], secs: [{ id: 's' + ++cid, title: '', cols: 2, f: [] }] } : { id, name: v, roles: [], cards: [] }); S.tab[S.page] = id; S.sel = { k: 'tab', id }; } S.addingTab = false; render(); }
   if (e.key === 'Enter' && t.id === 'newpage') { const v = t.value.trim(); if (v && !S.M[v]) { snap(); S.M[v] = { tabs: [{ id: 'p' + ++cid, name: 'Main', roles: [], cards: [] }] }; S.page = v; S.tab[v] = S.M[v].tabs[0].id; S.pal = 'cards'; } S.addingPage = false; render(); }
   if (e.key === 'Enter' && t.id === 'nfpage') A.nfaddpage();
-  if ((e.key === 'Enter' || e.key === ' ') && t.matches('.itab[data-a], .itab.add')) { e.preventDefault(); t.click(); }
+  if ((e.key === 'Enter' || e.key === ' ') && t.matches('.itab[data-a], .itab.add, .ptab[data-a]')) { e.preventDefault(); t.click(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && S.screen === 'editor' && t.tagName !== 'INPUT') { e.preventDefault(); e.shiftKey ? A.redo() : A.undo(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && S.screen === 'editor' && t.tagName !== 'INPUT') { e.preventDefault(); A.redo(); }
 });
