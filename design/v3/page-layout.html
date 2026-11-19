@@ -279,7 +279,16 @@ i { font-style: normal; }
 .orow { display: grid; grid-template-columns: 20px 22px minmax(0, 1fr); align-items: center; gap: 8px; padding: 8px 8px; border-radius: 11px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 5px; font-size: 13px; transition: box-shadow var(--fast), border-color var(--fast), background var(--fast); }
 .orow .n { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text-muted); text-align: center; }
 .orow small { display: block; color: var(--text-muted); font-size: 11.5px; }
-.orow.win { border-color: var(--ok-text); background: color-mix(in srgb, var(--ok-bg) 55%, var(--surface)); box-shadow: 0 0 0 3px var(--ok-bg); }
+.sheetmock { border-radius: 16px; border: 1px solid var(--border-strong); background: var(--surface-2); padding: 8px; box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 40%, transparent); }
+.sheet-h { display: flex; align-items: center; gap: 7px; padding: 4px 6px 8px; font-weight: 650; font-size: 13px; }
+.sheet-h .mono { margin-left: auto; font-size: 10.5px; color: var(--text-muted); font-weight: 500; }
+.pickrow { grid-template-columns: 20px 18px minmax(0, 1fr); }
+.pickrow .radio { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--border-strong); background: var(--surface); }
+.pickrow.sel { border-color: var(--bank-ink); background: var(--bank-soft); }
+.pickrow.sel .radio { box-shadow: inset 0 0 0 5px var(--bank-primary); }
+.hiddenrow { display: flex; justify-content: space-between; gap: 10px; padding: 5px 8px; font-size: 12.5px; color: var(--text-muted); border-radius: 8px; }
+.hiddenrow span { text-decoration: line-through; } .hiddenrow small { font-size: 11.5px; text-align: right; }
+.orow.win {border-color: var(--ok-text); background: color-mix(in srgb, var(--ok-bg) 55%, var(--surface)); box-shadow: 0 0 0 3px var(--ok-bg); }
 .orow.lift { box-shadow: var(--shadow-lg); border-color: var(--bank-ink); }
 .orow.off { opacity: .5; }
 .grab { color: var(--text-muted); cursor: grab; touch-action: none; display: grid; place-items: center; height: 24px; }
@@ -537,7 +546,7 @@ const I = {
 const ic = (n, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n] || I.box}</svg>`;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+const plural = (n, w) => (w === 'person' ? (n === 1 ? '1 person' : n + ' people') : n + ' ' + w + (n === 1 ? '' : 's'));
 const clone = (x) => JSON.parse(JSON.stringify(x));
 
 /* ---------- Deals: fields come from Setup › Modules & fields ---------- */
@@ -638,7 +647,7 @@ let S = {
   screen: 'list', cur: null, page: 'New/Edit', tab: {}, sel: { k: null }, pal: 'fields', palq: '', sample: 0, as: 'Everyone', phone: false, cmp: false, menu: null, fresh: null,
   M: {}, undo: [], redo: [], name: '', addingPage: false, addingTab: false,
   nf: { name: '', desc: '', prod: [], roles: [], branches: [], start: 'L1', pages: ['New/Edit', 'Detail', 'History'], def: false, err: '', extra: '' },
-  tr: { role: 'Relationship manager', prod: 'Home Loan', branch: 'Baner, Pune' },
+  pv: { role: 'Relationship manager', branch: 'Baner, Pune' },
 };
 const SCREENS = [['list', 'Layouts'], ['new', 'New layout'], ['editor', 'Layout editor']];
 const edits = () => S.undo.length;
@@ -656,41 +665,48 @@ function openLayout(id) {
 /* ---------- small pieces ---------- */
 const thumbHTML = (cells, def) => `<div class="thumb">${cells.map(([w, h, hd]) => `<i class="${hd ? 'hd' : ''}" style="--w:${w};--h:${h}"></i>`).join('')}${def ? '<span class="def">DEFAULT</span>' : ''}</div>`;
 const forText = (L) => [L.prod.length ? L.prod.join(', ') : 'Every product', L.roles.length ? L.roles.join(', ') : 'everyone', L.branches.length ? L.branches.join(', ') : 'all branches'];
-function matchWinner() {
-  const t = S.tr;
-  for (const id of ORDER) {
-    const L = LAYOUTS.find((x) => x.id === id);
-    if (!L.on || !L.v) continue; // switched off, or never published: deals don't use it yet
-    if (L.prod.length && !L.prod.includes(t.prod)) continue;
-    if (L.roles.length && !L.roles.includes(t.role)) continue;
-    if (L.branches.length && !L.branches.includes(t.branch)) continue;
-    return L;
-  }
-  return LAYOUTS.find((x) => x.def);
+/* Why a layout is not in someone's "Choose a layout" sheet, or '' when it is. */
+function notOffered(L, role, branch) {
+  if (!L.on) return 'switched off';
+  if (!L.v) return 'not published yet';
+  if (L.roles.length && !L.roles.includes(role)) return 'only for ' + L.roles.join(', ');
+  if (L.branches.length && !L.branches.includes(branch)) return 'only in ' + L.branches.join(', ');
+  return '';
+}
+/* The sheet a person sees on New deal: the layouts they may choose, in the admin's order. */
+function pickerHTML() {
+  const { role, branch } = S.pv;
+  const rows = ORDER.map((id, i) => ({ L: LAYOUTS.find((x) => x.id === id), i })).filter((r) => r.L);
+  const offered = rows.filter((r) => !notOffered(r.L, role, branch));
+  const hidden = rows.filter((r) => notOffered(r.L, role, branch));
+  const sel = offered.find((r) => r.L.def) || offered[0];
+  const row = ({ L, i }) => `<div class="orow pickrow${sel && sel.L.id === L.id ? ' sel' : ''}" data-orow="${i}"><span class="grab" data-drag="order" data-i="${i}" aria-label="Move ${esc(L.name)}">${ic('grip', 14)}</span><span class="radio" aria-hidden="true"></span><span><b style="font-weight:600">${esc(L.name)}</b>${L.def ? ' <span class="state live" style="font-size:9.5px;padding:1px 6px">DEFAULT</span>' : ''}<small>${esc(L.desc || forText(L)[0])}${L.prod.length ? ` · ${esc(L.prod.join(', '))}` : ''}</small></span></div>`;
+  return `<aside class="card order" aria-label="Choose a layout"><div class="sec"><b>Choose a layout</b> on New deal</div>
+    <p class="muted" style="font-size:12.5px;margin:0 0 10px">Whoever creates a deal picks its layout here. The deal keeps that layout for good: its form, its record page and its other pages.</p>
+    <div class="tryit" style="margin:0 0 10px;padding:0;border:0"><span class="lab">Preview as</span><div class="row3" style="grid-template-columns:1fr 1fr">
+      <label>Role<select data-pv="role">${ROLES.slice(1).map((x) => `<option ${role === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+      <label>Branch<select data-pv="branch">${BRANCHES.map((x) => `<option ${branch === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label></div></div>
+    <div class="sheetmock" id="olist"><div class="sheet-h">${ic('layout', 14)}Choose a layout<span class="mono">${plural(offered.length, 'option')}</span></div>
+      ${offered.length ? offered.map(row).join('') : '<div class="muted" style="font-size:12.5px;padding:10px">No layout is offered to this person: deals they create get the default.</div>'}
+      ${offered.length === 1 ? '<div class="muted" style="font-size:12px;padding:4px 6px 0">Only one choice, so the sheet is skipped and the form opens straight away.</div>' : ''}</div>
+    ${hidden.length ? `<div class="lab" style="margin:12px 0 6px">Not offered to a ${esc(role.toLowerCase())} in ${esc(branch)}</div>${hidden.map(({ L }) => `<div class="hiddenrow"><span>${esc(L.name)}</span><small>${esc(notOffered(L, role, branch))}</small></div>`).join('')}` : ''}
+    <div class="muted" style="font-size:12px;margin-top:10px">Drag to change the order everyone sees. The default starts selected; deals made by import or the API get it too.</div></aside>`;
 }
 
 /* ---------- list ---------- */
 function listView() {
-  const win = matchWinner();
-  return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · ToolBox</div><h2>Customise page layout</h2><p>Each card is a layout: which deals and people it is for, and the pages it has. Open one to design its pages. A deal opens with the first layout in the order on the right that fits.</p></div>
+  return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · ToolBox</div><h2>Customise page layout</h2><p>Each card is a layout: who can choose it, and the pages it has. Open one to design its pages. People pick a layout when they create a deal; the panel on the right shows that choice as they see it.</p></div>
       <div class="acts"><button class="btn" data-a="toast" data-v="Back to Deals">${ic('back', 15)}Deals</button><button class="btn pri" data-a="go" data-v="new">${ic('plus', 15)}New layout</button></div></div>
     <div class="ll"><div class="lcards">${LAYOUTS.map((L, i) => { const [p, r, b] = forText(L); return `<div class="lyc${L.on ? '' : ' off'}${S.fresh === L.id ? ' fresh' : ''}${S.menu === L.id ? ' open' : ''}" style="--d:${i * 50}ms">
         <button style="text-align:left;display:contents" data-a="open" data-v="${L.id}" aria-label="Open ${esc(L.name)}">${thumbHTML(thumbOf(L), L.def)}</button>
         <div class="lyc-b"><h3><button data-a="open" data-v="${L.id}" style="text-align:left">${esc(L.name)}</button><button class="menu" data-a="menu" data-v="${L.id}" aria-label="More for ${esc(L.name)}" aria-expanded="${S.menu === L.id}">${ic('dots', 16)}</button></h3>
           <div class="meta"><span>${ic('box', 13)}<b>${esc(p)}</b></span><span>${ic('users', 13)}${esc(r)} · ${esc(b)}</span></div>
           <div class="pg">${pagesOf(L).map((x) => `<span>${esc(x)}</span>`).join('')}</div></div>
-        <div class="lyc-f">${L.undo.length ? `<span class="state draft">DRAFT · ${plural(L.undo.length, 'change')}</span>` : !L.v ? '<span class="state draft">NOT PUBLISHED</span>' : L.on ? (L.people ? `Opens for ${plural(L.people, 'person')}` : `${L.used} deals use it`) : 'Switched off'}<span class="mono">${L.v ? 'v' + L.v + ' · ' : ''}${esc(L.by)} · ${esc(L.at)}</span></div>
+        <div class="lyc-f">${L.undo.length ? `<span class="state draft">DRAFT · ${plural(L.undo.length, 'change')}</span>` : !L.v ? '<span class="state draft">NOT PUBLISHED</span>' : L.on ? (L.people ? `${plural(L.people, 'person')} can choose it` : `${L.used} deals use it`) : 'Switched off'}<span class="mono">${L.v ? 'v' + L.v + ' · ' : ''}${esc(L.by)} · ${esc(L.at)}</span></div>
         ${S.menu === L.id ? `<div class="cmenu" role="menu"><button role="menuitem" data-a="open" data-v="${L.id}">${ic('pen', 15)}Open and edit</button><button role="menuitem" data-a="dupl" data-v="${L.id}">${ic('copy', 15)}Duplicate</button><button role="menuitem" data-a="mkdef" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('star', 15)}Make default</button><button role="menuitem" data-a="onoff" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('power', 15)}${L.on ? 'Switch off' : 'Switch on'}</button><button role="menuitem" class="danger" data-a="del" data-v="${L.id}" ${L.def ? 'disabled title="The default layout can’t be deleted"' : ''}>${ic('trash', 15)}Delete</button></div>` : ''}
       </div>`; }).join('')}
       <button class="lyc new" data-a="go" data-v="new" style="--d:${LAYOUTS.length * 50}ms">${ic('plus', 26)}<b>New layout</b><small>Name it, pick who it is for and its pages</small></button></div>
-      <aside class="card order" aria-label="Order of matching"><div class="sec"><b>Which layout a deal gets</b></div>
-        <div id="olist">${ORDER.map((id, i) => { const L = LAYOUTS.find((x) => x.id === id); const [p, r, b] = forText(L); return `<div class="orow${L.id === win.id ? ' win' : ''}${L.on && L.v ? '' : ' off'}" data-orow="${i}"><span class="grab" data-drag="order" data-i="${i}" aria-label="Move ${esc(L.name)}" ${L.def ? 'style="visibility:hidden"' : ''}>${ic('grip', 14)}</span><span class="n">${L.def ? '∞' : i + 1}</span><span><b style="font-weight:600">${esc(L.name)}</b><small>${esc(p)} · ${esc(r)}${L.branches.length ? ' · ' + esc(b) : ''}${L.on ? '' : ' · off'}${L.v ? '' : ' · not published'}</small></span></div>`; }).join('')}</div>
-        <div class="muted" style="font-size:12px">The first layout that fits wins; switched-off and unpublished ones are skipped. Drag to change the order; the default is always last.</div>
-        <div class="tryit"><span class="lab">Try it</span><div class="row3">
-          <label>Role<select data-tr="role">${ROLES.slice(1).map((x) => `<option ${S.tr.role === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-          <label>Product<select data-tr="prod">${PRODUCTS.map((x) => `<option ${S.tr.prod === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
-          <label>Branch<select data-tr="branch">${BRANCHES.map((x) => `<option ${S.tr.branch === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label></div>
-          <div class="winner">${ic('check', 15)}Opens with “${esc(win.name)}”</div></div></aside></div>`;
+      ${pickerHTML()}</div>`;
 }
 
 /* ---------- new layout (full page) ---------- */
@@ -706,18 +722,18 @@ function newView() {
       <div class="nf-sec"><h3>About the layout</h3>
         <div class="f${n.err ? ' bad' : ''}"><label for="nfname">Layout name <span class="req" style="color:var(--danger-text)">*</span></label><input id="nfname" data-nf="name" value="${esc(n.name)}" placeholder="For example: Gold loans, Baner desk" autocomplete="off">${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}</div>
         <div class="f"><label for="nfdesc">What it is for</label><textarea id="nfdesc" data-nf="desc" placeholder="One line people see on the card">${esc(n.desc)}</textarea></div></div>
-      <div class="nf-sec"><h3>${ic('box', 15)}Which deals<span class="mono">product / record type</span></h3>${chips('prod', PRODUCTS, 'Every product')}</div>
-      <div class="nf-sec"><h3>${ic('users', 15)}Who it is for<span class="mono">roles and branches</span></h3>${chips('roles', ROLES.slice(1), 'Everyone')}${chips('branches', BRANCHES, 'All branches')}</div>
+      <div class="nf-sec"><h3>${ic('box', 15)}Products<span class="mono">optional</span></h3><p class="muted" style="margin:-6px 0 0;font-size:12.5px">Shown with the layout in Choose a layout. On this layout the Product field offers only these.</p>${chips('prod', PRODUCTS, 'Every product')}</div>
+      <div class="nf-sec"><h3>${ic('users', 15)}Who can choose it<span class="mono">roles and branches</span></h3><p class="muted" style="margin:-6px 0 0;font-size:12.5px">Only these people see it in Choose a layout. Deals already made with it stay on it, whoever opens them.</p>${chips('roles', ROLES.slice(1), 'Everyone')}${chips('branches', BRANCHES, 'All branches')}</div>
       <div class="nf-sec"><h3>${ic('copy', 15)}Start from</h3><div class="start">${[['blank', 'Basic', null], ...LAYOUTS.map((L) => [L.id, L.name, thumbOf(L)])].map(([id, nm, th]) => `<button aria-pressed="${n.start === id}" data-a="nfstart" data-v="${id}">${th ? thumbHTML(th) : `<div class="thumb blank">${ic('plus', 18)}</div>`}${esc(nm)}${th ? '' : '<small class="muted" style="font-weight:400">Required fields only</small>'}</button>`).join('')}</div></div>
       <div class="nf-sec"><h3>${ic('page', 15)}Pages<span class="mono">each is designed on its own</span></h3>
         <div class="pages-l">${n.pages.map((pg) => pageRow(pg, pg === 'New/Edit' || pg === 'Detail')).join('')}</div>
         <div class="addpage"><input id="nfpage" data-nf="extra" value="${esc(n.extra)}" placeholder="Add a page, for example Documents or Credit review"><button class="btn" data-a="nfaddpage">${ic('plus', 15)}Add page</button></div>
         ${n.pages.includes('History') ? '' : '<button class="link" style="justify-self:start;font-size:13px" data-a="nfhist">+ History page</button>'}</div>
-      <div class="nf-sec"><div class="sw-row"><span>Default layout for Deals<small>Used when no other layout fits. There is one default.</small></span><button class="switch" role="switch" aria-checked="${n.def}" data-a="nfdef" aria-label="Default layout"></button></div></div>
+      <div class="nf-sec"><div class="sw-row"><span>Default layout for Deals<small>Starts selected in Choose a layout, and deals made by import or the API get it. There is one default.</small></span><button class="switch" role="switch" aria-checked="${n.def}" data-a="nfdef" aria-label="Default layout"></button></div></div>
       <div class="nf-foot"><button class="btn ghost" data-a="go" data-v="list">Cancel</button><button class="btn pri" data-a="nfsave">Save layout</button></div></div>
     <aside class="nf-side"><span class="lab">Your card</span>
       <div class="lyc" style="--d:0ms">${thumbHTML(preview.thumb, n.def)}<div class="lyc-b"><h3>${esc(preview.name)}</h3><div class="meta"><span>${ic('box', 13)}<b>${esc(p)}</b></span><span>${ic('users', 13)}${esc(r)} · ${esc(b)}</span></div><div class="pg">${n.pages.map((x) => `<span>${esc(x)}</span>`).join('')}</div></div><div class="lyc-f">New · draft</div></div>
-      <div class="card" style="padding:12px 14px;font-size:12.5px;color:var(--text-muted)">${n.def ? 'It becomes the default: last in the order, used when nothing else fits.' : `It goes ${n.roles.length || n.branches.length ? 'to the top of' : 'above the default in'} the matching order. You can drag it later.`} Nothing changes for anyone until you publish it.</div></aside></div>`;
+      <div class="card" style="padding:12px 14px;font-size:12.5px;color:var(--text-muted)">${n.def ? 'It becomes the default: it starts selected in Choose a layout.' : 'It joins the end of Choose a layout; drag it higher on the Layouts screen.'} Nothing changes for anyone until you publish it.</div></aside></div>`;
 }
 
 /* ---------- editor ---------- */
@@ -895,9 +911,9 @@ const A = {
   dupl: (t) => { keepLayout(); const L = LAYOUTS.find((x) => x.id === t.dataset.v); let nm = L.name + ' (copy)'; for (let k = 2; LAYOUTS.some((x) => x.name === nm); k++) nm = `${L.name} (copy ${k})`;
     const M = {}; for (const pg of pagesOf(L)) M[pg] = reid(clone(L.M[pg]));
     const c = { ...L, id: 'L' + ++cid, name: nm, def: false, used: 0, people: 0, v: 0, by: 'You', at: 'now', on: true, prod: [...L.prod], roles: [...L.roles], branches: [...L.branches], M, P: null, FS: clone(L.FS), undo: [], redo: [] }; LAYOUTS.splice(LAYOUTS.indexOf(L) + 1, 0, c); ORDER.splice(ORDER.indexOf(L.id), 0, c.id); S.fresh = c.id; S.menu = null; toast('Copy made as a draft; rename it from its card'); render(); },
-  mkdef: (t) => { LAYOUTS.forEach((x) => (x.def = x.id === t.dataset.v)); const id = t.dataset.v; ORDER = [...ORDER.filter((x) => x !== id), id]; S.menu = null; toast('Default changed in draft: it is used when nothing else fits'); render(); },
+  mkdef: (t) => { const L = LAYOUTS.find((x) => x.id === t.dataset.v); if (!L.on || !L.v) { S.menu = null; toast('Publish it and switch it on first: the default must be choosable'); render(); return; } LAYOUTS.forEach((x) => (x.def = x.id === L.id)); S.menu = null; toast(`${L.name} now starts selected in Choose a layout`); render(); },
   onoff: (t) => { const L = LAYOUTS.find((x) => x.id === t.dataset.v); L.on = !L.on; S.menu = null; render(); },
-  del: (t) => { const L = LAYOUTS.find((x) => x.id === t.dataset.v); S.menu = null; $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete ${esc(L.name)}?</h3></div><div class="dlg-body">${L.used ? `${L.used} deals use it. They will open with “${esc(LAYOUTS.find((x) => x.def).name)}”, the default.` : L.people ? `${plural(L.people, 'person')} open deals with it. They will get the next layout that fits.` : 'Nothing uses it.'} Deals keep all their data. You can bring it back from the layout's history for 30 days.</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="dodel" data-v="${L.id}">Delete</button></div></div></div>`; render(); },
+  del: (t) => { const L = LAYOUTS.find((x) => x.id === t.dataset.v); S.menu = null; $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete ${esc(L.name)}?</h3></div><div class="dlg-body">${L.used ? `${L.used} deals use it. They will open with “${esc(LAYOUTS.find((x) => x.def).name)}”, the default.` : L.people ? `It leaves Choose a layout for the ${plural(L.people, 'person')} who can pick it.` : 'No deal uses it yet.'} Deals keep all their data. You can bring it back from the layout's history for 30 days.</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="dodel" data-v="${L.id}">Delete</button></div></div></div>`; render(); },
   dodel: (t) => { if (S.cur === t.dataset.v) S.cur = null; LAYOUTS = LAYOUTS.filter((x) => x.id !== t.dataset.v); ORDER = ORDER.filter((x) => x !== t.dataset.v); $('ovl').innerHTML = ''; toast('Layout deleted'); render(); },
   close: (t, e) => { if (e.target === t || t.tagName === 'BUTTON') $('ovl').innerHTML = ''; },
   toast: (t) => toast(t.dataset.v),
@@ -917,10 +933,8 @@ const A = {
     const L = mk({ id: 'L' + ++cid, name: nm, desc: n.desc, prod: [...n.prod], roles: [...n.roles], branches: [...n.branches], def: n.def, by: 'You', at: 'now', v: 0 }, modelFor(n.pages, src ? src.M : null), src ? clone(src.FS) : {});
     if (n.def) LAYOUTS.forEach((x) => (x.def = false));
     LAYOUTS.unshift(L);
-    // Narrow layouts go first; one that fits every deal goes just above the default, so it never hides the others.
-    const narrow = n.prod.length || n.roles.length || n.branches.length;
-    const defAt = ORDER.findIndex((id) => LAYOUTS.find((x) => x.id === id)?.def);
-    ORDER = n.def ? [...ORDER, L.id] : narrow ? [L.id, ...ORDER] : [...ORDER.slice(0, defAt), L.id, ...ORDER.slice(defAt)];
+    // A new layout joins the end of Choose a layout; the admin drags it where they want.
+    ORDER = [...ORDER, L.id];
     S.nf = { name: '', desc: '', prod: [], roles: [], branches: [], start: 'L1', pages: ['New/Edit', 'Detail', 'History'], def: false, err: '', extra: '' };
     go({ screen: 'list', fresh: L.id }); toast(`“${nm}” saved as a draft card. Open it to design its pages.`);
   },
@@ -1008,7 +1022,7 @@ document.addEventListener('change', (e) => {
     if (LAYOUTS.some((x) => x.id !== L.id && x.name.toLowerCase() === v.toLowerCase())) { S.name = L.name; toast('Another Deals layout has that name'); render(); return; }
     S.name = v; L.name = v; render(); return;
   }
-  if (t.dataset.tr) { S.tr[t.dataset.tr] = t.value; render(); }
+  if (t.dataset.pv) { S.pv[t.dataset.pv] = t.value; render(); }
   if (t.dataset.cond != null) { snap(); const c = FIELDSET[S.sel.id].cond; c[+t.dataset.cond] = t.value; if (t.dataset.cond === '0') c[2] = t.value === 'product' ? 'Home loan' : F[t.value].s[0]; render(); }
   if (t.dataset.cw || t.dataset.ch || t.dataset.tn || t.dataset.sn || t.dataset.fh) { snap(); render(); }
 });
@@ -1044,7 +1058,7 @@ window.addEventListener('pointermove', (e) => {
     return;
   }
   if (D.k === 'order') {
-    const row = under(e.clientX, e.clientY)?.closest('.orow'); if (!row) return; const j = +row.dataset.orow; if (j === D.i || j >= ORDER.length - 1) return;
+    const row = under(e.clientX, e.clientY)?.closest('.orow'); if (!row) return; const j = +row.dataset.orow; if (j === D.i) return;
     const [m] = ORDER.splice(D.i, 1); ORDER.splice(j, 0, m); D.i = j; render(); document.querySelector(`.orow[data-orow="${j}"]`)?.classList.add('lift'); return;
   }
   if (D.k === 'tab') {
@@ -1069,7 +1083,7 @@ window.addEventListener('pointerup', (e) => {
   const d = D; D = null;
   if (ghost) { ghost.remove(); }
   const el = d.moved ? under(e.clientX, e.clientY) : null; ghost = null; clearMarks();
-  if (d.k === 'order') { if (d.moved) toast('Order changed in draft'); render(); return; }
+  if (d.k === 'order') { if (d.moved) toast('Order of Choose a layout changed'); render(); return; }
   if (d.k === 'tab' || d.k.startsWith('rz')) { render(); return; }
   if (!d.moved) { render(); return; }
   if (d.k === 'newfld' || d.k === 'fld') {
