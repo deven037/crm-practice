@@ -1,58 +1,73 @@
-import { useEffect, useState } from 'react';
+import { CSSProperties, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Pencil, Trash2 } from 'lucide-react';
-import { getAll, getAllSync, getById, removeMany, saveAll, upsert } from '../data/store';
-import { Campaign, CAMPAIGN_CHANNELS, CAMPAIGN_STATUSES, Deal, Lead } from '../types';
+import { Ban, ChevronLeft, Copy, Flag, MoreHorizontal, Pencil, Play, Plus, Trash2, TrendingUp, User as UserIcon } from 'lucide-react';
+import { apiFetch } from '../data/apiFetch';
+import { getAll, getAllSync, getById, removeMany } from '../data/store';
+import { Campaign, Deal, Lead, User } from '../types';
 import { Modal } from '../components/Modal';
-import { Select } from '../components/Select';
-import { DatePicker } from '../components/DatePicker';
 import { CustomFieldsSection } from '../components/CustomFieldsSection';
-import { RecordShell } from '../components/RecordShell';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../auth/AuthContext';
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed';
-import { formatCurrency, formatDate } from '../utils';
-import { getStatusOptions } from '../utils/rules';
+import { classNames } from '../utils';
+import { dayText, money, moneyShort, plural, shortDay } from './quotes/quoteLogic';
+import { Face, userName } from './activity/activityBits';
+import {
+  canWriteCampaigns, channelHue, dayOffset, dayShort, expectedSpend, paceText, roiText, runDays, statsFor, stoppedAt, weeksOf,
+} from './campaigns/campaignLogic';
+import { CampaignStatusPill, ChannelBadge, ChannelChip, GoalRing, hue } from './campaigns/campaignBits';
 
-const STATUS_PILL: Record<Campaign['status'], string> = {
-  Planned: 'status-new',
-  Active: 'status-qualified',
-  Completed: 'status-converted',
-  Cancelled: 'status-unqualified',
-};
+type Stage = 'Leads' | 'Reached' | 'Deals' | 'Won';
+const STEPS = ['Planned', 'Active', 'Completed'];
+const LIST_SIZE = 6;
 
+/**
+ * A campaign's page: leads week by week across the run, spend against the budget and the expected pace, the goal,
+ * cost per lead and return, a funnel from lead to won deal that lists who is in each stage, a spend log and history.
+ */
 export function CampaignDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const { user } = useAuth();
+  const canWrite = canWriteCampaigns(user?.role);
+  const { recordView, removeViews } = useRecentlyViewed();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  const [state, setState] = useState<'loading' | 'ready' | 'missing' | 'failed'>('loading');
   const [leads, setLeads] = useState<Lead[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<Campaign | null>(null);
+  const [stage, setStage] = useState<Stage>('Leads');
+  const [showAll, setShowAll] = useState(false);
+  const [spendText, setSpendText] = useState('');
+  const [spendNote, setSpendNote] = useState('');
+  const [menu, setMenu] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [confirmName, setConfirmName] = useState('');
-  const { user } = useAuth();
-  const { recordView, removeViews } = useRecentlyViewed();
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let alive = true;
+    setState('loading');
     (async () => {
-      const [c, l, d] = await Promise.all([
-        getById<Campaign>('campaigns', id ?? ''),
-        getAll<Lead>('leads'),
-        getAll<Deal>('deals'),
-      ]);
-      if (!c) {
-        setNotFound(true);
-        removeViews([id ?? '']);
-        return;
+      try {
+        const [c, l, d] = await Promise.all([getById<Campaign>('campaigns', id ?? '', true), getAll<Lead>('leads'), getAll<Deal>('deals')]);
+        if (!alive) return;
+        if (!c) { setState('missing'); removeViews([id ?? '']); return; }
+        setCampaign(c);
+        setLeads(l.filter((x) => x.campaignId === c.id));
+        setDeals(d.filter((x) => x.campaignId === c.id));
+        setState('ready');
+      } catch (error) {
+        if (!alive) return;
+        if ((error as { status?: number }).status === 404) { setState('missing'); removeViews([id ?? '']); } else setState('failed');
       }
-      setCampaign(c);
-      setLeads(l.filter((lead) => lead.campaignId === c.id));
-      setDeals(d.filter((deal) => deal.campaignId === c.id));
     })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {
@@ -60,270 +75,292 @@ export function CampaignDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaign?.id]);
 
-  if (notFound) {
-    return (
-      <div className="empty-cell">
-        Campaign not found. <Link to="/campaigns">Back to campaigns</Link>
-      </div>
-    );
-  }
-  if (!campaign) return <Spinner label="Loading campaign…" />;
+  useEffect(() => {
+    if (!menu) return;
+    const close = (e: MouseEvent) => { if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenu(false); };
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenu(false); };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', key);
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', key); };
+  }, [menu]);
 
-  const save = async () => {
-    if (!draft) return;
-    if (!draft.name.trim()) {
-      toast.push('error', 'Campaign name is required.');
-      return;
+  if (state === 'loading') return <Spinner label="Loading campaign…" />;
+  if (state === 'failed') return <div className="banner banner-error" role="alert">This campaign couldn’t load. Check your connection and reload the page.</div>;
+  if (state === 'missing' || !campaign) return <div className="empty-cell">Campaign not found. <Link to="/campaigns">Back to campaigns</Link></div>;
+
+  const c = campaign;
+  const users = getAllSync<User>('users');
+  const owner = userName(users, c.ownerId);
+  const col = channelHue(c.channel);
+  const s = statsFor(c, leads, deals);
+  const weeks = weeksOf(c, s.leads);
+  const most = Math.max(...weeks.vals, 1);
+  const len = runDays(c);
+  const startIn = dayOffset(c.startDate);
+  const endIn = dayOffset(c.endDate);
+  const pace = c.status === 'Planned' ? (startIn > 0 ? `Starts in ${plural(startIn, 'day')}` : 'Starts today')
+    : c.status === 'Active' ? `Day ${Math.min(len, 1 - startIn)} of ${len} · ${endIn > 0 ? `${plural(endIn, 'day')} left` : 'last day'}`
+      : c.status === 'Completed' ? `Ran ${plural(len, 'day')}` : `Stopped ${dayText(stoppedAt(c))}`;
+  const share = c.budget ? s.spent / c.budget : 0;
+  const expect = expectedSpend(c);
+  const paceWord = paceText(c, share);
+  const stepAt = STEPS.indexOf(c.status);
+  const ownDeals = [...s.deals].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  const ownLeads = [...s.leads].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  const funnel: [Stage, number, string][] = [
+    ['Leads', s.leads.length, 'came in'],
+    ['Reached', s.reached.length, 'followed up'],
+    ['Deals', s.deals.length, 'opened'],
+    ['Won', s.won.length, s.won.length ? moneyShort(s.wonValue) : 'none yet'],
+  ];
+  const widest = Math.max(s.leads.length, s.deals.length, 1);
+  const inStage = stage === 'Leads' ? ownLeads : stage === 'Reached' ? ownLeads.filter((l) => s.reached.includes(l)) : stage === 'Deals' ? ownDeals : ownDeals.filter((d) => s.won.includes(d));
+  const shown = showAll ? inStage : inStage.slice(0, LIST_SIZE);
+  const history = [...(c.history ?? [])].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  const spendAmount = Math.round(Number(spendText.replace(/[^0-9.]/g, '')));
+  const hasDependents = s.leads.length > 0 || s.deals.length > 0;
+
+  const run = async (label: string, work: () => Promise<Campaign>) => {
+    setBusy(true);
+    try {
+      const saved = await work();
+      setCampaign(saved);
+      toast.push('success', label);
+      return true;
+    } catch (error) {
+      toast.push('error', (error as { message?: string }).message || 'That couldn’t be saved. Check your connection and try again.');
+      return false;
+    } finally {
+      setBusy(false);
     }
-    await upsert('campaigns', draft);
-    setCampaign(draft);
-    setEditing(false);
-    toast.push('success', 'Campaign updated.');
   };
-
-  const wonRevenue = deals.filter((d) => d.stage === 'Closed Won').reduce((sum, d) => sum + d.amount, 0);
-  const roi = campaign.budget > 0 ? (wonRevenue / campaign.budget) * 100 : null;
-
+  const setStatus = (status: 'Active' | 'Completed' | 'Cancelled', why?: string) =>
+    run(status === 'Active' ? `${c.name} started.` : status === 'Completed' ? `${c.name} marked complete.` : `${c.name} cancelled.`,
+      () => apiFetch<Campaign>(`/campaigns/${c.id}/status`, { method: 'POST', body: JSON.stringify({ status, ...(why ? { reason: why } : {}) }) }));
+  const addSpend = async () => {
+    if (!(spendAmount > 0)) return;
+    const ok = await run(`${money(spendAmount)} added. Spent is now ${moneyShort(s.spent + spendAmount)}.`,
+      () => apiFetch<Campaign>(`/campaigns/${c.id}/spend`, { method: 'POST', body: JSON.stringify({ amount: spendAmount, ...(spendNote.trim() ? { note: spendNote.trim() } : {}) }) }));
+    if (ok) { setSpendText(''); setSpendNote(''); }
+  };
   const doDelete = async () => {
-    if (leads.length > 0) {
-      const allLeads = getAllSync<Lead>('leads').map((l) =>
-        l.campaignId === campaign.id ? { ...l, campaignId: null } : l
-      );
-      await saveAll('leads', allLeads);
+    setBusy(true);
+    try {
+      // The server unlinks the campaign's leads and deals; the records stay.
+      await removeMany('campaigns', [c.id]);
+      removeViews([c.id]);
+      toast.push('success', `Campaign "${c.name}" deleted.${hasDependents ? ` ${plural(s.leads.length, 'lead')} and ${plural(s.deals.length, 'deal')} unlinked.` : ''}`);
+      navigate('/campaigns');
+    } catch {
+      toast.push('error', 'The campaign couldn’t be deleted. Check your connection and try again.');
+      setBusy(false);
     }
-    if (deals.length > 0) {
-      const allDeals = getAllSync<Deal>('deals').map((d) =>
-        d.campaignId === campaign.id ? { ...d, campaignId: null } : d
-      );
-      await saveAll('deals', allDeals);
-    }
-    await removeMany('campaigns', [campaign.id]);
-    removeViews([campaign.id]);
-    toast.push('success', `Campaign "${campaign.name}" deleted.`);
-    navigate('/campaigns');
   };
 
-  const hasDependents = leads.length > 0 || deals.length > 0;
+  return (
+    <div className="pq3 cp3" data-testid="campaign-detail-page">
+      <Link to="/campaigns" className="contact-back"><ChevronLeft size={16} aria-hidden="true" /> All campaigns</Link>
 
-  const detailsTab = !editing ? (
-    <dl className="detail-list">
-      <dt>Channel</dt>
-      <dd>{campaign.channel}</dd>
-      <dt>Budget</dt>
-      <dd>{formatCurrency(campaign.budget)}</dd>
-      <dt>Start date</dt>
-      <dd>{formatDate(campaign.startDate)}</dd>
-      <dt>End date</dt>
-      <dd>{formatDate(campaign.endDate)}</dd>
-      <dt>Created</dt>
-      <dd>{formatDate(campaign.createdAt)}</dd>
-      <CustomFieldsSection module="campaigns" target="detail" mode="view" values={campaign.customFields ?? {}} />
-    </dl>
-  ) : (
-    draft && (
-      <div className="form-grid">
-        <div className="field">
-          <span className="field-label">Campaign name *</span>
-          <input className="input" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+      <div className="cp-head">
+        <ChannelBadge channel={c.channel} />
+        <div className="cp-head-t">
+          <h1>{c.name}</h1>
+          <div className="cp-meta">
+            <CampaignStatusPill status={c.status} />
+            <ChannelChip channel={c.channel} />
+            {owner && <span className="cp-who"><Face id={c.ownerId ?? ''} name={owner} small />{owner}</span>}
+            <span>{dayShort(c.startDate)} to {dayText(c.endDate)}</span>
+          </div>
         </div>
-        <div className="field">
-          <span className="field-label">Channel</span>
-          <Select
-            value={draft.channel}
-            options={getStatusOptions('campaigns', 'channel', CAMPAIGN_CHANNELS).map((c) => ({ value: c, label: c }))}
-            onChange={(v) => setDraft({ ...draft, channel: v })}
-          />
-        </div>
-        <div className="field">
-          <span className="field-label">Budget ($)</span>
-          <input
-            className="input"
-            type="number"
-            value={draft.budget}
-            onChange={(e) => setDraft({ ...draft, budget: Number(e.target.value) })}
-          />
-        </div>
-        <div className="field">
-          <span className="field-label">Status</span>
-          <Select
-            value={draft.status}
-            options={getStatusOptions('campaigns', 'status', CAMPAIGN_STATUSES).map((s) => ({ value: s, label: s }))}
-            onChange={(v) => setDraft({ ...draft, status: v as Campaign['status'] })}
-          />
-        </div>
-        <div className="field">
-          <span className="field-label">Start date</span>
-          <DatePicker value={draft.startDate} onChange={(iso) => setDraft({ ...draft, startDate: iso })} />
-        </div>
-        <div className="field">
-          <span className="field-label">End date</span>
-          <DatePicker value={draft.endDate} onChange={(iso) => setDraft({ ...draft, endDate: iso })} />
-        </div>
-        <CustomFieldsSection
-          module="campaigns"
-          target="detail"
-          mode="edit"
-          values={draft.customFields ?? {}}
-          onChange={(k, v) => setDraft({ ...draft, customFields: { ...draft.customFields, [k]: v } })}
-        />
-      </div>
-    )
-  );
-
-  const relatedTab = (
-    <>
-      <div className="card">
-        <h3>Return on investment</h3>
-        <dl className="detail-list">
-          <dt>Won revenue (from converted leads)</dt>
-          <dd>{formatCurrency(wonRevenue)}</dd>
-          <dt>ROI</dt>
-          <dd data-testid="campaign-roi">{roi === null ? '— (no budget set)' : `${roi.toFixed(1)}%`}</dd>
-        </dl>
-      </div>
-
-      <div className="card">
-        <div className="page-header" style={{ border: 'none', marginBottom: 12, paddingBottom: 0 }}>
-          <h3>Leads generated ({leads.length})</h3>
-          <button
-            className="btn btn-small"
-            data-testid="new-lead-for-campaign-btn"
-            onClick={() => navigate(`/leads/new?campaignId=${campaign.id}`)}
-          >
-            + New lead for this campaign
-          </button>
-        </div>
-        {leads.length === 0 ? (
-          <p className="muted">No leads yet for this campaign.</p>
-        ) : (
-          <ul className="related-list">
-            {leads.map((lead) => (
-              <li key={lead.id}>
-                <Link to={`/leads/${lead.id}`}>{lead.name}</Link>{' '}
-                <span className="muted">
-                  — {lead.company} · <span className={`pill status-${lead.status.toLowerCase()}`}>{lead.status}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+        {canWrite && (
+          <div className="cp-acts">
+            {c.status === 'Planned' && <button type="button" className="btn btn-primary contacts-primary" disabled={busy} data-testid="start-campaign-btn" onClick={() => setStatus('Active')}><Play size={15} aria-hidden="true" /> Start now</button>}
+            {c.status === 'Active' && <button type="button" className="btn btn-primary contacts-primary" disabled={busy} data-testid="complete-campaign-btn" onClick={() => setStatus('Completed')}><Flag size={15} aria-hidden="true" /> Mark complete</button>}
+            <Link to={`/campaigns/${c.id}/edit`} className="btn" data-testid="edit-campaign-btn"><Pencil size={14} aria-hidden="true" /> Edit</Link>
+            <Link to={`/leads/new?campaignId=${c.id}`} className="btn" data-testid="new-lead-for-campaign-btn"><Plus size={14} aria-hidden="true" /> New lead</Link>
+            <div className="pq-menu" ref={menuRef}>
+              <button type="button" className="btn pq-sq" aria-label="More actions" aria-haspopup="menu" aria-expanded={menu} data-testid="campaign-more" onClick={() => setMenu((m) => !m)}><MoreHorizontal size={17} aria-hidden="true" /></button>
+              {menu && (
+                <div className="pq-pop right" role="menu">
+                  <button type="button" role="menuitem" className="pq-opt" onClick={() => navigate(`/campaigns/new?copy=${c.id}`)}><Copy size={16} aria-hidden="true" /> Duplicate</button>
+                  {(c.status === 'Planned' || c.status === 'Active') && (
+                    <button type="button" role="menuitem" className="pq-opt" data-testid="cancel-campaign-btn" onClick={() => { setMenu(false); setReason(''); setCancelling(true); }}><Ban size={16} aria-hidden="true" /> Cancel campaign</button>
+                  )}
+                  <button type="button" role="menuitem" className="pq-opt danger" data-testid="delete-campaign-btn" onClick={() => { setMenu(false); setConfirmName(''); setDeleting(true); }}><Trash2 size={16} aria-hidden="true" /> Delete</button>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
 
-      {deals.length > 0 && (
-        <div className="card">
-          <h3>Deals attributed ({deals.length})</h3>
-          <ul className="related-list">
-            {deals.map((deal) => (
-              <li key={deal.id}>
-                <Link to={`/deals/${deal.id}`}>{deal.name}</Link>{' '}
-                <span className="muted">
-                  — {formatCurrency(deal.amount)} · {deal.stage}
-                </span>
-              </li>
-            ))}
-          </ul>
+      {c.status === 'Cancelled' ? (
+        <div className="pq-note cp-gap">Cancelled {dayText(stoppedAt(c))}.{c.cancelReason ? ` Reason: ${c.cancelReason}.` : ''} Its leads and deals stay linked.</div>
+      ) : (
+        <div className="cp-steps" aria-label={`Status: ${c.status}`}>
+          {STEPS.map((st, i) => <span key={st} className={classNames('cp-step', i === stepAt && 'on', i < stepAt && 'past')}>{st}</span>)}
         </div>
       )}
-    </>
-  );
 
-  return (
-    <>
-      <RecordShell
-        testId="campaign-detail-page"
-        breadcrumbs={[{ label: 'Campaigns', to: '/campaigns' }, { label: campaign.name }]}
-        title={campaign.name}
-        keyInfo={[
-          { label: 'Status', value: <span className={`pill ${STATUS_PILL[campaign.status]}`} data-testid="campaign-status">{campaign.status}</span> },
-          { label: 'Channel', value: campaign.channel },
-          { label: 'Budget', value: formatCurrency(campaign.budget) },
-          { label: 'Start', value: formatDate(campaign.startDate) },
-          { label: 'End', value: formatDate(campaign.endDate) },
-          { label: 'Layout', value: campaign.layoutName || '—' },
-        ]}
-        tabs={[
-          { id: 'details', label: 'Details', content: <div className="card">{detailsTab}</div> },
-          { id: 'related', label: 'ROI & Related', content: relatedTab },
-        ]}
-        actions={
-          !editing ? (
-            <>
-              <button
-                className="btn"
-                data-testid="edit-campaign-btn"
-                onClick={() => {
-                  setDraft({ ...campaign });
-                  setEditing(true);
-                }}
-              >
-                <Pencil size={14} /> Edit
-              </button>
-              <button
-                className="btn btn-danger"
-                data-testid="delete-campaign-btn"
-                onClick={() => {
-                  setConfirmName('');
-                  setDeleting(true);
-                }}
-              >
-                <Trash2 size={14} /> Delete
-              </button>
-            </>
+      <section className="pq-card-box cp-strip" style={hue(col)}>
+        <div className="cp-strip-h"><h2>Leads each week</h2><span className="pq-muted">{plural(s.leads.length, 'lead')} so far</span><span className="cp-pace">{pace}</span></div>
+        <div className="cp-weeks" data-testid="campaign-weeks">
+          {Array.from({ length: weeks.n }, (_, i) => (i < weeks.done ? (
+            <span key={i} className={classNames('cp-wk', c.status === 'Active' && i === weeks.done - 1 && 'now')} style={{ '--h': `${(weeks.vals[i] / most) * 100}%` } as CSSProperties} title={`Week ${i + 1}: ${plural(weeks.vals[i], 'lead')}`}>
+              <i style={{ animationDelay: `${Math.min(i, 30) * 30}ms` }} /><b>{weeks.vals[i]}</b>
+            </span>
           ) : (
+            <span key={i} className="cp-wk future" title={`Week ${i + 1}: still to come`}><i /></span>
+          )))}
+        </div>
+        <div className="cp-wl"><span>{dayShort(c.startDate)}</span>{c.status === 'Active' && weeks.n > 1 && <span className="cp-wl-now" style={{ left: `${(weeks.done / weeks.n) * 100}%` }}>Today</span>}<span>{dayShort(c.endDate)}</span></div>
+      </section>
+
+      <div className="cp-figs">
+        <div className="pq-card-box cp-fig" style={hue(col)}>
+          <span className="pq-lab">Spent</span>
+          <b data-testid="campaign-spent">{moneyShort(s.spent)}</b>
+          <div className={classNames('cp-gauge', share > 1 && 'over')} style={{ '--w': `${Math.min(1, share) * 100}%`, '--p': `${expect * 100}%` } as CSSProperties}
+            title={c.status === 'Active' ? 'The line is where spend should be by today' : undefined}>
+            <i />{c.status === 'Active' && <em />}
+          </div>
+          <small>{share > 1 ? `${money(s.spent - c.budget)} over the ${moneyShort(c.budget)} budget` : `of ${moneyShort(c.budget)}${paceWord ? ` · ${paceWord}` : ''}`}</small>
+        </div>
+        <div className="pq-card-box cp-fig">
+          <span className="pq-lab">Leads</span>
+          <div className="cp-ringf">
+            <GoalRing value={s.leads.length} max={c.targetLeads || s.leads.length} color={col} />
+            <div><b>{s.leads.length}</b><small>{c.targetLeads ? `of ${c.targetLeads} wanted` : 'no goal set'}</small></div>
+          </div>
+        </div>
+        <div className="pq-card-box cp-fig">
+          <span className="pq-lab">Cost per lead</span>
+          <b>{s.cpl === null ? '—' : money(s.cpl)}</b>
+          <small>{s.plannedCpl === null ? 'No goal set' : s.cpl === null ? `Planned: ${money(s.plannedCpl)}` : s.cpl <= s.plannedCpl ? `Under the planned ${money(s.plannedCpl)}` : `Above the planned ${money(s.plannedCpl)}`}</small>
+        </div>
+        <div className="pq-card-box cp-fig">
+          <span className="pq-lab">Return</span>
+          <b className={classNames(s.roi !== null && s.roi < 1 && 'cp-lo')} data-testid="campaign-roi">{roiText(s.roi)}</b>
+          <small>{s.won.length ? `${moneyShort(s.wonValue)} won from ${plural(s.won.length, 'deal')}` : 'No deals won yet'}</small>
+        </div>
+      </div>
+
+      <div className="pq-cols">
+        <div className="pq-stack">
+          <section className="pq-card-box pq-box cp-funnel">
+            <div className="pq-box-h"><h2>From lead to won deal</h2><span className="pq-muted">Pick a stage to see who is in it</span></div>
+            <div className="cp-fun" data-testid="campaign-funnel">
+              {funnel.map(([name, v, sub], i) => {
+                const prev = i ? funnel[i - 1][1] : 0;
+                const w = Math.max(14, (v / widest) * 100);
+                return (
+                  <button key={name} type="button" className="cp-fs" aria-pressed={stage === name} data-testid={`campaign-stage-${name.toLowerCase()}`} onClick={() => { setStage(name); setShowAll(false); }}>
+                    <span className="nm">{name}<small>{sub}</small></span>
+                    <span className="bw"><span className="band" style={{ '--w': `${w}%`, '--k': `${Math.min(22, w / 6)}px`, '--c': col, filter: `saturate(${1 - i * 0.12})`, animationDelay: `${i * 60}ms` } as CSSProperties}>{v}</span></span>
+                    <span className="cv">{i > 0 && <><b>{prev ? `${Math.round((v / prev) * 100)}%` : '—'}</b>of {funnel[i - 1][0].toLowerCase()}</>}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="cp-flist" data-testid="campaign-stage-list">
+              <span className="pq-lab">{stage} · {inStage.length}</span>
+              {inStage.length === 0 && <p className="pq-muted cp-none">Nobody here yet.</p>}
+              {shown.map((r) => ('stage' in r ? (
+                <Link key={r.id} to={`/deals/${r.id}`} className="cp-li"><TrendingUp size={15} aria-hidden="true" /><span>{r.name}</span><small>{moneyShort(r.amount)} · {r.stage}</small></Link>
+              ) : (
+                <Link key={r.id} to={`/leads/${r.id}`} className="cp-li"><UserIcon size={15} aria-hidden="true" /><span>{r.name}<small> · {r.company}</small></span><small>{r.status}</small></Link>
+              )))}
+              {inStage.length > LIST_SIZE && <button type="button" className="link cp-more" onClick={() => setShowAll((x) => !x)}>{showAll ? 'Show fewer' : `Show all ${inStage.length}`}</button>}
+            </div>
+          </section>
+        </div>
+        <div className="pq-stack">
+          <section className="pq-card-box pq-box">
+            <h2>Details</h2>
+            <dl className="pq-kv">
+              <div><dt>Channel</dt><dd><ChannelChip channel={c.channel} /></dd></div>
+              <div><dt>Owner</dt><dd>{owner ? <span className="cp-who"><Face id={c.ownerId ?? ''} name={owner} small />{owner}</span> : '—'}</dd></div>
+              <div><dt>Runs</dt><dd>{dayShort(c.startDate)} to {dayText(c.endDate)}</dd></div>
+              <div><dt>Budget</dt><dd>{money(c.budget)}</dd></div>
+              <div><dt>Leads wanted</dt><dd>{c.targetLeads || '—'}</dd></div>
+              {c.audience && <div><dt>For</dt><dd>{c.audience}</dd></div>}
+              <div><dt>Created</dt><dd>{dayText(c.createdAt)}</dd></div>
+              {c.layoutName && <div><dt>Layout</dt><dd>{c.layoutName}</dd></div>}
+            </dl>
+            <CustomFieldsSection module="campaigns" target="detail" mode="view" values={c.customFields ?? {}} />
+          </section>
+          {canWrite && (c.status === 'Active' || c.status === 'Completed') && (
+            <section className="pq-card-box pq-box">
+              <h2 className="cp-h-tight">Log spend</h2>
+              <p className="pq-muted pq-small cp-h-sub">Add what was paid out, such as an invoice from the agency.</p>
+              <div className="cp-spend">
+                <input className="input cp-amt" inputMode="decimal" value={spendText} placeholder="Amount" aria-label="Amount spent" data-testid="campaign-spend-input"
+                  onChange={(e) => setSpendText(e.target.value.replace(/[^0-9.]/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') addSpend(); }} />
+                <button type="button" className="btn" disabled={busy || !(spendAmount > 0)} data-testid="campaign-spend-add" onClick={addSpend}>Add</button>
+              </div>
+              <input className="input cp-note-in" value={spendNote} maxLength={200} placeholder="What it was for (optional)" aria-label="What the spend was for" onChange={(e) => setSpendNote(e.target.value)} />
+            </section>
+          )}
+          <section className="pq-card-box pq-box" data-testid="campaign-history">
+            <h2>History</h2>
+            <div className="cp-hist">
+              {history.length === 0 && <p className="pq-muted">Nothing yet.</p>}
+              {history.map((h, i) => (
+                <div key={`${h.at}-${i}`}>
+                  <small>{shortDay(h.at)}</small>
+                  <span>{h.amount !== undefined ? <><b>{money(h.amount)}</b> {h.text.replace(/^Spend logged/, 'spend logged')}</> : h.text}<small> · {h.by}</small></span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+
+      {cancelling && (
+        <Modal
+          title={`Cancel ${c.name}?`}
+          onClose={() => setCancelling(false)}
+          footer={
             <>
-              <button className="btn" onClick={() => setEditing(false)}>
-                Cancel
-              </button>
-              <button className="btn btn-primary" data-testid="save-campaign-btn" onClick={save}>
-                Save
-              </button>
+              <button className="btn" onClick={() => setCancelling(false)}>Keep running</button>
+              <button className="btn btn-primary" disabled={busy} data-testid="confirm-cancel-btn" onClick={async () => { if (await setStatus('Cancelled', reason.trim())) setCancelling(false); }}>Cancel campaign</button>
             </>
-          )
-        }
-      />
+          }
+        >
+          <p>It stops counting as running from today. Leads and deals it brought stay linked.</p>
+          <div className="field">
+            <label className="field-label" htmlFor="campaign-cancel-reason">Reason</label>
+            <input id="campaign-cancel-reason" className="input" maxLength={300} placeholder="For example, results too low for the spend" value={reason} onChange={(e) => setReason(e.target.value)} />
+          </div>
+        </Modal>
+      )}
 
       {deleting && (
         <Modal
-          title={`Delete campaign — ${campaign.name}`}
+          title={`Delete ${c.name}?`}
           onClose={() => setDeleting(false)}
           footer={
             <>
-              <button className="btn" onClick={() => setDeleting(false)}>
-                Cancel
-              </button>
-              <button
-                className="btn btn-danger"
-                data-testid="confirm-delete-btn"
-                disabled={hasDependents && confirmName !== campaign.name}
-                onClick={doDelete}
-              >
-                Delete campaign
-              </button>
+              {(c.status === 'Planned' || c.status === 'Active') && <button className="btn" onClick={() => { setReason(''); setDeleting(false); setCancelling(true); }}>Cancel it instead</button>}
+              <button className="btn" onClick={() => setDeleting(false)}>Keep</button>
+              <button className="btn btn-danger" data-testid="confirm-delete-btn" disabled={busy || (hasDependents && confirmName !== c.name)} onClick={doDelete}>Delete campaign</button>
             </>
           }
         >
           {!hasDependents ? (
-            <p>Delete “{campaign.name}”? This cannot be undone.</p>
+            <p>This cannot be undone.</p>
           ) : (
             <>
-              <div className="banner banner-error" role="alert">
-                {leads.length} lead(s) and {deals.length} deal(s) reference this campaign. Deleting it will{' '}
-                <strong>unlink</strong> the campaign from those records — they are kept.
-              </div>
+              <p>{plural(s.leads.length, 'lead')} and {plural(s.deals.length, 'deal')} keep their records but lose the link to this campaign. This cannot be undone.</p>
               <div className="field">
-                <span className="field-label">Type the campaign name to confirm</span>
-                <input
-                  className="input"
-                  data-testid="delete-confirm-input"
-                  placeholder={campaign.name}
-                  value={confirmName}
-                  onChange={(e) => setConfirmName(e.target.value)}
-                />
+                <label className="field-label" htmlFor="campaign-delete-confirm">Type the campaign name to confirm</label>
+                <input id="campaign-delete-confirm" className="input" data-testid="delete-confirm-input" placeholder={c.name} value={confirmName} onChange={(e) => setConfirmName(e.target.value)} />
               </div>
             </>
           )}
         </Modal>
       )}
-    </>
+    </div>
   );
 }
+

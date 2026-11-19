@@ -30,6 +30,7 @@ import { ProductDetail } from './pages/ProductDetail';
 import { Campaigns } from './pages/Campaigns';
 import { CampaignForm } from './pages/CampaignForm';
 import { CampaignDetail } from './pages/CampaignDetail';
+import { CampaignEdit } from './pages/CampaignEdit';
 import { Quotes } from './pages/Quotes';
 import { QuoteForm } from './pages/QuoteForm';
 import { QuoteEdit } from './pages/QuoteEdit';
@@ -142,6 +143,7 @@ export function App() {
             <Route path="/campaigns" element={<Protected><Campaigns /></Protected>} />
             <Route path="/campaigns/new" element={<Protected><CampaignForm /></Protected>} />
             <Route path="/campaigns/:id" element={<Protected><CampaignDetail /></Protected>} />
+            <Route path="/campaigns/:id/edit" element={<Protected><CampaignEdit /></Protected>} />
             <Route path="/quotes" element={<Protected><Quotes /></Protected>} />
             <Route path="/quotes/new" element={<Protected roles={['admin', 'rep']}><QuoteForm /></Protected>} />
             <Route path="/quotes/:id/edit" element={<Protected roles={['admin', 'rep']}><QuoteEdit /></Protected>} />

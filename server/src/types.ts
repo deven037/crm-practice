@@ -175,6 +175,34 @@ export interface Campaign {
   createdAt: string;
   layoutName?: string | null;
   customFields?: Record<string, string | number | boolean | null>;
+  ownerId?: string | null;
+  /** Who the campaign is for, in the planner's words. */
+  audience?: string;
+  /** Leads the plan wants; with the budget it sets the planned cost per lead. */
+  targetLeads?: number | null;
+  /** Total of the spend log. Written by the server. */
+  spent?: number;
+  spendLog?: CampaignSpend[];
+  cancelReason?: string | null;
+  /** Written by the server, newest last. */
+  history?: CampaignEvent[];
+}
+
+/** One payment logged against a campaign, such as an agency invoice. */
+export interface CampaignSpend {
+  amount: number;
+  at: string;
+  by: string;
+  note?: string;
+}
+
+/** One line of a campaign's history, written by the server. */
+export interface CampaignEvent {
+  /** Set on a spend line, so the page can show it in the bank's currency. */
+  amount?: number;
+  at: string;
+  by: string;
+  text: string;
 }
 
 export type TaskPriority = 'Low' | 'Medium' | 'High';
