@@ -72,6 +72,7 @@ import { AutoFlowList } from './pages/AutoFlowList';
 import { AutoFlowIntakeForm } from './pages/AutoFlowIntakeForm';
 import { Settings } from './pages/Settings';
 import { TestCases } from './pages/TestCases';
+import SearchPage from './pages/SearchPage';
 import { Forbidden } from './pages/Forbidden';
 import { DataStudio } from './pages/DataStudio';
 import { AnalysisResults } from './pages/AnalysisResults';
@@ -190,6 +191,7 @@ export function App() {
             <Route path="/setup/autoflow" element={<Protected roles={['admin', 'rep']}><AutoFlowList /></Protected>} />
             <Route path="/setup/autoflow/new" element={<Protected roles={['admin', 'rep']}><AutoFlowIntakeForm /></Protected>} />
             <Route path="/setup/autoflow/:id" element={<Protected roles={['admin', 'rep']}><AutoFlowDesigner /></Protected>} />
+            <Route path="/search" element={<Protected><SearchPage /></Protected>} />
             <Route path="/settings" element={<Protected><Settings /></Protected>} />
             <Route path="/testcases" element={<Protected><TestCases /></Protected>} />
             <Route path="/forbidden" element={<Protected><Forbidden /></Protected>} />

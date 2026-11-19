@@ -634,3 +634,11 @@ export interface DashboardLayout {
   cards: DashboardCard[];
   updatedAt: string;
 }
+
+/** A person's recent searches, newest first (id user-<userId>). */
+export interface SearchHistory {
+  id: string;
+  userId: string;
+  terms: string[];
+  updatedAt: string;
+}

@@ -391,6 +391,45 @@ paths:
       responses:
         '200': { description: The campaign with the new spend line, its spent total and a history line. }
         '409': { description: The campaign has not started (not_started). }
+  /search:
+    get:
+      tags: [Search]
+      summary: Search every module a person can open, custom fields included
+      description: >-
+        Ranked matches. The term may hold type:, owner: (owner:me) and status: filters, quoted for several words.
+        A term that is exactly a reference (TK-0010, Q-2026-0142, a product SKU) comes back as jump. Viewers never
+        match or see email and phone. The latency simulation does not apply.
+      parameters:
+        - { name: q, in: query, required: true, schema: { type: string, minLength: 2, maxLength: 200 } }
+        - { name: types, in: query, schema: { type: string }, description: 'Comma list of types to show (lead, contact, account, deal, ticket, quote, product, campaign, meeting, task). Narrows items, not counts.' }
+        - { name: owners, in: query, schema: { type: string }, description: Comma list of owner user ids. Narrows items, not counts. }
+        - { name: statuses, in: query, schema: { type: string }, description: Comma list of statuses. Narrows items, not counts. }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 60, default: 25 } }
+      responses:
+        '200': { description: '{ term, text, filters, jump, total, counts by type, owners[], statuses[], shown, items[], page, pageSize, totalPages }. Each item has type, id, ref, title, sub, ownerId, ownerName, status, at, amount, matchedIn, matchedValue, score and fields [label, value][].' }
+        '422': { description: Term missing, shorter than 2 characters, or a parameter out of range. }
+  /search/recent:
+    get:
+      tags: [Search]
+      summary: The signed-in person's recent searches, newest first
+      responses:
+        '200': { description: '{ terms: string[] } (at most 8).' }
+    post:
+      tags: [Search]
+      summary: Remember a search; the same term again moves to the front
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [term], properties: { term: { type: string, minLength: 2, maxLength: 200 } } }
+      responses:
+        '200': { description: '{ terms: string[] }.' }
+    delete:
+      tags: [Search]
+      summary: Forget the person's recent searches
+      responses:
+        '204': { description: Removed. }
   /dashboard/layout:
     get:
       tags: [Dashboard]
