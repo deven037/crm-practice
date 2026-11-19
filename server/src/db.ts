@@ -26,6 +26,8 @@ import {
   SlaConfig,
   SlaRules,
   StatusCodeSet,
+  SetupDraft,
+  SetupVersion,
   TaskItem,
   Ticket,
   User,
@@ -152,6 +154,7 @@ export class Collection<T extends { id: string }> {
 export const COLLECTION_NAMES = [
   'users', 'leads', 'contacts', 'accounts', 'deals', 'products', 'tickets', 'campaigns', 'quotes', 'tasks', 'meetings',
   'activities', 'notifications', 'customFieldDefs', 'layouts', 'pageLayouts', 'roleDefs', 'assignmentRules',
+  'setupDrafts', 'setupVersions',
   'dedupeRules', 'statusCodeSets', 'slaConfigs', 'slaRules', 'quoteSettings', 'dashboardLayouts', 'searchHistory', 'autoFlowProcesses', 'audit',
 ] as const;
 export type CollectionName = (typeof COLLECTION_NAMES)[number];
@@ -178,6 +181,8 @@ export class Store {
   assignmentRules = new Collection<AssignmentRule>('assignmentRules', ['name']);
   dedupeRules = new Collection<DedupeRule>('dedupeRules', ['name']);
   statusCodeSets = new Collection<StatusCodeSet>('statusCodeSets', ['name']);
+  setupDrafts = new Collection<SetupDraft>('setupDrafts');
+  setupVersions = new Collection<SetupVersion>('setupVersions');
   slaConfigs = new Collection<SlaConfig>('slaConfigs', []);
   slaRules = new Collection<SlaRules>('slaRules', []);
   quoteSettings = new Collection<QuoteSettings>('quoteSettings', []);
@@ -211,6 +216,8 @@ export class Store {
     this.assignmentRules.seed(data.assignmentRules);
     this.dedupeRules.seed(data.dedupeRules);
     this.statusCodeSets.seed(data.statusCodeSets);
+    this.setupDrafts.seed(data.setupDrafts);
+    this.setupVersions.seed(data.setupVersions);
     this.slaConfigs.seed(data.slaConfigs);
     this.slaRules.seed(data.slaRules);
     this.quoteSettings.seed(data.quoteSettings);

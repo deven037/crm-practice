@@ -945,6 +945,8 @@ export function buildSeedData() {
     quoteSettings: [] as QuoteSettings[],
     dashboardLayouts: [] as DashboardLayout[],
     searchHistory: [] as SearchHistory[],
+    setupDrafts: [],
+    setupVersions: [],
     autoFlowProcesses,
     audit: [
       { id: 'audit-1', user: 'Alex Admin', action: 'seed', detail: 'Database seeded with sample data', when: new Date().toISOString() },

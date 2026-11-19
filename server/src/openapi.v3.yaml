@@ -7,6 +7,22 @@ tags:
     description: The signed-in user's own bank.
 
 schemas:
+  SetupSettings:
+    type: object
+    required: [statusCodeSets]
+    properties:
+      statusCodeSets:
+        type: array
+        items:
+          type: object
+          required: [id, module, field, name, options]
+          properties:
+            id: { type: string }
+            module: { type: string, enum: [leads, deals, campaigns, activities, tickets, products, quotes] }
+            field: { type: string }
+            name: { type: string }
+            options: { type: array, minItems: 1, items: { type: string } }
+            isSystem: { type: boolean, default: false }
   PublicBank:
     type: object
     description: What anyone may know about a bank; enough to draw its login page. Colour and images are null unless the bank is active.
@@ -68,6 +84,99 @@ schemas:
       mustChangePassword: { type: boolean, description: 'true: every route except /auth/me, /auth/change-password and /auth/logout-all answers 403 password_change_required until the password is changed.' }
 
 paths:
+  /setup/draft:
+    get:
+      tags: [Setup]
+      summary: Read the draft or current settings
+      responses:
+        '200': { description: Draft state with revision and dirty flag and settings. }
+        '403': { description: Bank administrator access required. }
+    put:
+      tags: [Setup]
+      summary: Save picklists and stages to the draft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [revision, settings]
+              properties:
+                revision: { type: string, description: Revision returned by the draft endpoint. }
+                settings: { $ref: '#/components/schemas/SetupSettings' }
+      responses:
+        '200': { description: Draft state with revision and dirty flag and settings. }
+        '403': { description: Bank administrator access required. }
+        '409': { description: Revision or live settings changed. }
+    delete:
+      tags: [Setup]
+      summary: Discard the draft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [revision]
+              properties:
+                revision: { type: string, description: Revision returned by the draft endpoint. }
+      responses:
+        '204': { description: Discard the draft. }
+        '403': { description: Bank administrator access required. }
+        '409': { description: Revision or live settings changed. }
+  /setup/publish:
+    post:
+      tags: [Setup]
+      summary: Publish the draft and retain the last twenty versions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [revision, note]
+              properties:
+                revision: { type: string, description: Revision returned by the draft endpoint. }
+                note: { type: string, minLength: 1, maxLength: 500 }
+      responses:
+        '201': { description: Publish the draft and retain the last twenty versions. }
+        '403': { description: Bank administrator access required. }
+        '409': { description: Revision or live settings changed. }
+  /setup/versions:
+    get:
+      tags: [Setup]
+      summary: List version metadata, newest first
+      responses:
+        '200': { description: List version metadata newest first. }
+        '403': { description: Bank administrator access required. }
+  /setup/versions/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [Setup]
+      summary: Read a version with its settings
+      responses:
+        '200': { description: Read a version with its settings. }
+        '403': { description: Bank administrator access required. }
+  /setup/versions/{id}/restore:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [Setup]
+      summary: Restore a saved version into the draft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [revision]
+              properties:
+                revision: { type: string, description: Revision returned by the draft endpoint. }
+      responses:
+        '200': { description: Draft state with revision and dirty flag and settings. }
+        '403': { description: Bank administrator access required. }
+        '409': { description: Revision or live settings changed. }
   /auth/identify:
     post:
       tags: [Auth]
