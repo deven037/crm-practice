@@ -238,9 +238,26 @@ i { font-style: normal; }
 .db-tray:empty { display: none; }
 
 /* bento grid; every card says how wide it is */
-.db-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-flow: row dense; gap: 14px; align-items: stretch; }
-.w { grid-column: span var(--span); min-width: 0; position: relative; animation: enter var(--slow) var(--ease-out) both; }
-.w > .card { height: 100%; }
+/* 12 columns wide; heights in 20px rows with 14px gaps, so one row step is 34px */
+.db-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-auto-rows: 20px; grid-auto-flow: row dense; gap: 14px; align-items: stretch; border-radius: 14px; }
+.db-grid.measure { grid-auto-rows: auto; align-items: start; } .db-grid.measure .w { grid-row: auto; }
+.w { grid-column: span var(--span); grid-row: span var(--rows, 1); min-width: 0; position: relative; display: flex; flex-direction: column; animation: enter var(--slow) var(--ease-out) both; }
+.w > .card { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.editing { background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--bank-ink) 7%, transparent) 0 calc((100% - 154px) / 12), transparent calc((100% - 154px) / 12) calc((100% - 154px) / 12 + 14px)); }
+.editing .w { cursor: grab; touch-action: none; }
+.rz { position: absolute; z-index: 3; display: none; touch-action: none; }
+.editing .rz { display: block; }
+.rz-e { top: 18px; bottom: 18px; right: -8px; width: 16px; cursor: ew-resize; }
+.rz-s { left: 18px; right: 18px; bottom: -8px; height: 16px; cursor: ns-resize; }
+.rz-e::after, .rz-s::after { content: ''; position: absolute; border-radius: 3px; background: var(--bank-ink); opacity: .45; transition: opacity var(--fast), transform var(--fast); }
+.rz-e::after { top: 50%; left: 6px; width: 4px; height: 40px; margin-top: -20px; }
+.rz-s::after { left: 50%; top: 6px; height: 4px; width: 40px; margin-left: -20px; }
+.rz:hover::after { opacity: 1; }
+.rz-se { right: -7px; bottom: -7px; width: 22px; height: 22px; border-radius: 7px; cursor: nwse-resize; background: var(--surface); box-shadow: 0 0 0 2px var(--bank-ink), var(--shadow); }
+.rz-se::after { content: ''; position: absolute; right: 5px; bottom: 5px; width: 8px; height: 8px; border-right: 2px solid var(--bank-ink); border-bottom: 2px solid var(--bank-ink); }
+.editing .wh { flex-wrap: wrap; } .editing .wh > .muted, .editing .wh > .link { display: none; }
+.sz { font-size: 11.5px; font-weight: 600; color: var(--bank-ink); padding: 0 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.w.sizing > .card, .w.sizing > .pulse { outline: 2px solid var(--bank-ink) !important; }
 .wh { display: flex; align-items: center; gap: 10px; padding: 16px 18px 0; }
 .wh h3 { font-size: 16px; font-weight: 650; flex: 1; min-width: 0; }
 .wh .muted { font-size: 12.5px; }
@@ -421,6 +438,7 @@ i { font-style: normal; }
 }
 @container (max-width: 860px) {
   .w { grid-column: span 12; }
+  .rz-e { display: none !important; }
   .feed { grid-template-columns: minmax(0, 1fr); }
 }
 @container (max-width: 640px) {
@@ -736,19 +754,21 @@ function feedW() {
     <div class="wb"><div class="feed" data-testid="activity-feed">${FEED.map(([i, c, t, w]) => `<div class="fe" style="--c:${c}"><span class="ico">${ic(i, 15)}</span><span>${t}</span><small>${w}</small></div>`).join('')}</div></div>`;
 }
 
+/* smallest size each card can take: columns of 12, rows of 34px */
+const MIN = { needs: [4, 9], month: [4, 8], pulse: [6, 4], day: [3, 6], pipe: [4, 6], team: [5, 6], leads: [3, 7], feed: [4, 5] };
 function ctl(id) {
-  const w = S.layout.find((x) => x.id === id), spans = WIDGETS[id].spans;
-  const label = { 4: 'Third', 5: 'Narrow', 6: 'Half', 7: 'Wide', 8: 'Two thirds', 12: 'Full' }[w.span];
-  return `<span class="ctl"><button data-a="size" data-v="${id}" ${spans.length < 2 ? 'disabled' : ''} title="Change width">${ic('width', 14)}${label}</button><button data-a="hide" data-v="${id}" title="Hide">${ic('eyeoff', 14)}</button><span class="hdl" data-drag="${id}" title="Drag to move">${ic('grip', 16)}</span></span>`;
+  const w = S.layout.find((x) => x.id === id);
+  return `<span class="ctl"><span class="sz" title="Width in columns, height in rows">${w.span}/12 · ${w.rows || '–'} rows</span><button data-a="fit" data-v="${id}" title="Fit the height to what the card shows" ${w.custom ? '' : 'disabled'}>Fit</button><button data-a="hide" data-v="${id}" title="Hide">${ic('eyeoff', 14)}</button><span class="hdl" data-drag="${id}" title="Drag anywhere on the card to move it">${ic('grip', 16)}</span></span>`;
 }
 
 const BODY = { needs: needsW, month: monthW, pulse: pulseW, day: dayW, pipe: pipeW, team: teamW, leads: leadsW, feed: feedW };
 function widget(w, i) {
   let inner = BODY[w.id]();
   if (w.id === 'needs') inner = `<div class="card">${inner}</div>`;
-  else if (w.id === 'pulse') inner = (S.edit ? `<div class="wh" style="padding:0 4px 8px"><h3 class="muted" style="font-size:13px">Pulse</h3>${ctl('pulse')}</div>` : '') + inner;
+  else if (w.id === 'pulse') inner = (S.edit ? `<div class="wh" style="padding:0 4px 8px"><h3 style="font-size:13px;color:var(--text-muted)">Pulse</h3>${ctl('pulse')}</div>` : '') + inner;
   else inner = `<div class="card">${inner}</div>`;
-  return `<section class="w" style="--span:${w.span};animation-delay:${i * 50}ms" data-w="${w.id}">${inner}</section>`;
+  const handles = S.edit ? `<span class="rz rz-e" data-rz="e" data-id="${w.id}" title="Drag to change the width"></span><span class="rz rz-s" data-rz="s" data-id="${w.id}" title="Drag to change the height"></span><span class="rz rz-se" data-rz="se" data-id="${w.id}" title="Drag to resize. Double-click to fit the content"></span>` : '';
+  return `<section class="w" style="--span:${w.span};${w.custom ? `--rows:${w.rows};` : ''}animation-delay:${i * 50}ms" data-w="${w.id}">${inner}${handles}</section>`;
 }
 
 /* ---------- page ---------- */
@@ -769,14 +789,23 @@ function brief() {
 function editBar() {
   if (!S.edit) return '';
   const hid = S.layout.filter((w) => w.hidden);
-  return `<div class="db-edit"><span>Drag cards by ${ic('grip', 13).replace('<svg', '<svg style="display:inline;vertical-align:-2px"')} to move them, change their width, or hide them. Saved for you on every device.</span>
+  return `<div class="db-edit"><span>Grab a card anywhere to move it. Drag its right edge, bottom edge or corner to make it any size; double-click the corner to fit the content. Saved for you on every device.</span>
     <button class="btn" data-a="reset">Reset to the bank's layout</button><button class="btn" data-a="toast" data-v="Saved as the layout new staff start with (admins only)">Make this the bank's layout</button>
     <div class="db-tray">${hid.length ? '<span class="lab" style="align-self:center;color:inherit">Add back</span>' : ''}${hid.map((w) => `<button class="tg add" data-a="unhide" data-v="${w.id}">${ic('plus', 12)}${WIDGETS[w.id].title}</button>`).join('')}</div></div>`;
 }
 function render(quiet) {
   const y = $('main').scrollTop, pg = $('page');
   pg.classList.toggle('quiet', !!quiet);
-  pg.innerHTML = brief() + editBar() + `<div class="db-grid ${S.edit ? 'editing' : ''}" id="grid">${S.layout.filter((w) => !w.hidden && !(w.id === 'team' && S.data === 'new' && false)).map(widget).join('')}</div>`;
+  pg.innerHTML = brief() + editBar() + `<div class="db-grid measure ${S.edit ? 'editing' : ''}" id="grid">${S.layout.filter((w) => !w.hidden).map(widget).join('')}</div>`;
+  // Cards nobody has sized follow their content: measure them once at their width, then lock every card to whole rows.
+  const g = $('grid');
+  S.layout.filter((w) => !w.hidden).forEach((w) => {
+    const el = g.querySelector(`.w[data-w="${w.id}"]`);
+    if (!w.custom) w.rows = Math.max(MIN[w.id][1], Math.ceil((el.offsetHeight + 14) / 34));
+    el.style.setProperty('--rows', w.rows);
+    const sz = el.querySelector('.sz'); if (sz) sz.textContent = `${w.span}/12 · ${w.rows} rows`;
+  });
+  g.classList.remove('measure');
   $('main').scrollTop = y;
   rail(); bindChart();
 }
@@ -817,7 +846,7 @@ const A = {
   range: (t) => { S.range = t.dataset.v; S.pop = null; render(); },
   edit: () => { S.edit = !S.edit; S.pop = null; render(true); if (!S.edit) toast('Layout saved'); },
   reset: () => { S.layout = DEFAULT.map(([id, span]) => ({ id, span, hidden: false })); render(); toast('Back to the bank’s layout'); },
-  size: (t) => { const w = S.layout.find((x) => x.id === t.dataset.v), sp = WIDGETS[w.id].spans; w.span = sp[(sp.indexOf(w.span) + 1) % sp.length]; render(true); },
+  fit: (t) => { S.layout.find((x) => x.id === t.dataset.v).custom = false; render(true); },
   hide: (t) => { S.layout.find((x) => x.id === t.dataset.v).hidden = true; render(true); },
   unhide: (t) => { S.layout.find((x) => x.id === t.dataset.v).hidden = false; render(true); },
   kind: (t) => { S.kind = S.kind === t.dataset.v ? null : t.dataset.v; render(true); },
@@ -841,15 +870,35 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.pop) { S.pop = null; render(true); } });
 
 /* swipe the top card; drag widgets by their handle */
-let sw = null, swiped = false, mv = null;
+let sw = null, swiped = false, mv = null, rs = null;
 document.addEventListener('pointerdown', (e) => {
-  const h = e.target.closest('[data-drag]');
-  if (h && S.edit) { e.preventDefault(); mv = { id: h.dataset.drag }; document.body.classList.add('dragging'); const w = h.closest('.w'); w.classList.add('lift'); return; }
+  const z = e.target.closest('[data-rz]');
+  if (z && S.edit) {
+    e.preventDefault();
+    const gr = $('grid').getBoundingClientRect(), w = S.layout.find((x) => x.id === z.dataset.id);
+    rs = { w, dir: z.dataset.rz, x0: e.clientX, y0: e.clientY, span0: w.span, rows0: w.rows, step: (gr.width - 11 * 14) / 12 + 14 };
+    document.body.classList.add('dragging'); z.closest('.w').classList.add('sizing'); return;
+  }
+  const h = e.target.closest('[data-drag]') || (S.edit && !e.target.closest('.ctl button, .rz') && e.target.closest('.w'));
+  if (h && S.edit) { e.preventDefault(); mv = { id: h.dataset.drag || h.dataset.w }; document.body.classList.add('dragging'); const w = h.closest('.w'); w.classList.add('lift'); return; }
   const c = e.target.closest('.dk:not(.b1):not(.b2)');
   if (c && !e.target.closest('button') && !S.edit) sw = { el: c, x: e.clientX, dx: 0 };
 });
 window.addEventListener('pointermove', (e) => {
   if (sw) { sw.dx = e.clientX - sw.x; if (Math.abs(sw.dx) > 4) { sw.el.classList.add('drag'); sw.el.style.transform = `translateX(${sw.dx}px) rotate(${sw.dx / 30}deg)`; } }
+  if (rs) {
+    const [minC, minR] = MIN[rs.w.id], narrow = $('main').clientWidth < 900;
+    const span = rs.dir === 's' || narrow ? rs.w.span : Math.max(minC, Math.min(12, rs.span0 + Math.round((e.clientX - rs.x0) / rs.step)));
+    const rows = rs.dir === 'e' ? rs.w.rows : Math.max(minR, Math.min(60, rs.rows0 + Math.round((e.clientY - rs.y0) / 34)));
+    if (span !== rs.w.span || rows !== rs.w.rows) {
+      rs.w.span = span;
+      // Only a change of height fixes it; widening alone lets the height keep following the content.
+      if (rs.dir !== 'e') { rs.w.rows = rows; rs.w.custom = true; }
+      render(true);
+      const el = document.querySelector(`.w[data-w="${rs.w.id}"]`); if (el) el.classList.add('sizing');
+    }
+    return;
+  }
   if (mv) {
     const over = document.elementsFromPoint(e.clientX, e.clientY).map((el) => el.closest && el.closest('.w')).find((w) => w && w.dataset.w !== mv.id);
     if (!over) return;
@@ -860,7 +909,9 @@ window.addEventListener('pointermove', (e) => {
     if (next.map((w) => w.id).join() !== S.layout.map((w) => w.id).join()) { S.layout = next; render(true); const w = document.querySelector(`.w[data-w="${mv.id}"]`); if (w) w.classList.add('lift'); }
   }
 });
+document.addEventListener('dblclick', (e) => { const z = e.target.closest('[data-rz="se"]'); if (z && S.edit) { S.layout.find((x) => x.id === z.dataset.id).custom = false; render(true); } });
 window.addEventListener('pointerup', () => {
+  if (rs) { rs = null; document.body.classList.remove('dragging'); document.querySelectorAll('.w.sizing').forEach((w) => w.classList.remove('sizing')); }
   if (mv) { mv = null; document.body.classList.remove('dragging'); document.querySelectorAll('.w.lift').forEach((w) => w.classList.remove('lift')); }
   if (sw) {
     const { el, dx } = sw; sw = null; el.classList.remove('drag');
