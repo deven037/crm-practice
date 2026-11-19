@@ -280,12 +280,6 @@ i { font-style: normal; }
 .orow .n { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text-muted); text-align: center; }
 .orow small { display: block; color: var(--text-muted); font-size: 11.5px; }
 /* categories */
-.lgroups { display: grid; gap: 22px; min-width: 0; }
-.lgrp-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 10px; }
-.lgrp-h i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); transform: rotate(45deg) translateY(-1px); flex: none; align-self: center; }
-.lgrp-h b { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
-.lgrp-h .mono { font-size: 11px; color: var(--text-muted); padding: 1px 7px; border-radius: 6px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); }
-.lgrp-h .muted { font-size: 12.5px; }
 .pgrp { display: flex; align-items: center; gap: 7px; padding: 10px 6px 5px; font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: color-mix(in srgb, var(--c) 70%, var(--text)); }
 .pgrp:first-of-type { padding-top: 2px; }
 .pgrp i { width: 8px; height: 8px; border-radius: 3px; background: var(--c); flex: none; }
@@ -749,25 +743,25 @@ function pickerHTML() {
 function listView() {
   return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · ToolBox</div><h2>Customise page layout</h2><p>Each card is a layout: who can choose it, and the pages it has. Open one to design its pages. People pick a layout when they create a deal; the panel on the right shows that choice as they see it.</p></div>
       <div class="acts"><button class="btn" data-a="toast" data-v="Back to Deals">${ic('back', 15)}Deals</button><button class="btn" data-a="newcat">${ic('plus', 15)}New category</button><button class="btn pri" data-a="go" data-v="new">${ic('plus', 15)}New layout</button></div></div>
-    <div class="ll"><div class="lgroups">${(() => { let n = 0; return CATS.map((k) => { const ls = LAYOUTS.filter((L) => catOf(L).id === k.id); return ls.length ? `<section class="lgrp" aria-label="${esc(k.name)}"><div class="lgrp-h" style="--c:${k.c}"><i></i><b>${esc(k.name)}</b><span class="mono">${ls.length}</span><span class="muted">${esc(k.desc)}</span></div><div class="lcards">${ls.map((L) => card(L, n++)).join('')}</div></section>` : ''; }).join(''); })()}
-      <div class="lcards"><button class="lyc new" data-a="go" data-v="new" style="--d:${LAYOUTS.length * 50}ms">${ic('plus', 26)}<b>New layout</b><small>Name it, pick its category, who can choose it and its pages</small></button></div></div>
+    <div class="ll"><div class="lcards">${LAYOUTS.map((L, i) => card(L, i)).join('')}
+      <button class="lyc new" data-a="go" data-v="new" style="--d:${LAYOUTS.length * 50}ms">${ic('plus', 26)}<b>New layout</b><small>Name it, pick its category, who can choose it and its pages</small></button></div>
       ${pickerHTML()}</div>`;
 }
 function card(L, i) {
   { const [p, r, b] = forText(L); return `<div class="lyc${L.on ? '' : ' off'}${S.fresh === L.id ? ' fresh' : ''}${S.menu === L.id ? ' open' : ''}" style="--d:${i * 50}ms">
         <button style="text-align:left;display:contents" data-a="open" data-v="${L.id}" aria-label="Open ${esc(L.name)}">${thumbHTML(thumbOf(L), L.def)}</button>
-        <div class="lyc-b"><h3><button data-a="open" data-v="${L.id}" style="text-align:left">${esc(L.name)}</button><button class="menu" data-a="menu" data-v="${L.id}" aria-label="More for ${esc(L.name)}" aria-expanded="${S.menu === L.id}">${ic('dots', 16)}</button></h3>
+        <div class="lyc-b">${catChip(catOf(L))}<h3><button data-a="open" data-v="${L.id}" style="text-align:left">${esc(L.name)}</button><button class="menu" data-a="menu" data-v="${L.id}" aria-label="More for ${esc(L.name)}" aria-expanded="${S.menu === L.id}">${ic('dots', 16)}</button></h3>
           <div class="meta"><span>${ic('box', 13)}<b>${esc(p)}</b></span><span>${ic('users', 13)}${esc(r)} · ${esc(b)}</span></div>
           <div class="pg">${pagesOf(L).map((x) => `<span>${esc(x)}</span>`).join('')}</div></div>
         <div class="lyc-f">${L.undo.length ? `<span class="state draft">DRAFT · ${plural(L.undo.length, 'change')}</span>` : !L.v ? '<span class="state draft">NOT PUBLISHED</span>' : L.on ? (L.people ? `${plural(L.people, 'person')} can choose it` : `${L.used} deals use it`) : 'Switched off'}<span class="mono">${L.v ? 'v' + L.v + ' · ' : ''}${esc(L.by)} · ${esc(L.at)}</span></div>
-        ${S.menu === L.id ? `<div class="cmenu" role="menu"><button role="menuitem" data-a="open" data-v="${L.id}">${ic('pen', 15)}Open and edit</button><button role="menuitem" data-a="dupl" data-v="${L.id}">${ic('copy', 15)}Duplicate</button><button role="menuitem" data-a="chcat" data-v="${L.id}">${ic('tab', 15)}Change category</button><button role="menuitem" data-a="mkdef" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('star', 15)}Make default</button><button role="menuitem" data-a="onoff" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('power', 15)}${L.on ? 'Switch off' : 'Switch on'}</button><button role="menuitem" class="danger" data-a="del" data-v="${L.id}" ${L.def ? 'disabled title="The default layout can’t be deleted"' : ''}>${ic('trash', 15)}Delete</button></div>` : ''}
+        ${S.menu === L.id ? `<div class="cmenu" role="menu"><button role="menuitem" data-a="open" data-v="${L.id}">${ic('layout', 15)}Open layout</button><button role="menuitem" data-a="edit" data-v="${L.id}">${ic('pen', 15)}Edit details</button><button role="menuitem" data-a="dupl" data-v="${L.id}">${ic('copy', 15)}Duplicate</button><button role="menuitem" data-a="mkdef" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('star', 15)}Make default</button><button role="menuitem" data-a="onoff" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('power', 15)}${L.on ? 'Switch off' : 'Switch on'}</button><button role="menuitem" class="danger" data-a="del" data-v="${L.id}" ${L.def ? 'disabled title="The default layout can’t be deleted"' : ''}>${ic('trash', 15)}Delete</button></div>` : ''}
       </div>`; }
 }
 
 /* ---------- categories (the only place a category is made) ---------- */
 function catsView() {
   const f = S.cf;
-  const back = S.nfHold ? `<button class="btn" data-a="cfback">${ic('back', 15)}Back to New layout</button>` : `<button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button>`;
+  const back = S.nfHold ? `<button class="btn" data-a="cfback">${ic('back', 15)}Back to ${S.nfHold === 'edit' ? 'Edit layout details' : 'New layout'}</button>` : `<button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button>`;
   return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · Customise page layout</div><h2>Categories</h2><p>Categories group the Deals layouts. People see them as headings when they choose a layout for a new deal, in the order below. A category is made here and nowhere else.</p></div>
       <div class="acts">${back}</div></div>
     <div class="cats">
@@ -789,12 +783,17 @@ function catsView() {
 /* ---------- new layout (full page) ---------- */
 function newView() {
   const n = S.nf;
+  /* The same page edits an existing layout's details (screen "edit"): no Start from, pages are changed in the editor. */
+  const E = S.screen === 'edit' ? LAYOUTS.find((x) => x.id === S.editId) : null;
   const chips = (key, all, allLabel) => `<div class="chipset" role="group"><button aria-pressed="${n[key].length === 0}" data-a="nfall" data-k="${key}">${allLabel}</button>${all.map((x) => `<button aria-pressed="${n[key].includes(x)}" data-a="nfchip" data-k="${key}" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div>`;
   const pageRow = (p, fixed) => `<div><span class="ico">${ic(p === 'New/Edit' ? 'form' : p === 'History' ? 'history' : 'page', 13)}</span><span><b style="font-weight:600">${esc(p)}</b><small>${p === 'New/Edit' ? 'The form for creating and editing a deal' : p === 'Detail' ? 'The deal’s own page' : p === 'History' ? 'Every change and stage move' : 'A page of its own'}</small></span>${fixed ? '<span class="mono muted" style="font-size:11px">always</span>' : `<button class="btn ghost sq" style="width:30px;height:30px" data-a="nfrmpage" data-v="${esc(p)}" aria-label="Remove ${esc(p)}">${ic('x', 14)}</button>`}</div>`;
   const preview = { id: 'preview', name: n.name || 'Layout name', prod: n.prod, roles: n.roles, branches: n.branches, pages: n.pages, def: n.def, on: true, used: 0, v: 0, by: 'You', at: 'now', thumb: n.start === 'blank' || !LAYOUTS.some((x) => x.id === n.start) ? thumbOf({ M: { Detail: BASIC.Detail() } }) : thumbOf(LAYOUTS.find((x) => x.id === n.start)) };
   const [p, r, b] = forText(preview);
-  return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · Customise page layout</div><h2>New layout</h2><p>Say what it is called, which deals and people it is for, and which pages it has. After saving you design each page.</p></div>
-      <div class="acts"><button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button></div></div>
+  if (E) preview.thumb = thumbOf(E);
+  const defLocked = E && E.def;
+  const defBlocked = E && !E.def && (!E.on || !E.v);
+  return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · Customise page layout</div><h2>${E ? 'Edit layout details' : 'New layout'}</h2><p>${E ? `Change what <b>${esc(E.name)}</b> is called, its category and who can choose it. Its pages are designed in the layout itself.` : 'Say what it is called, which deals and people it is for, and which pages it has. After saving you design each page.'}</p></div>
+      <div class="acts">${E ? `<button class="btn" data-a="efcancel">${ic('back', 15)}${S.editFrom === 'editor' ? esc(E.name) : 'Layouts'}</button>` : `<button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button>`}</div></div>
     <div class="nf"><div class="card">
       <div class="nf-sec"><h3>About the layout</h3>
         <div class="f${n.err ? ' bad' : ''}"><label for="nfname">Layout name <span class="req" style="color:var(--danger-text)">*</span></label><input id="nfname" data-nf="name" value="${esc(n.name)}" placeholder="For example: Gold loans, Baner desk" autocomplete="off">${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}</div>
@@ -805,16 +804,17 @@ function newView() {
         <p class="muted" style="margin:-4px 0 0;font-size:12.5px">Not in the list? <button class="link" data-a="nfnewcat">Make a new category</button>. Your form stays as it is.</p></div>
       <div class="nf-sec"><h3>${ic('box', 15)}Products<span class="mono">optional</span></h3><p class="muted" style="margin:-6px 0 0;font-size:12.5px">Shown with the layout in Choose a layout. On this layout the Product field offers only these.</p>${chips('prod', PRODUCTS, 'Every product')}</div>
       <div class="nf-sec"><h3>${ic('users', 15)}Who can choose it<span class="mono">roles and branches</span></h3><p class="muted" style="margin:-6px 0 0;font-size:12.5px">Only these people see it in Choose a layout. Deals already made with it stay on it, whoever opens them.</p>${chips('roles', ROLES.slice(1), 'Everyone')}${chips('branches', BRANCHES, 'All branches')}</div>
-      <div class="nf-sec"><h3>${ic('copy', 15)}Start from</h3><div class="start">${[['blank', 'Basic', null], ...LAYOUTS.map((L) => [L.id, L.name, thumbOf(L)])].map(([id, nm, th]) => `<button aria-pressed="${n.start === id}" data-a="nfstart" data-v="${id}">${th ? thumbHTML(th) : `<div class="thumb blank">${ic('plus', 18)}</div>`}${esc(nm)}${th ? '' : '<small class="muted" style="font-weight:400">Required fields only</small>'}</button>`).join('')}</div></div>
+      ${E ? `<div class="nf-sec"><h3>${ic('page', 15)}Pages<span class="mono">${pagesOf(E).length}</span></h3><div class="pg">${pagesOf(E).map((x) => `<span>${esc(x)}</span>`).join('')}</div><p class="muted" style="margin:0;font-size:12.5px">Pages are added, removed and designed in the layout. <button class="link" data-a="efopen">Open the layout</button></p></div>` : ''}
+      ${E ? '' : `<div class="nf-sec"><h3>${ic('copy', 15)}Start from</h3><div class="start">${[['blank', 'Basic', null], ...LAYOUTS.map((L) => [L.id, L.name, thumbOf(L)])].map(([id, nm, th]) => `<button aria-pressed="${n.start === id}" data-a="nfstart" data-v="${id}">${th ? thumbHTML(th) : `<div class="thumb blank">${ic('plus', 18)}</div>`}${esc(nm)}${th ? '' : '<small class="muted" style="font-weight:400">Required fields only</small>'}</button>`).join('')}</div></div>
       <div class="nf-sec"><h3>${ic('page', 15)}Pages<span class="mono">each is designed on its own</span></h3>
         <div class="pages-l">${n.pages.map((pg) => pageRow(pg, pg === 'New/Edit' || pg === 'Detail')).join('')}</div>
         <div class="addpage"><input id="nfpage" data-nf="extra" value="${esc(n.extra)}" placeholder="Add a page, for example Documents or Credit review"><button class="btn" data-a="nfaddpage">${ic('plus', 15)}Add page</button></div>
-        ${n.pages.includes('History') ? '' : '<button class="link" style="justify-self:start;font-size:13px" data-a="nfhist">+ History page</button>'}</div>
-      <div class="nf-sec"><div class="sw-row"><span>Default layout for Deals<small>Starts selected in Choose a layout, and deals made by import or the API get it. There is one default.</small></span><button class="switch" role="switch" aria-checked="${n.def}" data-a="nfdef" aria-label="Default layout"></button></div></div>
-      <div class="nf-foot"><button class="btn ghost" data-a="go" data-v="list">Cancel</button><button class="btn pri" data-a="nfsave">Save layout</button></div></div>
+        ${n.pages.includes('History') ? '' : '<button class="link" style="justify-self:start;font-size:13px" data-a="nfhist">+ History page</button>'}</div>`}
+      <div class="nf-sec"><div class="sw-row"><span>Default layout for Deals<small>${defLocked ? 'This is the default. To change it, make another layout the default.' : defBlocked ? 'Publish it and switch it on before it can be the default.' : 'Starts selected in Choose a layout, and deals made by import or the API get it. There is one default.'}</small></span><button class="switch" role="switch" aria-checked="${n.def}" data-a="nfdef" aria-label="Default layout" ${defLocked || defBlocked ? 'disabled' : ''}></button></div></div>
+      <div class="nf-foot"><button class="btn ghost" ${E ? 'data-a="efcancel"' : 'data-a="go" data-v="list"'}>Cancel</button><button class="btn pri" data-a="${E ? 'efsave' : 'nfsave'}">${E ? 'Save changes' : 'Save layout'}</button></div></div>
     <aside class="nf-side"><span class="lab">Your card</span>
       <div class="lyc" style="--d:0ms">${thumbHTML(preview.thumb, n.def)}<div class="lyc-b">${CATS.find((k) => k.id === n.cat) ? catChip(CATS.find((k) => k.id === n.cat)) : '<span class="muted" style="font-size:12px">No category yet</span>'}<h3>${esc(preview.name)}</h3><div class="meta"><span>${ic('box', 13)}<b>${esc(p)}</b></span><span>${ic('users', 13)}${esc(r)} · ${esc(b)}</span></div><div class="pg">${n.pages.map((x) => `<span>${esc(x)}</span>`).join('')}</div></div><div class="lyc-f">New · draft</div></div>
-      <div class="card" style="padding:12px 14px;font-size:12.5px;color:var(--text-muted)">${n.def ? 'It becomes the default: it starts selected in Choose a layout.' : 'It joins the end of Choose a layout; drag it higher on the Layouts screen.'} Nothing changes for anyone until you publish it.</div></aside></div>`;
+      <div class="card" style="padding:12px 14px;font-size:12.5px;color:var(--text-muted)">${E ? 'These details apply as soon as you save. Changes to the pages still wait until the layout is published.' : `${n.def ? 'It becomes the default: it starts selected in Choose a layout.' : 'It joins the end of Choose a layout; drag it higher on the Layouts screen.'} Nothing changes for anyone until you publish it.`}</div></aside></div>`;
 }
 
 /* ---------- editor ---------- */
@@ -950,7 +950,7 @@ function editorView() {
   const ck = checks();
   const blocks = ck.filter((c) => c[0] === 'block').length;
   const gone = S.cmp ? [...pubPlaced(S.page)].filter((x) => !placed().has(x)) : [];
-  return `<div class="ed-top"><button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button><input class="nm" id="lname" value="${esc(S.name)}" aria-label="Layout name">${edits() ? `<span class="state draft">DRAFT · ${plural(edits(), 'change')}</span>` : L.v ? `<span class="state live">PUBLISHED · v${L.v}</span>` : '<span class="state draft">NOT PUBLISHED YET</span>'}<span class="sp"></span>
+  return `<div class="ed-top"><button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button><input class="nm" id="lname" value="${esc(S.name)}" aria-label="Layout name">${catChip(catOf(L))}<button class="btn ghost" style="height:30px;font-size:12.5px" data-a="edit" data-v="${L.id}">${ic('pen', 14)}Edit details</button>${edits() ? `<span class="state draft">DRAFT · ${plural(edits(), 'change')}</span>` : L.v ? `<span class="state live">PUBLISHED · v${L.v}</span>` : '<span class="state draft">NOT PUBLISHED YET</span>'}<span class="sp"></span>
       <button class="btn ghost sq" data-a="undo" aria-label="Undo" ${S.undo.length ? '' : 'disabled'}>${ic('undo', 16)}</button><button class="btn ghost sq" data-a="redo" aria-label="Redo" ${S.redo.length ? '' : 'disabled'}>${ic('redo', 16)}</button>
       <button class="btn${S.cmp ? ' pri' : ''}" data-a="cmp" aria-pressed="${S.cmp}" ${L.v ? '' : 'disabled title="Nothing is published yet"'}>${ic('eye', 15)}Compare with published</button><button class="btn pri" data-a="publish" ${edits() || !L.v ? '' : 'disabled'}>Publish v${L.v + 1}</button></div>
     <div class="ptabs" role="tablist" aria-label="Pages">${Object.keys(S.M).map((pg) => `<span class="ptab" role="tab" tabindex="0" aria-selected="${S.page === pg}" data-a="page" data-v="${esc(pg)}">${ic(PAGE_KIND[pg] === 'form' ? 'form' : pg === 'History' ? 'history' : 'page', 15)}${esc(pg)}<span class="k">${S.M[pg].tabs.length} tab${S.M[pg].tabs.length === 1 ? '' : 's'}</span>${S.page === pg && !FIXED_PAGES.includes(pg) ? `<button class="tabx" data-a="rmpage" data-v="${esc(pg)}" aria-label="Delete page ${esc(pg)}" title="Delete page">${ic('x', 12)}</button>` : ''}</span>`).join('')}${S.addingPage ? '<span class="ptab"><input id="newpage" placeholder="Page name"></span>' : `<button class="ptab add" data-a="addpage">${ic('plus', 14)}Page</button>`}</div>
@@ -970,8 +970,8 @@ function render() {
   keepLayout();
   const ae = document.activeElement, keep = ae && ae.id ? ae.id : null, pos = keep && ae.selectionStart != null ? ae.selectionStart : null;
   const sc = $('main').scrollTop;
-  $('page').innerHTML = S.screen === 'list' ? listView() : S.screen === 'cats' ? catsView() : S.screen === 'new' ? newView() : editorView();
-  $('crumb').innerHTML = `<span>Deals</span><span>/</span><span>ToolBox</span><span>/</span><b>${S.screen === 'list' ? 'Customise page layout' : S.screen === 'cats' ? 'Categories' : S.screen === 'new' ? 'New layout' : esc(S.name)}</b>`;
+  $('page').innerHTML = S.screen === 'list' ? listView() : S.screen === 'cats' ? catsView() : S.screen === 'new' || S.screen === 'edit' ? newView() : editorView();
+  $('crumb').innerHTML = `<span>Deals</span><span>/</span><span>ToolBox</span><span>/</span><b>${S.screen === 'list' ? 'Customise page layout' : S.screen === 'cats' ? 'Categories' : S.screen === 'new' ? 'New layout' : S.screen === 'edit' ? 'Edit details' : esc(S.name)}</b>`;
   $('rail').innerHTML = '<i class="logo">H</i>' + ['dashboard', 'target', 'user', 'building', 'deal', 'file', 'box', 'mega', 'checksq', 'calendar', 'ticket'].map((n) => `<span class="${n === 'deal' ? 'on' : ''}">${ic(n, 18)}</span>`).join('');
   $('screens').innerHTML = SCREENS.map(([k, n]) => `<button aria-pressed="${S.screen === k}" data-s="${k}">${n}</button>`).join('');
   $('main').scrollTop = sc;
@@ -983,7 +983,7 @@ const NF0 = () => ({ name: '', desc: '', cat: '', prod: [], roles: [], branches:
 /* Opening "New layout" always starts a fresh form; Cancel throws the half-filled one away. */
 const go = (o) => {
   // Leaving the Categories page always ends the "came from New layout" detour, except for the trip back to the form.
-  const toForm = o.screen === 'new' && S.screen === 'cats' && S.nfHold;
+  const toForm = S.screen === 'cats' && S.nfHold && o.screen === S.nfHold;
   if (S.screen === 'cats' && o.screen !== 'cats') { S.nfHold = false; S.cren = null; S.cf.err = ''; }
   if (o.screen === 'new' && S.screen !== 'new' && !toForm) S.nf = NF0();
   if (S.nf.cat && !CATS.some((k) => k.id === S.nf.cat)) S.nf.cat = ''; if (S.nf.start !== 'blank' && !LAYOUTS.some((x) => x.id === S.nf.start)) S.nf.start = 'blank'; Object.assign(S, o); S.menu = null; $('main').scrollTop = 0; render(); };
@@ -1007,8 +1007,26 @@ const A = {
   nfchip: (t) => { const k = t.dataset.k, v = t.dataset.v, a = S.nf[k]; S.nf[k] = a.includes(v) ? a.filter((x) => x !== v) : [...a, v]; render(); },
   nfstart: (t) => { S.nf.start = t.dataset.v; if (t.dataset.v !== 'blank') { const L = LAYOUTS.find((x) => x.id === t.dataset.v); keepLayout(); S.nf.pages = [...pagesOf(L)]; if (!S.nf.cat) { S.nf.cat = catOf(L).id; S.nf.caterr = ''; } } render(); },
   nfcat: (t) => { S.nf.cat = t.dataset.v; S.nf.caterr = ''; render(); },
-  nfnewcat: () => { S.nfHold = true; S.cf = { name: '', desc: '', c: CAT_COLOURS[1], err: '' }; go({ screen: 'cats' }); setTimeout(() => $('cfname')?.focus(), 0); },
-  cfback: () => go({ screen: 'new' }),
+  nfnewcat: () => { S.nfHold = S.screen; S.cf = { name: '', desc: '', c: CAT_COLOURS[1], err: '' }; go({ screen: 'cats' }); setTimeout(() => $('cfname')?.focus(), 0); },
+  cfback: () => go({ screen: S.nfHold || 'list' }),
+  edit: (t) => {
+    keepLayout(); const L = LAYOUTS.find((x) => x.id === t.dataset.v); if (!L) return;
+    S.editId = L.id; S.menu = null; S.editFrom = S.screen === 'editor' ? 'editor' : 'list';
+    S.nf = { ...NF0(), name: L.name, desc: L.desc || '', cat: catOf(L).id, prod: [...L.prod], roles: [...L.roles], branches: [...L.branches], start: L.id, pages: pagesOf(L), def: L.def };
+    go({ screen: 'edit' }); setTimeout(() => $('nfname')?.focus(), 0);
+  },
+  efopen: () => { const id = S.editId; openLayout(id); go({ screen: 'editor' }); },
+  efsave: () => {
+    const n = S.nf, L = LAYOUTS.find((x) => x.id === S.editId), nm = n.name.trim();
+    if (!nm) { n.err = 'Give the layout a name'; render(); $('nfname').focus(); return; }
+    if (LAYOUTS.some((x) => x.id !== L.id && x.name.toLowerCase() === nm.toLowerCase())) { n.err = 'Another Deals layout has that name'; render(); $('nfname').focus(); return; }
+    if (!CATS.some((k) => k.id === n.cat)) { n.caterr = 'Pick a category'; render(); return; }
+    Object.assign(L, { name: nm, desc: n.desc.trim(), cat: n.cat, prod: [...n.prod], roles: [...n.roles], branches: [...n.branches] });
+    if (n.def && !L.def) LAYOUTS.forEach((x) => (x.def = x.id === L.id));
+    if (S.cur === L.id) S.name = L.name;
+    go(S.editFrom === 'editor' ? { screen: 'editor' } : { screen: 'list', fresh: L.id }); toast(`${L.name}: details saved`);
+  },
+  efcancel: () => go({ screen: S.editFrom === 'editor' ? 'editor' : 'list' }),
   newcat: () => { S.cf = { name: '', desc: '', c: CAT_COLOURS[1], err: '' }; go({ screen: 'cats' }); setTimeout(() => $('cfname')?.focus(), 0); },
   cfcol: (t) => { S.cf.c = t.dataset.v; render(); },
   cfadd: () => {
@@ -1017,7 +1035,7 @@ const A = {
     if (CATS.some((k) => k.name.toLowerCase() === nm.toLowerCase())) { f.err = 'There is already a category with that name'; render(); $('cfname').focus(); return; }
     const k = { id: 'K' + ++cid, name: nm, desc: f.desc.trim(), c: f.c };
     CATS.push(k); S.freshCat = k.id; S.cf = { name: '', desc: '', c: f.c, err: '' };
-    if (S.nfHold) { S.nf.cat = k.id; S.nf.caterr = ''; toast(`“${nm}” added and picked for your new layout`); go({ screen: 'new' }); return; }
+    if (S.nfHold) { S.nf.cat = k.id; S.nf.caterr = ''; toast(`“${nm}” added and picked for ${S.nfHold === 'edit' ? 'this layout' : 'your new layout'}`); go({ screen: S.nfHold }); return; }
     toast(`“${nm}” added. Pick it when you make or move a layout.`); render(); $('cfname')?.focus();
   },
   cren: (t) => { const k = CATS.find((x) => x.id === t.dataset.v); S.cren = k.id; S.crenVal = k.name; render(); setTimeout(() => { $('crname')?.focus(); $('crname')?.select(); }, 0); },
@@ -1034,13 +1052,6 @@ const A = {
     $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete “${esc(k.name)}”?</h3></div><div class="dlg-body">${ls.length ? `${ls.length === 1 ? `Its layout, ${esc(ls[0].name)}, moves` : `Its ${ls.length} layouts (${ls.map((L) => esc(L.name)).join(', ')}) move`} to another category. Deals are not touched.<div class="f" style="margin-top:12px"><label for="cmove">Move ${ls.length === 1 ? 'it' : 'them'} to</label><select id="cmove">${others.map((x) => `<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select></div>` : 'It has no layouts. Nothing else changes.'}</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="docdel" data-v="${k.id}">Delete</button></div></div></div>`;
   },
   docdel: (t) => { const id = t.dataset.v, to = $('cmove')?.value; if (to) LAYOUTS.forEach((L) => { if (catOf(L).id === id) L.cat = to; }); CATS = CATS.filter((x) => x.id !== id); $('ovl').innerHTML = ''; toast(to ? `Category deleted; its layouts moved to ${CATS.find((x) => x.id === to).name}` : 'Category deleted'); render(); },
-  chcat: (t) => {
-    const L = LAYOUTS.find((x) => x.id === t.dataset.v); S.menu = null; render();
-    $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Category of ${esc(L.name)}</h3></div><div class="dlg-body"><div class="chipset" role="radiogroup" aria-label="Category" id="chcats">${CATS.map((k) => `<button role="radio" aria-pressed="${catOf(L).id === k.id}" data-a="pickcat" data-v="${k.id}" style="--c:${k.c}"><i class="cdot"></i>${esc(k.name)}</button>`).join('')}</div><p style="font-size:12.5px;margin:10px 0 0">It moves under that heading in Choose a layout. New categories are made on the <button class="link" data-a="newcatfromdlg">Categories page</button>.</p></div><div class="dlg-foot"><button class="btn ghost" data-a="close">Cancel</button><span class="sp"></span><button class="btn pri" data-a="dochcat" data-v="${L.id}">Move</button></div></div></div>`;
-  },
-  pickcat: (t) => { document.querySelectorAll('#chcats button').forEach((b) => b.setAttribute('aria-pressed', b === t)); },
-  dochcat: (t) => { const L = LAYOUTS.find((x) => x.id === t.dataset.v); const pick = document.querySelector('#chcats button[aria-pressed="true"]'); if (pick) L.cat = pick.dataset.v; $('ovl').innerHTML = ''; S.fresh = L.id; toast(`${L.name} is now under ${catOf(L).name}`); render(); },
-  newcatfromdlg: () => { $('ovl').innerHTML = ''; A.newcat(); },
   nfrmpage: (t) => { S.nf.pages = S.nf.pages.filter((x) => x !== t.dataset.v); render(); },
   nfhist: () => { S.nf.pages.push('History'); render(); },
   nfaddpage: () => { const v = S.nf.extra.trim(); if (!v) { $('nfpage').focus(); return; } if (S.nf.pages.some((x) => x.toLowerCase() === v.toLowerCase())) { toast('That page is already there'); return; } S.nf.pages.push(v); S.nf.extra = ''; render(); $('nfpage').focus(); },
