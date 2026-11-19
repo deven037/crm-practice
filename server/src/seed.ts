@@ -315,37 +315,110 @@ function seedNotifications(): AppNotification[] {
   ];
 }
 
-const CAMPAIGN_NAMES = [
-  'Spring Product Launch',
-  'LinkedIn Lead Gen Push',
-  'Webinar Series: CRM Best Practices',
-  'Partner Co-Marketing Q2',
-  'Retargeting Ad Blitz',
-  'Trade Show — SaaSCon',
-  'Content Hub Relaunch',
-  'Customer Referral Drive',
+/**
+ * The demo bank's campaigns: [name, channel, start day, end day (from today), leads wanted, owner, audience,
+ * return wanted (won value per rupee spent; 0 = none won)]. Fixed rows so the Campaigns pages always show a
+ * running, finished, cancelled and planned campaign; spend and budget are worked out from the won deals.
+ */
+const CAMPAIGN_PLAN: [string, string, number, number, number, string, string, number][] = [
+  ['Festive Business Loans', 'Paid Search', -40, 20, 12, 'user-4', 'Traders and shop owners stocking up for the festive season', 3.4],
+  ['Payroll Switch Webinars', 'Webinar', -25, 35, 15, 'user-2', 'HR and finance heads at firms with 50 to 500 staff', 2.1],
+  ['Merchant POS on LinkedIn', 'Social Media', -10, 50, 20, 'user-2', 'Retail chains and restaurants with five or more outlets', 0],
+  ['Trade Finance Expo Mumbai', 'Trade Show', -112, -108, 6, 'user-4', 'Importers and exporters visiting the Mumbai expo', 5.8],
+  ['Corporate Cards Email Series', 'Email', -130, -70, 8, 'user-1', 'Finance teams of existing current-account customers', 8.5],
+  ['CA Partner Referral Club', 'Partner Referral', -60, 90, 10, 'user-4', 'Chartered accountants who advise SME clients', 0.8],
+  ['Summer Savings Social Blitz', 'Social Media', -135, -100, 12, 'user-1', 'Salaried savers aged 25 to 40', 0],
+  ['New Year Cash Management Push', 'Email', 35, 75, 15, 'user-2', 'Mid-size companies with several collection accounts', 0],
 ];
+/** Days from today the cancelled campaign was stopped. */
+const CAMPAIGN_CANCELLED_AT = -110;
+
+const dayStart = (d: number) => { const t = new Date(now() + d * DAY); t.setHours(0, 0, 0, 0); return t; };
+const dayEnd = (d: number) => { const t = new Date(now() + d * DAY); t.setHours(23, 59, 0, 0); return t; };
 
 function seedCampaigns(): Campaign[] {
-  return CAMPAIGN_NAMES.map((name, i) => {
+  return CAMPAIGN_PLAN.map(([name, channel, s, e, target, ownerId, audience], i) => {
+    // The random calls stay in their original order so every seeded record after the campaigns is unchanged;
+    // the campaign itself comes from the fixed plan above.
     const startOffsetDays = between(30, 200);
     const durationDays = between(14, 90);
-    const start = new Date(now() - startOffsetDays * DAY);
-    const end = new Date(start.getTime() + durationDays * DAY);
-    let status: CampaignStatus;
-    if (end.getTime() < now()) status = pick<CampaignStatus>(['Completed', 'Cancelled']);
-    else if (start.getTime() > now()) status = 'Planned';
-    else status = 'Active';
+    if (now() - startOffsetDays * DAY + durationDays * DAY < now()) pick<CampaignStatus>(['Completed', 'Cancelled']);
+    pick(CAMPAIGN_CHANNELS);
+    between(5, 50);
+    between(0, 5);
+    const status: CampaignStatus = i === 6 ? 'Cancelled' : s > 0 ? 'Planned' : e < 0 ? 'Completed' : 'Active';
     return {
       id: `campaign-${i + 1}`,
       name,
-      channel: pick(CAMPAIGN_CHANNELS),
-      budget: between(5, 50) * 1000,
-      startDate: start.toISOString(),
-      endDate: end.toISOString(),
+      channel,
+      budget: 0, // set by finishCampaigns
+      startDate: dayStart(s).toISOString(),
+      endDate: dayEnd(e).toISOString(),
       status,
-      createdAt: daysAgo(startOffsetDays + between(0, 5)),
+      createdAt: dayStart(s - 14 - i).toISOString(),
+      layoutName: 'Default',
+      ownerId,
+      audience,
+      targetLeads: target,
+      spent: 0,
+      spendLog: [],
+      cancelReason: status === 'Cancelled' ? 'Results too low for the spend' : null,
+      history: [],
     };
+  });
+}
+
+const roundTo = (n: number, step: number) => Math.max(step, Math.round(n / step) * step);
+
+/**
+ * Links deals to the campaigns, then sets each campaign's spend, budget, spend log and history so its return is
+ * close to the plan's. No rand() here, so the rest of the seed stays the same.
+ */
+function finishCampaigns(campaigns: Campaign[], leads: Lead[], deals: Deal[]): void {
+  const started = campaigns.slice(0, 6);
+  // Won deals: one each for the campaigns that have a return in the plan.
+  const wonFor = campaigns.filter((_, i) => CAMPAIGN_PLAN[i][7] > 0);
+  deals.filter((d) => d.stage === 'Closed Won').forEach((d, k) => { d.campaignId = wonFor[k % wonFor.length].id; });
+  deals.forEach((d, i) => { if (d.stage !== 'Closed Won' && i % 4 === 0) d.campaignId = started[(i / 4) % started.length].id; });
+  // A planned campaign has not reached anyone yet.
+  const planned = campaigns.filter((c) => c.status === 'Planned').map((c) => c.id);
+  leads.forEach((l) => { if (l.campaignId && planned.includes(l.campaignId)) l.campaignId = 'campaign-3'; });
+
+  const owner = (id: string | null | undefined) => SEED_USERS.find((u) => u.id === id)?.name ?? 'Alex Admin';
+  campaigns.forEach((c, i) => {
+    const [, , s, e, , , , ret] = CAMPAIGN_PLAN[i];
+    const won = deals.filter((d) => d.campaignId === c.id && d.stage === 'Closed Won').reduce((t, d) => t + d.amount, 0);
+    const len = e - s + 1;
+    const share = c.status === 'Active' ? Math.min(1, (1 - s) / len) * (0.9 + (i % 3) * 0.1) : c.status === 'Completed' ? 0.96 : 0;
+    let spent = 0;
+    let budget = 0;
+    if (c.status === 'Planned') budget = 60_000;
+    else if (c.status === 'Cancelled') { spent = 30_000; budget = 80_000; }
+    else if (ret > 0 && won > 0) { spent = roundTo(won / ret, 1000); budget = roundTo(spent / share, 1000); }
+    else { budget = 90_000; spent = roundTo(budget * share * 0.6, 1000); }
+    c.budget = budget;
+    c.spent = spent;
+
+    const by = owner(c.ownerId);
+    const history = [{ at: c.createdAt, by, text: 'Created' }] as NonNullable<Campaign['history']>;
+    if (c.status !== 'Planned') history.push({ at: c.startDate, by: 'System', text: 'Started on its start date' });
+    // Spend in two to four payments across the part of the run that has gone.
+    const lastDay = c.status === 'Cancelled' ? CAMPAIGN_CANCELLED_AT : Math.min(0, e);
+    const parts = spent ? Math.max(1, Math.min(2 + (i % 3), Math.floor(spent / 2000))) : 0;
+    let left = spent;
+    const log: NonNullable<Campaign['spendLog']> = [];
+    for (let p = 0; p < parts; p++) {
+      const amount = p === parts - 1 ? left : roundTo(spent / parts, 1000);
+      left -= amount;
+      const at = dayStart(s + Math.round(((lastDay - s) * (p + 1)) / (parts + 0.5))).toISOString();
+      const note = ['Agency invoice', 'Media booking', 'Event and travel', 'Creative and printing'][(i + p) % 4];
+      log.push({ amount, at, by, note });
+      history.push({ at, by, text: `Spend logged: ${note}`, amount });
+    }
+    c.spendLog = log;
+    if (c.status === 'Completed') history.push({ at: c.endDate, by: 'System', text: 'Ended on its end date' });
+    if (c.status === 'Cancelled') history.push({ at: dayStart(CAMPAIGN_CANCELLED_AT).toISOString(), by, text: `Cancelled: ${c.cancelReason}` });
+    c.history = history;
   });
 }
 
@@ -828,6 +901,7 @@ export function buildSeedData() {
 
   const campaigns = seedCampaigns();
   const leadsWithCampaigns = attachCampaignsToLeads(leads, campaigns);
+  finishCampaigns(campaigns, leadsWithCampaigns, deals);
   const quotes = finishQuotes(seedQuotes(accounts, deals, products), products, accounts);
   const customFieldDefs = seedCustomFieldDefs();
   const layouts = seedLayouts();

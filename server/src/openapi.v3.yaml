@@ -354,3 +354,40 @@ paths:
       responses:
         '200': { description: The saved settings. }
         '409': { description: The approver is not a user of this bank (unknown_user). }
+  /campaigns/refresh:
+    post:
+      tags: [Campaigns]
+      summary: Move campaigns along by their dates
+      description: >
+        Planned campaigns whose start date has come become Active; Active campaigns past their end date become
+        Completed. The Campaigns page calls this when it opens, since GET requests don't save.
+      responses:
+        '200': { description: 'The ids of the campaigns that changed: { changed: string[] }.' }
+  /campaigns/{id}/status:
+    post:
+      tags: [Campaigns]
+      summary: Start a planned campaign now, mark a running one complete, or cancel one with a reason
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [status], properties: { status: { type: string, enum: [Active, Completed, Cancelled] }, reason: { type: string } } }
+      responses:
+        '200': { description: 'The campaign. Starting early moves the start date to now; completing early moves the end date to now.' }
+        '409': { description: 'Not allowed from its status (not_planned, not_active, finished).' }
+  /campaigns/{id}/spend:
+    post:
+      tags: [Campaigns]
+      summary: Log money paid out for a campaign
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [amount], properties: { amount: { type: number }, note: { type: string } } }
+      responses:
+        '200': { description: The campaign with the new spend line, its spent total and a history line. }
+        '409': { description: The campaign has not started (not_started). }
