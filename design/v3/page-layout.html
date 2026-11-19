@@ -246,10 +246,12 @@ i { font-style: normal; }
 /* layout list */
 .ll { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
 .lcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
-.lyc { position: relative; display: flex; flex-direction: column; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; text-align: left; animation: pop var(--slow) var(--ease-spring) backwards; animation-delay: var(--d);
+.lyc { position: relative; display: flex; flex-direction: column; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); text-align: left; animation: pop var(--slow) var(--ease-spring) backwards; animation-delay: var(--d);
   transition: transform var(--base) var(--ease-spring), box-shadow var(--base), border-color var(--fast); }
 .lyc:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: var(--bank-soft-line); }
 .lyc.off { opacity: .62; }
+.lyc.open { z-index: 6; opacity: 1; }
+.lyc > .thumb { border-radius: 17px 17px 0 0; }
 .lyc.fresh { border-color: var(--ok-text); box-shadow: 0 0 0 4px var(--ok-bg), var(--shadow); }
 .thumb { position: relative; height: 112px; padding: 10px; display: grid; grid-template-columns: repeat(12, 1fr); grid-auto-rows: 9px; gap: 4px; background-color: var(--surface-2); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 12px 12px; border-bottom: 1px solid var(--border); overflow: hidden; }
 .thumb i { grid-column: span var(--w); grid-row: span var(--h); border-radius: 4px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--border-strong); }
@@ -269,7 +271,7 @@ i { font-style: normal; }
 .lyc.new { display: grid; place-items: center; text-align: center; gap: 6px; min-height: 280px; border: 1.5px dashed var(--border-strong); background: none; box-shadow: none; color: var(--text-muted); }
 .lyc.new:hover { color: var(--bank-ink); background: var(--bank-soft); border-color: var(--bank-soft-line); }
 .lyc.new b { font-family: var(--font-display); font-size: 17px; color: inherit; }
-.cmenu { position: absolute; z-index: 9; top: 150px; right: 12px; width: 190px; padding: 6px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg); animation: pop var(--base) var(--ease-spring); }
+.cmenu { position: absolute; z-index: 9; top: 158px; right: 10px; width: 200px; padding: 6px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg); animation: pop var(--base) var(--ease-spring); }
 .cmenu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border-radius: 9px; font-size: 13px; font-weight: 500; text-align: left; }
 .cmenu button:hover { background: var(--bank-soft); }
 .cmenu button.danger { color: var(--danger-text); }
@@ -633,7 +635,7 @@ function listView() {
   const win = matchWinner();
   return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · ToolBox</div><h2>Customise page layout</h2><p>Each card is a layout: which deals and people it is for, and the pages it has. Open one to design its pages. A deal opens with the first layout in the order on the right that fits.</p></div>
       <div class="acts"><button class="btn" data-a="toast" data-v="Back to Deals">${ic('back', 15)}Deals</button><button class="btn pri" data-a="go" data-v="new">${ic('plus', 15)}New layout</button></div></div>
-    <div class="ll"><div class="lcards">${LAYOUTS.map((L, i) => { const [p, r, b] = forText(L); return `<div class="lyc${L.on ? '' : ' off'}${S.fresh === L.id ? ' fresh' : ''}" style="--d:${i * 50}ms">
+    <div class="ll"><div class="lcards">${LAYOUTS.map((L, i) => { const [p, r, b] = forText(L); return `<div class="lyc${L.on ? '' : ' off'}${S.fresh === L.id ? ' fresh' : ''}${S.menu === L.id ? ' open' : ''}" style="--d:${i * 50}ms">
         <button style="text-align:left;display:contents" data-a="open" data-v="${L.id}" aria-label="Open ${esc(L.name)}">${thumbHTML(L.thumb, L.def)}</button>
         <div class="lyc-b"><h3><button data-a="open" data-v="${L.id}" style="text-align:left">${esc(L.name)}</button><button class="menu" data-a="menu" data-v="${L.id}" aria-label="More for ${esc(L.name)}" aria-expanded="${S.menu === L.id}">${ic('dots', 16)}</button></h3>
           <div class="meta"><span>${ic('box', 13)}<b>${esc(p)}</b></span><span>${ic('users', 13)}${esc(r)} · ${esc(b)}</span></div>
