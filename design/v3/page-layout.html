@@ -570,23 +570,29 @@ const ROLES = ['Everyone', 'Relationship manager', 'Credit officer', 'Branch man
 const PRODUCTS = ['Home Loan', 'Car Loan', 'Gold Loan', 'Business Loan'];
 const BRANCHES = ['Andheri East', 'Baner, Pune', 'Kothrud, Pune', 'Head office'];
 
-/* layouts of Deals */
-let LAYOUTS = [
-  { id: 'L1', name: 'Secured loans', desc: 'Home and gold loans: collateral and LTV up front.', prod: ['Home Loan', 'Gold Loan'], roles: [], branches: [], pages: ['New/Edit', 'Detail', 'History'], def: false, on: true, used: 214, by: 'Priya Nair', at: '18 Nov', v: 6,
-    thumb: [[12, 2, 1], [8, 4], [4, 4], [7, 6], [5, 3], [5, 3]] },
-  { id: 'L2', name: 'Car loans', desc: 'Dealer, vehicle and insurance details.', prod: ['Car Loan'], roles: [], branches: [], pages: ['New/Edit', 'Detail'], def: false, on: true, used: 96, by: 'Sana Iyer', at: '12 Nov', v: 3,
-    thumb: [[12, 2, 1], [6, 5], [6, 5], [12, 3]] },
-  { id: 'L3', name: 'Credit desk', desc: 'What credit officers check before sanction.', prod: [], roles: ['Credit officer'], branches: [], pages: ['New/Edit', 'Detail', 'Credit review'], def: false, on: true, used: 0, people: 4, by: 'Priya Nair', at: '9 Nov', v: 2,
-    thumb: [[12, 2, 1], [4, 8], [8, 4], [8, 4]] },
-  { id: 'L4', name: 'Pune quick form', desc: 'Short form for the Pune walk-in desks.', prod: ['Home Loan'], roles: ['Relationship manager'], branches: ['Baner, Pune', 'Kothrud, Pune'], pages: ['New/Edit', 'Detail'], def: false, on: false, used: 0, people: 6, by: 'Sana Iyer', at: '2 Nov', v: 1,
-    thumb: [[12, 2, 1], [12, 6]] },
-  { id: 'L0', name: 'Standard deal', desc: 'Any deal no other layout covers.', prod: [], roles: [], branches: [], pages: ['New/Edit', 'Detail', 'History'], def: true, on: true, used: 41, by: 'Harbor CRM', at: '15 Oct', v: 1,
-    thumb: [[12, 2, 1], [8, 5], [4, 5], [12, 4]] },
-];
-let ORDER = ['L3', 'L4', 'L1', 'L2', 'L0'];
+/* ---------- each layout has its own pages (M = draft, P = published, FS = field settings on this layout) ---------- */
+let cid = 100;
+const uid = (p) => p + ++cid;
+/* "Basic" start: the required fields, a standard record page, and History. */
+const BASIC = {
+  'New/Edit': () => ({ tabs: [{ id: uid('t'), name: 'Details', roles: [], secs: [{ id: uid('s'), title: 'Basics', cols: 2, f: ['name', 'acct', 'stage', 'amount', 'close', 'owner'] }] }] }),
+  Detail: () => ({ tabs: [{ id: uid('d'), name: 'Overview', roles: [], cards: [{ id: uid('c'), k: 'stage', w: 12, h: 2 }, { id: uid('c'), k: 'figures', w: 8, h: 3 }, { id: uid('c'), k: 'next', w: 4, h: 3 }, { id: uid('c'), k: 'details', w: 12, h: 4, f: ['num', 'acct', 'amount', 'close', 'owner'] }] }] }),
+  History: () => ({ tabs: [{ id: uid('h'), name: 'All changes', roles: [], cards: [{ id: uid('c'), k: 'history', w: 12, h: 8 }] }] }),
+};
+const emptyPage = () => ({ tabs: [{ id: uid('p'), name: 'Main', roles: [], cards: [] }] });
+/* Fresh ids for a copied page, so two layouts never share a tab, section or card. */
+function reid(page) { for (const t of page.tabs) { t.id = uid('t'); (t.secs || []).forEach((s) => (s.id = uid('s'))); (t.cards || []).forEach((c) => (c.id = uid('c'))); } return page; }
+/* The pages a new layout starts with: copied from the source layout where it has that page, otherwise basic or empty. */
+function modelFor(pages, base) {
+  const m = {};
+  for (const pg of pages) m[pg] = base && base[pg] ? reid(clone(base[pg])) : BASIC[pg] ? BASIC[pg]() : emptyPage();
+  return m;
+}
+const pagesOf = (L) => Object.keys(L.M);
+/* The card's picture: the first tab of the Detail page, as drawn on the canvas. */
+const thumbOf = (L) => { const t = L.M.Detail?.tabs[0]; const cells = (t?.cards || []).slice(0, 8).map((c) => [c.w, Math.max(1, Math.min(6, c.h)), c.k === 'stage' ? 1 : 0]); return cells.length ? cells : [[12, 2, 1]]; };
 
-/* the layout being edited: Secured loans */
-const PUBLISHED = {
+const SECURED = {
   'New/Edit': { tabs: [
     { id: 't1', name: 'Loan', roles: [], secs: [{ id: 's1', title: 'Basics', cols: 2, f: ['name', 'acct', 'product', 'sub', 'stage', 'close'] }, { id: 's2', title: 'Amount', cols: 2, f: ['amount', 'tenure', 'rate', 'emi'] }] },
     { id: 't2', name: 'Security', roles: [], secs: [{ id: 's3', title: 'Collateral', cols: 2, f: ['coll', 'ltv', 'purity'] }] },
@@ -602,17 +608,50 @@ const PUBLISHED = {
 const PAGE_KIND = { 'New/Edit': 'form' };
 /* Every layout keeps these two; any other page can be deleted. */
 const FIXED_PAGES = ['New/Edit', 'Detail'];
-let FIELDSET = { coll: { cond: ['product', 'is', 'Home loan, Gold loan'] }, ltv: { cond: ['product', 'is', 'Home loan, Gold loan'] }, purity: { cond: ['product', 'is', 'Gold loan'], help: 'Only for gold loans; read from the assay slip.' }, coapp: {}, emi: { help: 'Worked out from amount, rate and tenure.' } };
+const SECURED_FS = { coll: { cond: ['product', 'is', 'Home loan, Gold loan'] }, ltv: { cond: ['product', 'is', 'Home loan, Gold loan'] }, purity: { cond: ['product', 'is', 'Gold loan'], help: 'Only for gold loans; read from the assay slip.' }, emi: { help: 'Worked out from amount, rate and tenure.' } };
+
+const CAR = modelFor(['New/Edit', 'Detail']);
+CAR['New/Edit'].tabs[0].secs.push({ id: uid('s'), title: 'Loan', cols: 2, f: ['product', 'sub', 'tenure', 'rate', 'emi'] });
+CAR.Detail.tabs[0].cards.push({ id: uid('c'), k: 'docs', w: 6, h: 3 }, { id: uid('c'), k: 'people', w: 6, h: 3 });
+const CREDIT = modelFor(['New/Edit', 'Detail']);
+CREDIT['Credit review'] = { tabs: [{ id: uid('p'), name: 'Checks', roles: [], cards: [{ id: uid('c'), k: 'details', w: 4, h: 8, f: ['ltv', 'coll', 'emi', 'purity'] }, { id: uid('c'), k: 'coll', w: 8, h: 4 }, { id: uid('c'), k: 'stagehist', w: 8, h: 4 }] }] };
+const PUNE = modelFor(['New/Edit', 'Detail']);
+PUNE.Detail.tabs[0].cards = [{ id: uid('c'), k: 'stage', w: 12, h: 2 }, { id: uid('c'), k: 'details', w: 12, h: 6, f: ['num', 'acct', 'amount', 'close', 'owner'] }];
+const STANDARD = modelFor(['New/Edit', 'Detail', 'History']);
+
+/* A layout: who it is for, its pages (M, the draft people edit), what is live (P, null until first published), field settings (FS), and its own undo. */
+const mk = (o, M, FS = {}) => ({ on: true, used: 0, people: 0, roles: [], branches: [], prod: [], def: false, ...o, M, P: o.v ? clone(M) : null, FS, undo: [], redo: [] });
+let LAYOUTS = [
+  mk({ id: 'L1', name: 'Secured loans', desc: 'Home and gold loans: collateral and LTV up front.', prod: ['Home Loan', 'Gold Loan'], used: 214, by: 'Priya Nair', at: '18 Nov', v: 6 }, clone(SECURED), clone(SECURED_FS)),
+  mk({ id: 'L2', name: 'Car loans', desc: 'Dealer, vehicle and insurance details.', prod: ['Car Loan'], used: 96, by: 'Sana Iyer', at: '12 Nov', v: 3 }, CAR),
+  mk({ id: 'L3', name: 'Credit desk', desc: 'What credit officers check before sanction.', roles: ['Credit officer'], people: 4, by: 'Priya Nair', at: '9 Nov', v: 2 }, CREDIT),
+  mk({ id: 'L4', name: 'Pune quick form', desc: 'Short form for the Pune walk-in desks.', prod: ['Home Loan'], roles: ['Relationship manager'], branches: ['Baner, Pune', 'Kothrud, Pune'], on: false, people: 6, by: 'Sana Iyer', at: '2 Nov', v: 1 }, PUNE),
+  mk({ id: 'L0', name: 'Standard deal', desc: 'Any deal no other layout covers.', def: true, used: 41, by: 'Harbor CRM', at: '15 Oct', v: 1 }, STANDARD),
+];
+let ORDER = ['L3', 'L4', 'L1', 'L2', 'L0'];
+
+/* The editor works on these; they are the open layout's own objects, written back on every redraw (see keepLayout()). */
+let PUBLISHED = {};
+let FIELDSET = {};
 
 let S = {
-  screen: 'list', page: 'New/Edit', tab: { 'New/Edit': 't1', Detail: 'd1', History: 'h1' }, sel: { k: 'field', id: 'coll' }, pal: 'fields', palq: '', sample: 0, as: 'Everyone', phone: false, cmp: false, menu: null, fresh: null,
-  M: clone(PUBLISHED), undo: [], redo: [], name: 'Secured loans', addingPage: false, addingTab: false,
+  screen: 'list', cur: null, page: 'New/Edit', tab: {}, sel: { k: null }, pal: 'fields', palq: '', sample: 0, as: 'Everyone', phone: false, cmp: false, menu: null, fresh: null,
+  M: {}, undo: [], redo: [], name: '', addingPage: false, addingTab: false,
   nf: { name: '', desc: '', prod: [], roles: [], branches: [], start: 'L1', pages: ['New/Edit', 'Detail', 'History'], def: false, err: '', extra: '' },
   tr: { role: 'Relationship manager', prod: 'Home Loan', branch: 'Baner, Pune' },
 };
 const SCREENS = [['list', 'Layouts'], ['new', 'New layout'], ['editor', 'Layout editor']];
 const edits = () => S.undo.length;
+const curL = () => LAYOUTS.find((x) => x.id === S.cur);
 function snap() { S.undo.push(JSON.stringify({ M: S.M, FS: FIELDSET })); if (S.undo.length > 60) S.undo.shift(); S.redo = []; }
+/* Write the editor's working copy back into the open layout. */
+function keepLayout() { const L = curL(); if (!L) return; L.M = S.M; L.FS = FIELDSET; L.undo = S.undo; L.redo = S.redo; }
+function openLayout(id) {
+  keepLayout();
+  const L = LAYOUTS.find((x) => x.id === id); if (!L) return;
+  S.cur = id; S.M = L.M; FIELDSET = L.FS; PUBLISHED = L.P || {}; S.undo = L.undo; S.redo = L.redo; S.name = L.name;
+  S.page = 'New/Edit'; S.tab = {}; S.sel = { k: null }; S.pal = 'fields'; S.palq = ''; S.cmp = false; S.addingPage = S.addingTab = false;
+}
 
 /* ---------- small pieces ---------- */
 const thumbHTML = (cells, def) => `<div class="thumb">${cells.map(([w, h, hd]) => `<i class="${hd ? 'hd' : ''}" style="--w:${w};--h:${h}"></i>`).join('')}${def ? '<span class="def">DEFAULT</span>' : ''}</div>`;
@@ -621,7 +660,7 @@ function matchWinner() {
   const t = S.tr;
   for (const id of ORDER) {
     const L = LAYOUTS.find((x) => x.id === id);
-    if (!L.on) continue;
+    if (!L.on || !L.v) continue; // switched off, or never published: deals don't use it yet
     if (L.prod.length && !L.prod.includes(t.prod)) continue;
     if (L.roles.length && !L.roles.includes(t.role)) continue;
     if (L.branches.length && !L.branches.includes(t.branch)) continue;
@@ -636,17 +675,17 @@ function listView() {
   return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · ToolBox</div><h2>Customise page layout</h2><p>Each card is a layout: which deals and people it is for, and the pages it has. Open one to design its pages. A deal opens with the first layout in the order on the right that fits.</p></div>
       <div class="acts"><button class="btn" data-a="toast" data-v="Back to Deals">${ic('back', 15)}Deals</button><button class="btn pri" data-a="go" data-v="new">${ic('plus', 15)}New layout</button></div></div>
     <div class="ll"><div class="lcards">${LAYOUTS.map((L, i) => { const [p, r, b] = forText(L); return `<div class="lyc${L.on ? '' : ' off'}${S.fresh === L.id ? ' fresh' : ''}${S.menu === L.id ? ' open' : ''}" style="--d:${i * 50}ms">
-        <button style="text-align:left;display:contents" data-a="open" data-v="${L.id}" aria-label="Open ${esc(L.name)}">${thumbHTML(L.thumb, L.def)}</button>
+        <button style="text-align:left;display:contents" data-a="open" data-v="${L.id}" aria-label="Open ${esc(L.name)}">${thumbHTML(thumbOf(L), L.def)}</button>
         <div class="lyc-b"><h3><button data-a="open" data-v="${L.id}" style="text-align:left">${esc(L.name)}</button><button class="menu" data-a="menu" data-v="${L.id}" aria-label="More for ${esc(L.name)}" aria-expanded="${S.menu === L.id}">${ic('dots', 16)}</button></h3>
           <div class="meta"><span>${ic('box', 13)}<b>${esc(p)}</b></span><span>${ic('users', 13)}${esc(r)} · ${esc(b)}</span></div>
-          <div class="pg">${L.pages.map((x) => `<span>${esc(x)}</span>`).join('')}</div></div>
-        <div class="lyc-f">${L.on ? (L.people ? `Opens for ${plural(L.people, 'person')}` : `${L.used} deals use it`) : 'Switched off'}<span class="mono">v${L.v} · ${esc(L.by)} · ${esc(L.at)}</span></div>
+          <div class="pg">${pagesOf(L).map((x) => `<span>${esc(x)}</span>`).join('')}</div></div>
+        <div class="lyc-f">${L.undo.length ? `<span class="state draft">DRAFT · ${plural(L.undo.length, 'change')}</span>` : !L.v ? '<span class="state draft">NOT PUBLISHED</span>' : L.on ? (L.people ? `Opens for ${plural(L.people, 'person')}` : `${L.used} deals use it`) : 'Switched off'}<span class="mono">${L.v ? 'v' + L.v + ' · ' : ''}${esc(L.by)} · ${esc(L.at)}</span></div>
         ${S.menu === L.id ? `<div class="cmenu" role="menu"><button role="menuitem" data-a="open" data-v="${L.id}">${ic('pen', 15)}Open and edit</button><button role="menuitem" data-a="dupl" data-v="${L.id}">${ic('copy', 15)}Duplicate</button><button role="menuitem" data-a="mkdef" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('star', 15)}Make default</button><button role="menuitem" data-a="onoff" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('power', 15)}${L.on ? 'Switch off' : 'Switch on'}</button><button role="menuitem" class="danger" data-a="del" data-v="${L.id}" ${L.def ? 'disabled title="The default layout can’t be deleted"' : ''}>${ic('trash', 15)}Delete</button></div>` : ''}
       </div>`; }).join('')}
       <button class="lyc new" data-a="go" data-v="new" style="--d:${LAYOUTS.length * 50}ms">${ic('plus', 26)}<b>New layout</b><small>Name it, pick who it is for and its pages</small></button></div>
       <aside class="card order" aria-label="Order of matching"><div class="sec"><b>Which layout a deal gets</b></div>
-        <div id="olist">${ORDER.map((id, i) => { const L = LAYOUTS.find((x) => x.id === id); const [p, r, b] = forText(L); return `<div class="orow${L.id === win.id ? ' win' : ''}${L.on ? '' : ' off'}" data-orow="${i}"><span class="grab" data-drag="order" data-i="${i}" aria-label="Move ${esc(L.name)}" ${L.def ? 'style="visibility:hidden"' : ''}>${ic('grip', 14)}</span><span class="n">${L.def ? '∞' : i + 1}</span><span><b style="font-weight:600">${esc(L.name)}</b><small>${esc(p)} · ${esc(r)}${L.branches.length ? ' · ' + esc(b) : ''}${L.on ? '' : ' · off'}</small></span></div>`; }).join('')}</div>
-        <div class="muted" style="font-size:12px">The first layout that fits wins. Drag to change the order; the default is always last.</div>
+        <div id="olist">${ORDER.map((id, i) => { const L = LAYOUTS.find((x) => x.id === id); const [p, r, b] = forText(L); return `<div class="orow${L.id === win.id ? ' win' : ''}${L.on && L.v ? '' : ' off'}" data-orow="${i}"><span class="grab" data-drag="order" data-i="${i}" aria-label="Move ${esc(L.name)}" ${L.def ? 'style="visibility:hidden"' : ''}>${ic('grip', 14)}</span><span class="n">${L.def ? '∞' : i + 1}</span><span><b style="font-weight:600">${esc(L.name)}</b><small>${esc(p)} · ${esc(r)}${L.branches.length ? ' · ' + esc(b) : ''}${L.on ? '' : ' · off'}${L.v ? '' : ' · not published'}</small></span></div>`; }).join('')}</div>
+        <div class="muted" style="font-size:12px">The first layout that fits wins; switched-off and unpublished ones are skipped. Drag to change the order; the default is always last.</div>
         <div class="tryit"><span class="lab">Try it</span><div class="row3">
           <label>Role<select data-tr="role">${ROLES.slice(1).map((x) => `<option ${S.tr.role === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
           <label>Product<select data-tr="prod">${PRODUCTS.map((x) => `<option ${S.tr.prod === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
@@ -659,7 +698,7 @@ function newView() {
   const n = S.nf;
   const chips = (key, all, allLabel) => `<div class="chipset" role="group"><button aria-pressed="${n[key].length === 0}" data-a="nfall" data-k="${key}">${allLabel}</button>${all.map((x) => `<button aria-pressed="${n[key].includes(x)}" data-a="nfchip" data-k="${key}" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div>`;
   const pageRow = (p, fixed) => `<div><span class="ico">${ic(p === 'New/Edit' ? 'form' : p === 'History' ? 'history' : 'page', 13)}</span><span><b style="font-weight:600">${esc(p)}</b><small>${p === 'New/Edit' ? 'The form for creating and editing a deal' : p === 'Detail' ? 'The deal’s own page' : p === 'History' ? 'Every change and stage move' : 'A page of its own'}</small></span>${fixed ? '<span class="mono muted" style="font-size:11px">always</span>' : `<button class="btn ghost sq" style="width:30px;height:30px" data-a="nfrmpage" data-v="${esc(p)}" aria-label="Remove ${esc(p)}">${ic('x', 14)}</button>`}</div>`;
-  const preview = { id: 'preview', name: n.name || 'Layout name', prod: n.prod, roles: n.roles, branches: n.branches, pages: n.pages, def: n.def, on: true, used: 0, v: 0, by: 'You', at: 'now', thumb: n.start === 'blank' ? [[12, 2, 1], [12, 3]] : LAYOUTS.find((x) => x.id === n.start).thumb };
+  const preview = { id: 'preview', name: n.name || 'Layout name', prod: n.prod, roles: n.roles, branches: n.branches, pages: n.pages, def: n.def, on: true, used: 0, v: 0, by: 'You', at: 'now', thumb: n.start === 'blank' || !LAYOUTS.some((x) => x.id === n.start) ? thumbOf({ M: { Detail: BASIC.Detail() } }) : thumbOf(LAYOUTS.find((x) => x.id === n.start)) };
   const [p, r, b] = forText(preview);
   return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · Customise page layout</div><h2>New layout</h2><p>Say what it is called, which deals and people it is for, and which pages it has. After saving you design each page.</p></div>
       <div class="acts"><button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button></div></div>
@@ -669,7 +708,7 @@ function newView() {
         <div class="f"><label for="nfdesc">What it is for</label><textarea id="nfdesc" data-nf="desc" placeholder="One line people see on the card">${esc(n.desc)}</textarea></div></div>
       <div class="nf-sec"><h3>${ic('box', 15)}Which deals<span class="mono">product / record type</span></h3>${chips('prod', PRODUCTS, 'Every product')}</div>
       <div class="nf-sec"><h3>${ic('users', 15)}Who it is for<span class="mono">roles and branches</span></h3>${chips('roles', ROLES.slice(1), 'Everyone')}${chips('branches', BRANCHES, 'All branches')}</div>
-      <div class="nf-sec"><h3>${ic('copy', 15)}Start from</h3><div class="start">${[['blank', 'Blank', null], ...LAYOUTS.map((L) => [L.id, L.name, L.thumb])].map(([id, nm, th]) => `<button aria-pressed="${n.start === id}" data-a="nfstart" data-v="${id}">${th ? thumbHTML(th) : `<div class="thumb blank">${ic('plus', 18)}</div>`}${esc(nm)}</button>`).join('')}</div></div>
+      <div class="nf-sec"><h3>${ic('copy', 15)}Start from</h3><div class="start">${[['blank', 'Basic', null], ...LAYOUTS.map((L) => [L.id, L.name, thumbOf(L)])].map(([id, nm, th]) => `<button aria-pressed="${n.start === id}" data-a="nfstart" data-v="${id}">${th ? thumbHTML(th) : `<div class="thumb blank">${ic('plus', 18)}</div>`}${esc(nm)}${th ? '' : '<small class="muted" style="font-weight:400">Required fields only</small>'}</button>`).join('')}</div></div>
       <div class="nf-sec"><h3>${ic('page', 15)}Pages<span class="mono">each is designed on its own</span></h3>
         <div class="pages-l">${n.pages.map((pg) => pageRow(pg, pg === 'New/Edit' || pg === 'Detail')).join('')}</div>
         <div class="addpage"><input id="nfpage" data-nf="extra" value="${esc(n.extra)}" placeholder="Add a page, for example Documents or Credit review"><button class="btn" data-a="nfaddpage">${ic('plus', 15)}Add page</button></div>
@@ -753,7 +792,7 @@ function canvasHTML() {
   else body = t.cards.length ? `<div class="cgrid" id="cg">${t.cards.map(cardHTML).join('')}</div>` : `<div class="emptytab" data-emptycards="1"><b>Nothing on this tab yet</b>Drag cards or fields here from the left.</div>`;
   const s = S.sample;
   return `<div class="canvas${S.phone ? ' phone' : ''}" id="canvas"><div class="frame">
-    <div class="fr-h"><span class="badge">${ic('deal', 18)}</span><span><b>${isForm() ? 'New deal' : esc(F.name.s[s])}</b><small>${isForm() ? 'Secured loans layout' : `${F.num.s[s]} · ${F.acct.s[s]}`}</small></span></div>
+    <div class="fr-h"><span class="badge">${ic('deal', 18)}</span><span><b>${isForm() ? 'New deal' : esc(F.name.s[s])}</b><small>${isForm() ? esc(S.name) + ' layout' : `${F.num.s[s]} · ${F.acct.s[s]}`}</small></span></div>
     <div class="itabs" role="tablist" id="itabs">${tabsH}</div><div class="body" id="cbody">${body}</div></div></div>`;
 }
 function paletteHTML() {
@@ -810,18 +849,19 @@ function inspectorHTML() {
   return `<aside class="card insp"><div class="insp-b"><div class="muted" style="padding:20px 6px;text-align:center"><b style="display:block;color:var(--text);font-family:var(--font-display)">Pick anything on the page</b>A field, a card, a section or a tab: its settings show here.</div></div></aside>`;
 }
 function editorView() {
+  const L = curL();
   const ck = checks();
   const blocks = ck.filter((c) => c[0] === 'block').length;
   const gone = S.cmp ? [...pubPlaced(S.page)].filter((x) => !placed().has(x)) : [];
-  return `<div class="ed-top"><button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button><input class="nm" id="lname" value="${esc(S.name)}" aria-label="Layout name">${edits() ? `<span class="state draft">DRAFT · ${plural(edits(), 'change')}</span>` : '<span class="state live">PUBLISHED · v6</span>'}<span class="sp"></span>
+  return `<div class="ed-top"><button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button><input class="nm" id="lname" value="${esc(S.name)}" aria-label="Layout name">${edits() ? `<span class="state draft">DRAFT · ${plural(edits(), 'change')}</span>` : L.v ? `<span class="state live">PUBLISHED · v${L.v}</span>` : '<span class="state draft">NOT PUBLISHED YET</span>'}<span class="sp"></span>
       <button class="btn ghost sq" data-a="undo" aria-label="Undo" ${S.undo.length ? '' : 'disabled'}>${ic('undo', 16)}</button><button class="btn ghost sq" data-a="redo" aria-label="Redo" ${S.redo.length ? '' : 'disabled'}>${ic('redo', 16)}</button>
-      <button class="btn${S.cmp ? ' pri' : ''}" data-a="cmp" aria-pressed="${S.cmp}">${ic('eye', 15)}Compare with published</button><button class="btn pri" data-a="publish" ${edits() ? '' : 'disabled'}>Publish v7</button></div>
+      <button class="btn${S.cmp ? ' pri' : ''}" data-a="cmp" aria-pressed="${S.cmp}" ${L.v ? '' : 'disabled title="Nothing is published yet"'}>${ic('eye', 15)}Compare with published</button><button class="btn pri" data-a="publish" ${edits() || !L.v ? '' : 'disabled'}>Publish v${L.v + 1}</button></div>
     <div class="ptabs" role="tablist" aria-label="Pages">${Object.keys(S.M).map((pg) => `<span class="ptab" role="tab" tabindex="0" aria-selected="${S.page === pg}" data-a="page" data-v="${esc(pg)}">${ic(PAGE_KIND[pg] === 'form' ? 'form' : pg === 'History' ? 'history' : 'page', 15)}${esc(pg)}<span class="k">${S.M[pg].tabs.length} tab${S.M[pg].tabs.length === 1 ? '' : 's'}</span>${S.page === pg && !FIXED_PAGES.includes(pg) ? `<button class="tabx" data-a="rmpage" data-v="${esc(pg)}" aria-label="Delete page ${esc(pg)}" title="Delete page">${ic('x', 12)}</button>` : ''}</span>`).join('')}${S.addingPage ? '<span class="ptab"><input id="newpage" placeholder="Page name"></span>' : `<button class="ptab add" data-a="addpage">${ic('plus', 14)}Page</button>`}</div>
     <div class="tools2"><span>Sample</span><div class="seg">${SAMPLES.map((x, i) => `<button aria-pressed="${S.sample === i}" data-a="sample" data-v="${i}">${i ? 'Gold loan' : 'Home loan'}</button>`).join('')}</div>
       <span>Preview as</span><div class="seg">${ROLES.map((r) => `<button aria-pressed="${S.as === r}" data-a="as" data-v="${r}">${r === 'Relationship manager' ? 'RM' : r}</button>`).join('')}</div>
       <div class="seg" style="margin-left:auto"><button aria-pressed="${!S.phone}" data-a="phone" data-v="0" aria-label="Desktop">${ic('monitor', 14)}</button><button aria-pressed="${S.phone}" data-a="phone" data-v="1" aria-label="Phone">${ic('phone', 14)}</button></div></div>
     <div class="ed">${paletteHTML()}<div style="min-width:0">${canvasHTML()}
-      ${gone.length ? `<div class="gone">${ic('x', 13)} Taken off since v6: ${gone.map((x) => esc(F[x].l)).join(', ')}</div>` : ''}
+      ${gone.length ? `<div class="gone">${ic('x', 13)} Taken off since v${L.v}: ${gone.map((x) => esc(F[x].l)).join(', ')}</div>` : ''}
       <div class="checks" aria-label="Checks"><div class="sec" style="margin:0"><b>Checks</b> ${ck.length ? `${ck.length} to look at${blocks ? ` · ${blocks} must be fixed before publishing` : ''}` : 'all clear'}</div>
         ${ck.length ? ck.map(([k, t, pg, tab]) => `<div class="ck ${k}"><span class="s">${ic(k === 'block' ? 'lock' : 'warn', 12)}</span><span>${esc(t)}</span><button class="link" style="font-size:12px" data-a="goto" data-p="${esc(pg)}" data-t="${tab || ''}">Show</button></div>`).join('') : `<div class="ck ok"><span class="s">${ic('check', 12)}</span><span>Every required field is on New/Edit, no empty tabs.</span><span></span></div>`}</div></div>
       ${inspectorHTML()}</div>`;
@@ -829,6 +869,8 @@ function editorView() {
 
 /* ---------- render ---------- */
 function render() {
+  if (S.screen === 'editor' && !curL()) openLayout(LAYOUTS[0].id);
+  keepLayout();
   const ae = document.activeElement, keep = ae && ae.id ? ae.id : null, pos = keep && ae.selectionStart != null ? ae.selectionStart : null;
   const sc = $('main').scrollTop;
   $('page').innerHTML = S.screen === 'list' ? listView() : S.screen === 'new' ? newView() : editorView();
@@ -840,25 +882,28 @@ function render() {
 }
 let tt;
 function toast(m) { const el = $('toast'); el.innerHTML = ic('check', 15) + esc(m); el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), 2600); }
-const go = (o) => { Object.assign(S, o); S.menu = null; $('main').scrollTop = 0; render(); };
+const NF0 = () => ({ name: '', desc: '', prod: [], roles: [], branches: [], start: 'L1', pages: ['New/Edit', 'Detail', 'History'], def: false, err: '', extra: '' });
+/* Opening "New layout" always starts a fresh form; Cancel throws the half-filled one away. */
+const go = (o) => { if (o.screen === 'new' && S.screen !== 'new') S.nf = NF0(); if (S.nf.start !== 'blank' && !LAYOUTS.some((x) => x.id === S.nf.start)) S.nf.start = 'blank'; Object.assign(S, o); S.menu = null; $('main').scrollTop = 0; render(); };
 const findSec = (si) => curTab().secs[+si];
 const findCard = (id) => { for (const t of pageM().tabs) { const c = (t.cards || []).find((x) => x.id === id); if (c) return [t, c]; } return [null, null]; };
-let cid = 100;
 
 const A = {
   go: (t) => go({ screen: t.dataset.v }),
-  open: (t) => go({ screen: 'editor', name: LAYOUTS.find((x) => x.id === t.dataset.v).name }),
+  open: (t) => { openLayout(t.dataset.v); go({ screen: 'editor' }); },
   menu: (t, e) => { e.stopPropagation(); S.menu = S.menu === t.dataset.v ? null : t.dataset.v; render(); },
-  dupl: (t) => { const L = LAYOUTS.find((x) => x.id === t.dataset.v); const c = { ...clone(L), id: 'L' + ++cid, name: L.name + ' (copy)', def: false, used: 0, v: 0, by: 'You', at: 'now', on: true }; LAYOUTS.splice(LAYOUTS.indexOf(L) + 1, 0, c); ORDER.splice(ORDER.indexOf(L.id), 0, c.id); S.fresh = c.id; S.menu = null; toast('Copy made as a draft; rename it from its card'); render(); },
+  dupl: (t) => { keepLayout(); const L = LAYOUTS.find((x) => x.id === t.dataset.v); let nm = L.name + ' (copy)'; for (let k = 2; LAYOUTS.some((x) => x.name === nm); k++) nm = `${L.name} (copy ${k})`;
+    const M = {}; for (const pg of pagesOf(L)) M[pg] = reid(clone(L.M[pg]));
+    const c = { ...L, id: 'L' + ++cid, name: nm, def: false, used: 0, people: 0, v: 0, by: 'You', at: 'now', on: true, prod: [...L.prod], roles: [...L.roles], branches: [...L.branches], M, P: null, FS: clone(L.FS), undo: [], redo: [] }; LAYOUTS.splice(LAYOUTS.indexOf(L) + 1, 0, c); ORDER.splice(ORDER.indexOf(L.id), 0, c.id); S.fresh = c.id; S.menu = null; toast('Copy made as a draft; rename it from its card'); render(); },
   mkdef: (t) => { LAYOUTS.forEach((x) => (x.def = x.id === t.dataset.v)); const id = t.dataset.v; ORDER = [...ORDER.filter((x) => x !== id), id]; S.menu = null; toast('Default changed in draft: it is used when nothing else fits'); render(); },
   onoff: (t) => { const L = LAYOUTS.find((x) => x.id === t.dataset.v); L.on = !L.on; S.menu = null; render(); },
-  del: (t) => { const L = LAYOUTS.find((x) => x.id === t.dataset.v); S.menu = null; $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete ${esc(L.name)}?</h3></div><div class="dlg-body">${L.used ? `${L.used} deals use it. They will open with “${esc(LAYOUTS.find((x) => x.def).name)}”, the default.` : L.people ? `${plural(L.people, 'person')} open deals with it. They will get the next layout that fits.` : 'Nothing uses it.'} Their data is not touched. You can bring it back from the layout's history for 30 days.</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="dodel" data-v="${L.id}">Delete</button></div></div></div>`; render(); },
-  dodel: (t) => { LAYOUTS = LAYOUTS.filter((x) => x.id !== t.dataset.v); ORDER = ORDER.filter((x) => x !== t.dataset.v); $('ovl').innerHTML = ''; toast('Layout deleted'); render(); },
+  del: (t) => { const L = LAYOUTS.find((x) => x.id === t.dataset.v); S.menu = null; $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete ${esc(L.name)}?</h3></div><div class="dlg-body">${L.used ? `${L.used} deals use it. They will open with “${esc(LAYOUTS.find((x) => x.def).name)}”, the default.` : L.people ? `${plural(L.people, 'person')} open deals with it. They will get the next layout that fits.` : 'Nothing uses it.'} Deals keep all their data. You can bring it back from the layout's history for 30 days.</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="dodel" data-v="${L.id}">Delete</button></div></div></div>`; render(); },
+  dodel: (t) => { if (S.cur === t.dataset.v) S.cur = null; LAYOUTS = LAYOUTS.filter((x) => x.id !== t.dataset.v); ORDER = ORDER.filter((x) => x !== t.dataset.v); $('ovl').innerHTML = ''; toast('Layout deleted'); render(); },
   close: (t, e) => { if (e.target === t || t.tagName === 'BUTTON') $('ovl').innerHTML = ''; },
   toast: (t) => toast(t.dataset.v),
   nfall: (t) => { S.nf[t.dataset.k] = []; render(); },
   nfchip: (t) => { const k = t.dataset.k, v = t.dataset.v, a = S.nf[k]; S.nf[k] = a.includes(v) ? a.filter((x) => x !== v) : [...a, v]; render(); },
-  nfstart: (t) => { S.nf.start = t.dataset.v; if (t.dataset.v !== 'blank') { const L = LAYOUTS.find((x) => x.id === t.dataset.v); S.nf.pages = [...L.pages]; } render(); },
+  nfstart: (t) => { S.nf.start = t.dataset.v; if (t.dataset.v !== 'blank') { const L = LAYOUTS.find((x) => x.id === t.dataset.v); keepLayout(); S.nf.pages = [...pagesOf(L)]; } render(); },
   nfrmpage: (t) => { S.nf.pages = S.nf.pages.filter((x) => x !== t.dataset.v); render(); },
   nfhist: () => { S.nf.pages.push('History'); render(); },
   nfaddpage: () => { const v = S.nf.extra.trim(); if (!v) { $('nfpage').focus(); return; } if (S.nf.pages.some((x) => x.toLowerCase() === v.toLowerCase())) { toast('That page is already there'); return; } S.nf.pages.push(v); S.nf.extra = ''; render(); $('nfpage').focus(); },
@@ -867,10 +912,15 @@ const A = {
     const n = S.nf, nm = n.name.trim();
     if (!nm) { n.err = 'Give the layout a name'; render(); $('nfname').focus(); return; }
     if (LAYOUTS.some((x) => x.name.toLowerCase() === nm.toLowerCase())) { n.err = 'Another Deals layout has that name'; render(); $('nfname').focus(); return; }
-    const L = { id: 'L' + ++cid, name: nm, desc: n.desc, prod: [...n.prod], roles: [...n.roles], branches: [...n.branches], pages: [...n.pages], def: n.def, on: true, used: 0, people: n.roles.length ? 3 : 0, by: 'You', at: 'now', v: 0, thumb: n.start === 'blank' ? [[12, 2, 1], [12, 3]] : LAYOUTS.find((x) => x.id === n.start).thumb };
+    keepLayout();
+    const src = n.start === 'blank' ? null : LAYOUTS.find((x) => x.id === n.start);
+    const L = mk({ id: 'L' + ++cid, name: nm, desc: n.desc, prod: [...n.prod], roles: [...n.roles], branches: [...n.branches], def: n.def, by: 'You', at: 'now', v: 0 }, modelFor(n.pages, src ? src.M : null), src ? clone(src.FS) : {});
     if (n.def) LAYOUTS.forEach((x) => (x.def = false));
     LAYOUTS.unshift(L);
-    ORDER = n.def ? [...ORDER, L.id] : [L.id, ...ORDER];
+    // Narrow layouts go first; one that fits every deal goes just above the default, so it never hides the others.
+    const narrow = n.prod.length || n.roles.length || n.branches.length;
+    const defAt = ORDER.findIndex((id) => LAYOUTS.find((x) => x.id === id)?.def);
+    ORDER = n.def ? [...ORDER, L.id] : narrow ? [L.id, ...ORDER] : [...ORDER.slice(0, defAt), L.id, ...ORDER.slice(defAt)];
     S.nf = { name: '', desc: '', prod: [], roles: [], branches: [], start: 'L1', pages: ['New/Edit', 'Detail', 'History'], def: false, err: '', extra: '' };
     go({ screen: 'list', fresh: L.id }); toast(`“${nm}” saved as a draft card. Open it to design its pages.`);
   },
@@ -890,8 +940,8 @@ const A = {
   undo: () => { if (!S.undo.length) return; S.redo.push(JSON.stringify({ M: S.M, FS: FIELDSET })); const s = JSON.parse(S.undo.pop()); S.M = s.M; FIELDSET = s.FS; A._fixPage(); render(); },
   _fixPage: () => { if (!S.M[S.page]) { S.page = 'Detail'; S.sel = { k: null }; } if (!S.M[S.page].tabs.some((x) => x.id === S.tab[S.page])) S.tab[S.page] = S.M[S.page].tabs[0].id; },
   redo: () => { if (!S.redo.length) return; S.undo.push(JSON.stringify({ M: S.M, FS: FIELDSET })); const s = JSON.parse(S.redo.pop()); S.M = s.M; FIELDSET = s.FS; A._fixPage(); render(); },
-  publish: () => { const ck = checks(); const b = ck.filter((c) => c[0] === 'block'); if (b.length) { toast(`Fix first: ${b[0][1]}`); return; } $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Publish ${esc(S.name)} v7</h3></div><div class="dlg-body">${plural(edits(), 'change')}. ${LAYOUTS[0].used || 214} deals open with this layout; people see it on their next page load. You can roll back to v6.${ck.length ? `<br><br>${plural(ck.length, 'check')} to look at, none blocking.` : ''}<div class="f" style="margin-top:12px"><label for="pnote">What changed</label><textarea id="pnote" placeholder="For example: gold purity on the Security tab"></textarea></div></div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep editing</button><span class="sp"></span><button class="btn pri" data-a="dopub">Publish</button></div></div></div>`; },
-  dopub: () => { Object.keys(PUBLISHED).forEach((k) => delete PUBLISHED[k]); Object.assign(PUBLISHED, clone(S.M)); S.undo = []; S.redo = []; $('ovl').innerHTML = ''; toast('v7 is live for every deal that uses this layout'); render(); },
+  publish: () => { const L = curL(); const ck = checks(); const b = ck.filter((c) => c[0] === 'block'); if (b.length) { toast(`Fix first: ${b[0][1]}`); return; } $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Publish ${esc(S.name)} v${L.v + 1}</h3></div><div class="dlg-body">${L.v ? `${plural(edits(), 'change')}. ` : 'First version of this layout. '}${L.used ? `${L.used} deals open with it; ` : L.people ? `${plural(L.people, 'person')} open deals with it; ` : 'Deals that fit it start using it; '}people see it on their next page load.${L.v ? ` You can roll back to v${L.v}.` : ''}${ck.length ? `<br><br>${plural(ck.length, 'check')} to look at, none blocking.` : ''}<div class="f" style="margin-top:12px"><label for="pnote">What changed</label><textarea id="pnote" placeholder="For example: gold purity on the Security tab"></textarea></div></div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep editing</button><span class="sp"></span><button class="btn pri" data-a="dopub">Publish</button></div></div></div>`; },
+  dopub: () => { const L = curL(); PUBLISHED = clone(S.M); L.P = PUBLISHED; L.v += 1; L.by = 'You'; L.at = 'now'; S.undo = []; S.redo = []; S.cmp = false; $('ovl').innerHTML = ''; toast(`${S.name} v${L.v} is live`); render(); },
   goto: (t) => { S.page = t.dataset.p; if (t.dataset.t) S.tab[S.page] = t.dataset.t; render(); },
   fset: (t) => { snap(); const s = FIELDSET[S.sel.id] || (FIELDSET[S.sel.id] = {}); s[t.dataset.k] = !s[t.dataset.k]; render(); },
   fcond: () => { snap(); const s = FIELDSET[S.sel.id] || (FIELDSET[S.sel.id] = {}); s.cond = s.cond ? null : ['product', 'is', 'Home loan']; render(); },
@@ -932,8 +982,8 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
   const t = e.target;
   if (e.key === 'Escape') { if ($('ovl').innerHTML) $('ovl').innerHTML = ''; else if (S.menu) { S.menu = null; render(); } else if (S.addingTab || S.addingPage) { S.addingTab = S.addingPage = false; render(); } }
-  if (e.key === 'Enter' && t.id === 'newtab') { const v = t.value.trim(); if (v) { snap(); const id = 't' + ++cid; pageM().tabs.push(isForm() ? { id, name: v, roles: [], secs: [{ id: 's' + ++cid, title: '', cols: 2, f: [] }] } : { id, name: v, roles: [], cards: [] }); S.tab[S.page] = id; S.sel = { k: 'tab', id }; } S.addingTab = false; render(); }
-  if (e.key === 'Enter' && t.id === 'newpage') { const v = t.value.trim(); if (v && !S.M[v]) { snap(); S.M[v] = { tabs: [{ id: 'p' + ++cid, name: 'Main', roles: [], cards: [] }] }; S.page = v; S.tab[v] = S.M[v].tabs[0].id; S.pal = 'cards'; } S.addingPage = false; render(); }
+  if (e.key === 'Enter' && t.id === 'newtab') { const v = t.value.trim(); if (v) { snap(); const id = 't' + ++cid; pageM().tabs.push(isForm() ? { id, name: v, roles: [], secs: [{ id: 's' + ++cid, title: 'Details', cols: 2, f: [] }] } : { id, name: v, roles: [], cards: [] }); S.tab[S.page] = id; S.sel = { k: 'tab', id }; } S.addingTab = false; render(); }
+  if (e.key === 'Enter' && t.id === 'newpage') { const v = t.value.trim(); const same = v && Object.keys(S.M).find((x) => x.toLowerCase() === v.toLowerCase()); if (same) { toast(`This layout already has a “${same}” page`); t.select(); return; } if (v) { snap(); S.M[v] = emptyPage(); S.page = v; S.tab[v] = S.M[v].tabs[0].id; S.sel = { k: null }; S.pal = 'cards'; } S.addingPage = false; render(); }
   if (e.key === 'Enter' && t.id === 'nfpage') A.nfaddpage();
   if ((e.key === 'Enter' || e.key === ' ') && t.matches('.itab[data-a], .itab.add, .ptab[data-a]')) { e.preventDefault(); t.click(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && S.screen === 'editor' && t.tagName !== 'INPUT') { e.preventDefault(); e.shiftKey ? A.redo() : A.undo(); }
@@ -952,6 +1002,12 @@ document.addEventListener('input', (e) => {
 });
 document.addEventListener('change', (e) => {
   const t = e.target;
+  if (t.id === 'lname') {
+    const L = curL(), v = t.value.trim();
+    if (!v) { S.name = L.name; toast('A layout needs a name'); render(); return; }
+    if (LAYOUTS.some((x) => x.id !== L.id && x.name.toLowerCase() === v.toLowerCase())) { S.name = L.name; toast('Another Deals layout has that name'); render(); return; }
+    S.name = v; L.name = v; render(); return;
+  }
   if (t.dataset.tr) { S.tr[t.dataset.tr] = t.value; render(); }
   if (t.dataset.cond != null) { snap(); const c = FIELDSET[S.sel.id].cond; c[+t.dataset.cond] = t.value; if (t.dataset.cond === '0') c[2] = t.value === 'product' ? 'Home loan' : F[t.value].s[0]; render(); }
   if (t.dataset.cw || t.dataset.ch || t.dataset.tn || t.dataset.sn || t.dataset.fh) { snap(); render(); }
