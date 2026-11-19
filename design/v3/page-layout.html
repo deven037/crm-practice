@@ -359,6 +359,8 @@ i { font-style: normal; }
 .itab .lock { color: var(--warn-text); }
 .itab.lift { background: var(--surface); box-shadow: var(--shadow-lg); z-index: 3; }
 .itab.add { color: var(--bank-ink); font-weight: 600; }
+.tabx { width: 20px; height: 20px; margin: 0 -4px 0 2px; border-radius: 6px; display: grid; place-items: center; color: var(--text-muted); transition: background var(--fast), color var(--fast); }
+.tabx:hover, .tabx:focus-visible { background: var(--danger-bg); color: var(--danger-text); }
 .body { padding: 14px; display: grid; gap: 12px; }
 .fsec { border-radius: 14px; background: var(--surface); border: 1px solid var(--border); padding: 12px 14px 14px; transition: border-color var(--fast), box-shadow var(--fast); }
 .fsec.sel { border-color: var(--bank-ink); box-shadow: 0 0 0 3px var(--bank-soft); }
@@ -738,7 +740,7 @@ function cardHTML(c, i) {
 }
 function canvasHTML() {
   const P = pageM(), t = curTab();
-  const tabsH = P.tabs.map((x) => `<span class="itab${x.id === t.id ? '' : ''}${S.sel.k === 'tab' && S.sel.id === x.id ? ' sel' : ''}${roleSees(x) ? '' : ' hid'}" role="tab" tabindex="0" aria-selected="${x.id === t.id}" data-a="itab" data-v="${x.id}" data-itab="${x.id}"><span class="grab" data-drag="tab" data-t="${x.id}" style="height:16px" aria-label="Move tab ${esc(x.name)}">${ic('grip', 11)}</span>${esc(x.name)}${x.roles.length ? `<span class="lock" title="Only ${esc(x.roles.join(', '))}">${ic('lock', 11)}</span>` : ''}</span>`).join('')
+  const tabsH = P.tabs.map((x) => `<span class="itab${x.id === t.id ? '' : ''}${S.sel.k === 'tab' && S.sel.id === x.id ? ' sel' : ''}${roleSees(x) ? '' : ' hid'}" role="tab" tabindex="0" aria-selected="${x.id === t.id}" data-a="itab" data-v="${x.id}" data-itab="${x.id}"><span class="grab" data-drag="tab" data-t="${x.id}" style="height:16px" aria-label="Move tab ${esc(x.name)}">${ic('grip', 11)}</span>${esc(x.name)}${x.roles.length ? `<span class="lock" title="Only ${esc(x.roles.join(', '))}">${ic('lock', 11)}</span>` : ''}${x.id === t.id && P.tabs.length > 1 ? `<button class="tabx" data-a="rmtabx" data-v="${x.id}" aria-label="Delete tab ${esc(x.name)}" title="Delete tab">${ic('x', 12)}</button>` : ''}</span>`).join('')
     + (S.addingTab ? `<span class="itab"><input id="newtab" placeholder="Tab name" style="width:110px;height:26px;padding:0 8px;border-radius:7px;border:1px solid var(--bank-ink);outline:0;background:var(--surface)"></span>` : `<span class="itab add" role="button" tabindex="0" data-a="addtab">${ic('plus', 13)}Tab</span>`);
   let body;
   if (!roleSees(t)) body = `<div class="emptytab"><b>${esc(S.as)} doesn't see this tab</b>Only ${esc(t.roles.join(', '))}. Change "Preview as" to see it.</div>`;
@@ -893,7 +895,16 @@ const A = {
   cardrmf: (t) => { snap(); const [, c] = findCard(S.sel.id); c.f = c.f.filter((x) => x !== t.dataset.v); render(); },
   troleall: () => { snap(); pageM().tabs.find((x) => x.id === S.sel.id).roles = []; render(); },
   trole: (t) => { snap(); const tb = pageM().tabs.find((x) => x.id === S.sel.id); const r = t.dataset.v; tb.roles = tb.roles.includes(r) ? tb.roles.filter((x) => x !== r) : [...tb.roles, r]; render(); },
-  rmtab: () => { snap(); const P = pageM(); P.tabs = P.tabs.filter((x) => x.id !== S.sel.id); S.tab[S.page] = P.tabs[0].id; S.sel = { k: null }; render(); },
+  rmtab: () => A.rmtabx({ dataset: { v: S.sel.id } }),
+  rmtabx: (t) => {
+    const P = pageM(), tb = P.tabs.find((x) => x.id === t.dataset.v); if (!tb || P.tabs.length < 2) return;
+    const n = tb.secs ? tb.secs.reduce((k, s) => k + s.f.length, 0) : tb.cards.length;
+    const go = () => { snap(); P.tabs = P.tabs.filter((x) => x.id !== tb.id); S.tab[S.page] = P.tabs[0].id; S.sel = { k: null }; $('ovl').innerHTML = ''; toast(`Tab “${tb.name}” deleted. Undo brings it back.`); render(); };
+    if (!n) { go(); return; }
+    A._rmtab = go;
+    $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete the “${esc(tb.name)}” tab?</h3></div><div class="dlg-body">It holds ${tb.secs ? plural(n, 'field') : plural(n, 'card')}. ${tb.secs ? 'The fields go back to the list on the left, so you can place them on another tab.' : 'The cards go back to the card library.'} Undo brings the tab back.</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="dormtab">Delete tab</button></div></div></div>`;
+  },
+  dormtab: () => A._rmtab && A._rmtab(),
   scols: (t) => { snap(); curTab().secs.find((x) => x.id === S.sel.id).cols = +t.dataset.v; render(); },
   rmsec: () => { snap(); const tb = curTab(); tb.secs = tb.secs.filter((x) => x.id !== S.sel.id); S.sel = { k: null }; render(); },
 };
