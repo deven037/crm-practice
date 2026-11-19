@@ -279,6 +279,43 @@ i { font-style: normal; }
 .orow { display: grid; grid-template-columns: 20px 22px minmax(0, 1fr); align-items: center; gap: 8px; padding: 8px 8px; border-radius: 11px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 5px; font-size: 13px; transition: box-shadow var(--fast), border-color var(--fast), background var(--fast); }
 .orow .n { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text-muted); text-align: center; }
 .orow small { display: block; color: var(--text-muted); font-size: 11.5px; }
+/* categories */
+.lgroups { display: grid; gap: 22px; min-width: 0; }
+.lgrp-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 10px; }
+.lgrp-h i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); transform: rotate(45deg) translateY(-1px); flex: none; align-self: center; }
+.lgrp-h b { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+.lgrp-h .mono { font-size: 11px; color: var(--text-muted); padding: 1px 7px; border-radius: 6px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); }
+.lgrp-h .muted { font-size: 12.5px; }
+.pgrp { display: flex; align-items: center; gap: 7px; padding: 10px 6px 5px; font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: color-mix(in srgb, var(--c) 70%, var(--text)); }
+.pgrp:first-of-type { padding-top: 2px; }
+.pgrp i { width: 8px; height: 8px; border-radius: 3px; background: var(--c); flex: none; }
+.pgrp .mono { margin-left: auto; font-size: 10px; color: var(--text-muted); font-weight: 500; letter-spacing: 0; }
+.catchip { display: inline-flex; align-items: center; gap: 5px; align-self: start; justify-self: start; padding: 1px 8px 1px 6px; border-radius: 6px; font-size: 11px; font-weight: 600; color: color-mix(in srgb, var(--c) 70%, var(--text)); background: color-mix(in srgb, var(--c) 12%, var(--surface)); }
+.catchip i { width: 7px; height: 7px; border-radius: 2px; background: var(--c); }
+.chipset .cdot { width: 8px; height: 8px; border-radius: 3px; background: var(--c); }
+.chipset.bad button { box-shadow: inset 0 0 0 1px var(--danger-text); }
+.cats { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px; align-items: start; }
+.catnew { padding: 14px 16px 16px; display: grid; gap: 12px; position: sticky; top: 76px; }
+.catnew .btn.pri { justify-self: start; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.swatches button { width: 26px; height: 26px; border-radius: 8px; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); transition: transform var(--fast) var(--ease-spring); }
+.swatches button:hover { transform: scale(1.12); }
+.swatches button[aria-checked="true"] { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--c); }
+.catprev { padding: 8px 10px; border-radius: 12px; background: var(--surface-2); border: 1px dashed var(--border-strong); }
+.catprev .pgrp { padding: 6px 0 0; }
+.catlist { overflow: hidden; }
+.crow { display: grid; grid-template-columns: 20px 12px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface); transition: box-shadow var(--fast), background var(--fast); }
+.crow:first-child { border-top: 0; }
+.crow .dot { width: 12px; height: 12px; border-radius: 4px; background: var(--c); }
+.crow .cmain { display: grid; gap: 1px; min-width: 0; }
+.crow .cmain b { font-weight: 650; font-size: 14px; }
+.crow .cmain small { color: var(--text-muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+.crow .cmain small.mono { font-size: 11px; }
+.crow .cmain input { height: 32px; padding: 0 10px; border-radius: 9px; border: 1px solid var(--bank-ink); background: var(--surface); outline: 0; font-weight: 600; max-width: 260px; }
+.crow .cacts { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.crow .cacts .btn { height: 32px; padding: 0 10px; font-size: 12.5px; }
+.crow.lift { position: relative; z-index: 3; box-shadow: var(--shadow-lg); }
+.crow.fresh { background: color-mix(in srgb, var(--ok-bg) 45%, var(--surface)); }
 .sheetmock { border-radius: 16px; border: 1px solid var(--border-strong); background: var(--surface-2); padding: 8px; box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 40%, transparent); }
 .sheet-h { display: flex; align-items: center; gap: 7px; padding: 4px 6px 8px; font-weight: 650; font-size: 13px; }
 .sheet-h .mono { margin-left: auto; font-size: 10.5px; color: var(--text-muted); font-weight: 500; }
@@ -462,6 +499,7 @@ i { font-style: normal; }
   .ed { grid-template-columns: 210px minmax(0, 1fr); } .ed > .insp { grid-column: 1 / -1; position: static; }
 }
 @container (max-width: 900px) {
+  .cats { grid-template-columns: minmax(0, 1fr); } .catnew { position: static; }
   .ll, .nf { grid-template-columns: minmax(0, 1fr); } .order, .nf-side { position: static; }
   .ed { grid-template-columns: minmax(0, 1fr); } .pal { position: static; max-height: none; }
   .pal .list { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; } .pal .list .pi { width: auto; flex: none; } .pal .glab { display: none; }
@@ -474,6 +512,7 @@ i { font-style: normal; }
   .fgrid { grid-template-columns: minmax(0, 1fr) !important; }
   .cgrid { grid-template-columns: minmax(0, 1fr); } .rc { grid-column: 1 / -1; } .rz-x, .rz-xy { display: none; }
   .tryit .row3 { grid-template-columns: minmax(0, 1fr); }
+  .crow { grid-template-columns: 20px 12px minmax(0, 1fr); } .crow .cacts { grid-column: 3; justify-content: flex-start; }
   .ed-top .nm { font-size: 19px; }
 }
 </style>
@@ -629,13 +668,25 @@ PUNE.Detail.tabs[0].cards = [{ id: uid('c'), k: 'stage', w: 12, h: 2 }, { id: ui
 const STANDARD = modelFor(['New/Edit', 'Detail', 'History']);
 
 /* A layout: who it is for, its pages (M, the draft people edit), what is live (P, null until first published), field settings (FS), and its own undo. */
-const mk = (o, M, FS = {}) => ({ on: true, used: 0, people: 0, roles: [], branches: [], prod: [], def: false, ...o, M, P: o.v ? clone(M) : null, FS, undo: [], redo: [] });
+/* Categories group a module's layouts: headings in Choose a layout and on the Layouts screen, in this order.
+   They are made, renamed, ordered and deleted only on the Categories page. Every layout is in exactly one. */
+const CAT_COLOURS = ['#2f6fe0', '#0f97a8', '#1f9d63', '#6d4fd6', '#d9467a', '#d33a3a', '#c98a12', '#8a93a6'];
+let CATS = [
+  { id: 'K1', name: 'Retail loans', desc: 'Home, car and gold loans for individuals.', c: '#2f6fe0' },
+  { id: 'K2', name: 'Credit', desc: 'What the credit team works in.', c: '#6d4fd6' },
+  { id: 'K3', name: 'Branch desks', desc: 'Short forms for walk-in desks.', c: '#c98a12' },
+  { id: 'K0', name: 'General', desc: 'Layouts for any deal.', c: '#8a93a6' },
+];
+const catOf = (L) => CATS.find((k) => k.id === L.cat) || CATS[CATS.length - 1];
+const catChip = (k) => `<span class="catchip" style="--c:${k.c}"><i></i>${esc(k.name)}</span>`;
+
+const mk = (o, M, FS = {}) => ({ on: true, used: 0, people: 0, roles: [], branches: [], prod: [], def: false, cat: 'K0', ...o, M, P: o.v ? clone(M) : null, FS, undo: [], redo: [] });
 let LAYOUTS = [
-  mk({ id: 'L1', name: 'Secured loans', desc: 'Home and gold loans: collateral and LTV up front.', prod: ['Home Loan', 'Gold Loan'], used: 214, by: 'Priya Nair', at: '18 Nov', v: 6 }, clone(SECURED), clone(SECURED_FS)),
-  mk({ id: 'L2', name: 'Car loans', desc: 'Dealer, vehicle and insurance details.', prod: ['Car Loan'], used: 96, by: 'Sana Iyer', at: '12 Nov', v: 3 }, CAR),
-  mk({ id: 'L3', name: 'Credit desk', desc: 'What credit officers check before sanction.', roles: ['Credit officer'], people: 4, by: 'Priya Nair', at: '9 Nov', v: 2 }, CREDIT),
-  mk({ id: 'L4', name: 'Pune quick form', desc: 'Short form for the Pune walk-in desks.', prod: ['Home Loan'], roles: ['Relationship manager'], branches: ['Baner, Pune', 'Kothrud, Pune'], on: false, people: 6, by: 'Sana Iyer', at: '2 Nov', v: 1 }, PUNE),
-  mk({ id: 'L0', name: 'Standard deal', desc: 'Any deal no other layout covers.', def: true, used: 41, by: 'Harbor CRM', at: '15 Oct', v: 1 }, STANDARD),
+  mk({ id: 'L1', name: 'Secured loans', cat: 'K1', desc: 'Home and gold loans: collateral and LTV up front.', prod: ['Home Loan', 'Gold Loan'], used: 214, by: 'Priya Nair', at: '18 Nov', v: 6 }, clone(SECURED), clone(SECURED_FS)),
+  mk({ id: 'L2', name: 'Car loans', cat: 'K1', desc: 'Dealer, vehicle and insurance details.', prod: ['Car Loan'], used: 96, by: 'Sana Iyer', at: '12 Nov', v: 3 }, CAR),
+  mk({ id: 'L3', name: 'Credit desk', cat: 'K2', desc: 'What credit officers check before sanction.', roles: ['Credit officer'], people: 4, by: 'Priya Nair', at: '9 Nov', v: 2 }, CREDIT),
+  mk({ id: 'L4', name: 'Pune quick form', cat: 'K3', desc: 'Short form for the Pune walk-in desks.', prod: ['Home Loan'], roles: ['Relationship manager'], branches: ['Baner, Pune', 'Kothrud, Pune'], on: false, people: 6, by: 'Sana Iyer', at: '2 Nov', v: 1 }, PUNE),
+  mk({ id: 'L0', name: 'Standard deal', cat: 'K0', desc: 'Any deal no other layout covers.', def: true, used: 41, by: 'Harbor CRM', at: '15 Oct', v: 1 }, STANDARD),
 ];
 let ORDER = ['L3', 'L4', 'L1', 'L2', 'L0'];
 
@@ -646,10 +697,11 @@ let FIELDSET = {};
 let S = {
   screen: 'list', cur: null, page: 'New/Edit', tab: {}, sel: { k: null }, pal: 'fields', palq: '', sample: 0, as: 'Everyone', phone: false, cmp: false, menu: null, fresh: null,
   M: {}, undo: [], redo: [], name: '', addingPage: false, addingTab: false,
-  nf: { name: '', desc: '', prod: [], roles: [], branches: [], start: 'L1', pages: ['New/Edit', 'Detail', 'History'], def: false, err: '', extra: '' },
+  nf: { name: '', desc: '', cat: '', prod: [], roles: [], branches: [], start: 'L1', pages: ['New/Edit', 'Detail', 'History'], def: false, err: '', caterr: '', extra: '' },
   pv: { role: 'Relationship manager', branch: 'Baner, Pune' },
+  cf: { name: '', desc: '', c: CAT_COLOURS[1], err: '' }, cren: null, crenVal: '', nfHold: false,
 };
-const SCREENS = [['list', 'Layouts'], ['new', 'New layout'], ['editor', 'Layout editor']];
+const SCREENS = [['list', 'Layouts'], ['cats', 'Categories'], ['new', 'New layout'], ['editor', 'Layout editor']];
 const edits = () => S.undo.length;
 const curL = () => LAYOUTS.find((x) => x.id === S.cur);
 function snap() { S.undo.push(JSON.stringify({ M: S.M, FS: FIELDSET })); if (S.undo.length > 60) S.undo.shift(); S.redo = []; }
@@ -687,26 +739,51 @@ function pickerHTML() {
       <label>Role<select data-pv="role">${ROLES.slice(1).map((x) => `<option ${role === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
       <label>Branch<select data-pv="branch">${BRANCHES.map((x) => `<option ${branch === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label></div></div>
     <div class="sheetmock" id="olist"><div class="sheet-h">${ic('layout', 14)}Choose a layout<span class="mono">${plural(offered.length, 'option')}</span></div>
-      ${offered.length ? offered.map(row).join('') : '<div class="muted" style="font-size:12.5px;padding:10px">No layout is offered to this person: deals they create get the default.</div>'}
+      ${offered.length ? CATS.map((k) => { const rs = offered.filter((r) => catOf(r.L).id === k.id); return rs.length ? `<div class="pgrp" style="--c:${k.c}"><i></i>${esc(k.name)}<span class="mono">${rs.length}</span></div>${rs.map(row).join('')}` : ''; }).join('') : '<div class="muted" style="font-size:12.5px;padding:10px">No layout is offered to this person: deals they create get the default.</div>'}
       ${offered.length === 1 ? '<div class="muted" style="font-size:12px;padding:4px 6px 0">Only one choice, so the sheet is skipped and the form opens straight away.</div>' : ''}</div>
     ${hidden.length ? `<div class="lab" style="margin:12px 0 6px">Not offered to a ${esc(role.toLowerCase())} in ${esc(branch)}</div>${hidden.map(({ L }) => `<div class="hiddenrow"><span>${esc(L.name)}</span><small>${esc(notOffered(L, role, branch))}</small></div>`).join('')}` : ''}
-    <div class="muted" style="font-size:12px;margin-top:10px">Drag to change the order everyone sees. The default starts selected; deals made by import or the API get it too.</div></aside>`;
+    <div class="muted" style="font-size:12px;margin-top:10px">Layouts show under their category, in the order set on the Categories page. Drag a layout to move it within its category. The default starts selected; deals made by import or the API get it too.</div></aside>`;
 }
 
 /* ---------- list ---------- */
 function listView() {
   return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · ToolBox</div><h2>Customise page layout</h2><p>Each card is a layout: who can choose it, and the pages it has. Open one to design its pages. People pick a layout when they create a deal; the panel on the right shows that choice as they see it.</p></div>
-      <div class="acts"><button class="btn" data-a="toast" data-v="Back to Deals">${ic('back', 15)}Deals</button><button class="btn pri" data-a="go" data-v="new">${ic('plus', 15)}New layout</button></div></div>
-    <div class="ll"><div class="lcards">${LAYOUTS.map((L, i) => { const [p, r, b] = forText(L); return `<div class="lyc${L.on ? '' : ' off'}${S.fresh === L.id ? ' fresh' : ''}${S.menu === L.id ? ' open' : ''}" style="--d:${i * 50}ms">
+      <div class="acts"><button class="btn" data-a="toast" data-v="Back to Deals">${ic('back', 15)}Deals</button><button class="btn" data-a="newcat">${ic('plus', 15)}New category</button><button class="btn pri" data-a="go" data-v="new">${ic('plus', 15)}New layout</button></div></div>
+    <div class="ll"><div class="lgroups">${(() => { let n = 0; return CATS.map((k) => { const ls = LAYOUTS.filter((L) => catOf(L).id === k.id); return ls.length ? `<section class="lgrp" aria-label="${esc(k.name)}"><div class="lgrp-h" style="--c:${k.c}"><i></i><b>${esc(k.name)}</b><span class="mono">${ls.length}</span><span class="muted">${esc(k.desc)}</span></div><div class="lcards">${ls.map((L) => card(L, n++)).join('')}</div></section>` : ''; }).join(''); })()}
+      <div class="lcards"><button class="lyc new" data-a="go" data-v="new" style="--d:${LAYOUTS.length * 50}ms">${ic('plus', 26)}<b>New layout</b><small>Name it, pick its category, who can choose it and its pages</small></button></div></div>
+      ${pickerHTML()}</div>`;
+}
+function card(L, i) {
+  { const [p, r, b] = forText(L); return `<div class="lyc${L.on ? '' : ' off'}${S.fresh === L.id ? ' fresh' : ''}${S.menu === L.id ? ' open' : ''}" style="--d:${i * 50}ms">
         <button style="text-align:left;display:contents" data-a="open" data-v="${L.id}" aria-label="Open ${esc(L.name)}">${thumbHTML(thumbOf(L), L.def)}</button>
         <div class="lyc-b"><h3><button data-a="open" data-v="${L.id}" style="text-align:left">${esc(L.name)}</button><button class="menu" data-a="menu" data-v="${L.id}" aria-label="More for ${esc(L.name)}" aria-expanded="${S.menu === L.id}">${ic('dots', 16)}</button></h3>
           <div class="meta"><span>${ic('box', 13)}<b>${esc(p)}</b></span><span>${ic('users', 13)}${esc(r)} · ${esc(b)}</span></div>
           <div class="pg">${pagesOf(L).map((x) => `<span>${esc(x)}</span>`).join('')}</div></div>
         <div class="lyc-f">${L.undo.length ? `<span class="state draft">DRAFT · ${plural(L.undo.length, 'change')}</span>` : !L.v ? '<span class="state draft">NOT PUBLISHED</span>' : L.on ? (L.people ? `${plural(L.people, 'person')} can choose it` : `${L.used} deals use it`) : 'Switched off'}<span class="mono">${L.v ? 'v' + L.v + ' · ' : ''}${esc(L.by)} · ${esc(L.at)}</span></div>
-        ${S.menu === L.id ? `<div class="cmenu" role="menu"><button role="menuitem" data-a="open" data-v="${L.id}">${ic('pen', 15)}Open and edit</button><button role="menuitem" data-a="dupl" data-v="${L.id}">${ic('copy', 15)}Duplicate</button><button role="menuitem" data-a="mkdef" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('star', 15)}Make default</button><button role="menuitem" data-a="onoff" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('power', 15)}${L.on ? 'Switch off' : 'Switch on'}</button><button role="menuitem" class="danger" data-a="del" data-v="${L.id}" ${L.def ? 'disabled title="The default layout can’t be deleted"' : ''}>${ic('trash', 15)}Delete</button></div>` : ''}
-      </div>`; }).join('')}
-      <button class="lyc new" data-a="go" data-v="new" style="--d:${LAYOUTS.length * 50}ms">${ic('plus', 26)}<b>New layout</b><small>Name it, pick who it is for and its pages</small></button></div>
-      ${pickerHTML()}</div>`;
+        ${S.menu === L.id ? `<div class="cmenu" role="menu"><button role="menuitem" data-a="open" data-v="${L.id}">${ic('pen', 15)}Open and edit</button><button role="menuitem" data-a="dupl" data-v="${L.id}">${ic('copy', 15)}Duplicate</button><button role="menuitem" data-a="chcat" data-v="${L.id}">${ic('tab', 15)}Change category</button><button role="menuitem" data-a="mkdef" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('star', 15)}Make default</button><button role="menuitem" data-a="onoff" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('power', 15)}${L.on ? 'Switch off' : 'Switch on'}</button><button role="menuitem" class="danger" data-a="del" data-v="${L.id}" ${L.def ? 'disabled title="The default layout can’t be deleted"' : ''}>${ic('trash', 15)}Delete</button></div>` : ''}
+      </div>`; }
+}
+
+/* ---------- categories (the only place a category is made) ---------- */
+function catsView() {
+  const f = S.cf;
+  const back = S.nfHold ? `<button class="btn" data-a="cfback">${ic('back', 15)}Back to New layout</button>` : `<button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button>`;
+  return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · Customise page layout</div><h2>Categories</h2><p>Categories group the Deals layouts. People see them as headings when they choose a layout for a new deal, in the order below. A category is made here and nowhere else.</p></div>
+      <div class="acts">${back}</div></div>
+    <div class="cats">
+      <section class="card catnew" aria-label="New category"><div class="sec"><b>New category</b></div>
+        <div class="f${f.err ? ' bad' : ''}"><label for="cfname">Name <span style="color:var(--danger-text)">*</span></label><input id="cfname" data-cf="name" value="${esc(f.name)}" placeholder="For example: Business loans" autocomplete="off" maxlength="40">${f.err ? `<div class="err">${esc(f.err)}</div>` : ''}</div>
+        <div class="f"><label for="cfdesc">What goes in it</label><input id="cfdesc" data-cf="desc" value="${esc(f.desc)}" placeholder="One line, shown under the heading" maxlength="90"></div>
+        <div><span class="flab" style="font-size:12.5px;font-weight:500">Colour</span><div class="swatches" role="radiogroup" aria-label="Colour">${CAT_COLOURS.map((c) => `<button role="radio" aria-checked="${f.c === c}" style="--c:${c}" data-a="cfcol" data-v="${c}" aria-label="Colour ${c}"></button>`).join('')}</div></div>
+        <div class="catprev"><span class="lab">How it looks in Choose a layout</span><div class="pgrp" style="--c:${f.c}"><i></i>${esc(f.name.trim() || 'Category name')}<span class="mono">0</span></div></div>
+        <button class="btn pri" data-a="cfadd">${ic('plus', 15)}Add category</button></section>
+      <section class="card catlist" aria-label="Categories"><div class="sec" style="padding:14px 16px 0"><b>${plural(CATS.length, 'category')}</b> in this order</div>
+        <div id="clist">${CATS.map((k, i) => { const ls = LAYOUTS.filter((L) => catOf(L).id === k.id); return `<div class="crow${S.freshCat === k.id ? ' fresh' : ''}" data-crow="${i}" style="--c:${k.c}">
+          <span class="grab" data-drag="cat" data-i="${i}" aria-label="Move ${esc(k.name)}">${ic('grip', 14)}</span><i class="dot"></i>
+          <span class="cmain">${S.cren === k.id ? `<input id="crname" value="${esc(S.crenVal)}" aria-label="New name for ${esc(k.name)}" maxlength="40">` : `<b>${esc(k.name)}</b>`}<small>${esc(k.desc || '')}</small><small class="mono">${ls.length ? `${plural(ls.length, 'layout')}: ${ls.map((L) => esc(L.name)).join(', ')}` : 'No layouts yet'}</small></span>
+          <span class="cacts">${S.cren === k.id ? `<button class="btn" data-a="crsave">Save</button><button class="btn ghost" data-a="crcancel">Cancel</button>` : `<button class="btn ghost" data-a="cren" data-v="${k.id}">${ic('pen', 14)}Rename</button><button class="btn ghost danger" data-a="cdel" data-v="${k.id}" ${CATS.length < 2 ? 'disabled title="There must be at least one category"' : ''}>${ic('trash', 14)}Delete</button>`}</span></div>`; }).join('')}</div>
+        <div class="muted" style="font-size:12px;padding:6px 16px 14px">Drag to change the order of the headings. Deleting a category moves its layouts to another one.</div></section>
+    </div>`;
 }
 
 /* ---------- new layout (full page) ---------- */
@@ -722,6 +799,10 @@ function newView() {
       <div class="nf-sec"><h3>About the layout</h3>
         <div class="f${n.err ? ' bad' : ''}"><label for="nfname">Layout name <span class="req" style="color:var(--danger-text)">*</span></label><input id="nfname" data-nf="name" value="${esc(n.name)}" placeholder="For example: Gold loans, Baner desk" autocomplete="off">${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}</div>
         <div class="f"><label for="nfdesc">What it is for</label><textarea id="nfdesc" data-nf="desc" placeholder="One line people see on the card">${esc(n.desc)}</textarea></div></div>
+      <div class="nf-sec"><h3>${ic('tab', 15)}Category <span style="color:var(--danger-text)">*</span><span class="mono">heading in Choose a layout</span></h3>
+        <div class="chipset${n.caterr ? ' bad' : ''}" role="radiogroup" aria-label="Category">${CATS.map((k) => `<button role="radio" aria-pressed="${n.cat === k.id}" aria-checked="${n.cat === k.id}" data-a="nfcat" data-v="${k.id}" style="--c:${k.c}"><i class="cdot"></i>${esc(k.name)}</button>`).join('')}</div>
+        ${n.caterr ? `<div class="err" style="color:var(--danger-text);font-size:12px;margin-top:-6px">${esc(n.caterr)}</div>` : ''}
+        <p class="muted" style="margin:-4px 0 0;font-size:12.5px">Not in the list? <button class="link" data-a="nfnewcat">Make a new category</button>. Your form stays as it is.</p></div>
       <div class="nf-sec"><h3>${ic('box', 15)}Products<span class="mono">optional</span></h3><p class="muted" style="margin:-6px 0 0;font-size:12.5px">Shown with the layout in Choose a layout. On this layout the Product field offers only these.</p>${chips('prod', PRODUCTS, 'Every product')}</div>
       <div class="nf-sec"><h3>${ic('users', 15)}Who can choose it<span class="mono">roles and branches</span></h3><p class="muted" style="margin:-6px 0 0;font-size:12.5px">Only these people see it in Choose a layout. Deals already made with it stay on it, whoever opens them.</p>${chips('roles', ROLES.slice(1), 'Everyone')}${chips('branches', BRANCHES, 'All branches')}</div>
       <div class="nf-sec"><h3>${ic('copy', 15)}Start from</h3><div class="start">${[['blank', 'Basic', null], ...LAYOUTS.map((L) => [L.id, L.name, thumbOf(L)])].map(([id, nm, th]) => `<button aria-pressed="${n.start === id}" data-a="nfstart" data-v="${id}">${th ? thumbHTML(th) : `<div class="thumb blank">${ic('plus', 18)}</div>`}${esc(nm)}${th ? '' : '<small class="muted" style="font-weight:400">Required fields only</small>'}</button>`).join('')}</div></div>
@@ -732,7 +813,7 @@ function newView() {
       <div class="nf-sec"><div class="sw-row"><span>Default layout for Deals<small>Starts selected in Choose a layout, and deals made by import or the API get it. There is one default.</small></span><button class="switch" role="switch" aria-checked="${n.def}" data-a="nfdef" aria-label="Default layout"></button></div></div>
       <div class="nf-foot"><button class="btn ghost" data-a="go" data-v="list">Cancel</button><button class="btn pri" data-a="nfsave">Save layout</button></div></div>
     <aside class="nf-side"><span class="lab">Your card</span>
-      <div class="lyc" style="--d:0ms">${thumbHTML(preview.thumb, n.def)}<div class="lyc-b"><h3>${esc(preview.name)}</h3><div class="meta"><span>${ic('box', 13)}<b>${esc(p)}</b></span><span>${ic('users', 13)}${esc(r)} · ${esc(b)}</span></div><div class="pg">${n.pages.map((x) => `<span>${esc(x)}</span>`).join('')}</div></div><div class="lyc-f">New · draft</div></div>
+      <div class="lyc" style="--d:0ms">${thumbHTML(preview.thumb, n.def)}<div class="lyc-b">${CATS.find((k) => k.id === n.cat) ? catChip(CATS.find((k) => k.id === n.cat)) : '<span class="muted" style="font-size:12px">No category yet</span>'}<h3>${esc(preview.name)}</h3><div class="meta"><span>${ic('box', 13)}<b>${esc(p)}</b></span><span>${ic('users', 13)}${esc(r)} · ${esc(b)}</span></div><div class="pg">${n.pages.map((x) => `<span>${esc(x)}</span>`).join('')}</div></div><div class="lyc-f">New · draft</div></div>
       <div class="card" style="padding:12px 14px;font-size:12.5px;color:var(--text-muted)">${n.def ? 'It becomes the default: it starts selected in Choose a layout.' : 'It joins the end of Choose a layout; drag it higher on the Layouts screen.'} Nothing changes for anyone until you publish it.</div></aside></div>`;
 }
 
@@ -889,8 +970,8 @@ function render() {
   keepLayout();
   const ae = document.activeElement, keep = ae && ae.id ? ae.id : null, pos = keep && ae.selectionStart != null ? ae.selectionStart : null;
   const sc = $('main').scrollTop;
-  $('page').innerHTML = S.screen === 'list' ? listView() : S.screen === 'new' ? newView() : editorView();
-  $('crumb').innerHTML = `<span>Deals</span><span>/</span><span>ToolBox</span><span>/</span><b>${S.screen === 'list' ? 'Customise page layout' : S.screen === 'new' ? 'New layout' : esc(S.name)}</b>`;
+  $('page').innerHTML = S.screen === 'list' ? listView() : S.screen === 'cats' ? catsView() : S.screen === 'new' ? newView() : editorView();
+  $('crumb').innerHTML = `<span>Deals</span><span>/</span><span>ToolBox</span><span>/</span><b>${S.screen === 'list' ? 'Customise page layout' : S.screen === 'cats' ? 'Categories' : S.screen === 'new' ? 'New layout' : esc(S.name)}</b>`;
   $('rail').innerHTML = '<i class="logo">H</i>' + ['dashboard', 'target', 'user', 'building', 'deal', 'file', 'box', 'mega', 'checksq', 'calendar', 'ticket'].map((n) => `<span class="${n === 'deal' ? 'on' : ''}">${ic(n, 18)}</span>`).join('');
   $('screens').innerHTML = SCREENS.map(([k, n]) => `<button aria-pressed="${S.screen === k}" data-s="${k}">${n}</button>`).join('');
   $('main').scrollTop = sc;
@@ -898,9 +979,14 @@ function render() {
 }
 let tt;
 function toast(m) { const el = $('toast'); el.innerHTML = ic('check', 15) + esc(m); el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), 2600); }
-const NF0 = () => ({ name: '', desc: '', prod: [], roles: [], branches: [], start: 'L1', pages: ['New/Edit', 'Detail', 'History'], def: false, err: '', extra: '' });
+const NF0 = () => ({ name: '', desc: '', cat: '', prod: [], roles: [], branches: [], start: 'L1', pages: ['New/Edit', 'Detail', 'History'], def: false, err: '', caterr: '', extra: '' });
 /* Opening "New layout" always starts a fresh form; Cancel throws the half-filled one away. */
-const go = (o) => { if (o.screen === 'new' && S.screen !== 'new') S.nf = NF0(); if (S.nf.start !== 'blank' && !LAYOUTS.some((x) => x.id === S.nf.start)) S.nf.start = 'blank'; Object.assign(S, o); S.menu = null; $('main').scrollTop = 0; render(); };
+const go = (o) => {
+  // Leaving the Categories page always ends the "came from New layout" detour, except for the trip back to the form.
+  const toForm = o.screen === 'new' && S.screen === 'cats' && S.nfHold;
+  if (S.screen === 'cats' && o.screen !== 'cats') { S.nfHold = false; S.cren = null; S.cf.err = ''; }
+  if (o.screen === 'new' && S.screen !== 'new' && !toForm) S.nf = NF0();
+  if (S.nf.cat && !CATS.some((k) => k.id === S.nf.cat)) S.nf.cat = ''; if (S.nf.start !== 'blank' && !LAYOUTS.some((x) => x.id === S.nf.start)) S.nf.start = 'blank'; Object.assign(S, o); S.menu = null; $('main').scrollTop = 0; render(); };
 const findSec = (si) => curTab().secs[+si];
 const findCard = (id) => { for (const t of pageM().tabs) { const c = (t.cards || []).find((x) => x.id === id); if (c) return [t, c]; } return [null, null]; };
 
@@ -919,7 +1005,42 @@ const A = {
   toast: (t) => toast(t.dataset.v),
   nfall: (t) => { S.nf[t.dataset.k] = []; render(); },
   nfchip: (t) => { const k = t.dataset.k, v = t.dataset.v, a = S.nf[k]; S.nf[k] = a.includes(v) ? a.filter((x) => x !== v) : [...a, v]; render(); },
-  nfstart: (t) => { S.nf.start = t.dataset.v; if (t.dataset.v !== 'blank') { const L = LAYOUTS.find((x) => x.id === t.dataset.v); keepLayout(); S.nf.pages = [...pagesOf(L)]; } render(); },
+  nfstart: (t) => { S.nf.start = t.dataset.v; if (t.dataset.v !== 'blank') { const L = LAYOUTS.find((x) => x.id === t.dataset.v); keepLayout(); S.nf.pages = [...pagesOf(L)]; if (!S.nf.cat) { S.nf.cat = catOf(L).id; S.nf.caterr = ''; } } render(); },
+  nfcat: (t) => { S.nf.cat = t.dataset.v; S.nf.caterr = ''; render(); },
+  nfnewcat: () => { S.nfHold = true; S.cf = { name: '', desc: '', c: CAT_COLOURS[1], err: '' }; go({ screen: 'cats' }); setTimeout(() => $('cfname')?.focus(), 0); },
+  cfback: () => go({ screen: 'new' }),
+  newcat: () => { S.cf = { name: '', desc: '', c: CAT_COLOURS[1], err: '' }; go({ screen: 'cats' }); setTimeout(() => $('cfname')?.focus(), 0); },
+  cfcol: (t) => { S.cf.c = t.dataset.v; render(); },
+  cfadd: () => {
+    const f = S.cf, nm = f.name.trim();
+    if (!nm) { f.err = 'Give the category a name'; render(); $('cfname').focus(); return; }
+    if (CATS.some((k) => k.name.toLowerCase() === nm.toLowerCase())) { f.err = 'There is already a category with that name'; render(); $('cfname').focus(); return; }
+    const k = { id: 'K' + ++cid, name: nm, desc: f.desc.trim(), c: f.c };
+    CATS.push(k); S.freshCat = k.id; S.cf = { name: '', desc: '', c: f.c, err: '' };
+    if (S.nfHold) { S.nf.cat = k.id; S.nf.caterr = ''; toast(`“${nm}” added and picked for your new layout`); go({ screen: 'new' }); return; }
+    toast(`“${nm}” added. Pick it when you make or move a layout.`); render(); $('cfname')?.focus();
+  },
+  cren: (t) => { const k = CATS.find((x) => x.id === t.dataset.v); S.cren = k.id; S.crenVal = k.name; render(); setTimeout(() => { $('crname')?.focus(); $('crname')?.select(); }, 0); },
+  crcancel: () => { S.cren = null; render(); },
+  crsave: () => {
+    const k = CATS.find((x) => x.id === S.cren), v = S.crenVal.trim();
+    if (!v) { toast('A category needs a name'); $('crname')?.focus(); return; }
+    if (CATS.some((x) => x.id !== k.id && x.name.toLowerCase() === v.toLowerCase())) { toast('There is already a category with that name'); $('crname')?.focus(); return; }
+    k.name = v; S.cren = null; toast('Renamed'); render();
+  },
+  cdel: (t) => {
+    const k = CATS.find((x) => x.id === t.dataset.v); if (!k || CATS.length < 2) return;
+    const ls = LAYOUTS.filter((L) => catOf(L).id === k.id), others = CATS.filter((x) => x.id !== k.id);
+    $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete “${esc(k.name)}”?</h3></div><div class="dlg-body">${ls.length ? `${ls.length === 1 ? `Its layout, ${esc(ls[0].name)}, moves` : `Its ${ls.length} layouts (${ls.map((L) => esc(L.name)).join(', ')}) move`} to another category. Deals are not touched.<div class="f" style="margin-top:12px"><label for="cmove">Move ${ls.length === 1 ? 'it' : 'them'} to</label><select id="cmove">${others.map((x) => `<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select></div>` : 'It has no layouts. Nothing else changes.'}</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="docdel" data-v="${k.id}">Delete</button></div></div></div>`;
+  },
+  docdel: (t) => { const id = t.dataset.v, to = $('cmove')?.value; if (to) LAYOUTS.forEach((L) => { if (catOf(L).id === id) L.cat = to; }); CATS = CATS.filter((x) => x.id !== id); $('ovl').innerHTML = ''; toast(to ? `Category deleted; its layouts moved to ${CATS.find((x) => x.id === to).name}` : 'Category deleted'); render(); },
+  chcat: (t) => {
+    const L = LAYOUTS.find((x) => x.id === t.dataset.v); S.menu = null; render();
+    $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Category of ${esc(L.name)}</h3></div><div class="dlg-body"><div class="chipset" role="radiogroup" aria-label="Category" id="chcats">${CATS.map((k) => `<button role="radio" aria-pressed="${catOf(L).id === k.id}" data-a="pickcat" data-v="${k.id}" style="--c:${k.c}"><i class="cdot"></i>${esc(k.name)}</button>`).join('')}</div><p style="font-size:12.5px;margin:10px 0 0">It moves under that heading in Choose a layout. New categories are made on the <button class="link" data-a="newcatfromdlg">Categories page</button>.</p></div><div class="dlg-foot"><button class="btn ghost" data-a="close">Cancel</button><span class="sp"></span><button class="btn pri" data-a="dochcat" data-v="${L.id}">Move</button></div></div></div>`;
+  },
+  pickcat: (t) => { document.querySelectorAll('#chcats button').forEach((b) => b.setAttribute('aria-pressed', b === t)); },
+  dochcat: (t) => { const L = LAYOUTS.find((x) => x.id === t.dataset.v); const pick = document.querySelector('#chcats button[aria-pressed="true"]'); if (pick) L.cat = pick.dataset.v; $('ovl').innerHTML = ''; S.fresh = L.id; toast(`${L.name} is now under ${catOf(L).name}`); render(); },
+  newcatfromdlg: () => { $('ovl').innerHTML = ''; A.newcat(); },
   nfrmpage: (t) => { S.nf.pages = S.nf.pages.filter((x) => x !== t.dataset.v); render(); },
   nfhist: () => { S.nf.pages.push('History'); render(); },
   nfaddpage: () => { const v = S.nf.extra.trim(); if (!v) { $('nfpage').focus(); return; } if (S.nf.pages.some((x) => x.toLowerCase() === v.toLowerCase())) { toast('That page is already there'); return; } S.nf.pages.push(v); S.nf.extra = ''; render(); $('nfpage').focus(); },
@@ -927,10 +1048,11 @@ const A = {
   nfsave: () => {
     const n = S.nf, nm = n.name.trim();
     if (!nm) { n.err = 'Give the layout a name'; render(); $('nfname').focus(); return; }
+    if (!CATS.some((k) => k.id === n.cat)) { n.caterr = 'Pick a category'; render(); document.querySelector('[data-a="nfcat"]')?.focus(); return; }
     if (LAYOUTS.some((x) => x.name.toLowerCase() === nm.toLowerCase())) { n.err = 'Another Deals layout has that name'; render(); $('nfname').focus(); return; }
     keepLayout();
     const src = n.start === 'blank' ? null : LAYOUTS.find((x) => x.id === n.start);
-    const L = mk({ id: 'L' + ++cid, name: nm, desc: n.desc, prod: [...n.prod], roles: [...n.roles], branches: [...n.branches], def: n.def, by: 'You', at: 'now', v: 0 }, modelFor(n.pages, src ? src.M : null), src ? clone(src.FS) : {});
+    const L = mk({ id: 'L' + ++cid, name: nm, cat: n.cat, desc: n.desc, prod: [...n.prod], roles: [...n.roles], branches: [...n.branches], def: n.def, by: 'You', at: 'now', v: 0 }, modelFor(n.pages, src ? src.M : null), src ? clone(src.FS) : {});
     if (n.def) LAYOUTS.forEach((x) => (x.def = false));
     LAYOUTS.unshift(L);
     // A new layout joins the end of Choose a layout; the admin drags it where they want.
@@ -999,6 +1121,9 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && t.id === 'newtab') { const v = t.value.trim(); if (v) { snap(); const id = 't' + ++cid; pageM().tabs.push(isForm() ? { id, name: v, roles: [], secs: [{ id: 's' + ++cid, title: 'Details', cols: 2, f: [] }] } : { id, name: v, roles: [], cards: [] }); S.tab[S.page] = id; S.sel = { k: 'tab', id }; } S.addingTab = false; render(); }
   if (e.key === 'Enter' && t.id === 'newpage') { const v = t.value.trim(); const same = v && Object.keys(S.M).find((x) => x.toLowerCase() === v.toLowerCase()); if (same) { toast(`This layout already has a “${same}” page`); t.select(); return; } if (v) { snap(); S.M[v] = emptyPage(); S.page = v; S.tab[v] = S.M[v].tabs[0].id; S.sel = { k: null }; S.pal = 'cards'; } S.addingPage = false; render(); }
   if (e.key === 'Enter' && t.id === 'nfpage') A.nfaddpage();
+  if (e.key === 'Enter' && (t.id === 'cfname' || t.id === 'cfdesc')) { e.preventDefault(); A.cfadd(); }
+  if (t.id === 'crname' && e.key === 'Enter') { e.preventDefault(); A.crsave(); }
+  if (t.id === 'crname' && e.key === 'Escape') { e.stopPropagation(); A.crcancel(); }
   if ((e.key === 'Enter' || e.key === ' ') && t.matches('.itab[data-a], .itab.add, .ptab[data-a]')) { e.preventDefault(); t.click(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && S.screen === 'editor' && t.tagName !== 'INPUT') { e.preventDefault(); e.shiftKey ? A.redo() : A.undo(); }
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && S.screen === 'editor' && t.tagName !== 'INPUT') { e.preventDefault(); A.redo(); }
@@ -1006,6 +1131,8 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('focusout', (e) => { if ((e.target.id === 'newtab' && S.addingTab) || (e.target.id === 'newpage' && S.addingPage)) setTimeout(() => { if (document.activeElement?.id !== e.target.id) { S.addingTab = S.addingPage = false; render(); } }, 120); });
 document.addEventListener('input', (e) => {
   const t = e.target;
+  if (t.dataset.cf) { S.cf[t.dataset.cf] = t.value; if (t.dataset.cf === 'name') { S.cf.err = ''; const p = document.querySelector('.catprev .pgrp'); if (p) p.childNodes[1].textContent = t.value.trim() || 'Category name'; const bad = t.closest('.f.bad'); if (bad) { bad.classList.remove('bad'); bad.querySelector('.err')?.remove(); } } return; }
+  if (t.id === 'crname') { S.crenVal = t.value; return; }
   if (t.dataset.nf) { S.nf[t.dataset.nf] = t.value; if (t.dataset.nf === 'name') S.nf.err = ''; if (t.dataset.nf !== 'extra') render(); return; }
   if (t.id === 'palq') { S.palq = t.value; render(); return; }
   if (t.id === 'lname') { S.name = t.value; return; }
@@ -1057,8 +1184,14 @@ window.addEventListener('pointermove', (e) => {
     if (w !== c.w || hh !== c.h) { c.w = w; c.h = hh; render(); document.querySelector(`.rc[data-card="${D.c}"]`)?.classList.add('sizing'); }
     return;
   }
+  if (D.k === 'cat') {
+    const row = under(e.clientX, e.clientY)?.closest('.crow'); if (!row) return; const j = +row.dataset.crow; if (j === D.i) return;
+    const [m] = CATS.splice(D.i, 1); CATS.splice(j, 0, m); D.i = j; render(); document.querySelector(`.crow[data-crow="${j}"]`)?.classList.add('lift'); return;
+  }
   if (D.k === 'order') {
     const row = under(e.clientX, e.clientY)?.closest('.orow'); if (!row) return; const j = +row.dataset.orow; if (j === D.i) return;
+    // A layout moves only within its own category; its category decides which heading it sits under.
+    const catAt = (k) => catOf(LAYOUTS.find((x) => x.id === ORDER[k])).id; if (catAt(j) !== catAt(D.i)) return;
     const [m] = ORDER.splice(D.i, 1); ORDER.splice(j, 0, m); D.i = j; render(); document.querySelector(`.orow[data-orow="${j}"]`)?.classList.add('lift'); return;
   }
   if (D.k === 'tab') {
@@ -1084,6 +1217,7 @@ window.addEventListener('pointerup', (e) => {
   if (ghost) { ghost.remove(); }
   const el = d.moved ? under(e.clientX, e.clientY) : null; ghost = null; clearMarks();
   if (d.k === 'order') { if (d.moved) toast('Order of Choose a layout changed'); render(); return; }
+  if (d.k === 'cat') { if (d.moved) toast('Order of categories changed'); render(); return; }
   if (d.k === 'tab' || d.k.startsWith('rz')) { render(); return; }
   if (!d.moved) { render(); return; }
   if (d.k === 'newfld' || d.k === 'fld') {
