@@ -590,6 +590,26 @@ export interface StatusCodeSet {
 
 export type SlaClock = '24x7' | 'working';
 
+export interface SetupSnapshot {
+  statusCodeSets: StatusCodeSet[];
+}
+
+export interface SetupDraft {
+  id: 'draft';
+  revision: string;
+  baseDigest: string;
+  settings: SetupSnapshot;
+}
+
+export interface SetupVersion {
+  id: string;
+  number: number;
+  createdAt: string;
+  author: string;
+  note: string;
+  settings: SetupSnapshot;
+}
+
 /** One priority's promise. `hours` is the time to resolve (named before 3.0 added the first reply). */
 export interface SlaConfig {
   id: string;

@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json && node --input-type=module -e \"import { copyFileSync } from 'node:fs'; for (const f of ['openapi.yaml', 'openapi.v3.yaml']) copyFileSync('src/' + f, 'dist/' + f)\"",
     "start": "node dist/index.js",
-    "test": "tsx --test test/accounts.contract.ts test/deals.contract.ts test/activity.contract.ts test/tickets.contract.ts test/quotes.contract.ts test/campaigns.contract.ts test/dashboard.contract.ts test/search.contract.ts test/tenancy.isolation.ts"
+    "test": "tsx --test test/accounts.contract.ts test/deals.contract.ts test/activity.contract.ts test/tickets.contract.ts test/quotes.contract.ts test/campaigns.contract.ts test/dashboard.contract.ts test/search.contract.ts test/setup.contract.ts test/tenancy.isolation.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.16",

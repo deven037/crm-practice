@@ -1,0 +1,1271 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Harbor Page Layouts 3.0</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: Customise page layout opens only from a module's ToolBox (shown in Deals) and is the same tool in every module. Layouts are cards; a side panel sets the order in which layouts are matched to a record (product, role, branch) with a Try it box. New layout is a full page: name, what it is for, products, roles, branches, start from, pages, default. The editor shows the layout's pages as tabs (New/Edit, Detail, History, or any page added); each page has its own tabs; New/Edit has sections of fields, record pages have cards on a 12-column grid. Fields and cards are dragged in from the left; cards resize by their edges; a field's layout settings (required here, read-only here, help, show only when) sit on the right. Sample record, Preview as a role, phone view, undo/redo, compare with published, checks and publish. Tokens mirror src/styles/v3.css. */
+:root {
+  --bank-primary: #1d3a6e; --bank-on: #ffffff; --bank-ink-light: #1d3a6e; --bank-ink-dark: #9db8ee;
+  --bank-ink: var(--bank-ink-light);
+  --bg: color-mix(in srgb, var(--bank-primary) 4%, #f5f6f8);
+  --surface: #ffffff;
+  --surface-2: color-mix(in srgb, var(--bank-primary) 4%, #f3f4f6);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 7%, #e8eaee);
+  --border: color-mix(in srgb, var(--bank-primary) 8%, #e2e5ea);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 10%, #cfd4dc);
+  --text: #171b26; --text-muted: #5a6272;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 10%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 26%, var(--surface));
+  --chrome-bg: color-mix(in srgb, var(--bank-primary) 26%, #0a0d15);
+  --chrome-hover: color-mix(in srgb, var(--bank-primary) 34%, #151a26);
+  --chrome-line: color-mix(in srgb, var(--bank-primary) 30%, #1c2331);
+  --chrome-active: color-mix(in srgb, var(--bank-primary) 55%, #1a2030);
+  --chrome-text: #cfd5e3; --chrome-muted: #98a1b6; --chrome-strong: #ffffff;
+  --glass: color-mix(in srgb, var(--surface) 72%, transparent);
+  --glass-line: color-mix(in srgb, var(--text) 9%, transparent);
+  --scrim: color-mix(in srgb, var(--bank-primary) 18%, rgba(9, 12, 20, 0.5));
+  --warn-bg: #fdf0d5; --warn-text: #8a5300; --danger-bg: #fde7e7; --danger-text: #a12626; --ok-bg: #dcf5ea; --ok-text: #0c6b47;
+  --shadow: 0 1px 2px rgba(16, 22, 38, 0.05), 0 4px 12px -2px rgba(16, 22, 38, 0.07);
+  --shadow-lg: 0 4px 8px rgba(16, 22, 38, 0.05), 0 24px 48px -12px rgba(16, 22, 38, 0.24);
+  --shadow-dock: 0 18px 40px -16px color-mix(in srgb, var(--bank-primary) 70%, rgba(0, 0, 0, 0.6));
+  --shadow-bank: 0 6px 18px -6px color-mix(in srgb, var(--bank-primary) 60%, transparent);
+  --font-sans: 'IBM Plex Sans', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  --fast: 150ms; --base: 220ms; --slow: 350ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bank-ink: var(--bank-ink-dark);
+  --bg: color-mix(in srgb, var(--bank-primary) 7%, #0d1119);
+  --surface: color-mix(in srgb, var(--bank-primary) 5%, #171c28);
+  --surface-2: color-mix(in srgb, var(--bank-primary) 7%, #1f2533);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 9%, #293041);
+  --border: color-mix(in srgb, var(--bank-primary) 10%, #2c3445);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 12%, #3a4358);
+  --text: #e9ecf3; --text-muted: #9aa3b6;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 22%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 42%, var(--surface));
+  --glass: color-mix(in srgb, var(--surface) 68%, transparent);
+  --glass-line: color-mix(in srgb, #fff 9%, transparent);
+  --warn-bg: #3d2c0b; --warn-text: #f7cf7d; --danger-bg: #431417; --danger-text: #ffb1b1; --ok-bg: #0f3327; --ok-text: #86e3b9;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bank-ink: var(--bank-ink-dark);
+  --bg: color-mix(in srgb, var(--bank-primary) 7%, #0d1119);
+  --surface: color-mix(in srgb, var(--bank-primary) 5%, #171c28);
+  --surface-2: color-mix(in srgb, var(--bank-primary) 7%, #1f2533);
+  --surface-3: color-mix(in srgb, var(--bank-primary) 9%, #293041);
+  --border: color-mix(in srgb, var(--bank-primary) 10%, #2c3445);
+  --border-strong: color-mix(in srgb, var(--bank-primary) 12%, #3a4358);
+  --text: #e9ecf3; --text-muted: #9aa3b6;
+  --bank-soft: color-mix(in srgb, var(--bank-primary) 22%, var(--surface));
+  --bank-soft-line: color-mix(in srgb, var(--bank-primary) 42%, var(--surface));
+  --glass: color-mix(in srgb, var(--surface) 68%, transparent);
+  --glass-line: color-mix(in srgb, #fff 9%, transparent);
+  --warn-bg: #3d2c0b; --warn-text: #f7cf7d; --danger-bg: #431417; --danger-text: #ffb1b1; --ok-bg: #0f3327; --ok-text: #86e3b9;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 24px 48px -12px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--font-sans); font-size: 14px; line-height: 1.45;
+  padding-block: 16px 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-font-smoothing: antialiased;
+}
+body.dragging { cursor: grabbing; -webkit-user-select: none; user-select: none; }
+button, input, select { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--bank-ink); outline-offset: 2px; border-radius: 6px; }
+svg { flex: none; display: block; }
+h2, h3 { font-family: var(--font-display); margin: 0; letter-spacing: -0.01em; }
+i { font-style: normal; }
+
+.deck { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; max-width: 1280px; margin: 0 auto 14px; }
+.deck h1 { font-family: var(--font-display); font-size: 20px; font-weight: 650; margin: 0; flex: 1 1 200px; }
+.deck h1 small { display: block; font-family: var(--font-sans); font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.pick { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); }
+.seg { display: flex; flex-wrap: wrap; padding: 3px; gap: 2px; background: var(--surface-3); border-radius: 999px; }
+.seg button { padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--text-muted); display: flex; align-items: center; gap: 6px; transition: background var(--fast), color var(--fast); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.sw { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
+
+.stage { container-type: inline-size; max-width: 1280px; margin: 0 auto; }
+.app { position: relative; overflow: hidden; display: grid; grid-template-columns: auto minmax(0, 1fr); height: clamp(640px, 86vh, 840px); border-radius: 20px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg);
+  background: radial-gradient(60% 50% at 100% 0%, color-mix(in srgb, var(--bank-primary) 13%, transparent), transparent 70%), radial-gradient(50% 50% at 0% 100%, color-mix(in srgb, var(--bank-primary) 8%, transparent), transparent 70%), var(--bg); }
+.rail { width: 60px; margin: 10px 0 10px 10px; border-radius: 18px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; color: var(--chrome-muted); border: 1px solid var(--chrome-line); box-shadow: var(--shadow-dock);
+  background: radial-gradient(130% 42% at 0% 0%, color-mix(in srgb, var(--bank-primary) 62%, transparent), transparent 72%), var(--chrome-bg); }
+.rail .logo { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 8px; background: var(--bank-primary); color: var(--bank-on); font-family: var(--font-display); font-weight: 700; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+.rail span { width: 40px; height: 36px; border-radius: 10px; display: grid; place-items: center; }
+.rail span.on { color: var(--chrome-strong); background: var(--chrome-active); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+.main { position: relative; min-width: 0; overflow-y: auto; display: flex; flex-direction: column; }
+.tb { position: sticky; top: 0; z-index: 4; display: flex; align-items: center; gap: 10px; margin: 10px 12px 0; padding: 8px 10px 8px 16px; border-radius: 16px; background: var(--glass); -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px); border: 1px solid var(--glass-line); box-shadow: var(--shadow); }
+.crumb { display: flex; gap: 7px; color: var(--text-muted); font-size: 13px; white-space: nowrap; min-width: 0; overflow: hidden; }
+.crumb b { color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.chip-me { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 5px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-weight: 600; font-size: 13px; white-space: nowrap; }
+.av { width: 30px; height: 30px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 11.5px; font-weight: 600; background: var(--bank-primary); color: var(--bank-on); }
+.av.sm { width: 24px; height: 24px; font-size: 9.5px; }
+.av.soft { background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.page { flex: 1; padding: 22px 24px 90px; animation: enter var(--slow) var(--ease-out); }
+@keyframes enter { from { opacity: 0; transform: translateY(10px); } }
+@keyframes pop { from { opacity: 0; transform: scale(.9) translateY(8px); } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes grow { from { transform: scaleX(0); } }
+
+/* shared pieces */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 14px; border-radius: 12px; font-weight: 550; white-space: nowrap; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow);
+  transition: transform var(--fast) var(--ease-spring), border-color var(--fast), filter var(--fast), background var(--fast), color var(--fast); }
+.btn:hover { transform: translateY(-1px); border-color: var(--bank-soft-line); }
+.btn:active { transform: scale(.97); }
+.btn.pri { color: var(--bank-on); border-color: transparent; background: linear-gradient(180deg, color-mix(in srgb, var(--bank-primary) 90%, #fff), var(--bank-primary)); box-shadow: inset 0 1px 0 rgba(255,255,255,.22), var(--shadow-bank); }
+.btn.pri:hover { filter: brightness(1.08); }
+.btn.ghost { background: none; border-color: transparent; box-shadow: none; color: var(--text-muted); }
+.btn.ghost:hover { background: var(--surface-2); color: var(--text); }
+.btn.danger { color: var(--danger-text); }
+.btn.sq { width: 38px; padding: 0; }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap;
+  background: color-mix(in srgb, var(--c) 14%, var(--surface)); color: color-mix(in srgb, var(--c) 62%, var(--text)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 26%, transparent); }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.ph { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 18px; }
+.ph h2 { font-size: 28px; line-height: 34px; font-weight: 700; letter-spacing: -0.02em; }
+.ph p { margin: 2px 0 0; color: var(--text-muted); }
+.ph .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+.lab { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.muted { color: var(--text-muted); }
+.num { font-variant-numeric: tabular-nums; }
+.link { color: var(--bank-ink); font-weight: 550; } .link:hover { text-decoration: underline; }
+.tg { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 8px; font-size: 11.5px; font-weight: 500; white-space: nowrap; background: var(--surface-2); color: var(--text-muted); box-shadow: inset 0 0 0 1px var(--border); }
+.tg.add { border: 1px dashed var(--border-strong); background: none; box-shadow: none; }
+.tg.add:hover { color: var(--bank-ink); border-color: var(--bank-soft-line); background: var(--bank-soft); }
+
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; }
+.search { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; flex: 1 1 220px; max-width: 320px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-muted); transition: box-shadow var(--fast), border-color var(--fast); }
+.search:focus-within { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--text); }
+.fchip { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border-radius: 12px; border: 1px dashed var(--border-strong); color: var(--text-muted); font-weight: 500; white-space: nowrap; transition: background var(--fast), border-color var(--fast), color var(--fast); }
+.fchip:hover { background: var(--surface); color: var(--text); }
+.fchip.set { border-style: solid; border-color: var(--bank-soft-line); background: var(--bank-soft); color: var(--bank-ink); }
+.pop-wrap { position: relative; }
+.pop { position: absolute; z-index: 9; top: 44px; left: 0; width: 250px; padding: 6px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg); transform-origin: top left; animation: pop var(--base) var(--ease-spring); }
+.pop.right { left: auto; right: 0; transform-origin: top right; }
+.pop input { width: 100%; height: 34px; padding: 0 10px; margin-bottom: 4px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); outline: 0; }
+.pop input:focus { border-color: var(--bank-ink); }
+.pop .opt { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 10px; border-radius: 10px; text-align: left; font-weight: 500; }
+.pop .opt:hover { background: var(--bank-soft); }
+.pop .opt i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.pop .opt .tick { margin-left: auto; color: var(--bank-ink); opacity: 0; }
+.pop .opt[aria-checked="true"] .tick { opacity: 1; }
+.pop .opt small { margin-left: auto; color: var(--text-muted); font-size: 12px; }
+.pop .none { padding: 10px; color: var(--text-muted); font-size: 12.5px; }
+.empty { padding: 44px 20px; text-align: center; color: var(--text-muted); }
+.empty b { display: block; font-family: var(--font-display); font-size: 17px; color: var(--text); }
+.back { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-weight: 500; margin-bottom: 12px; }
+.back:hover { color: var(--bank-ink); }
+.box { padding: 18px 20px; }
+.box h3 { font-size: 16px; font-weight: 650; margin-bottom: 12px; }
+.box-h { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; } .box-h h3 { margin: 0; flex: 1; }
+.cols { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.stack { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.kv { display: grid; gap: 10px; margin: 0; }
+.kv div { display: flex; gap: 10px; align-items: center; }
+.kv dt { width: 96px; flex: none; font-size: 12.5px; color: var(--text-muted); } .kv dd { margin: 0; min-width: 0; flex: 1; overflow-wrap: anywhere; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+/* dialogs, sheet, form basics (shared with Contacts and Accounts) */
+.scrim { position: absolute; inset: 0; z-index: 10; background: var(--scrim); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); display: grid; place-items: center; padding: 14px; animation: fade var(--base); }
+.dlg { width: min(460px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 22px; background: var(--surface); border: 1px solid var(--glass-line); box-shadow: var(--shadow-lg); animation: pop var(--slow) var(--ease-spring); overflow: hidden; }
+.dlg-head { padding: 18px 22px 0; display: flex; align-items: center; gap: 10px; }
+.dlg-head h3 { font-size: 19px; font-weight: 650; flex: 1; overflow-wrap: anywhere; }
+.dlg-body { padding: 14px 22px 18px; overflow-y: auto; color: var(--text-muted); }
+.dlg-foot { display: flex; gap: 8px; padding: 14px 22px; background: var(--surface-2); border-top: 1px solid var(--border); }
+.dlg-foot .sp { flex: 1; }
+.scrim.edge { place-items: stretch end; padding: 10px; }
+.sheet { width: min(400px, 100%); display: flex; flex-direction: column; border-radius: 20px; background: var(--surface); border: 1px solid var(--glass-line); box-shadow: var(--shadow-lg); overflow: hidden; animation: slide var(--slow) var(--ease-out); }
+@keyframes slide { from { transform: translateX(40px); opacity: 0; } }
+.sheet-body { flex: 1; overflow-y: auto; padding: 16px 22px 20px; display: grid; gap: 14px; align-content: start; }
+.pick-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border-radius: 14px; text-align: left; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted); animation: enter var(--slow) var(--ease-out) backwards; animation-delay: var(--d); transition: transform var(--fast) var(--ease-spring), border-color var(--fast), background var(--fast), box-shadow var(--fast); }
+.pick-item:hover { transform: translateX(-3px); border-color: var(--bank-ink); background: var(--bank-soft); box-shadow: 0 0 0 3px var(--bank-soft); color: var(--bank-ink); }
+.pick-item .ext { width: 38px; height: 38px; flex: none; border-radius: 11px; display: grid; place-items: center; background: var(--bank-soft); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+.pick-item div { flex: 1; min-width: 0; } .pick-item b { display: block; font-weight: 600; color: var(--text); } .pick-item small { font-size: 12.5px; }
+.ltabs { display: flex; gap: 4px; padding: 0 16px; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; }
+.ltabs button { position: relative; padding: 10px 12px 12px; font-weight: 550; color: var(--text-muted); white-space: nowrap; transition: color var(--fast); }
+.ltabs button:hover { color: var(--text); }
+.ltabs button::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--bank-primary); transform: scaleX(0); transition: transform var(--base) var(--ease-out); }
+.ltabs button[aria-selected="true"] { color: var(--bank-ink); } .ltabs button[aria-selected="true"]::after { transform: scaleX(1); }
+.sect { padding: 20px 22px; animation: enter var(--base) var(--ease-out); }
+.fg { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.fg .full { grid-column: 1 / -1; }
+.f label, .f .flab { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; font-weight: 500; margin-bottom: 5px; }
+.f label .tg { font-size: 10.5px; padding: 0 6px; }
+.f input, .f select, .f .fake { width: 100%; height: 40px; padding: 0 12px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); outline: 0; transition: border-color var(--fast), box-shadow var(--fast); display: flex; align-items: center; gap: 8px; text-align: left; }
+.f input:focus, .f select:focus, .f .fake:focus-visible { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.f .fake .dn { margin-left: auto; color: var(--text-muted); }
+.f .fake i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.f input[type="range"] { height: 28px; padding: 0; border: 0; box-shadow: none; background: none; accent-color: var(--bank-primary); }
+.f label b { color: var(--bank-ink); font-variant-numeric: tabular-nums; }
+.f.bad input, .f.bad .fake { border-color: var(--danger-text); }
+.f .err { color: var(--danger-text); font-size: 12px; margin-top: 4px; }
+.fpop { width: 100%; min-width: 240px; max-height: 300px; overflow-y: auto; }
+.savebar { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; background: var(--surface-2); border-top: 1px solid var(--border); border-radius: 0 0 18px 18px; }
+.toast { position: absolute; z-index: 12; left: 50%; bottom: 18px; transform: translate(-50%, 80px); padding: 10px 16px; border-radius: 14px; display: flex; align-items: center; gap: 8px; font-weight: 500; white-space: nowrap; color: var(--chrome-strong); background: var(--chrome-bg); border: 1px solid var(--chrome-line); box-shadow: var(--shadow-lg); transition: transform var(--slow) var(--ease-spring); }
+.toast.on { transform: translate(-50%, 0); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 12px 6px 2px 46px; font-size: 12.5px; color: var(--text-muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; } .legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.legend em { margin-left: auto; font-style: normal; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; } }
+
+/* ---- Customise page layout (ToolBox) ---- */
+:root { --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace; --grid: color-mix(in srgb, var(--bank-primary) 7%, transparent); --amber: #e0a020; --mod: #1f9d63; }
+:root[data-theme="dark"] { --grid: color-mix(in srgb, #9db8ee 7%, transparent); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --grid: color-mix(in srgb, #9db8ee 7%, transparent); } }
+.mono { font-family: var(--mono); font-size: .92em; letter-spacing: -.01em; }
+.page.pl-page { padding: 16px 18px 100px; }
+.pl-h { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; margin-bottom: 16px; }
+.pl-h .eyebrow { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; color: var(--text-muted); text-transform: uppercase; }
+.pl-h .eyebrow i { width: 8px; height: 8px; border-radius: 3px; background: var(--mod); transform: rotate(45deg); }
+.pl-h h2 { font-size: 26px; line-height: 32px; font-weight: 700; letter-spacing: -.02em; }
+.pl-h p { margin: 2px 0 0; color: var(--text-muted); max-width: 66ch; }
+.pl-h .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+.sec { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+.sec::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.sec b { color: var(--text); font-weight: 600; }
+.switch { width: 38px; height: 22px; border-radius: 99px; background: var(--surface-3); box-shadow: inset 0 0 0 1px var(--border-strong); position: relative; flex: none; transition: background var(--base); }
+.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform var(--slow) var(--ease-spring); }
+.switch[aria-checked="true"] { background: var(--bank-primary); box-shadow: none; }
+.switch[aria-checked="true"]::after { transform: translateX(16px); }
+.chipset { display: flex; flex-wrap: wrap; gap: 6px; }
+.chipset button { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 10px; font-size: 13px; font-weight: 550; color: var(--text-muted); box-shadow: inset 0 0 0 1px var(--border-strong); background: var(--surface); transition: background var(--fast), color var(--fast), box-shadow var(--fast); }
+.chipset button:hover { color: var(--text); }
+.chipset button[aria-pressed="true"] { color: var(--bank-ink); background: var(--bank-soft); box-shadow: inset 0 0 0 1.5px var(--bank-ink); }
+.chipset button[disabled] { opacity: 1; cursor: default; color: var(--bank-ink); background: var(--bank-soft); box-shadow: inset 0 0 0 1px var(--bank-soft-line); }
+
+/* layout list */
+.ll { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+.lcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.lyc { position: relative; display: flex; flex-direction: column; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); text-align: left; animation: pop var(--slow) var(--ease-spring) backwards; animation-delay: var(--d);
+  transition: transform var(--base) var(--ease-spring), box-shadow var(--base), border-color var(--fast); }
+.lyc:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: var(--bank-soft-line); }
+.lyc.off { opacity: .62; }
+.lyc.open { z-index: 6; opacity: 1; }
+.lyc > .thumb { border-radius: 17px 17px 0 0; }
+.lyc.fresh { border-color: var(--ok-text); box-shadow: 0 0 0 4px var(--ok-bg), var(--shadow); }
+.thumb { position: relative; height: 112px; padding: 10px; display: grid; grid-template-columns: repeat(12, 1fr); grid-auto-rows: 9px; gap: 4px; background-color: var(--surface-2); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 12px 12px; border-bottom: 1px solid var(--border); overflow: hidden; }
+.thumb i { grid-column: span var(--w); grid-row: span var(--h); border-radius: 4px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.thumb i.hd { background: color-mix(in srgb, var(--mod) 35%, var(--surface)); box-shadow: none; }
+.thumb .def { position: absolute; top: 8px; right: 8px; font-family: var(--mono); font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: var(--bank-primary); color: var(--bank-on); }
+.lyc-b { padding: 12px 14px 14px; display: grid; gap: 7px; flex: 1; }
+.lyc-b h3 { font-size: 16px; font-weight: 650; display: flex; align-items: center; gap: 8px; }
+.lyc-b h3 .menu { margin-left: auto; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; color: var(--text-muted); }
+.lyc-b h3 .menu:hover { background: var(--surface-2); color: var(--text); }
+.meta { display: grid; gap: 3px; font-size: 12.5px; color: var(--text-muted); }
+.meta span { display: flex; gap: 6px; align-items: center; }
+.meta b { color: var(--text); font-weight: 550; }
+.pg { display: flex; flex-wrap: wrap; gap: 4px; }
+.pg span { font-family: var(--mono); font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: 6px; background: var(--surface-2); color: var(--text-muted); box-shadow: inset 0 0 0 1px var(--border); }
+.lyc-f { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted); }
+.lyc-f .mono { margin-left: auto; font-size: 11px; }
+.lyc.new { display: grid; place-items: center; text-align: center; gap: 6px; min-height: 280px; border: 1.5px dashed var(--border-strong); background: none; box-shadow: none; color: var(--text-muted); }
+.lyc.new:hover { color: var(--bank-ink); background: var(--bank-soft); border-color: var(--bank-soft-line); }
+.lyc.new b { font-family: var(--font-display); font-size: 17px; color: inherit; }
+.cmenu { position: absolute; z-index: 9; top: 158px; right: 10px; width: 200px; padding: 6px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg); animation: pop var(--base) var(--ease-spring); }
+.cmenu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border-radius: 9px; font-size: 13px; font-weight: 500; text-align: left; }
+.cmenu button:hover { background: var(--bank-soft); }
+.cmenu button.danger { color: var(--danger-text); }
+.order { padding: 14px 16px; position: sticky; top: 76px; }
+.orow { display: grid; grid-template-columns: 20px 22px minmax(0, 1fr); align-items: center; gap: 8px; padding: 8px 8px; border-radius: 11px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 5px; font-size: 13px; transition: box-shadow var(--fast), border-color var(--fast), background var(--fast); }
+.orow .n { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text-muted); text-align: center; }
+.orow small { display: block; color: var(--text-muted); font-size: 11.5px; }
+/* categories */
+.pgrp { display: flex; align-items: center; gap: 7px; padding: 10px 6px 5px; font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: color-mix(in srgb, var(--c) 70%, var(--text)); }
+.pgrp:first-of-type { padding-top: 2px; }
+.pgrp i { width: 8px; height: 8px; border-radius: 3px; background: var(--c); flex: none; }
+.pgrp .mono { margin-left: auto; font-size: 10px; color: var(--text-muted); font-weight: 500; letter-spacing: 0; }
+.catchip { display: inline-flex; align-items: center; gap: 5px; align-self: start; justify-self: start; padding: 1px 8px 1px 6px; border-radius: 6px; font-size: 11px; font-weight: 600; color: color-mix(in srgb, var(--c) 70%, var(--text)); background: color-mix(in srgb, var(--c) 12%, var(--surface)); }
+.catchip i { width: 7px; height: 7px; border-radius: 2px; background: var(--c); }
+.chipset .cdot { width: 8px; height: 8px; border-radius: 3px; background: var(--c); }
+.chipset.bad button { box-shadow: inset 0 0 0 1px var(--danger-text); }
+.cats { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 16px; align-items: start; }
+.catnew { padding: 14px 16px 16px; display: grid; gap: 12px; position: sticky; top: 76px; }
+.catnew .btn.pri { justify-self: start; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.swatches button { width: 26px; height: 26px; border-radius: 8px; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); transition: transform var(--fast) var(--ease-spring); }
+.swatches button:hover { transform: scale(1.12); }
+.swatches button[aria-checked="true"] { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--c); }
+.catprev { padding: 8px 10px; border-radius: 12px; background: var(--surface-2); border: 1px dashed var(--border-strong); }
+.catprev .pgrp { padding: 6px 0 0; }
+.catlist { overflow: hidden; }
+.crow { display: grid; grid-template-columns: 20px 12px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface); transition: box-shadow var(--fast), background var(--fast); }
+.crow:first-child { border-top: 0; }
+.crow .dot { width: 12px; height: 12px; border-radius: 4px; background: var(--c); }
+.crow .cmain { display: grid; gap: 1px; min-width: 0; }
+.crow .cmain b { font-weight: 650; font-size: 14px; }
+.crow .cmain small { color: var(--text-muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+.crow .cmain small.mono { font-size: 11px; }
+.crow .cmain input { height: 32px; padding: 0 10px; border-radius: 9px; border: 1px solid var(--bank-ink); background: var(--surface); outline: 0; font-weight: 600; max-width: 260px; }
+.crow .cacts { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.crow .cacts .btn { height: 32px; padding: 0 10px; font-size: 12.5px; }
+.crow.lift { position: relative; z-index: 3; box-shadow: var(--shadow-lg); }
+.crow.fresh { background: color-mix(in srgb, var(--ok-bg) 45%, var(--surface)); }
+.sheetmock { border-radius: 16px; border: 1px solid var(--border-strong); background: var(--surface-2); padding: 8px; box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 40%, transparent); }
+.sheet-h { display: flex; align-items: center; gap: 7px; padding: 4px 6px 8px; font-weight: 650; font-size: 13px; }
+.sheet-h .mono { margin-left: auto; font-size: 10.5px; color: var(--text-muted); font-weight: 500; }
+.pickrow { grid-template-columns: 20px 18px minmax(0, 1fr); }
+.pickrow .radio { width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--border-strong); background: var(--surface); }
+.pickrow.sel { border-color: var(--bank-ink); background: var(--bank-soft); }
+.pickrow.sel .radio { box-shadow: inset 0 0 0 5px var(--bank-primary); }
+.hiddenrow { display: flex; justify-content: space-between; gap: 10px; padding: 5px 8px; font-size: 12.5px; color: var(--text-muted); border-radius: 8px; }
+.hiddenrow span { text-decoration: line-through; } .hiddenrow small { font-size: 11.5px; text-align: right; }
+.orow.win {border-color: var(--ok-text); background: color-mix(in srgb, var(--ok-bg) 55%, var(--surface)); box-shadow: 0 0 0 3px var(--ok-bg); }
+.orow.lift { box-shadow: var(--shadow-lg); border-color: var(--bank-ink); }
+.orow.off { opacity: .5; }
+.grab { color: var(--text-muted); cursor: grab; touch-action: none; display: grid; place-items: center; height: 24px; }
+.grab:active { cursor: grabbing; }
+.tryit { display: grid; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-strong); }
+.tryit select { width: 100%; height: 34px; padding: 0 8px; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--surface); }
+.tryit .row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.tryit label { display: grid; gap: 3px; font-size: 11.5px; color: var(--text-muted); }
+.winner { padding: 10px 12px; border-radius: 12px; background: var(--ok-bg); color: var(--ok-text); font-size: 13px; font-weight: 600; display: flex; gap: 8px; align-items: center; }
+
+/* new layout form */
+.nf { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.nf .card { overflow: visible; }
+.nf-sec { padding: 18px 20px; border-top: 1px solid var(--border); display: grid; gap: 14px; }
+.nf-sec:first-child { border-top: 0; }
+.nf-sec h3 { font-size: 15px; font-weight: 650; display: flex; align-items: center; gap: 8px; }
+.nf-sec h3 .mono { font-size: 11px; color: var(--text-muted); font-weight: 500; margin-left: auto; }
+.f textarea { width: 100%; min-height: 64px; padding: 10px 12px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); outline: 0; resize: vertical; font: inherit; }
+.f textarea:focus { border-color: var(--bank-ink); box-shadow: 0 0 0 4px var(--bank-soft); }
+.start { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.start button { display: grid; gap: 6px; padding: 8px; border-radius: 13px; text-align: left; box-shadow: inset 0 0 0 1px var(--border-strong); background: var(--surface); font-size: 12.5px; font-weight: 550; transition: box-shadow var(--fast), background var(--fast); }
+.start button[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--bank-ink); background: var(--bank-soft); }
+.start .thumb { height: 64px; border-radius: 9px; border: 0; padding: 6px; grid-auto-rows: 5px; gap: 3px; }
+.start .thumb.blank { display: grid; place-items: center; grid-template-columns: 1fr; color: var(--text-muted); }
+.pages-l { display: grid; gap: 6px; }
+.pages-l > div { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 11px; background: var(--surface-2); font-size: 13px; animation: enter var(--base) var(--ease-out) backwards; }
+.pages-l .ico { width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; background: var(--surface); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--border); }
+.pages-l small { display: block; color: var(--text-muted); font-size: 11.5px; }
+.addpage { display: flex; gap: 6px; }
+.addpage input { flex: 1; min-width: 0; height: 36px; padding: 0 10px; border-radius: 10px; border: 1px dashed var(--border-strong); background: var(--surface); outline: 0; }
+.addpage input:focus { border-style: solid; border-color: var(--bank-ink); }
+.nf-side { position: sticky; top: 76px; display: grid; gap: 12px; }
+.nf-foot { display: flex; gap: 8px; justify-content: flex-end; padding: 14px 20px; background: var(--surface-2); border-top: 1px solid var(--border); border-radius: 0 0 18px 18px; }
+
+/* editor */
+.ed-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 10px; }
+.ed-top .nm { font-family: var(--font-display); font-size: 22px; font-weight: 700; letter-spacing: -.01em; border: 1px solid transparent; border-radius: 9px; padding: 2px 6px; margin-left: -6px; background: none; color: var(--text); outline: 0; min-width: 0; width: min(340px, 100%); }
+.ed-top .nm:hover { border-color: var(--border); } .ed-top .nm:focus { border-color: var(--bank-ink); background: var(--surface); }
+.state { font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 7px; }
+.state.draft { background: var(--warn-bg); color: var(--warn-text); } .state.live { background: var(--ok-bg); color: var(--ok-text); }
+.ed-top .sp { flex: 1; }
+.ed-top .btn { height: 34px; }
+.ptabs { display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--border-strong); margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
+.ptab { position: relative; display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 12px 12px 0 0; font-weight: 600; font-size: 13.5px; color: var(--text-muted); white-space: nowrap; border: 1px solid transparent; border-bottom: 0; margin-bottom: -1px; transition: background var(--fast), color var(--fast); }
+.ptab:hover { color: var(--text); background: var(--surface-2); }
+.ptab[aria-selected="true"] { color: var(--text); background: var(--surface); border-color: var(--border-strong); }
+.ptab[aria-selected="true"]::before { content: ''; position: absolute; left: 10px; right: 10px; top: -1px; height: 3px; border-radius: 0 0 3px 3px; background: var(--mod); }
+.ptab .k { font-family: var(--mono); font-size: 10px; padding: 1px 5px; border-radius: 5px; background: var(--surface-2); color: var(--text-muted); }
+.ptab.add { color: var(--bank-ink); }
+.ptab input { width: 120px; height: 26px; padding: 0 8px; border-radius: 7px; border: 1px solid var(--bank-ink); outline: 0; background: var(--surface); font-weight: 500; }
+.tools2 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 12px; font-size: 12.5px; color: var(--text-muted); }
+.tools2 .seg button { font-size: 12px; }
+.ed { display: grid; grid-template-columns: 236px minmax(0, 1fr) 270px; gap: 14px; align-items: start; }
+.pal { position: sticky; top: 76px; padding: 10px; display: grid; gap: 8px; max-height: calc(86vh - 120px); overflow-y: auto; }
+.pal .seg { width: 100%; } .pal .seg button { flex: 1; justify-content: center; }
+.pal-find { display: flex; align-items: center; gap: 7px; height: 32px; padding: 0 10px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted); }
+.pal-find input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font-size: 12.5px; color: var(--text); }
+.pi { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 9px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); font-size: 12.5px; font-weight: 550; text-align: left; cursor: grab; touch-action: none; user-select: none; transition: border-color var(--fast), background var(--fast), transform var(--fast) var(--ease-spring); }
+.pi:hover { border-color: var(--bank-soft-line); background: var(--bank-soft); transform: translateX(2px); }
+.pi.used { opacity: .5; cursor: default; } .pi.used:hover { transform: none; background: var(--surface); border-color: var(--border); }
+.pi .ty { width: 20px; height: 20px; border-radius: 6px; display: grid; place-items: center; flex: none; font-family: var(--mono); font-size: 9.5px; font-weight: 700; color: var(--c); background: color-mix(in srgb, var(--c) 14%, var(--surface)); }
+.pi .mono { margin-left: auto; font-size: 10px; color: var(--text-muted); font-weight: 500; }
+.pal .glab { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); padding: 4px 2px 0; }
+
+.canvas { border-radius: 18px; border: 1px solid var(--border); padding: 14px; min-height: 520px; background-color: var(--surface-2); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 20px 20px; transition: padding var(--slow) var(--ease-out); }
+.frame { margin: 0 auto; max-width: 100%; border-radius: 16px; background: var(--bg); border: 1px solid var(--border-strong); box-shadow: var(--shadow-lg); overflow: hidden; transition: max-width var(--slow) var(--ease-out); }
+.canvas.phone .frame { max-width: 380px; }
+.fr-h { display: flex; align-items: center; gap: 10px; padding: 14px 16px 10px; }
+.fr-h .badge { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #fff; background: var(--mod); flex: none; }
+.fr-h b { font-family: var(--font-display); font-size: 18px; font-weight: 700; display: block; line-height: 22px; }
+.fr-h small { color: var(--text-muted); font-size: 12px; }
+.itabs { display: flex; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.itab { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 9px 11px 11px; font-weight: 550; font-size: 13px; color: var(--text-muted); white-space: nowrap; cursor: pointer; border-radius: 8px 8px 0 0; }
+.itab:hover { color: var(--text); background: var(--surface-2); }
+.itab::after { content: ''; position: absolute; left: 8px; right: 8px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--bank-primary); transform: scaleX(0); transition: transform var(--base) var(--ease-out); }
+.itab[aria-selected="true"] { color: var(--bank-ink); } .itab[aria-selected="true"]::after { transform: scaleX(1); }
+.itab.sel { box-shadow: inset 0 0 0 1.5px var(--bank-ink); }
+.itab.hid { color: var(--text-muted); background: repeating-linear-gradient(-45deg, transparent 0 5px, color-mix(in srgb, var(--text) 6%, transparent) 5px 10px); text-decoration: line-through; }
+.itab .lock { color: var(--warn-text); }
+.itab.lift { background: var(--surface); box-shadow: var(--shadow-lg); z-index: 3; }
+.itab.add { color: var(--bank-ink); font-weight: 600; }
+.tabx { width: 20px; height: 20px; margin: 0 -4px 0 2px; border-radius: 6px; display: grid; place-items: center; color: var(--text-muted); transition: background var(--fast), color var(--fast); }
+.tabx:hover, .tabx:focus-visible { background: var(--danger-bg); color: var(--danger-text); }
+.body { padding: 14px; display: grid; gap: 12px; }
+.fsec { border-radius: 14px; background: var(--surface); border: 1px solid var(--border); padding: 12px 14px 14px; transition: border-color var(--fast), box-shadow var(--fast); }
+.fsec.sel { border-color: var(--bank-ink); box-shadow: 0 0 0 3px var(--bank-soft); }
+.fsec.over { border-color: var(--ok-text); border-style: dashed; background: color-mix(in srgb, var(--ok-bg) 35%, var(--surface)); }
+.fsec-h { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; cursor: pointer; }
+.fsec-h b { font-weight: 650; font-size: 14px; }
+.fsec-h .mono { margin-left: auto; font-size: 10.5px; color: var(--text-muted); }
+.fgrid { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 10px 14px; min-height: 46px; }
+.canvas.phone .fgrid { grid-template-columns: minmax(0, 1fr); }
+.fld { position: relative; padding: 6px 8px 8px; border-radius: 11px; border: 1px solid transparent; cursor: pointer; transition: background var(--fast), border-color var(--fast), opacity var(--fast); }
+.fld:hover { background: var(--surface-2); border-color: var(--border); }
+.fld.sel { border-color: var(--bank-ink); background: var(--bank-soft); }
+.fld.ghosted { opacity: .25; }
+.fld.dropb::before { content: ''; position: absolute; left: -2px; right: -2px; top: -6px; height: 3px; border-radius: 3px; background: var(--ok-text); }
+.fld.cond { opacity: .45; background: repeating-linear-gradient(-45deg, transparent 0 6px, color-mix(in srgb, var(--text) 5%, transparent) 6px 12px); }
+.fld .fl { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 550; margin-bottom: 4px; }
+.fld .fl .grab { height: 16px; margin-left: -4px; opacity: 0; transition: opacity var(--fast); }
+.fld:hover .fl .grab, .fld.sel .fl .grab { opacity: 1; }
+.fld .req { color: var(--danger-text); font-weight: 700; }
+.fld .flags { margin-left: auto; display: inline-flex; gap: 3px; }
+.fld .flags i { font-family: var(--mono); font-size: 9.5px; font-weight: 700; padding: 1px 5px; border-radius: 5px; background: var(--surface-3); color: var(--text-muted); }
+.fld .flags i.if { background: var(--warn-bg); color: var(--warn-text); }
+.fld .fi { height: 36px; display: flex; align-items: center; gap: 6px; padding: 0 11px; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.fld .fi.ro { background: var(--surface-2); color: var(--text-muted); border-style: dashed; }
+.fld .fi.long { height: 60px; align-items: flex-start; padding-top: 8px; white-space: normal; }
+.fld .fi .dn { margin-left: auto; color: var(--text-muted); }
+.fld .help { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+.fld .why { font-size: 11px; color: var(--warn-text); margin-top: 3px; display: flex; gap: 4px; align-items: center; }
+.newsec { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 12px; border: 1.5px dashed var(--border-strong); color: var(--bank-ink); font-weight: 600; font-size: 13px; }
+.newsec:hover { background: var(--bank-soft); border-color: var(--bank-soft-line); }
+.cgrid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 10px; grid-auto-flow: row dense; }
+.canvas.phone .cgrid { grid-template-columns: minmax(0, 1fr); }
+.rc { position: relative; grid-column: span var(--w); min-height: calc(var(--h) * 30px); padding: 10px 12px 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 7px; overflow: hidden; cursor: pointer; transition: border-color var(--fast), box-shadow var(--fast); }
+.canvas.phone .rc { grid-column: 1 / -1; }
+.rc.sel { border-color: var(--bank-ink); box-shadow: 0 0 0 3px var(--bank-soft), var(--shadow); }
+.rc.ghosted { opacity: .25; } .rc.dropb { box-shadow: -4px 0 0 var(--ok-text), var(--shadow); }
+.rc.over { border-color: var(--ok-text); border-style: dashed; }
+.rc-h { display: flex; align-items: center; gap: 6px; font-weight: 650; font-size: 13px; }
+.rc-h .mono { margin-left: auto; font-size: 10px; color: var(--text-muted); font-weight: 500; }
+.rc .rz-x { position: absolute; right: 0; top: 0; bottom: 12px; width: 12px; cursor: ew-resize; touch-action: none; display: grid; place-items: center; }
+.rc .rz-y { position: absolute; left: 0; right: 12px; bottom: 0; height: 12px; cursor: ns-resize; touch-action: none; display: grid; place-items: center; }
+.rc .rz-xy { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize; touch-action: none; }
+.rc .rz-x::after { content: ''; width: 3px; height: 24px; border-radius: 3px; background: var(--border-strong); }
+.rc .rz-y::after { content: ''; height: 3px; width: 24px; border-radius: 3px; background: var(--border-strong); }
+.rc .rz-xy::after { content: ''; position: absolute; right: 3px; bottom: 3px; width: 7px; height: 7px; border-right: 2px solid var(--border-strong); border-bottom: 2px solid var(--border-strong); border-radius: 0 0 3px 0; }
+.rc:hover .rz-x::after, .rc:hover .rz-y::after, .rc.sizing .rz-x::after, .rc.sizing .rz-y::after { background: var(--bank-ink); }
+.canvas.phone .rz-x, .canvas.phone .rz-xy { display: none; }
+.kvs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px 14px; font-size: 12.5px; }
+.kvs div { display: grid; gap: 1px; } .kvs span { color: var(--text-muted); font-size: 11.5px; } .kvs b { font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kvs .cond { opacity: .4; }
+.chev { display: flex; gap: 3px; }
+.chev i { flex: 1; height: 24px; display: grid; place-items: center; font-size: 10.5px; font-weight: 600; color: var(--text-muted); background: var(--surface-2); clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%, 8px 50%); }
+.chev i.on { background: var(--mod); color: #fff; }
+.figs { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+.figs div { display: grid; } .figs span { font-size: 11.5px; color: var(--text-muted); } .figs b { font-family: var(--font-display); font-size: 21px; font-weight: 700; }
+.hl { display: grid; gap: 6px; font-size: 12.5px; }
+.hl div { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.hl i { width: 8px; height: 8px; border-radius: 50%; background: var(--bank-ink); } .hl .mono { color: var(--text-muted); font-size: 10.5px; }
+.ring { width: 54px; height: 54px; border-radius: 50%; background: conic-gradient(var(--mod) calc(var(--p) * 1%), var(--surface-3) 0); display: grid; place-items: center; }
+.ring::after { content: attr(data-t); width: 42px; height: 42px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; font-size: 11px; font-weight: 700; }
+.files div { display: flex; gap: 8px; align-items: center; padding: 6px 8px; border-radius: 9px; background: var(--surface-2); font-size: 12.5px; margin-bottom: 4px; }
+.avs { display: flex; gap: 6px; align-items: center; font-size: 12.5px; }
+.emptytab { padding: 30px 16px; text-align: center; color: var(--text-muted); border: 1.5px dashed var(--border-strong); border-radius: 14px; }
+.emptytab b { display: block; color: var(--text); font-family: var(--font-display); font-size: 15px; margin-bottom: 3px; }
+
+.insp { position: sticky; top: 76px; }
+.insp-h { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--border); background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 14px 14px; }
+.insp-h h3 { font-size: 15px; font-weight: 650; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.insp-h .mono { font-size: 10.5px; color: var(--text-muted); }
+.insp-b { padding: 12px 14px 14px; display: grid; gap: 12px; }
+.insp .f input, .insp .f select { height: 34px; }
+.sw-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; }
+.sw-row small { display: block; color: var(--text-muted); font-size: 11.5px; }
+.condb { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; align-items: center; }
+.condb select { height: 32px; padding: 0 6px; border-radius: 9px; border: 1px solid var(--border-strong); background: var(--surface); min-width: 0; font-size: 12.5px; }
+.condb span { font-size: 12px; color: var(--text-muted); }
+.checks { margin-top: 12px; padding: 10px 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); display: grid; gap: 6px; }
+.checks .ck { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 12.5px; }
+.checks .ck .s { width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; }
+.checks .ck.block .s { background: var(--danger-bg); color: var(--danger-text); } .checks .ck.warn .s { background: var(--warn-bg); color: var(--warn-text); } .checks .ck.ok .s { background: var(--ok-bg); color: var(--ok-text); }
+.cmpb { position: absolute; top: -8px; right: 6px; z-index: 2; font-family: var(--mono); font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 5px; background: var(--ok-bg); color: var(--ok-text); box-shadow: 0 0 0 2px var(--surface); }
+.cmpb.chg { background: var(--warn-bg); color: var(--warn-text); }
+.gone { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--danger-bg); color: var(--danger-text); font-size: 12.5px; }
+.ghost-drag { position: fixed; z-index: 50; pointer-events: none; padding: 7px 11px; border-radius: 10px; background: var(--surface); border: 1.5px solid var(--bank-ink); box-shadow: var(--shadow-lg); font-size: 12.5px; font-weight: 600; transform: translate(-50%, -60%) rotate(-2deg); display: flex; gap: 6px; align-items: center; white-space: nowrap; }
+.dlg textarea { width: 100%; min-height: 60px; padding: 10px 12px; border-radius: 11px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); outline: 0; font: inherit; }
+
+@container (max-width: 1150px) {
+  .ed { grid-template-columns: 210px minmax(0, 1fr); } .ed > .insp { grid-column: 1 / -1; position: static; }
+}
+@container (max-width: 900px) {
+  .cats { grid-template-columns: minmax(0, 1fr); } .catnew { position: static; }
+  .ll, .nf { grid-template-columns: minmax(0, 1fr); } .order, .nf-side { position: static; }
+  .ed { grid-template-columns: minmax(0, 1fr); } .pal { position: static; max-height: none; }
+  .pal .list { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; } .pal .list .pi { width: auto; flex: none; } .pal .glab { display: none; }
+}
+@container (max-width: 640px) {
+  .rail { display: none; } .app { grid-template-columns: minmax(0, 1fr); }
+  .page.pl-page { padding: 12px 10px 100px; }
+  .pl-h h2 { font-size: 22px; line-height: 28px; }
+  .canvas { padding: 8px; } .body { padding: 10px; }
+  .fgrid { grid-template-columns: minmax(0, 1fr) !important; }
+  .cgrid { grid-template-columns: minmax(0, 1fr); } .rc { grid-column: 1 / -1; } .rz-x, .rz-xy { display: none; }
+  .tryit .row3 { grid-template-columns: minmax(0, 1fr); }
+  .crow { grid-template-columns: 20px 12px minmax(0, 1fr); } .crow .cacts { grid-column: 3; justify-content: flex-start; }
+  .ed-top .nm { font-size: 19px; }
+}
+</style>
+<div class="deck">
+  <h1>Customise page layout <small>Harbor CRM 3.0, design for your review. Opened from a module's ToolBox (shown here in Deals); built once and the same in every module. Try: <b>New layout</b>, open a layout card, drag fields in from the left, drag a card's edges, switch the sample record or "Preview as", and watch the checks.</small></h1>
+  <div class="pick">Screen <div class="seg" id="screens"></div></div>
+  <div class="pick"><div class="seg"><button id="themeBtn" aria-pressed="false">Light / dark</button></div></div>
+</div>
+
+<div class="stage">
+  <div class="app" id="app">
+    <aside class="rail" aria-hidden="true" id="rail"></aside>
+    <div class="main" id="main">
+      <header class="tb">
+        <div class="crumb" id="crumb"></div>
+        <div class="chip-me"><i class="av">PN</i><span>Priya Nair</span></div>
+      </header>
+      <main class="page pl-page" id="page"></main>
+    </div>
+    <div id="ovl"></div>
+    <div class="toast" id="toast" role="status"></div>
+  </div>
+</div>
+
+<script>
+const I = {
+  dashboard: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+  building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01"/>',
+  deal: '<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
+  box: '<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8M12 13v8"/>',
+  mega: '<path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
+  checksq: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12l3 3 5-6"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  fields: '<path d="M4 6h16M4 12h16M4 18h10"/>',
+  layout: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  history: '<path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  back: '<path d="M19 12H5M11 18l-6-6 6-6"/>',
+  out: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>',
+  x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  plus: '<path d="M5 12h14M12 5v14"/>',
+  grip: '<circle cx="9" cy="6" r="1.4"/><circle cx="15" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/><circle cx="15" cy="18" r="1.4"/>',
+  warn: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  phone: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
+  monitor: '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  undo: '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>',
+  redo: '<path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 15-6.7L21 13"/>',
+  eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  dots: '<circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  star: '<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>',
+  power: '<path d="M18.4 6.6a9 9 0 1 1-12.8 0M12 2v10"/>',
+  trash: '<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',
+  pen: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  form: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  page: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12"/>',
+  section: '<rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/>',
+  tab: '<path d="M3 21V7a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v11z"/>',
+};
+const ic = (n, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n] || I.box}</svg>`;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const plural = (n, w) => (w === 'person' ? (n === 1 ? '1 person' : n + ' people') : n + ' ' + w + (n === 1 ? '' : 's'));
+const clone = (x) => JSON.parse(JSON.stringify(x));
+
+/* ---------- Deals: fields come from Setup › Modules & fields ---------- */
+const TY = { text: ['Aa', '#2f6fe0'], long: ['¶', '#2f6fe0'], number: ['12', '#1f9d63'], currency: ['₹', '#1f9d63'], date: ['31', '#0f97a8'], pick: ['▾', '#6d4fd6'], multi: ['▾▾', '#6d4fd6'], lookup: ['→', '#d9467a'], user: ['@', '#d9467a'], formula: ['ƒx', '#c98a12'], auto: ['#', '#5a6272'], file: ['⎘', '#0e7c8a'] };
+const F = {
+  name: { l: 'Deal name', t: 'text', req: true, s: ['Kapoor flat purchase', 'Menon gold pledge'] },
+  num: { l: 'Deal number', t: 'auto', ro: true, s: ['HL-2026-0142', 'GL-2026-0031'] },
+  acct: { l: 'Account', t: 'lookup', req: true, s: ['Kapoor Exports Pvt Ltd', 'Menon Dental Clinic'] },
+  stage: { l: 'Stage', t: 'pick', req: true, s: ['Credit check', 'Sanctioned'] },
+  product: { l: 'Product', t: 'pick', s: ['Home loan', 'Gold loan'] },
+  sub: { l: 'Sub-product', t: 'pick', s: ['Purchase', 'Jewellery pledge'] },
+  amount: { l: 'Loan amount', t: 'currency', req: true, s: ['₹45,00,000', '₹6,50,000'] },
+  tenure: { l: 'Tenure (months)', t: 'number', s: ['240', '12'] },
+  rate: { l: 'Interest rate (%)', t: 'number', s: ['8.6', '9.25'] },
+  emi: { l: 'EMI', t: 'formula', ro: true, s: ['₹39,337', '₹56,950'] },
+  coll: { l: 'Collateral value', t: 'currency', s: ['₹62,00,000', '₹7,74,000'] },
+  ltv: { l: 'LTV %', t: 'formula', ro: true, s: ['72.6%', '84.0%'] },
+  purity: { l: 'Gold purity (karat)', t: 'number', s: ['', '22'] },
+  coapp: { l: 'Co-applicant', t: 'lookup', s: ['Vikram Kapoor', ''] },
+  close: { l: 'Close date', t: 'date', req: true, s: ['30 Nov 2026', '22 Nov 2026'] },
+  owner: { l: 'Owner', t: 'user', s: ['Arjun Das', 'Sana Iyer'] },
+  purpose: { l: 'Purpose', t: 'multi', s: ['Self-occupied', 'Business'] },
+  docs: { l: 'Sanction documents', t: 'file', s: ['2 files', ''] },
+  next: { l: 'Next step', t: 'text', s: ['Valuation visit on Saturday', 'Disburse at Baner branch'] },
+  notes: { l: 'Notes', t: 'long', s: ['Customer prefers a branch visit on Saturdays.', 'Wants the funds by Friday.'] },
+};
+const CARDS = { stage: ['Stage path', 'deal'], figures: ['Figures', 'deal'], details: ['Details', 'fields'], coll: ['Collateral', 'shield'], next: ['Next step', 'arrow'], people: ['People', 'users'], quotes: ['Quotes', 'file'], docs: ['Documents', 'file'], history: ['History', 'history'], stagehist: ['Stage moves', 'deal'], activity: ['Activity', 'calendar'], tickets: ['Open tickets', 'ticket'] };
+const SAMPLES = ['HL-2026-0142 · Kapoor flat (Home loan)', 'GL-2026-0031 · Menon gold (Gold loan)'];
+const ROLES = ['Everyone', 'Relationship manager', 'Credit officer', 'Branch manager', 'Viewer'];
+const PRODUCTS = ['Home Loan', 'Car Loan', 'Gold Loan', 'Business Loan'];
+const BRANCHES = ['Andheri East', 'Baner, Pune', 'Kothrud, Pune', 'Head office'];
+
+/* ---------- each layout has its own pages (M = draft, P = published, FS = field settings on this layout) ---------- */
+let cid = 100;
+const uid = (p) => p + ++cid;
+/* "Basic" start: the required fields, a standard record page, and History. */
+const BASIC = {
+  'New/Edit': () => ({ tabs: [{ id: uid('t'), name: 'Details', roles: [], secs: [{ id: uid('s'), title: 'Basics', cols: 2, f: ['name', 'acct', 'stage', 'amount', 'close', 'owner'] }] }] }),
+  Detail: () => ({ tabs: [{ id: uid('d'), name: 'Overview', roles: [], cards: [{ id: uid('c'), k: 'stage', w: 12, h: 2 }, { id: uid('c'), k: 'figures', w: 8, h: 3 }, { id: uid('c'), k: 'next', w: 4, h: 3 }, { id: uid('c'), k: 'details', w: 12, h: 4, f: ['num', 'acct', 'amount', 'close', 'owner'] }] }] }),
+  History: () => ({ tabs: [{ id: uid('h'), name: 'All changes', roles: [], cards: [{ id: uid('c'), k: 'history', w: 12, h: 8 }] }] }),
+};
+const emptyPage = () => ({ tabs: [{ id: uid('p'), name: 'Main', roles: [], cards: [] }] });
+/* Fresh ids for a copied page, so two layouts never share a tab, section or card. */
+function reid(page) { for (const t of page.tabs) { t.id = uid('t'); (t.secs || []).forEach((s) => (s.id = uid('s'))); (t.cards || []).forEach((c) => (c.id = uid('c'))); } return page; }
+/* The pages a new layout starts with: copied from the source layout where it has that page, otherwise basic or empty. */
+function modelFor(pages, base) {
+  const m = {};
+  for (const pg of pages) m[pg] = base && base[pg] ? reid(clone(base[pg])) : BASIC[pg] ? BASIC[pg]() : emptyPage();
+  return m;
+}
+const pagesOf = (L) => Object.keys(L.M);
+/* The card's picture: the first tab of the Detail page, as drawn on the canvas. */
+const thumbOf = (L) => { const t = L.M.Detail?.tabs[0]; const cells = (t?.cards || []).slice(0, 8).map((c) => [c.w, Math.max(1, Math.min(6, c.h)), c.k === 'stage' ? 1 : 0]); return cells.length ? cells : [[12, 2, 1]]; };
+
+const SECURED = {
+  'New/Edit': { tabs: [
+    { id: 't1', name: 'Loan', roles: [], secs: [{ id: 's1', title: 'Basics', cols: 2, f: ['name', 'acct', 'product', 'sub', 'stage', 'close'] }, { id: 's2', title: 'Amount', cols: 2, f: ['amount', 'tenure', 'rate', 'emi'] }] },
+    { id: 't2', name: 'Security', roles: [], secs: [{ id: 's3', title: 'Collateral', cols: 2, f: ['coll', 'ltv', 'purity'] }] },
+    { id: 't3', name: 'Documents', roles: [], secs: [{ id: 's4', title: 'Files and notes', cols: 1, f: ['docs', 'notes'] }] } ] },
+  Detail: { tabs: [
+    { id: 'd1', name: 'Overview', roles: [], cards: [{ id: 'c1', k: 'stage', w: 12, h: 2 }, { id: 'c2', k: 'figures', w: 8, h: 3 }, { id: 'c3', k: 'next', w: 4, h: 3 }, { id: 'c4', k: 'details', w: 7, h: 6, f: ['num', 'acct', 'product', 'sub', 'amount', 'tenure', 'rate', 'close', 'owner'] }, { id: 'c5', k: 'coll', w: 5, h: 3 }, { id: 'c6', k: 'people', w: 5, h: 3 }] },
+    { id: 'd2', name: 'Documents', roles: [], cards: [{ id: 'c7', k: 'docs', w: 12, h: 4 }] },
+    { id: 'd3', name: 'Credit', roles: ['Credit officer', 'Branch manager'], cards: [{ id: 'c8', k: 'details', w: 6, h: 5, f: ['ltv', 'coll', 'emi', 'purity'] }, { id: 'c9', k: 'stagehist', w: 6, h: 5 }] } ] },
+  History: { tabs: [
+    { id: 'h1', name: 'All changes', roles: [], cards: [{ id: 'c10', k: 'history', w: 12, h: 8 }] },
+    { id: 'h2', name: 'Stage moves', roles: [], cards: [{ id: 'c11', k: 'stagehist', w: 12, h: 5 }] } ] },
+};
+const PAGE_KIND = { 'New/Edit': 'form' };
+/* Every layout keeps these two; any other page can be deleted. */
+const FIXED_PAGES = ['New/Edit', 'Detail'];
+const SECURED_FS = { coll: { cond: ['product', 'is', 'Home loan, Gold loan'] }, ltv: { cond: ['product', 'is', 'Home loan, Gold loan'] }, purity: { cond: ['product', 'is', 'Gold loan'], help: 'Only for gold loans; read from the assay slip.' }, emi: { help: 'Worked out from amount, rate and tenure.' } };
+
+const CAR = modelFor(['New/Edit', 'Detail']);
+CAR['New/Edit'].tabs[0].secs.push({ id: uid('s'), title: 'Loan', cols: 2, f: ['product', 'sub', 'tenure', 'rate', 'emi'] });
+CAR.Detail.tabs[0].cards.push({ id: uid('c'), k: 'docs', w: 6, h: 3 }, { id: uid('c'), k: 'people', w: 6, h: 3 });
+const CREDIT = modelFor(['New/Edit', 'Detail']);
+CREDIT['Credit review'] = { tabs: [{ id: uid('p'), name: 'Checks', roles: [], cards: [{ id: uid('c'), k: 'details', w: 4, h: 8, f: ['ltv', 'coll', 'emi', 'purity'] }, { id: uid('c'), k: 'coll', w: 8, h: 4 }, { id: uid('c'), k: 'stagehist', w: 8, h: 4 }] }] };
+const PUNE = modelFor(['New/Edit', 'Detail']);
+PUNE.Detail.tabs[0].cards = [{ id: uid('c'), k: 'stage', w: 12, h: 2 }, { id: uid('c'), k: 'details', w: 12, h: 6, f: ['num', 'acct', 'amount', 'close', 'owner'] }];
+const STANDARD = modelFor(['New/Edit', 'Detail', 'History']);
+
+/* A layout: who it is for, its pages (M, the draft people edit), what is live (P, null until first published), field settings (FS), and its own undo. */
+/* Categories group a module's layouts: headings in Choose a layout and on the Layouts screen, in this order.
+   They are made, renamed, ordered and deleted only on the Categories page. Every layout is in exactly one. */
+const CAT_COLOURS = ['#2f6fe0', '#0f97a8', '#1f9d63', '#6d4fd6', '#d9467a', '#d33a3a', '#c98a12', '#8a93a6'];
+let CATS = [
+  { id: 'K1', name: 'Retail loans', desc: 'Home, car and gold loans for individuals.', c: '#2f6fe0' },
+  { id: 'K2', name: 'Credit', desc: 'What the credit team works in.', c: '#6d4fd6' },
+  { id: 'K3', name: 'Branch desks', desc: 'Short forms for walk-in desks.', c: '#c98a12' },
+  { id: 'K0', name: 'General', desc: 'Layouts for any deal.', c: '#8a93a6' },
+];
+const catOf = (L) => CATS.find((k) => k.id === L.cat) || CATS[CATS.length - 1];
+const catChip = (k) => `<span class="catchip" style="--c:${k.c}"><i></i>${esc(k.name)}</span>`;
+
+const mk = (o, M, FS = {}) => ({ on: true, used: 0, people: 0, roles: [], branches: [], prod: [], def: false, cat: 'K0', ...o, M, P: o.v ? clone(M) : null, FS, undo: [], redo: [] });
+let LAYOUTS = [
+  mk({ id: 'L1', name: 'Secured loans', cat: 'K1', desc: 'Home and gold loans: collateral and LTV up front.', prod: ['Home Loan', 'Gold Loan'], used: 214, by: 'Priya Nair', at: '18 Nov', v: 6 }, clone(SECURED), clone(SECURED_FS)),
+  mk({ id: 'L2', name: 'Car loans', cat: 'K1', desc: 'Dealer, vehicle and insurance details.', prod: ['Car Loan'], used: 96, by: 'Sana Iyer', at: '12 Nov', v: 3 }, CAR),
+  mk({ id: 'L3', name: 'Credit desk', cat: 'K2', desc: 'What credit officers check before sanction.', roles: ['Credit officer'], people: 4, by: 'Priya Nair', at: '9 Nov', v: 2 }, CREDIT),
+  mk({ id: 'L4', name: 'Pune quick form', cat: 'K3', desc: 'Short form for the Pune walk-in desks.', prod: ['Home Loan'], roles: ['Relationship manager'], branches: ['Baner, Pune', 'Kothrud, Pune'], on: false, people: 6, by: 'Sana Iyer', at: '2 Nov', v: 1 }, PUNE),
+  mk({ id: 'L0', name: 'Standard deal', cat: 'K0', desc: 'Any deal no other layout covers.', def: true, used: 41, by: 'Harbor CRM', at: '15 Oct', v: 1 }, STANDARD),
+];
+let ORDER = ['L3', 'L4', 'L1', 'L2', 'L0'];
+
+/* The editor works on these; they are the open layout's own objects, written back on every redraw (see keepLayout()). */
+let PUBLISHED = {};
+let FIELDSET = {};
+
+let S = {
+  screen: 'list', cur: null, page: 'New/Edit', tab: {}, sel: { k: null }, pal: 'fields', palq: '', sample: 0, as: 'Everyone', phone: false, cmp: false, menu: null, fresh: null,
+  M: {}, undo: [], redo: [], name: '', addingPage: false, addingTab: false,
+  nf: { name: '', desc: '', cat: '', prod: [], roles: [], branches: [], start: 'L1', pages: ['New/Edit', 'Detail', 'History'], def: false, err: '', caterr: '', extra: '' },
+  pv: { role: 'Relationship manager', branch: 'Baner, Pune' },
+  cf: { name: '', desc: '', c: CAT_COLOURS[1], err: '' }, cren: null, crenVal: '', nfHold: false,
+};
+const SCREENS = [['list', 'Layouts'], ['cats', 'Categories'], ['new', 'New layout'], ['editor', 'Layout editor']];
+const edits = () => S.undo.length;
+const curL = () => LAYOUTS.find((x) => x.id === S.cur);
+function snap() { S.undo.push(JSON.stringify({ M: S.M, FS: FIELDSET })); if (S.undo.length > 60) S.undo.shift(); S.redo = []; }
+/* Write the editor's working copy back into the open layout. */
+function keepLayout() { const L = curL(); if (!L) return; L.M = S.M; L.FS = FIELDSET; L.undo = S.undo; L.redo = S.redo; }
+function openLayout(id) {
+  keepLayout();
+  const L = LAYOUTS.find((x) => x.id === id); if (!L) return;
+  S.cur = id; S.M = L.M; FIELDSET = L.FS; PUBLISHED = L.P || {}; S.undo = L.undo; S.redo = L.redo; S.name = L.name;
+  S.page = 'New/Edit'; S.tab = {}; S.sel = { k: null }; S.pal = 'fields'; S.palq = ''; S.cmp = false; S.addingPage = S.addingTab = false;
+}
+
+/* ---------- small pieces ---------- */
+const thumbHTML = (cells, def) => `<div class="thumb">${cells.map(([w, h, hd]) => `<i class="${hd ? 'hd' : ''}" style="--w:${w};--h:${h}"></i>`).join('')}${def ? '<span class="def">DEFAULT</span>' : ''}</div>`;
+const forText = (L) => [L.prod.length ? L.prod.join(', ') : 'Every product', L.roles.length ? L.roles.join(', ') : 'everyone', L.branches.length ? L.branches.join(', ') : 'all branches'];
+/* Why a layout is not in someone's "Choose a layout" sheet, or '' when it is. */
+function notOffered(L, role, branch) {
+  if (!L.on) return 'switched off';
+  if (!L.v) return 'not published yet';
+  if (L.roles.length && !L.roles.includes(role)) return 'only for ' + L.roles.join(', ');
+  if (L.branches.length && !L.branches.includes(branch)) return 'only in ' + L.branches.join(', ');
+  return '';
+}
+/* The sheet a person sees on New deal: the layouts they may choose, in the admin's order. */
+function pickerHTML() {
+  const { role, branch } = S.pv;
+  const rows = ORDER.map((id, i) => ({ L: LAYOUTS.find((x) => x.id === id), i })).filter((r) => r.L);
+  const offered = rows.filter((r) => !notOffered(r.L, role, branch));
+  const hidden = rows.filter((r) => notOffered(r.L, role, branch));
+  const sel = offered.find((r) => r.L.def) || offered[0];
+  const row = ({ L, i }) => `<div class="orow pickrow${sel && sel.L.id === L.id ? ' sel' : ''}" data-orow="${i}"><span class="grab" data-drag="order" data-i="${i}" aria-label="Move ${esc(L.name)}">${ic('grip', 14)}</span><span class="radio" aria-hidden="true"></span><span><b style="font-weight:600">${esc(L.name)}</b>${L.def ? ' <span class="state live" style="font-size:9.5px;padding:1px 6px">DEFAULT</span>' : ''}<small>${esc(L.desc || forText(L)[0])}${L.prod.length ? ` · ${esc(L.prod.join(', '))}` : ''}</small></span></div>`;
+  return `<aside class="card order" aria-label="Choose a layout"><div class="sec"><b>Choose a layout</b> on New deal</div>
+    <p class="muted" style="font-size:12.5px;margin:0 0 10px">Whoever creates a deal picks its layout here. The deal keeps that layout for good: its form, its record page and its other pages.</p>
+    <div class="tryit" style="margin:0 0 10px;padding:0;border:0"><span class="lab">Preview as</span><div class="row3" style="grid-template-columns:1fr 1fr">
+      <label>Role<select data-pv="role">${ROLES.slice(1).map((x) => `<option ${role === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label>
+      <label>Branch<select data-pv="branch">${BRANCHES.map((x) => `<option ${branch === x ? 'selected' : ''}>${x}</option>`).join('')}</select></label></div></div>
+    <div class="sheetmock" id="olist"><div class="sheet-h">${ic('layout', 14)}Choose a layout<span class="mono">${plural(offered.length, 'option')}</span></div>
+      ${offered.length ? CATS.map((k) => { const rs = offered.filter((r) => catOf(r.L).id === k.id); return rs.length ? `<div class="pgrp" style="--c:${k.c}"><i></i>${esc(k.name)}<span class="mono">${rs.length}</span></div>${rs.map(row).join('')}` : ''; }).join('') : '<div class="muted" style="font-size:12.5px;padding:10px">No layout is offered to this person: deals they create get the default.</div>'}
+      ${offered.length === 1 ? '<div class="muted" style="font-size:12px;padding:4px 6px 0">Only one choice, so the sheet is skipped and the form opens straight away.</div>' : ''}</div>
+    ${hidden.length ? `<div class="lab" style="margin:12px 0 6px">Not offered to a ${esc(role.toLowerCase())} in ${esc(branch)}</div>${hidden.map(({ L }) => `<div class="hiddenrow"><span>${esc(L.name)}</span><small>${esc(notOffered(L, role, branch))}</small></div>`).join('')}` : ''}
+    <div class="muted" style="font-size:12px;margin-top:10px">Layouts show under their category, in the order set on the Categories page. Drag a layout to move it within its category. The default starts selected; deals made by import or the API get it too.</div></aside>`;
+}
+
+/* ---------- list ---------- */
+function listView() {
+  return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · ToolBox</div><h2>Customise page layout</h2><p>Each card is a layout: who can choose it, and the pages it has. Open one to design its pages. People pick a layout when they create a deal; the panel on the right shows that choice as they see it.</p></div>
+      <div class="acts"><button class="btn" data-a="toast" data-v="Back to Deals">${ic('back', 15)}Deals</button><button class="btn" data-a="newcat">${ic('plus', 15)}New category</button><button class="btn pri" data-a="go" data-v="new">${ic('plus', 15)}New layout</button></div></div>
+    <div class="ll"><div class="lcards">${LAYOUTS.map((L, i) => card(L, i)).join('')}
+      <button class="lyc new" data-a="go" data-v="new" style="--d:${LAYOUTS.length * 50}ms">${ic('plus', 26)}<b>New layout</b><small>Name it, pick its category, who can choose it and its pages</small></button></div>
+      ${pickerHTML()}</div>`;
+}
+function card(L, i) {
+  { const [p, r, b] = forText(L); return `<div class="lyc${L.on ? '' : ' off'}${S.fresh === L.id ? ' fresh' : ''}${S.menu === L.id ? ' open' : ''}" style="--d:${i * 50}ms">
+        <button style="text-align:left;display:contents" data-a="open" data-v="${L.id}" aria-label="Open ${esc(L.name)}">${thumbHTML(thumbOf(L), L.def)}</button>
+        <div class="lyc-b">${catChip(catOf(L))}<h3><button data-a="open" data-v="${L.id}" style="text-align:left">${esc(L.name)}</button><button class="menu" data-a="menu" data-v="${L.id}" aria-label="More for ${esc(L.name)}" aria-expanded="${S.menu === L.id}">${ic('dots', 16)}</button></h3>
+          <div class="meta"><span>${ic('box', 13)}<b>${esc(p)}</b></span><span>${ic('users', 13)}${esc(r)} · ${esc(b)}</span></div>
+          <div class="pg">${pagesOf(L).map((x) => `<span>${esc(x)}</span>`).join('')}</div></div>
+        <div class="lyc-f">${L.undo.length ? `<span class="state draft">DRAFT · ${plural(L.undo.length, 'change')}</span>` : !L.v ? '<span class="state draft">NOT PUBLISHED</span>' : L.on ? (L.people ? `${plural(L.people, 'person')} can choose it` : `${L.used} deals use it`) : 'Switched off'}<span class="mono">${L.v ? 'v' + L.v + ' · ' : ''}${esc(L.by)} · ${esc(L.at)}</span></div>
+        ${S.menu === L.id ? `<div class="cmenu" role="menu"><button role="menuitem" data-a="open" data-v="${L.id}">${ic('layout', 15)}Open layout</button><button role="menuitem" data-a="edit" data-v="${L.id}">${ic('pen', 15)}Edit details</button><button role="menuitem" data-a="dupl" data-v="${L.id}">${ic('copy', 15)}Duplicate</button><button role="menuitem" data-a="mkdef" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('star', 15)}Make default</button><button role="menuitem" data-a="onoff" data-v="${L.id}" ${L.def ? 'disabled' : ''}>${ic('power', 15)}${L.on ? 'Switch off' : 'Switch on'}</button><button role="menuitem" class="danger" data-a="del" data-v="${L.id}" ${L.def ? 'disabled title="The default layout can’t be deleted"' : ''}>${ic('trash', 15)}Delete</button></div>` : ''}
+      </div>`; }
+}
+
+/* ---------- categories (the only place a category is made) ---------- */
+function catsView() {
+  const f = S.cf;
+  const back = S.nfHold ? `<button class="btn" data-a="cfback">${ic('back', 15)}Back to ${S.nfHold === 'edit' ? 'Edit layout details' : 'New layout'}</button>` : `<button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button>`;
+  return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · Customise page layout</div><h2>Categories</h2><p>Categories group the Deals layouts. People see them as headings when they choose a layout for a new deal, in the order below. A category is made here and nowhere else.</p></div>
+      <div class="acts">${back}</div></div>
+    <div class="cats">
+      <section class="card catnew" aria-label="New category"><div class="sec"><b>New category</b></div>
+        <div class="f${f.err ? ' bad' : ''}"><label for="cfname">Name <span style="color:var(--danger-text)">*</span></label><input id="cfname" data-cf="name" value="${esc(f.name)}" placeholder="For example: Business loans" autocomplete="off" maxlength="40">${f.err ? `<div class="err">${esc(f.err)}</div>` : ''}</div>
+        <div class="f"><label for="cfdesc">What goes in it</label><input id="cfdesc" data-cf="desc" value="${esc(f.desc)}" placeholder="One line, shown under the heading" maxlength="90"></div>
+        <div><span class="flab" style="font-size:12.5px;font-weight:500">Colour</span><div class="swatches" role="radiogroup" aria-label="Colour">${CAT_COLOURS.map((c) => `<button role="radio" aria-checked="${f.c === c}" style="--c:${c}" data-a="cfcol" data-v="${c}" aria-label="Colour ${c}"></button>`).join('')}</div></div>
+        <div class="catprev"><span class="lab">How it looks in Choose a layout</span><div class="pgrp" style="--c:${f.c}"><i></i>${esc(f.name.trim() || 'Category name')}<span class="mono">0</span></div></div>
+        <button class="btn pri" data-a="cfadd">${ic('plus', 15)}Add category</button></section>
+      <section class="card catlist" aria-label="Categories"><div class="sec" style="padding:14px 16px 0"><b>${plural(CATS.length, 'category')}</b> in this order</div>
+        <div id="clist">${CATS.map((k, i) => { const ls = LAYOUTS.filter((L) => catOf(L).id === k.id); return `<div class="crow${S.freshCat === k.id ? ' fresh' : ''}" data-crow="${i}" style="--c:${k.c}">
+          <span class="grab" data-drag="cat" data-i="${i}" aria-label="Move ${esc(k.name)}">${ic('grip', 14)}</span><i class="dot"></i>
+          <span class="cmain">${S.cren === k.id ? `<input id="crname" value="${esc(S.crenVal)}" aria-label="New name for ${esc(k.name)}" maxlength="40">` : `<b>${esc(k.name)}</b>`}<small>${esc(k.desc || '')}</small><small class="mono">${ls.length ? `${plural(ls.length, 'layout')}: ${ls.map((L) => esc(L.name)).join(', ')}` : 'No layouts yet'}</small></span>
+          <span class="cacts">${S.cren === k.id ? `<button class="btn" data-a="crsave">Save</button><button class="btn ghost" data-a="crcancel">Cancel</button>` : `<button class="btn ghost" data-a="cren" data-v="${k.id}">${ic('pen', 14)}Rename</button><button class="btn ghost danger" data-a="cdel" data-v="${k.id}" ${CATS.length < 2 ? 'disabled title="There must be at least one category"' : ''}>${ic('trash', 14)}Delete</button>`}</span></div>`; }).join('')}</div>
+        <div class="muted" style="font-size:12px;padding:6px 16px 14px">Drag to change the order of the headings. Deleting a category moves its layouts to another one.</div></section>
+    </div>`;
+}
+
+/* ---------- new layout (full page) ---------- */
+function newView() {
+  const n = S.nf;
+  /* The same page edits an existing layout's details (screen "edit"): no Start from, pages are changed in the editor. */
+  const E = S.screen === 'edit' ? LAYOUTS.find((x) => x.id === S.editId) : null;
+  const chips = (key, all, allLabel) => `<div class="chipset" role="group"><button aria-pressed="${n[key].length === 0}" data-a="nfall" data-k="${key}">${allLabel}</button>${all.map((x) => `<button aria-pressed="${n[key].includes(x)}" data-a="nfchip" data-k="${key}" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div>`;
+  const pageRow = (p, fixed) => `<div><span class="ico">${ic(p === 'New/Edit' ? 'form' : p === 'History' ? 'history' : 'page', 13)}</span><span><b style="font-weight:600">${esc(p)}</b><small>${p === 'New/Edit' ? 'The form for creating and editing a deal' : p === 'Detail' ? 'The deal’s own page' : p === 'History' ? 'Every change and stage move' : 'A page of its own'}</small></span>${fixed ? '<span class="mono muted" style="font-size:11px">always</span>' : `<button class="btn ghost sq" style="width:30px;height:30px" data-a="nfrmpage" data-v="${esc(p)}" aria-label="Remove ${esc(p)}">${ic('x', 14)}</button>`}</div>`;
+  const preview = { id: 'preview', name: n.name || 'Layout name', prod: n.prod, roles: n.roles, branches: n.branches, pages: n.pages, def: n.def, on: true, used: 0, v: 0, by: 'You', at: 'now', thumb: n.start === 'blank' || !LAYOUTS.some((x) => x.id === n.start) ? thumbOf({ M: { Detail: BASIC.Detail() } }) : thumbOf(LAYOUTS.find((x) => x.id === n.start)) };
+  const [p, r, b] = forText(preview);
+  if (E) preview.thumb = thumbOf(E);
+  const defLocked = E && E.def;
+  const defBlocked = E && !E.def && (!E.on || !E.v);
+  return `<div class="pl-h"><div><div class="eyebrow"><i></i>Deals · Customise page layout</div><h2>${E ? 'Edit layout details' : 'New layout'}</h2><p>${E ? `Change what <b>${esc(E.name)}</b> is called, its category and who can choose it. Its pages are designed in the layout itself.` : 'Say what it is called, which deals and people it is for, and which pages it has. After saving you design each page.'}</p></div>
+      <div class="acts">${E ? `<button class="btn" data-a="efcancel">${ic('back', 15)}${S.editFrom === 'editor' ? esc(E.name) : 'Layouts'}</button>` : `<button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button>`}</div></div>
+    <div class="nf"><div class="card">
+      <div class="nf-sec"><h3>About the layout</h3>
+        <div class="f${n.err ? ' bad' : ''}"><label for="nfname">Layout name <span class="req" style="color:var(--danger-text)">*</span></label><input id="nfname" data-nf="name" value="${esc(n.name)}" placeholder="For example: Gold loans, Baner desk" autocomplete="off">${n.err ? `<div class="err">${esc(n.err)}</div>` : ''}</div>
+        <div class="f"><label for="nfdesc">What it is for</label><textarea id="nfdesc" data-nf="desc" placeholder="One line people see on the card">${esc(n.desc)}</textarea></div></div>
+      <div class="nf-sec"><h3>${ic('tab', 15)}Category <span style="color:var(--danger-text)">*</span><span class="mono">heading in Choose a layout</span></h3>
+        <div class="chipset${n.caterr ? ' bad' : ''}" role="radiogroup" aria-label="Category">${CATS.map((k) => `<button role="radio" aria-pressed="${n.cat === k.id}" aria-checked="${n.cat === k.id}" data-a="nfcat" data-v="${k.id}" style="--c:${k.c}"><i class="cdot"></i>${esc(k.name)}</button>`).join('')}</div>
+        ${n.caterr ? `<div class="err" style="color:var(--danger-text);font-size:12px;margin-top:-6px">${esc(n.caterr)}</div>` : ''}
+        <p class="muted" style="margin:-4px 0 0;font-size:12.5px">Not in the list? <button class="link" data-a="nfnewcat">Make a new category</button>. Your form stays as it is.</p></div>
+      <div class="nf-sec"><h3>${ic('box', 15)}Products<span class="mono">optional</span></h3><p class="muted" style="margin:-6px 0 0;font-size:12.5px">Shown with the layout in Choose a layout. On this layout the Product field offers only these.</p>${chips('prod', PRODUCTS, 'Every product')}</div>
+      <div class="nf-sec"><h3>${ic('users', 15)}Who can choose it<span class="mono">roles and branches</span></h3><p class="muted" style="margin:-6px 0 0;font-size:12.5px">Only these people see it in Choose a layout. Deals already made with it stay on it, whoever opens them.</p>${chips('roles', ROLES.slice(1), 'Everyone')}${chips('branches', BRANCHES, 'All branches')}</div>
+      ${E ? `<div class="nf-sec"><h3>${ic('page', 15)}Pages<span class="mono">${pagesOf(E).length}</span></h3><div class="pg">${pagesOf(E).map((x) => `<span>${esc(x)}</span>`).join('')}</div><p class="muted" style="margin:0;font-size:12.5px">Pages are added, removed and designed in the layout. <button class="link" data-a="efopen">Open the layout</button></p></div>` : ''}
+      ${E ? '' : `<div class="nf-sec"><h3>${ic('copy', 15)}Start from</h3><div class="start">${[['blank', 'Basic', null], ...LAYOUTS.map((L) => [L.id, L.name, thumbOf(L)])].map(([id, nm, th]) => `<button aria-pressed="${n.start === id}" data-a="nfstart" data-v="${id}">${th ? thumbHTML(th) : `<div class="thumb blank">${ic('plus', 18)}</div>`}${esc(nm)}${th ? '' : '<small class="muted" style="font-weight:400">Required fields only</small>'}</button>`).join('')}</div></div>
+      <div class="nf-sec"><h3>${ic('page', 15)}Pages<span class="mono">each is designed on its own</span></h3>
+        <div class="pages-l">${n.pages.map((pg) => pageRow(pg, pg === 'New/Edit' || pg === 'Detail')).join('')}</div>
+        <div class="addpage"><input id="nfpage" data-nf="extra" value="${esc(n.extra)}" placeholder="Add a page, for example Documents or Credit review"><button class="btn" data-a="nfaddpage">${ic('plus', 15)}Add page</button></div>
+        ${n.pages.includes('History') ? '' : '<button class="link" style="justify-self:start;font-size:13px" data-a="nfhist">+ History page</button>'}</div>`}
+      <div class="nf-sec"><div class="sw-row"><span>Default layout for Deals<small>${defLocked ? 'This is the default. To change it, make another layout the default.' : defBlocked ? 'Publish it and switch it on before it can be the default.' : 'Starts selected in Choose a layout, and deals made by import or the API get it. There is one default.'}</small></span><button class="switch" role="switch" aria-checked="${n.def}" data-a="nfdef" aria-label="Default layout" ${defLocked || defBlocked ? 'disabled' : ''}></button></div></div>
+      <div class="nf-foot"><button class="btn ghost" ${E ? 'data-a="efcancel"' : 'data-a="go" data-v="list"'}>Cancel</button><button class="btn pri" data-a="${E ? 'efsave' : 'nfsave'}">${E ? 'Save changes' : 'Save layout'}</button></div></div>
+    <aside class="nf-side"><span class="lab">Your card</span>
+      <div class="lyc" style="--d:0ms">${thumbHTML(preview.thumb, n.def)}<div class="lyc-b">${CATS.find((k) => k.id === n.cat) ? catChip(CATS.find((k) => k.id === n.cat)) : '<span class="muted" style="font-size:12px">No category yet</span>'}<h3>${esc(preview.name)}</h3><div class="meta"><span>${ic('box', 13)}<b>${esc(p)}</b></span><span>${ic('users', 13)}${esc(r)} · ${esc(b)}</span></div><div class="pg">${n.pages.map((x) => `<span>${esc(x)}</span>`).join('')}</div></div><div class="lyc-f">New · draft</div></div>
+      <div class="card" style="padding:12px 14px;font-size:12.5px;color:var(--text-muted)">${E ? 'These details apply as soon as you save. Changes to the pages still wait until the layout is published.' : `${n.def ? 'It becomes the default: it starts selected in Choose a layout.' : 'It joins the end of Choose a layout; drag it higher on the Layouts screen.'} Nothing changes for anyone until you publish it.`}</div></aside></div>`;
+}
+
+/* ---------- editor ---------- */
+const pageM = () => S.M[S.page];
+const isForm = () => PAGE_KIND[S.page] === 'form';
+const curTab = () => pageM().tabs.find((t) => t.id === S.tab[S.page]) || pageM().tabs[0];
+const placed = () => new Set(pageM().tabs.flatMap((t) => (t.secs ? t.secs.flatMap((s) => s.f) : t.cards.flatMap((c) => c.f || []))));
+const pubPlaced = (pg) => new Set((PUBLISHED[pg] || { tabs: [] }).tabs.flatMap((t) => (t.secs ? t.secs.flatMap((s) => s.f) : t.cards.flatMap((c) => c.f || []))));
+const pubCards = (pg) => new Set((PUBLISHED[pg] || { tabs: [] }).tabs.flatMap((t) => (t.cards || []).map((c) => c.id)));
+const condMet = (fid) => { const c = FIELDSET[fid]?.cond; if (!c) return true; const v = F[c[0]].s[S.sample]; return c[1] === 'is' ? c[2].split(', ').includes(v) : !!v; };
+const roleSees = (tab) => S.as === 'Everyone' || !tab.roles.length || tab.roles.includes(S.as);
+
+function checks() {
+  const out = [];
+  const ne = S.M['New/Edit'];
+  const onForm = new Set(ne.tabs.flatMap((t) => t.secs.flatMap((s) => s.f)));
+  for (const [id, f] of Object.entries(F)) if (f.req && !f.ro && !onForm.has(id)) out.push(['block', `${f.l} is required but not on New/Edit`, 'New/Edit']);
+  for (const [pg, P] of Object.entries(S.M)) for (const t of P.tabs) {
+    const empty = t.secs ? t.secs.every((s) => !s.f.length) : !t.cards.length;
+    if (empty) out.push(['warn', `${pg} › ${t.name} is empty`, pg, t.id]);
+    if (t.secs) for (const s of t.secs) if (!s.f.length && t.secs.length > 1) out.push(['warn', `${pg} › ${t.name} › ${s.title || 'section'} has no fields`, pg, t.id]);
+  }
+  for (const [fid, set] of Object.entries(FIELDSET)) if (set.cond && onForm.has(fid) && !onForm.has(set.cond[0])) out.push(['warn', `${F[fid].l} shows only when ${F[set.cond[0]].l} is set, but ${F[set.cond[0]].l} is not on New/Edit`, 'New/Edit']);
+  return out;
+}
+
+function fieldHTML(fid, si, i, tab) {
+  const f = F[fid], set = FIELDSET[fid] || {}, v = f.s[S.sample];
+  const met = condMet(fid);
+  const ro = f.ro || set.ro || S.as === 'Viewer';
+  const req = (f.req || set.req) && !ro;
+  const isNew = S.cmp && !pubPlaced(S.page).has(fid);
+  const sel = S.sel.k === 'field' && S.sel.id === fid;
+  const tyv = TY[f.t];
+  const input = f.t === 'long' ? `<div class="fi long${ro ? ' ro' : ''}">${esc(v) || '<span class="muted">Write a note…</span>'}</div>`
+    : `<div class="fi${ro ? ' ro' : ''}">${f.t === 'pick' || f.t === 'multi' || f.t === 'lookup' || f.t === 'user' ? `${esc(v) || '<span class="muted">Pick…</span>'}<span class="dn">▾</span>` : f.t === 'file' ? `${ic('file', 14)}${esc(v) || '<span class="muted">Drop files</span>'}` : esc(v) || '<span class="muted">—</span>'}</div>`;
+  return `<div class="fld${sel ? ' sel' : ''}${met ? '' : ' cond'}" data-fld="${fid}" data-sec="${si}" data-i="${i}" data-a="selfld" data-v="${fid}">${isNew ? '<span class="cmpb">NEW</span>' : ''}
+    <div class="fl"><span class="grab" data-drag="fld" data-f="${fid}" aria-label="Move ${esc(f.l)}">${ic('grip', 12)}</span>${esc(f.l)}${req ? '<span class="req">*</span>' : ''}<span class="flags">${set.cond ? '<i class="if">IF</i>' : ''}${set.ro ? '<i>RO</i>' : ''}<i style="color:${tyv[1]}">${tyv[0]}</i></span></div>
+    ${input}${set.help ? `<div class="help">${esc(set.help)}</div>` : ''}${met ? '' : `<div class="why">${ic('eye', 11)}Shows when ${esc(F[set.cond[0]].l)} is ${esc(set.cond[2])}</div>`}</div>`;
+}
+function cardBody(c) {
+  const s = S.sample;
+  switch (c.k) {
+    case 'stage': { const st = ['Enquiry', 'Documents', 'Credit check', 'Sanctioned', 'Disbursed']; const at = st.indexOf(F.stage.s[s]); return `<div class="chev">${st.map((x, i) => `<i class="${i <= at ? 'on' : ''}">${x}</i>`).join('')}</div>`; }
+    case 'figures': return `<div class="figs"><div><span>Loan amount</span><b>${F.amount.s[s]}</b></div><div><span>EMI</span><b>${F.emi.s[s]}</b></div><div><span>Close</span><b style="font-size:16px">${F.close.s[s]}</b></div></div>`;
+    case 'details': return `<div class="kvs">${(c.f || []).map((fid) => `<div class="${condMet(fid) ? '' : 'cond'}"><span>${esc(F[fid].l)}</span><b>${esc(F[fid].s[s] || '—')}</b></div>`).join('')}${(c.f || []).length ? '' : '<div class="muted">Drag fields here</div>'}</div>`;
+    case 'coll': { const p = parseFloat(F.ltv.s[s]); return `<div style="display:flex;gap:12px;align-items:center"><span class="ring" style="--p:${p}" data-t="${F.ltv.s[s]}"></span><div><span class="muted" style="font-size:11.5px">Collateral value</span><br><b>${F.coll.s[s]}</b><br><span class="muted" style="font-size:11.5px">LTV limit 80%</span></div></div>`; }
+    case 'next': return `<div style="font-size:13px">${esc(F.next.s[s])}<div class="muted" style="font-size:11.5px;margin-top:4px">${F.owner.s[s]} · due Sat</div></div>`;
+    case 'people': return `<div class="avs"><i class="av sm soft">VK</i><span>${esc(F.coapp.s[s] || 'No co-applicant')}</span></div><div class="avs"><i class="av sm soft">${F.owner.s[s].split(' ').map((x) => x[0]).join('')}</i><span>${F.owner.s[s]} · owner</span></div>`;
+    case 'docs': return `<div class="files"><div>${ic('file', 14)}Sanction letter.pdf<span class="mono muted" style="margin-left:auto;font-size:10.5px">220 KB</span></div><div>${ic('file', 14)}Valuation report.pdf<span class="mono muted" style="margin-left:auto;font-size:10.5px">1.1 MB</span></div></div>`;
+    case 'history': case 'stagehist': return `<div class="hl">${(c.k === 'history' ? [['Arjun Das set Interest rate to 8.6', 'Today'], ['Stage moved to Credit check', 'Yesterday'], ['Rahul Khanna added Valuation report', '17 Nov'], ['Loan amount 40,00,000 → 45,00,000', '16 Nov'], ['Deal created from lead', '14 Nov']] : [['Documents → Credit check', 'Yesterday'], ['Enquiry → Documents', '16 Nov']]).map(([t, d]) => `<div><i></i><span>${t}</span><span class="mono">${d}</span></div>`).join('')}</div>`;
+    default: return '<div class="muted" style="font-size:12.5px">Shows the related records</div>';
+  }
+}
+function cardHTML(c, i) {
+  const sel = S.sel.k === 'card' && S.sel.id === c.id;
+  const isNew = S.cmp && !pubCards(S.page).has(c.id);
+  const pubC = (PUBLISHED[S.page]?.tabs || []).flatMap((t) => t.cards || []).find((x) => x.id === c.id);
+  const chg = S.cmp && pubC && (pubC.w !== c.w || pubC.h !== c.h || JSON.stringify(pubC.f) !== JSON.stringify(c.f));
+  return `<div class="rc${sel ? ' sel' : ''}" style="--w:${c.w};--h:${c.h}" data-card="${c.id}" data-i="${i}" data-a="selcard" data-v="${c.id}">${isNew ? '<span class="cmpb">NEW</span>' : chg ? '<span class="cmpb chg">CHANGED</span>' : ''}
+    <div class="rc-h"><span class="grab" data-drag="card" data-c="${c.id}" aria-label="Move ${CARDS[c.k][0]}">${ic('grip', 13)}</span>${ic(CARDS[c.k][1], 14)}${CARDS[c.k][0]}<span class="mono">${c.w}×${c.h}</span></div>${cardBody(c)}
+    <span class="rz-x" data-drag="rzx" data-c="${c.id}" aria-label="Width"></span><span class="rz-y" data-drag="rzy" data-c="${c.id}" aria-label="Height"></span><span class="rz-xy" data-drag="rzxy" data-c="${c.id}" aria-label="Width and height"></span></div>`;
+}
+function canvasHTML() {
+  const P = pageM(), t = curTab();
+  const tabsH = P.tabs.map((x) => `<span class="itab${x.id === t.id ? '' : ''}${S.sel.k === 'tab' && S.sel.id === x.id ? ' sel' : ''}${roleSees(x) ? '' : ' hid'}" role="tab" tabindex="0" aria-selected="${x.id === t.id}" data-a="itab" data-v="${x.id}" data-itab="${x.id}"><span class="grab" data-drag="tab" data-t="${x.id}" style="height:16px" aria-label="Move tab ${esc(x.name)}">${ic('grip', 11)}</span>${esc(x.name)}${x.roles.length ? `<span class="lock" title="Only ${esc(x.roles.join(', '))}">${ic('lock', 11)}</span>` : ''}${x.id === t.id && P.tabs.length > 1 ? `<button class="tabx" data-a="rmtabx" data-v="${x.id}" aria-label="Delete tab ${esc(x.name)}" title="Delete tab">${ic('x', 12)}</button>` : ''}</span>`).join('')
+    + (S.addingTab ? `<span class="itab"><input id="newtab" placeholder="Tab name" style="width:110px;height:26px;padding:0 8px;border-radius:7px;border:1px solid var(--bank-ink);outline:0;background:var(--surface)"></span>` : `<span class="itab add" role="button" tabindex="0" data-a="addtab">${ic('plus', 13)}Tab</span>`);
+  let body;
+  if (!roleSees(t)) body = `<div class="emptytab"><b>${esc(S.as)} doesn't see this tab</b>Only ${esc(t.roles.join(', '))}. Change "Preview as" to see it.</div>`;
+  else if (isForm()) body = t.secs.map((s, si) => `<section class="fsec${S.sel.k === 'sec' && S.sel.id === s.id ? ' sel' : ''}" data-secbox="${si}"><div class="fsec-h" data-a="selsec" data-v="${s.id}"><b>${esc(s.title || 'Untitled section')}</b><span class="mono">${s.cols} col · ${s.f.length}</span></div>
+      <div class="fgrid" style="--cols:${s.cols}" data-sec="${si}">${s.f.map((fid, i) => fieldHTML(fid, si, i, t)).join('') || '<div class="muted" style="font-size:12.5px;padding:12px 4px">Drag fields here</div>'}</div></section>`).join('') + `<button class="newsec" data-a="addsec">${ic('plus', 14)}Section</button>`;
+  else body = t.cards.length ? `<div class="cgrid" id="cg">${t.cards.map(cardHTML).join('')}</div>` : `<div class="emptytab" data-emptycards="1"><b>Nothing on this tab yet</b>Drag cards or fields here from the left.</div>`;
+  const s = S.sample;
+  return `<div class="canvas${S.phone ? ' phone' : ''}" id="canvas"><div class="frame">
+    <div class="fr-h"><span class="badge">${ic('deal', 18)}</span><span><b>${isForm() ? 'New deal' : esc(F.name.s[s])}</b><small>${isForm() ? esc(S.name) + ' layout' : `${F.num.s[s]} · ${F.acct.s[s]}`}</small></span></div>
+    <div class="itabs" role="tablist" id="itabs">${tabsH}</div><div class="body" id="cbody">${body}</div></div></div>`;
+}
+function paletteHTML() {
+  const used = placed();
+  const q = S.palq.trim().toLowerCase();
+  const fl = Object.entries(F).filter(([, f]) => !q || f.l.toLowerCase().includes(q));
+  const fieldsL = fl.map(([id, f]) => `<div class="pi${used.has(id) ? ' used' : ''}" ${used.has(id) ? '' : `data-drag="newfld" data-f="${id}"`} role="button" tabindex="0" aria-label="${esc(f.l)}${used.has(id) ? ', on this page' : ', drag onto the page'}"><span class="ty" style="--c:${TY[f.t][1]}">${TY[f.t][0]}</span>${esc(f.l)}<span class="mono">${used.has(id) ? 'on page' : ''}</span></div>`).join('');
+  const usedC = new Set(pageM().tabs.flatMap((t) => (t.cards || []).map((c) => c.k)));
+  const cardsL = Object.entries(CARDS).map(([k, [n, icn]]) => `<div class="pi" data-drag="newcard" data-k="${k}" role="button" tabindex="0">${ic(icn, 14)}${n}<span class="mono">${usedC.has(k) && k !== 'details' ? 'on page' : ''}</span></div>`).join('');
+  return `<aside class="card pal" aria-label="Fields and cards">${isForm() ? '' : `<div class="seg"><button aria-pressed="${S.pal === 'fields'}" data-a="pal" data-v="fields">Fields</button><button aria-pressed="${S.pal === 'cards'}" data-a="pal" data-v="cards">Cards</button></div>`}
+    ${isForm() || S.pal === 'fields' ? `<label class="pal-find">${ic('search', 14)}<input id="palq" value="${esc(S.palq)}" placeholder="Find a field" aria-label="Find a field"></label><div class="glab">Deals fields · ${Object.keys(F).length}</div><div class="list" style="display:grid;gap:5px">${fieldsL}</div>
+      <button class="link" style="font-size:12.5px;text-align:left" data-a="toast" data-v="Opens Setup › Modules & fields › Deals in a new tab">${ic('out', 12)} Make a new field in Setup</button>` : `<div class="glab">Card library</div><div class="list" style="display:grid;gap:5px">${cardsL}</div><button class="link" style="font-size:12.5px;text-align:left" data-a="toast" data-v="New card: pick fields or a related list; it joins the library for every Deals layout">${ic('plus', 12)} New card</button>`}</aside>`;
+}
+function inspectorHTML() {
+  const sel = S.sel;
+  const P = pageM();
+  if (sel.k === 'field') {
+    const f = F[sel.id]; if (!f) return '';
+    const set = FIELDSET[sel.id] || (FIELDSET[sel.id] = {});
+    const opts = Object.entries(F).filter(([id, x]) => id !== sel.id && (x.t === 'pick' || x.t === 'multi'));
+    const c = set.cond;
+    return `<aside class="card insp" aria-label="Field on this layout"><div class="insp-h"><span class="pi" style="padding:0;border:0;background:none;cursor:default"><span class="ty" style="--c:${TY[f.t][1]}">${TY[f.t][0]}</span></span><h3>${esc(f.l)}</h3><span class="mono">on ${esc(S.page)}</span></div><div class="insp-b">
+      <div class="sw-row"><span>Required here${f.req ? '<small>Every deal needs it</small>' : '<small>Only on this layout</small>'}</span><button class="switch" role="switch" aria-checked="${!!(f.req || set.req)}" data-a="fset" data-k="req" ${f.req || f.ro ? 'disabled' : ''} aria-label="Required here"></button></div>
+      <div class="sw-row"><span>Read-only here${f.ro ? '<small>Worked out by the CRM</small>' : ''}</span><button class="switch" role="switch" aria-checked="${!!(f.ro || set.ro)}" data-a="fset" data-k="ro" ${f.ro ? 'disabled' : ''} aria-label="Read-only here"></button></div>
+      <div class="f"><label for="fhelp">Help text</label><input id="fhelp" data-fh="1" value="${esc(set.help || '')}" placeholder="A hint under the field"></div>
+      <div><div class="sw-row"><span>Show only when</span><button class="switch" role="switch" aria-checked="${!!c}" data-a="fcond" aria-label="Show only when"></button></div>
+        ${c ? `<div class="condb" style="margin-top:8px"><select data-cond="0">${opts.map(([id, x]) => `<option value="${id}" ${c[0] === id ? 'selected' : ''}>${esc(x.l)}</option>`).join('')}</select><span>is</span><select data-cond="2">${(c[0] === 'product' ? ['Home loan', 'Gold loan', 'Home loan, Gold loan', 'Car loan', 'Business loan'] : [...new Set(F[c[0]].s.filter(Boolean))]).map((x) => `<option ${c[2] === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></div>
+          <div class="muted" style="font-size:12px;margin-top:6px">With the ${S.sample ? 'gold' : 'home'} loan sample it is ${condMet(sel.id) ? '<b style="color:var(--ok-text)">shown</b>' : '<b style="color:var(--warn-text)">hidden</b>'}.</div>` : ''}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-a="toast" data-v="Opens ${esc(f.l)} in Setup › Modules & fields">${ic('out', 14)}Field in Setup</button><button class="btn danger" data-a="rmfld" ${f.req && isForm() ? 'disabled title="Required: New/Edit must have it"' : ''}>Take off</button></div>
+    </div></aside>`;
+  }
+  if (sel.k === 'card') {
+    const c = P.tabs.flatMap((t) => t.cards || []).find((x) => x.id === sel.id); if (!c) return '';
+    return `<aside class="card insp" aria-label="Card"><div class="insp-h">${ic(CARDS[c.k][1], 16)}<h3>${CARDS[c.k][0]}</h3><span class="mono">${c.w}×${c.h}</span></div><div class="insp-b">
+      <div class="f"><label>Width · ${c.w} of 12</label><input type="range" min="3" max="12" value="${c.w}" data-cw="1"></div>
+      <div class="f"><label>Height · ${c.h} rows</label><input type="range" min="2" max="12" value="${c.h}" data-ch="1"></div>
+      ${c.k === 'details' ? `<span class="lab">Fields it shows · drag more onto the card</span><div style="display:grid;gap:4px">${(c.f || []).map((fid) => `<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:8px;background:var(--surface-2);font-size:12.5px">${esc(F[fid].l)}<button class="btn ghost sq" style="width:24px;height:24px;margin-left:auto" data-a="cardrmf" data-v="${fid}" aria-label="Take ${esc(F[fid].l)} off the card">${ic('x', 12)}</button></div>`).join('')}</div>` : c.k === 'history' ? '<div class="f"><label>Events before it scrolls</label><input type="number" value="20" min="5" max="100"></div>' : ''}
+      <button class="btn danger" data-a="rmcard">Take off the page</button></div></aside>`;
+  }
+  if (sel.k === 'tab') {
+    const t = P.tabs.find((x) => x.id === sel.id); if (!t) return '';
+    return `<aside class="card insp" aria-label="Tab"><div class="insp-h">${ic('tab', 16)}<h3>${esc(t.name)}</h3><span class="mono">tab</span></div><div class="insp-b">
+      <div class="f"><label for="tname">Tab name</label><input id="tname" data-tn="1" value="${esc(t.name)}"></div>
+      <span class="lab">Who sees it</span><div class="chipset"><button aria-pressed="${!t.roles.length}" data-a="troleall">Everyone</button>${ROLES.slice(1).map((r) => `<button aria-pressed="${t.roles.includes(r)}" data-a="trole" data-v="${r}">${r}</button>`).join('')}</div>
+      <button class="btn danger" data-a="rmtab" ${P.tabs.length < 2 ? 'disabled title="A page needs at least one tab"' : ''}>Delete tab</button></div></aside>`;
+  }
+  if (sel.k === 'sec') {
+    const s = P.tabs.flatMap((t) => t.secs || []).find((x) => x.id === sel.id); if (!s) return '';
+    return `<aside class="card insp" aria-label="Section"><div class="insp-h">${ic('section', 16)}<h3>${esc(s.title || 'Untitled section')}</h3><span class="mono">section</span></div><div class="insp-b">
+      <div class="f"><label for="sname">Title</label><input id="sname" data-sn="1" value="${esc(s.title)}"></div>
+      <span class="lab">Columns</span><div class="seg"><button aria-pressed="${s.cols === 1}" data-a="scols" data-v="1">One</button><button aria-pressed="${s.cols === 2}" data-a="scols" data-v="2">Two</button><button aria-pressed="${s.cols === 3}" data-a="scols" data-v="3">Three</button></div>
+      <button class="btn danger" data-a="rmsec">Delete section</button><div class="muted" style="font-size:12px">Its fields go back to the list on the left.</div></div></aside>`;
+  }
+  return `<aside class="card insp"><div class="insp-b"><div class="muted" style="padding:20px 6px;text-align:center"><b style="display:block;color:var(--text);font-family:var(--font-display)">Pick anything on the page</b>A field, a card, a section or a tab: its settings show here.</div></div></aside>`;
+}
+function editorView() {
+  const L = curL();
+  const ck = checks();
+  const blocks = ck.filter((c) => c[0] === 'block').length;
+  const gone = S.cmp ? [...pubPlaced(S.page)].filter((x) => !placed().has(x)) : [];
+  return `<div class="ed-top"><button class="btn" data-a="go" data-v="list">${ic('back', 15)}Layouts</button><input class="nm" id="lname" value="${esc(S.name)}" aria-label="Layout name">${catChip(catOf(L))}<button class="btn ghost" style="height:30px;font-size:12.5px" data-a="edit" data-v="${L.id}">${ic('pen', 14)}Edit details</button>${edits() ? `<span class="state draft">DRAFT · ${plural(edits(), 'change')}</span>` : L.v ? `<span class="state live">PUBLISHED · v${L.v}</span>` : '<span class="state draft">NOT PUBLISHED YET</span>'}<span class="sp"></span>
+      <button class="btn ghost sq" data-a="undo" aria-label="Undo" ${S.undo.length ? '' : 'disabled'}>${ic('undo', 16)}</button><button class="btn ghost sq" data-a="redo" aria-label="Redo" ${S.redo.length ? '' : 'disabled'}>${ic('redo', 16)}</button>
+      <button class="btn${S.cmp ? ' pri' : ''}" data-a="cmp" aria-pressed="${S.cmp}" ${L.v ? '' : 'disabled title="Nothing is published yet"'}>${ic('eye', 15)}Compare with published</button><button class="btn pri" data-a="publish" ${edits() || !L.v ? '' : 'disabled'}>Publish v${L.v + 1}</button></div>
+    <div class="ptabs" role="tablist" aria-label="Pages">${Object.keys(S.M).map((pg) => `<span class="ptab" role="tab" tabindex="0" aria-selected="${S.page === pg}" data-a="page" data-v="${esc(pg)}">${ic(PAGE_KIND[pg] === 'form' ? 'form' : pg === 'History' ? 'history' : 'page', 15)}${esc(pg)}<span class="k">${S.M[pg].tabs.length} tab${S.M[pg].tabs.length === 1 ? '' : 's'}</span>${S.page === pg && !FIXED_PAGES.includes(pg) ? `<button class="tabx" data-a="rmpage" data-v="${esc(pg)}" aria-label="Delete page ${esc(pg)}" title="Delete page">${ic('x', 12)}</button>` : ''}</span>`).join('')}${S.addingPage ? '<span class="ptab"><input id="newpage" placeholder="Page name"></span>' : `<button class="ptab add" data-a="addpage">${ic('plus', 14)}Page</button>`}</div>
+    <div class="tools2"><span>Sample</span><div class="seg">${SAMPLES.map((x, i) => `<button aria-pressed="${S.sample === i}" data-a="sample" data-v="${i}">${i ? 'Gold loan' : 'Home loan'}</button>`).join('')}</div>
+      <span>Preview as</span><div class="seg">${ROLES.map((r) => `<button aria-pressed="${S.as === r}" data-a="as" data-v="${r}">${r === 'Relationship manager' ? 'RM' : r}</button>`).join('')}</div>
+      <div class="seg" style="margin-left:auto"><button aria-pressed="${!S.phone}" data-a="phone" data-v="0" aria-label="Desktop">${ic('monitor', 14)}</button><button aria-pressed="${S.phone}" data-a="phone" data-v="1" aria-label="Phone">${ic('phone', 14)}</button></div></div>
+    <div class="ed">${paletteHTML()}<div style="min-width:0">${canvasHTML()}
+      ${gone.length ? `<div class="gone">${ic('x', 13)} Taken off since v${L.v}: ${gone.map((x) => esc(F[x].l)).join(', ')}</div>` : ''}
+      <div class="checks" aria-label="Checks"><div class="sec" style="margin:0"><b>Checks</b> ${ck.length ? `${ck.length} to look at${blocks ? ` · ${blocks} must be fixed before publishing` : ''}` : 'all clear'}</div>
+        ${ck.length ? ck.map(([k, t, pg, tab]) => `<div class="ck ${k}"><span class="s">${ic(k === 'block' ? 'lock' : 'warn', 12)}</span><span>${esc(t)}</span><button class="link" style="font-size:12px" data-a="goto" data-p="${esc(pg)}" data-t="${tab || ''}">Show</button></div>`).join('') : `<div class="ck ok"><span class="s">${ic('check', 12)}</span><span>Every required field is on New/Edit, no empty tabs.</span><span></span></div>`}</div></div>
+      ${inspectorHTML()}</div>`;
+}
+
+/* ---------- render ---------- */
+function render() {
+  if (S.screen === 'editor' && !curL()) openLayout(LAYOUTS[0].id);
+  keepLayout();
+  const ae = document.activeElement, keep = ae && ae.id ? ae.id : null, pos = keep && ae.selectionStart != null ? ae.selectionStart : null;
+  const sc = $('main').scrollTop;
+  $('page').innerHTML = S.screen === 'list' ? listView() : S.screen === 'cats' ? catsView() : S.screen === 'new' || S.screen === 'edit' ? newView() : editorView();
+  $('crumb').innerHTML = `<span>Deals</span><span>/</span><span>ToolBox</span><span>/</span><b>${S.screen === 'list' ? 'Customise page layout' : S.screen === 'cats' ? 'Categories' : S.screen === 'new' ? 'New layout' : S.screen === 'edit' ? 'Edit details' : esc(S.name)}</b>`;
+  $('rail').innerHTML = '<i class="logo">H</i>' + ['dashboard', 'target', 'user', 'building', 'deal', 'file', 'box', 'mega', 'checksq', 'calendar', 'ticket'].map((n) => `<span class="${n === 'deal' ? 'on' : ''}">${ic(n, 18)}</span>`).join('');
+  $('screens').innerHTML = SCREENS.map(([k, n]) => `<button aria-pressed="${S.screen === k}" data-s="${k}">${n}</button>`).join('');
+  $('main').scrollTop = sc;
+  if (keep && $(keep)) { const el = $(keep); el.focus(); try { if (pos != null) el.setSelectionRange(pos, pos); } catch (e) {} }
+}
+let tt;
+function toast(m) { const el = $('toast'); el.innerHTML = ic('check', 15) + esc(m); el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), 2600); }
+const NF0 = () => ({ name: '', desc: '', cat: '', prod: [], roles: [], branches: [], start: 'L1', pages: ['New/Edit', 'Detail', 'History'], def: false, err: '', caterr: '', extra: '' });
+/* Opening "New layout" always starts a fresh form; Cancel throws the half-filled one away. */
+const go = (o) => {
+  // Leaving the Categories page always ends the "came from New layout" detour, except for the trip back to the form.
+  const toForm = S.screen === 'cats' && S.nfHold && o.screen === S.nfHold;
+  if (S.screen === 'cats' && o.screen !== 'cats') { S.nfHold = false; S.cren = null; S.cf.err = ''; }
+  if (o.screen === 'new' && S.screen !== 'new' && !toForm) S.nf = NF0();
+  if (S.nf.cat && !CATS.some((k) => k.id === S.nf.cat)) S.nf.cat = ''; if (S.nf.start !== 'blank' && !LAYOUTS.some((x) => x.id === S.nf.start)) S.nf.start = 'blank'; Object.assign(S, o); S.menu = null; $('main').scrollTop = 0; render(); };
+const findSec = (si) => curTab().secs[+si];
+const findCard = (id) => { for (const t of pageM().tabs) { const c = (t.cards || []).find((x) => x.id === id); if (c) return [t, c]; } return [null, null]; };
+
+const A = {
+  go: (t) => go({ screen: t.dataset.v }),
+  open: (t) => { openLayout(t.dataset.v); go({ screen: 'editor' }); },
+  menu: (t, e) => { e.stopPropagation(); S.menu = S.menu === t.dataset.v ? null : t.dataset.v; render(); },
+  dupl: (t) => { keepLayout(); const L = LAYOUTS.find((x) => x.id === t.dataset.v); let nm = L.name + ' (copy)'; for (let k = 2; LAYOUTS.some((x) => x.name === nm); k++) nm = `${L.name} (copy ${k})`;
+    const M = {}; for (const pg of pagesOf(L)) M[pg] = reid(clone(L.M[pg]));
+    const c = { ...L, id: 'L' + ++cid, name: nm, def: false, used: 0, people: 0, v: 0, by: 'You', at: 'now', on: true, prod: [...L.prod], roles: [...L.roles], branches: [...L.branches], M, P: null, FS: clone(L.FS), undo: [], redo: [] }; LAYOUTS.splice(LAYOUTS.indexOf(L) + 1, 0, c); ORDER.splice(ORDER.indexOf(L.id), 0, c.id); S.fresh = c.id; S.menu = null; toast('Copy made as a draft; rename it from its card'); render(); },
+  mkdef: (t) => { const L = LAYOUTS.find((x) => x.id === t.dataset.v); if (!L.on || !L.v) { S.menu = null; toast('Publish it and switch it on first: the default must be choosable'); render(); return; } LAYOUTS.forEach((x) => (x.def = x.id === L.id)); S.menu = null; toast(`${L.name} now starts selected in Choose a layout`); render(); },
+  onoff: (t) => { const L = LAYOUTS.find((x) => x.id === t.dataset.v); L.on = !L.on; S.menu = null; render(); },
+  del: (t) => { const L = LAYOUTS.find((x) => x.id === t.dataset.v); S.menu = null; $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete ${esc(L.name)}?</h3></div><div class="dlg-body">${L.used ? `${L.used} deals use it. They will open with “${esc(LAYOUTS.find((x) => x.def).name)}”, the default.` : L.people ? `It leaves Choose a layout for the ${plural(L.people, 'person')} who can pick it.` : 'No deal uses it yet.'} Deals keep all their data. You can bring it back from the layout's history for 30 days.</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="dodel" data-v="${L.id}">Delete</button></div></div></div>`; render(); },
+  dodel: (t) => { if (S.cur === t.dataset.v) S.cur = null; LAYOUTS = LAYOUTS.filter((x) => x.id !== t.dataset.v); ORDER = ORDER.filter((x) => x !== t.dataset.v); $('ovl').innerHTML = ''; toast('Layout deleted'); render(); },
+  close: (t, e) => { if (e.target === t || t.tagName === 'BUTTON') $('ovl').innerHTML = ''; },
+  toast: (t) => toast(t.dataset.v),
+  nfall: (t) => { S.nf[t.dataset.k] = []; render(); },
+  nfchip: (t) => { const k = t.dataset.k, v = t.dataset.v, a = S.nf[k]; S.nf[k] = a.includes(v) ? a.filter((x) => x !== v) : [...a, v]; render(); },
+  nfstart: (t) => { S.nf.start = t.dataset.v; if (t.dataset.v !== 'blank') { const L = LAYOUTS.find((x) => x.id === t.dataset.v); keepLayout(); S.nf.pages = [...pagesOf(L)]; if (!S.nf.cat) { S.nf.cat = catOf(L).id; S.nf.caterr = ''; } } render(); },
+  nfcat: (t) => { S.nf.cat = t.dataset.v; S.nf.caterr = ''; render(); },
+  nfnewcat: () => { S.nfHold = S.screen; S.cf = { name: '', desc: '', c: CAT_COLOURS[1], err: '' }; go({ screen: 'cats' }); setTimeout(() => $('cfname')?.focus(), 0); },
+  cfback: () => go({ screen: S.nfHold || 'list' }),
+  edit: (t) => {
+    keepLayout(); const L = LAYOUTS.find((x) => x.id === t.dataset.v); if (!L) return;
+    S.editId = L.id; S.menu = null; S.editFrom = S.screen === 'editor' ? 'editor' : 'list';
+    S.nf = { ...NF0(), name: L.name, desc: L.desc || '', cat: catOf(L).id, prod: [...L.prod], roles: [...L.roles], branches: [...L.branches], start: L.id, pages: pagesOf(L), def: L.def };
+    go({ screen: 'edit' }); setTimeout(() => $('nfname')?.focus(), 0);
+  },
+  efopen: () => { const id = S.editId; openLayout(id); go({ screen: 'editor' }); },
+  efsave: () => {
+    const n = S.nf, L = LAYOUTS.find((x) => x.id === S.editId), nm = n.name.trim();
+    if (!nm) { n.err = 'Give the layout a name'; render(); $('nfname').focus(); return; }
+    if (LAYOUTS.some((x) => x.id !== L.id && x.name.toLowerCase() === nm.toLowerCase())) { n.err = 'Another Deals layout has that name'; render(); $('nfname').focus(); return; }
+    if (!CATS.some((k) => k.id === n.cat)) { n.caterr = 'Pick a category'; render(); return; }
+    Object.assign(L, { name: nm, desc: n.desc.trim(), cat: n.cat, prod: [...n.prod], roles: [...n.roles], branches: [...n.branches] });
+    if (n.def && !L.def) LAYOUTS.forEach((x) => (x.def = x.id === L.id));
+    if (S.cur === L.id) S.name = L.name;
+    go(S.editFrom === 'editor' ? { screen: 'editor' } : { screen: 'list', fresh: L.id }); toast(`${L.name}: details saved`);
+  },
+  efcancel: () => go({ screen: S.editFrom === 'editor' ? 'editor' : 'list' }),
+  newcat: () => { S.cf = { name: '', desc: '', c: CAT_COLOURS[1], err: '' }; go({ screen: 'cats' }); setTimeout(() => $('cfname')?.focus(), 0); },
+  cfcol: (t) => { S.cf.c = t.dataset.v; render(); },
+  cfadd: () => {
+    const f = S.cf, nm = f.name.trim();
+    if (!nm) { f.err = 'Give the category a name'; render(); $('cfname').focus(); return; }
+    if (CATS.some((k) => k.name.toLowerCase() === nm.toLowerCase())) { f.err = 'There is already a category with that name'; render(); $('cfname').focus(); return; }
+    const k = { id: 'K' + ++cid, name: nm, desc: f.desc.trim(), c: f.c };
+    CATS.push(k); S.freshCat = k.id; S.cf = { name: '', desc: '', c: f.c, err: '' };
+    if (S.nfHold) { S.nf.cat = k.id; S.nf.caterr = ''; toast(`“${nm}” added and picked for ${S.nfHold === 'edit' ? 'this layout' : 'your new layout'}`); go({ screen: S.nfHold }); return; }
+    toast(`“${nm}” added. Pick it when you make or move a layout.`); render(); $('cfname')?.focus();
+  },
+  cren: (t) => { const k = CATS.find((x) => x.id === t.dataset.v); S.cren = k.id; S.crenVal = k.name; render(); setTimeout(() => { $('crname')?.focus(); $('crname')?.select(); }, 0); },
+  crcancel: () => { S.cren = null; render(); },
+  crsave: () => {
+    const k = CATS.find((x) => x.id === S.cren), v = S.crenVal.trim();
+    if (!v) { toast('A category needs a name'); $('crname')?.focus(); return; }
+    if (CATS.some((x) => x.id !== k.id && x.name.toLowerCase() === v.toLowerCase())) { toast('There is already a category with that name'); $('crname')?.focus(); return; }
+    k.name = v; S.cren = null; toast('Renamed'); render();
+  },
+  cdel: (t) => {
+    const k = CATS.find((x) => x.id === t.dataset.v); if (!k || CATS.length < 2) return;
+    const ls = LAYOUTS.filter((L) => catOf(L).id === k.id), others = CATS.filter((x) => x.id !== k.id);
+    $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete “${esc(k.name)}”?</h3></div><div class="dlg-body">${ls.length ? `${ls.length === 1 ? `Its layout, ${esc(ls[0].name)}, moves` : `Its ${ls.length} layouts (${ls.map((L) => esc(L.name)).join(', ')}) move`} to another category. Deals are not touched.<div class="f" style="margin-top:12px"><label for="cmove">Move ${ls.length === 1 ? 'it' : 'them'} to</label><select id="cmove">${others.map((x) => `<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select></div>` : 'It has no layouts. Nothing else changes.'}</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="docdel" data-v="${k.id}">Delete</button></div></div></div>`;
+  },
+  docdel: (t) => { const id = t.dataset.v, to = $('cmove')?.value; if (to) LAYOUTS.forEach((L) => { if (catOf(L).id === id) L.cat = to; }); CATS = CATS.filter((x) => x.id !== id); $('ovl').innerHTML = ''; toast(to ? `Category deleted; its layouts moved to ${CATS.find((x) => x.id === to).name}` : 'Category deleted'); render(); },
+  nfrmpage: (t) => { S.nf.pages = S.nf.pages.filter((x) => x !== t.dataset.v); render(); },
+  nfhist: () => { S.nf.pages.push('History'); render(); },
+  nfaddpage: () => { const v = S.nf.extra.trim(); if (!v) { $('nfpage').focus(); return; } if (S.nf.pages.some((x) => x.toLowerCase() === v.toLowerCase())) { toast('That page is already there'); return; } S.nf.pages.push(v); S.nf.extra = ''; render(); $('nfpage').focus(); },
+  nfdef: () => { S.nf.def = !S.nf.def; render(); },
+  nfsave: () => {
+    const n = S.nf, nm = n.name.trim();
+    if (!nm) { n.err = 'Give the layout a name'; render(); $('nfname').focus(); return; }
+    if (!CATS.some((k) => k.id === n.cat)) { n.caterr = 'Pick a category'; render(); document.querySelector('[data-a="nfcat"]')?.focus(); return; }
+    if (LAYOUTS.some((x) => x.name.toLowerCase() === nm.toLowerCase())) { n.err = 'Another Deals layout has that name'; render(); $('nfname').focus(); return; }
+    keepLayout();
+    const src = n.start === 'blank' ? null : LAYOUTS.find((x) => x.id === n.start);
+    const L = mk({ id: 'L' + ++cid, name: nm, cat: n.cat, desc: n.desc, prod: [...n.prod], roles: [...n.roles], branches: [...n.branches], def: n.def, by: 'You', at: 'now', v: 0 }, modelFor(n.pages, src ? src.M : null), src ? clone(src.FS) : {});
+    if (n.def) LAYOUTS.forEach((x) => (x.def = false));
+    LAYOUTS.unshift(L);
+    // A new layout joins the end of Choose a layout; the admin drags it where they want.
+    ORDER = [...ORDER, L.id];
+    S.nf = { name: '', desc: '', prod: [], roles: [], branches: [], start: 'L1', pages: ['New/Edit', 'Detail', 'History'], def: false, err: '', extra: '' };
+    go({ screen: 'list', fresh: L.id }); toast(`“${nm}” saved as a draft card. Open it to design its pages.`);
+  },
+  page: (t) => { S.page = t.dataset.v; S.sel = { k: null }; S.pal = PAGE_KIND[S.page] === 'form' ? 'fields' : 'cards'; render(); },
+  addpage: () => { S.addingPage = true; render(); setTimeout(() => $('newpage')?.focus(), 0); },
+  itab: (t, e) => { if (e.target.closest('[data-drag]')) return; S.tab[S.page] = t.dataset.v; S.sel = { k: 'tab', id: t.dataset.v }; render(); },
+  addtab: () => { S.addingTab = true; render(); setTimeout(() => $('newtab')?.focus(), 0); },
+  selfld: (t, e) => { if (e.target.closest('[data-drag]')) return; S.sel = { k: 'field', id: t.dataset.v }; render(); },
+  selcard: (t, e) => { if (e.target.closest('[data-drag]')) return; S.sel = { k: 'card', id: t.dataset.v }; render(); },
+  selsec: (t) => { S.sel = { k: 'sec', id: t.dataset.v }; render(); },
+  addsec: () => { snap(); const id = 's' + ++cid; curTab().secs.push({ id, title: 'New section', cols: 2, f: [] }); S.sel = { k: 'sec', id }; render(); $('sname')?.select(); },
+  pal: (t) => { S.pal = t.dataset.v; render(); },
+  sample: (t) => { S.sample = +t.dataset.v; render(); },
+  as: (t) => { S.as = t.dataset.v; render(); },
+  phone: (t) => { S.phone = t.dataset.v === '1'; render(); },
+  cmp: () => { S.cmp = !S.cmp; render(); },
+  undo: () => { if (!S.undo.length) return; S.redo.push(JSON.stringify({ M: S.M, FS: FIELDSET })); const s = JSON.parse(S.undo.pop()); S.M = s.M; FIELDSET = s.FS; A._fixPage(); render(); },
+  _fixPage: () => { if (!S.M[S.page]) { S.page = 'Detail'; S.sel = { k: null }; } if (!S.M[S.page].tabs.some((x) => x.id === S.tab[S.page])) S.tab[S.page] = S.M[S.page].tabs[0].id; },
+  redo: () => { if (!S.redo.length) return; S.undo.push(JSON.stringify({ M: S.M, FS: FIELDSET })); const s = JSON.parse(S.redo.pop()); S.M = s.M; FIELDSET = s.FS; A._fixPage(); render(); },
+  publish: () => { const L = curL(); const ck = checks(); const b = ck.filter((c) => c[0] === 'block'); if (b.length) { toast(`Fix first: ${b[0][1]}`); return; } $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Publish ${esc(S.name)} v${L.v + 1}</h3></div><div class="dlg-body">${L.v ? `${plural(edits(), 'change')}. ` : 'First version of this layout. '}${L.used ? `${L.used} deals open with it; ` : L.people ? `${plural(L.people, 'person')} open deals with it; ` : 'Deals that fit it start using it; '}people see it on their next page load.${L.v ? ` You can roll back to v${L.v}.` : ''}${ck.length ? `<br><br>${plural(ck.length, 'check')} to look at, none blocking.` : ''}<div class="f" style="margin-top:12px"><label for="pnote">What changed</label><textarea id="pnote" placeholder="For example: gold purity on the Security tab"></textarea></div></div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep editing</button><span class="sp"></span><button class="btn pri" data-a="dopub">Publish</button></div></div></div>`; },
+  dopub: () => { const L = curL(); PUBLISHED = clone(S.M); L.P = PUBLISHED; L.v += 1; L.by = 'You'; L.at = 'now'; S.undo = []; S.redo = []; S.cmp = false; $('ovl').innerHTML = ''; toast(`${S.name} v${L.v} is live`); render(); },
+  goto: (t) => { S.page = t.dataset.p; if (t.dataset.t) S.tab[S.page] = t.dataset.t; render(); },
+  fset: (t) => { snap(); const s = FIELDSET[S.sel.id] || (FIELDSET[S.sel.id] = {}); s[t.dataset.k] = !s[t.dataset.k]; render(); },
+  fcond: () => { snap(); const s = FIELDSET[S.sel.id] || (FIELDSET[S.sel.id] = {}); s.cond = s.cond ? null : ['product', 'is', 'Home loan']; render(); },
+  rmfld: () => { snap(); for (const t of pageM().tabs) { if (t.secs) t.secs.forEach((s) => (s.f = s.f.filter((x) => x !== S.sel.id))); else t.cards.forEach((c) => c.f && (c.f = c.f.filter((x) => x !== S.sel.id))); } S.sel = { k: null }; render(); },
+  rmcard: () => { snap(); for (const t of pageM().tabs) if (t.cards) t.cards = t.cards.filter((c) => c.id !== S.sel.id); S.sel = { k: null }; render(); },
+  cardrmf: (t) => { snap(); const [, c] = findCard(S.sel.id); c.f = c.f.filter((x) => x !== t.dataset.v); render(); },
+  troleall: () => { snap(); pageM().tabs.find((x) => x.id === S.sel.id).roles = []; render(); },
+  trole: (t) => { snap(); const tb = pageM().tabs.find((x) => x.id === S.sel.id); const r = t.dataset.v; tb.roles = tb.roles.includes(r) ? tb.roles.filter((x) => x !== r) : [...tb.roles, r]; render(); },
+  rmtab: () => A.rmtabx({ dataset: { v: S.sel.id } }),
+  rmtabx: (t) => {
+    const P = pageM(), tb = P.tabs.find((x) => x.id === t.dataset.v); if (!tb || P.tabs.length < 2) return;
+    const n = tb.secs ? tb.secs.reduce((k, s) => k + s.f.length, 0) : tb.cards.length;
+    const go = () => { snap(); P.tabs = P.tabs.filter((x) => x.id !== tb.id); S.tab[S.page] = P.tabs[0].id; S.sel = { k: null }; $('ovl').innerHTML = ''; toast(`Tab “${tb.name}” deleted. Undo brings it back.`); render(); };
+    if (!n) { go(); return; }
+    A._rmtab = go;
+    $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete the “${esc(tb.name)}” tab?</h3></div><div class="dlg-body">It holds ${tb.secs ? plural(n, 'field') : plural(n, 'card')}. ${tb.secs ? 'The fields go back to the list on the left, so you can place them on another tab.' : 'The cards go back to the card library.'} Undo brings the tab back.</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="dormtab">Delete tab</button></div></div></div>`;
+  },
+  dormtab: () => A._rmtab && A._rmtab(),
+  rmpage: (t) => {
+    const pg = t.dataset.v; if (FIXED_PAGES.includes(pg) || !S.M[pg]) return;
+    const tabs = S.M[pg].tabs, n = tabs.reduce((k, x) => k + (x.secs ? x.secs.reduce((m, s) => m + s.f.length, 0) : x.cards.length), 0);
+    const go = () => { snap(); delete S.M[pg]; S.page = 'Detail'; S.sel = { k: null }; S.pal = 'cards'; $('ovl').innerHTML = ''; toast(`Page “${pg}” deleted. Undo brings it back.`); render(); };
+    if (!n) { go(); return; }
+    A._rmpage = go;
+    $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete the “${esc(pg)}” page?</h3></div><div class="dlg-body">It has ${plural(tabs.length, 'tab')} with ${plural(n, 'card')}. People stop seeing this page once you publish. Undo brings it back.</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="dormpage">Delete page</button></div></div></div>`;
+  },
+  dormpage: () => A._rmpage && A._rmpage(),
+  scols: (t) => { snap(); curTab().secs.find((x) => x.id === S.sel.id).cols = +t.dataset.v; render(); },
+  rmsec: () => { snap(); const tb = curTab(); tb.secs = tb.secs.filter((x) => x.id !== S.sel.id); S.sel = { k: null }; render(); },
+};
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-a]');
+  if (S.menu && !e.target.closest('.cmenu, [data-a="menu"]')) { S.menu = null; if (!t) { render(); return; } }
+  if (!t || !t.closest('#page, #ovl')) return;
+  if (t.disabled) return;
+  const f = A[t.dataset.a]; if (f) f(t, e);
+});
+document.addEventListener('keydown', (e) => {
+  const t = e.target;
+  if (e.key === 'Escape') { if ($('ovl').innerHTML) $('ovl').innerHTML = ''; else if (S.menu) { S.menu = null; render(); } else if (S.addingTab || S.addingPage) { S.addingTab = S.addingPage = false; render(); } }
+  if (e.key === 'Enter' && t.id === 'newtab') { const v = t.value.trim(); if (v) { snap(); const id = 't' + ++cid; pageM().tabs.push(isForm() ? { id, name: v, roles: [], secs: [{ id: 's' + ++cid, title: 'Details', cols: 2, f: [] }] } : { id, name: v, roles: [], cards: [] }); S.tab[S.page] = id; S.sel = { k: 'tab', id }; } S.addingTab = false; render(); }
+  if (e.key === 'Enter' && t.id === 'newpage') { const v = t.value.trim(); const same = v && Object.keys(S.M).find((x) => x.toLowerCase() === v.toLowerCase()); if (same) { toast(`This layout already has a “${same}” page`); t.select(); return; } if (v) { snap(); S.M[v] = emptyPage(); S.page = v; S.tab[v] = S.M[v].tabs[0].id; S.sel = { k: null }; S.pal = 'cards'; } S.addingPage = false; render(); }
+  if (e.key === 'Enter' && t.id === 'nfpage') A.nfaddpage();
+  if (e.key === 'Enter' && (t.id === 'cfname' || t.id === 'cfdesc')) { e.preventDefault(); A.cfadd(); }
+  if (t.id === 'crname' && e.key === 'Enter') { e.preventDefault(); A.crsave(); }
+  if (t.id === 'crname' && e.key === 'Escape') { e.stopPropagation(); A.crcancel(); }
+  if ((e.key === 'Enter' || e.key === ' ') && t.matches('.itab[data-a], .itab.add, .ptab[data-a]')) { e.preventDefault(); t.click(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && S.screen === 'editor' && t.tagName !== 'INPUT') { e.preventDefault(); e.shiftKey ? A.redo() : A.undo(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y' && S.screen === 'editor' && t.tagName !== 'INPUT') { e.preventDefault(); A.redo(); }
+});
+document.addEventListener('focusout', (e) => { if ((e.target.id === 'newtab' && S.addingTab) || (e.target.id === 'newpage' && S.addingPage)) setTimeout(() => { if (document.activeElement?.id !== e.target.id) { S.addingTab = S.addingPage = false; render(); } }, 120); });
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  if (t.dataset.cf) { S.cf[t.dataset.cf] = t.value; if (t.dataset.cf === 'name') { S.cf.err = ''; const p = document.querySelector('.catprev .pgrp'); if (p) p.childNodes[1].textContent = t.value.trim() || 'Category name'; const bad = t.closest('.f.bad'); if (bad) { bad.classList.remove('bad'); bad.querySelector('.err')?.remove(); } } return; }
+  if (t.id === 'crname') { S.crenVal = t.value; return; }
+  if (t.dataset.nf) { S.nf[t.dataset.nf] = t.value; if (t.dataset.nf === 'name') S.nf.err = ''; if (t.dataset.nf !== 'extra') render(); return; }
+  if (t.id === 'palq') { S.palq = t.value; render(); return; }
+  if (t.id === 'lname') { S.name = t.value; return; }
+  if (t.dataset.fh) { (FIELDSET[S.sel.id] || (FIELDSET[S.sel.id] = {})).help = t.value; const box = document.querySelector(`.fld[data-fld="${S.sel.id}"]`); if (box) { let h = box.querySelector('.help'); if (!h && t.value) { h = document.createElement('div'); h.className = 'help'; box.querySelector('.fi').after(h); } if (h) h.textContent = t.value; } return; }
+  if (t.dataset.tn) { const tb = pageM().tabs.find((x) => x.id === S.sel.id); tb.name = t.value; const el = document.querySelector(`.itab[data-itab="${tb.id}"]`); if (el) el.childNodes[1].textContent = t.value; return; }
+  if (t.dataset.sn) { const s = curTab().secs.find((x) => x.id === S.sel.id); s.title = t.value; const el = document.querySelector('.fsec.sel .fsec-h b'); if (el) el.textContent = t.value || 'Untitled section'; return; }
+  if (t.dataset.cw || t.dataset.ch) { const [, c] = findCard(S.sel.id); if (t.dataset.cw) c.w = +t.value; else c.h = +t.value; render(); return; }
+});
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.id === 'lname') {
+    const L = curL(), v = t.value.trim();
+    if (!v) { S.name = L.name; toast('A layout needs a name'); render(); return; }
+    if (LAYOUTS.some((x) => x.id !== L.id && x.name.toLowerCase() === v.toLowerCase())) { S.name = L.name; toast('Another Deals layout has that name'); render(); return; }
+    S.name = v; L.name = v; render(); return;
+  }
+  if (t.dataset.pv) { S.pv[t.dataset.pv] = t.value; render(); }
+  if (t.dataset.cond != null) { snap(); const c = FIELDSET[S.sel.id].cond; c[+t.dataset.cond] = t.value; if (t.dataset.cond === '0') c[2] = t.value === 'product' ? 'Home loan' : F[t.value].s[0]; render(); }
+  if (t.dataset.cw || t.dataset.ch || t.dataset.tn || t.dataset.sn || t.dataset.fh) { snap(); render(); }
+});
+
+/* ---------- dragging (window listeners, so a redraw never drops the drag) ---------- */
+let D = null, ghost = null;
+const under = (x, y) => { if (ghost) ghost.style.display = 'none'; const el = document.elementFromPoint(x, y); if (ghost) ghost.style.display = ''; return el; };
+function clearMarks() { document.querySelectorAll('.dropb, .over').forEach((x) => x.classList.remove('dropb', 'over')); }
+document.addEventListener('pointerdown', (e) => {
+  const h = e.target.closest('[data-drag]'); if (!h || e.button) return;
+  e.preventDefault();
+  const k = h.dataset.drag;
+  D = { k, f: h.dataset.f, c: h.dataset.c, ck: h.dataset.k, t: h.dataset.t, i: +h.dataset.i, x: e.clientX, y: e.clientY, moved: false };
+  if (k === 'rzx' || k === 'rzy' || k === 'rzxy') { const [, c] = findCard(D.c); const g = $('cg').getBoundingClientRect(); D.col = (g.width - 11 * 10) / 12 + 10; D.w0 = c.w; D.h0 = c.h; snap(); S.sel = { k: 'card', id: D.c }; }
+  if (['newfld', 'fld', 'newcard', 'card'].includes(k)) {
+    const label = k === 'newfld' || k === 'fld' ? F[D.f].l : k === 'newcard' ? CARDS[D.ck][0] : CARDS[findCard(D.c)[1].k][0];
+    ghost = document.createElement('div'); ghost.className = 'ghost-drag'; ghost.innerHTML = ic(k.includes('card') ? 'layout' : 'fields', 14) + esc(label); ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px'; document.body.appendChild(ghost);
+    if (k === 'fld') document.querySelector(`.fld[data-fld="${D.f}"]`)?.classList.add('ghosted');
+    if (k === 'card') document.querySelector(`.rc[data-card="${D.c}"]`)?.classList.add('ghosted');
+  }
+  document.body.classList.add('dragging');
+});
+window.addEventListener('pointermove', (e) => {
+  if (!D) return;
+  const dx = e.clientX - D.x, dy = e.clientY - D.y;
+  if (Math.abs(dx) + Math.abs(dy) > 3) D.moved = true;
+  if (ghost) { ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px'; }
+  if (D.k === 'rzx' || D.k === 'rzy' || D.k === 'rzxy') {
+    const [, c] = findCard(D.c);
+    const w = D.k === 'rzy' ? c.w : Math.max(3, Math.min(12, Math.round(D.w0 + dx / D.col)));
+    const hh = D.k === 'rzx' ? c.h : Math.max(2, Math.min(12, Math.round(D.h0 + dy / 40)));
+    if (w !== c.w || hh !== c.h) { c.w = w; c.h = hh; render(); document.querySelector(`.rc[data-card="${D.c}"]`)?.classList.add('sizing'); }
+    return;
+  }
+  if (D.k === 'cat') {
+    const row = under(e.clientX, e.clientY)?.closest('.crow'); if (!row) return; const j = +row.dataset.crow; if (j === D.i) return;
+    const [m] = CATS.splice(D.i, 1); CATS.splice(j, 0, m); D.i = j; render(); document.querySelector(`.crow[data-crow="${j}"]`)?.classList.add('lift'); return;
+  }
+  if (D.k === 'order') {
+    const row = under(e.clientX, e.clientY)?.closest('.orow'); if (!row) return; const j = +row.dataset.orow; if (j === D.i) return;
+    // A layout moves only within its own category; its category decides which heading it sits under.
+    const catAt = (k) => catOf(LAYOUTS.find((x) => x.id === ORDER[k])).id; if (catAt(j) !== catAt(D.i)) return;
+    const [m] = ORDER.splice(D.i, 1); ORDER.splice(j, 0, m); D.i = j; render(); document.querySelector(`.orow[data-orow="${j}"]`)?.classList.add('lift'); return;
+  }
+  if (D.k === 'tab') {
+    const tab = under(e.clientX, e.clientY)?.closest('.itab[data-itab]'); if (!tab || tab.dataset.itab === D.t) return;
+    const P = pageM(); const a = P.tabs.findIndex((x) => x.id === D.t), b = P.tabs.findIndex((x) => x.id === tab.dataset.itab);
+    if (!D.snapped) { snap(); D.snapped = true; } const [m] = P.tabs.splice(a, 1); P.tabs.splice(b, 0, m); render(); document.querySelector(`.itab[data-itab="${D.t}"]`)?.classList.add('lift'); return;
+  }
+  clearMarks();
+  const el = under(e.clientX, e.clientY);
+  if (D.k === 'newfld' || D.k === 'fld') {
+    const tabEl = el?.closest('.itab[data-itab]'); if (tabEl && tabEl.dataset.itab !== curTab().id) { S.tab[S.page] = tabEl.dataset.itab; render(); if (D.k === 'fld') document.querySelector(`.fld[data-fld="${D.f}"]`)?.classList.add('ghosted'); return; }
+    if (isForm()) { const fl = el?.closest('.fld'); if (fl && fl.dataset.fld !== D.f) fl.classList.add('dropb'); else el?.closest('.fsec')?.classList.add('over'); }
+    else el?.closest('.rc')?.classList.add('over') || el?.closest('[data-emptycards]')?.classList.add('over');
+  } else if (D.k === 'newcard' || D.k === 'card') {
+    const rc = el?.closest('.rc'); if (rc && rc.dataset.card !== D.c) rc.classList.add('dropb'); else el?.closest('.cgrid, [data-emptycards]')?.classList.add('over');
+    const tabEl = el?.closest('.itab[data-itab]'); if (tabEl && tabEl.dataset.itab !== curTab().id) { S.tab[S.page] = tabEl.dataset.itab; render(); if (D.k === 'card') document.querySelector(`.rc[data-card="${D.c}"]`)?.classList.add('ghosted'); }
+  }
+});
+window.addEventListener('pointerup', (e) => {
+  if (!D) return;
+  document.body.classList.remove('dragging');
+  const d = D; D = null;
+  if (ghost) { ghost.remove(); }
+  const el = d.moved ? under(e.clientX, e.clientY) : null; ghost = null; clearMarks();
+  if (d.k === 'order') { if (d.moved) toast('Order of Choose a layout changed'); render(); return; }
+  if (d.k === 'cat') { if (d.moved) toast('Order of categories changed'); render(); return; }
+  if (d.k === 'tab' || d.k.startsWith('rz')) { render(); return; }
+  if (!d.moved) { render(); return; }
+  if (d.k === 'newfld' || d.k === 'fld') {
+    const t = curTab();
+    if (isForm()) {
+      const fl = el?.closest('.fld'), secEl = el?.closest('.fsec');
+      if (!secEl && !fl) { render(); return; }
+      snap();
+      for (const tb of pageM().tabs) tb.secs.forEach((s) => (s.f = s.f.filter((x) => x !== d.f)));
+      const si = +(fl ? fl.dataset.sec : secEl.dataset.secbox);
+      const sec = t.secs[si]; const at = fl && fl.dataset.fld !== d.f ? sec.f.indexOf(fl.dataset.fld) : sec.f.length;
+      sec.f.splice(at < 0 ? sec.f.length : at, 0, d.f);
+    } else {
+      const rc = el?.closest('.rc'); let c = rc ? findCard(rc.dataset.card)[1] : null;
+      if (!rc && !el?.closest('#cbody')) { render(); return; }
+      snap();
+      for (const tb of pageM().tabs) tb.cards.forEach((x) => x.f && (x.f = x.f.filter((y) => y !== d.f)));
+      if (!c || c.k !== 'details') { c = t.cards.find((x) => x.k === 'details'); if (!c) { c = { id: 'c' + ++cid, k: 'details', w: 12, h: 3, f: [] }; t.cards.push(c); } }
+      c.f.push(d.f); S.sel = { k: 'card', id: c.id }; render(); return;
+    }
+    S.sel = { k: 'field', id: d.f }; render(); return;
+  }
+  if (d.k === 'newcard' || d.k === 'card') {
+    const t = curTab(); const rc = el?.closest('.rc');
+    if (!rc && !el?.closest('#cbody')) { render(); return; }
+    snap();
+    let card;
+    if (d.k === 'card') { for (const tb of pageM().tabs) { const i = tb.cards.findIndex((x) => x.id === d.c); if (i >= 0) [card] = tb.cards.splice(i, 1); } }
+    else card = { id: 'c' + ++cid, k: d.ck, w: 6, h: 3, ...(d.ck === 'details' ? { f: [] } : {}) };
+    const at = rc && rc.dataset.card !== d.c ? t.cards.findIndex((x) => x.id === rc.dataset.card) : t.cards.length;
+    t.cards.splice(at < 0 ? t.cards.length : at, 0, card);
+    S.sel = { k: 'card', id: card.id }; render();
+  }
+});
+
+$('screens').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) go({ screen: b.dataset.s }); });
+const isDark = () => (document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
+$('themeBtn').addEventListener('click', () => { document.documentElement.dataset.theme = isDark() ? 'light' : 'dark'; });
+render();
+</script>
