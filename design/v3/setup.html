@@ -426,7 +426,7 @@ i { font-style: normal; }
 .sent { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 14px; line-height: 30px; }
 .tok2 { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px; border-radius: 9px; font-weight: 600; background: var(--surface); color: var(--bank-ink); box-shadow: inset 0 0 0 1px var(--bank-soft-line); white-space: nowrap; }
 .tok2:hover { background: var(--bank-soft); }
-.tok2.v { color: var(--text); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.tok2.v { color: var(--text); box-shadow: inset 0 0 0 1px var(--border-strong); white-space: normal; height: auto; min-height: 30px; padding: 5px 10px; line-height: 1.35; text-align: left; max-width: 100%; }
 .andor { font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--text-muted); }
 .trace { display: grid; gap: 6px; }
 .tr { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 7px 10px; border-radius: 10px; font-size: 13px; background: var(--surface-2); animation: enter var(--base) var(--ease-out) backwards; }
@@ -488,6 +488,35 @@ i { font-style: normal; }
 .opt3 button[aria-checked="true"] i { box-shadow: inset 0 0 0 5px var(--bank-primary); }
 .opt3 b { font-weight: 600; font-size: 13px; } .opt3 small { color: var(--text-muted); font-size: 12px; }
 
+/* branches */
+.brs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 14px; align-items: start; }
+.reg { padding: 6px 12px 12px; }
+.reg-h { display: flex; align-items: center; gap: 8px; padding: 10px 4px 6px; font-family: var(--mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); }
+.reg-h span { margin-left: auto; text-transform: none; letter-spacing: 0; }
+.brow { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; width: 100%; padding: 9px 10px 9px 26px; border-radius: 11px; text-align: left; transition: background var(--fast); }
+.brow::before { content: ''; position: absolute; left: 10px; top: -4px; bottom: 50%; width: 10px; border-left: 1.5px solid var(--border-strong); border-bottom: 1.5px solid var(--border-strong); border-radius: 0 0 0 6px; }
+.brow:hover { background: var(--surface-2); }
+.brow[aria-current="true"] { background: var(--bank-soft); }
+.brow .code { font-family: var(--mono); font-size: 10.5px; color: var(--text-muted); grid-row: span 2; align-self: center; padding: 2px 6px; border-radius: 6px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); }
+.brow b { font-weight: 600; } .brow small { grid-column: 2; color: var(--text-muted); font-size: 12px; }
+.brow .mono { grid-row: 1 / span 2; grid-column: 3; color: var(--text-muted); font-size: 11px; }
+.team { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); }
+.team:first-of-type { border-top: 0; }
+.team b { font-weight: 600; } .team small { display: block; color: var(--text-muted); font-size: 12px; }
+.stack-av { display: flex; } .stack-av .av { margin-left: -6px; box-shadow: 0 0 0 2px var(--surface); } .stack-av .av:first-child { margin-left: 0; }
+.scope { display: grid; gap: 6px; font-size: 12.5px; }
+.scope div { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 8px; align-items: center; padding: 7px 10px; border-radius: 10px; background: var(--surface-2); }
+.scope .pc { min-width: 0; height: 24px; font-size: 11px; }
+/* recycle bin */
+.binr { display: grid; grid-template-columns: auto minmax(0, 1fr) 150px auto; gap: 10px 14px; align-items: center; padding: 11px 14px; border-top: 1px solid var(--border); font-size: 13px; animation: enter var(--base) var(--ease-out) backwards; }
+.binr:first-child { border-top: 0; }
+.binr small { display: block; color: var(--text-muted); font-size: 12px; }
+.binr .tyc { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: var(--c); background: color-mix(in srgb, var(--c) 14%, var(--surface)); }
+.left { display: grid; gap: 4px; font-size: 11.5px; color: var(--text-muted); }
+.left i { display: block; height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.left i b { display: block; height: 100%; border-radius: 3px; background: var(--c); }
+.binr.gone { animation: binout .35s var(--ease-out) forwards; }
+@keyframes binout { to { opacity: 0; transform: translateX(30px); } }
 /* history */
 .hist { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 14px; align-items: start; }
 .tl { padding: 10px 12px 12px 26px; position: relative; }
@@ -532,6 +561,7 @@ i { font-style: normal; }
   .home-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .home-cols > :last-child { grid-column: 1 / -1; }
 }
 @container (max-width: 900px) {
+  .brs { grid-template-columns: minmax(0, 1fr); }
   .su { grid-template-columns: minmax(0, 1fr); }
   .su-ix { position: static; grid-template-columns: minmax(0, 1fr); }
   .su-ix .grp, .su-ix .gwrap { display: contents; }
@@ -556,7 +586,8 @@ i { font-style: normal; }
   .vrow2 { grid-template-columns: 20px 26px minmax(0, 1fr) auto; } .vrow2 .meaning { display: none; }
   .invite { grid-template-columns: minmax(0, 1fr); }
   .urow { grid-template-columns: auto minmax(0, 1fr) auto; } .urow .hide-s { display: none; }
-  .map .smp, .map .hide-s { display: none; } .wire { width: 28px; }
+  .map .smp, .map .hide-s { display: none; }
+  .binr { grid-template-columns: auto minmax(0, 1fr) auto; } .binr .left { grid-column: 2; grid-row: 2; } .wire { width: 28px; }
   .steps span { font-size: 0; gap: 0; justify-content: center; } .steps span.on { font-size: 12px; gap: 6px; }
   .step { grid-template-columns: minmax(0, 1fr); gap: 6px; } .step + .step::before { left: 20px; }
   .draft { padding-left: 18px; } .draft .mono { display: none; }
@@ -627,6 +658,8 @@ const I = {
   phone: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
   monitor: '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>',
   undo: '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/>',
+  trash: '<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',
+  restore: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
   eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
 };
 const ic = (n, s = 17) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n] || I.box}</svg>`;
@@ -703,6 +736,8 @@ const RULES = [
   { id: 'vr-ltv', kind: 'Validation', name: 'Sanction needs LTV under 80%', on: true, when: 'a Deal moves to Sanctioned', ifs: [['Record type', 'is', 'Home Loan or Gold Loan'], ['LTV %', 'is over', '80']], then: [['Block', 'the move', '"LTV must be 80% or less to sanction."']] },
   { id: 'vr-kyc', kind: 'Validation', name: 'No deal without KYC', on: true, when: 'a Deal is created', ifs: [['Account › Primary contact › KYC status', 'is not', 'Verified']], then: [['Block', 'saving', '"Verify the customer’s KYC first."']] },
   { id: 'sr-docs', kind: 'Stage rule', name: 'Disbursal needs documents', on: true, when: 'a Deal moves to Disbursed', ifs: [['Sanction documents', 'is', 'empty']], then: [['Block', 'the move', '"Attach the sanction letter."']] },
+  { id: 'ap-large', kind: 'Approval', name: 'Loans over ₹1 Cr need a second approver', on: true, when: 'a Deal moves to Sanctioned', ifs: [['Loan amount', 'is over', '₹1 Cr']], then: [['Ask', 'for approval from', 'Branch manager, then Credit head if no answer in 2 days']] },
+  { id: 'ap-del', kind: 'Approval', name: 'Deleting a customer needs approval', on: true, when: 'someone deletes an Account', ifs: [['Account', 'has', 'open deals or products']], then: [['Ask', 'for approval from', 'Branch manager']] },
   { id: 'sr-back', kind: 'Stage rule', name: 'No moving back after sanction', on: true, when: 'a Deal leaves Sanctioned', ifs: [['New stage', 'is before', 'Sanctioned']], then: [['Block', 'the move', 'unless Branch manager']] },
 ];
 const SAMPLES = {
@@ -734,23 +769,39 @@ let VERSIONS = [
 ];
 const AUDIT = [['Sana Iyer', 'Signed in', 'Baner, Pune · Chrome on Windows', '', '09:12'], ['Priya Nair', 'Published version 14', 'Gold loan record type, 4 changes', '', 'Yesterday 16:20'], ['Arjun Das', 'Exported 214 leads', 'Leads › My open leads view', '', 'Yesterday 14:03'], ['Rahul Khanna', 'Changed a deal', 'HL-2026-0142 Kapoor flat', ['Stage', 'Credit check', 'Sanctioned'], 'Yesterday 11:47'], ['Priya Nair', 'Changed a user', 'Meera Joshi', ['Branch', 'Andheri East', 'Kothrud, Pune'], '17 Nov'], ['Sana Iyer', 'Deleted a lead', 'Test lead (duplicate of Rhea Kapoor)', '', '16 Nov']];
 
+const BRANCHES = [
+  { region: 'Mumbai', head: 'Kavita Rao', list: [
+    { id: 'ho', name: 'Head office', code: 'MUM-001', city: 'Nariman Point', mgr: 'Priya Nair', people: 14, teams: [['Credit', 'Rahul Khanna', 5], ['Operations', 'Neha Shah', 6], ['Inside sales', 'Kunal Mehta', 3]] },
+    { id: 'and', name: 'Andheri East', code: 'MUM-012', city: 'Mumbai', mgr: 'Rakesh Menon', people: 9, teams: [['Retail loans', 'Arjun Das', 6], ['Current accounts', 'Fatima Sheikh', 3]] } ] },
+  { region: 'Pune', head: 'Sana Iyer', list: [
+    { id: 'ban', name: 'Baner', code: 'PUN-004', city: 'Pune', mgr: 'Sana Iyer', people: 7, teams: [['Home loans', 'Meera Joshi', 4], ['Gold desk', 'Anil Kulkarni', 3]] },
+    { id: 'kot', name: 'Kothrud', code: 'PUN-007', city: 'Pune', mgr: '', people: 3, teams: [['Home loans', 'Meera Joshi', 3]] } ] },
+];
+let BIN = [
+  ['Lead', 'target', '#2f6fe0', 'Test lead (duplicate of Rhea Kapoor)', 'Sana Iyer', '16 Nov', 27],
+  ['Deal', 'deal', '#1f9d63', 'CL-2026-0090 · Used car, Kurla', 'Arjun Das', '12 Nov', 23],
+  ['Contact', 'user', '#0f97a8', 'Aarav Malhotra (older record, merged)', 'Priya Nair', '2 Nov', 13],
+  ['Quote', 'file', '#7a4fd6', 'Q-2026-0118 · Payroll Pro draft', 'Arjun Das', '30 Oct', 10],
+  ['Ticket', 'ticket', '#d33a3a', 'TK-0031 · Duplicate complaint', 'Rahul Khanna', '25 Oct', 5],
+];
 const HEALTH = [
   ['warn', 'LTV % is on the Sanction rule but not on the Gold Loan page', 'Credit officers can’t see why a move is blocked. Fix it in Deals › ToolBox › Customise page layout.', 'toolbox'],
   ['warn', '1 KYC status has no colour', '“Re-KYC due” shows grey everywhere.', 'picklists'],
+  ['warn', 'Kothrud branch has no branch manager', 'Approvals for Kothrud deals wait for the region head.', 'branches'],
   ['info', 'Duplicate check on Leads uses mobile only', 'Adding PAN would catch 31 more duplicates from the last month.', 'rules'],
 ];
 
 /* ---------- state ---------- */
 let S = {
   screen: 'home', mod: 'deals', tab: 'fields', field: 'emi', list: 'deal-stage', rule: 'vr-ltv', sample: 1, role: 'rm', atab: 'roles', ver: 14, htab: 'versions',
-  find: '', palette: null, invite: false, dup: 'skip', hot: null,
+  branch: 'ban', find: '', palette: null, invite: false, dup: 'skip', hot: null,
   draft: [
     { k: 'f-emi', s: 'chg', where: 'Deals › Fields', text: 'EMI formula rounds to whole rupees', by: 'You', at: '12 min ago' },
     { k: 'st-sanction', s: 'add', where: 'Deals › Stage', text: 'Sanctioned added to Gold Loan', by: 'You', at: '9 min ago' },
     { k: 'p-rm-leads-4', s: 'chg', where: 'Access › Relationship manager', text: 'Leads Export: None → Own', by: 'You', at: '2 min ago' },
   ],
 };
-const SCREENS = [['home', 'Blueprint', 'map'], ['workbench', 'Modules & fields', 'fields'], ['picklists', 'Picklists & stages', 'list'], ['rules', 'Rules', 'rule'], ['access', 'Users & roles', 'shield'], ['import', 'Import', 'upload'], ['history', 'History & audit', 'history']];
+const SCREENS = [['home', 'Blueprint', 'map'], ['workbench', 'Modules & fields', 'fields'], ['picklists', 'Picklists & stages', 'list'], ['rules', 'Rules', 'rule'], ['access', 'Users & roles', 'shield'], ['branches', 'Branches & teams', 'bank'],['import', 'Import', 'upload'], ['history', 'History & audit', 'history'], ['bin', 'Recycle bin', 'trash']];
 
 function addDraft(k, s, where, text) {
   const row = { k, s, where, text, by: 'You', at: 'just now' };
@@ -780,8 +831,8 @@ function indexHTML() {
     <div class="strip">
       <div class="grp">Overview</div>${it('home', 'Blueprint', 'map', S.draft.length ? '<i class="dot" title="Changes in draft"></i>' : '')}
       <div class="grp">Build</div>${it('workbench', 'Modules & fields', 'fields', `<span class="n">${Object.keys(MODS).length}</span>`)}${it('picklists', 'Picklists & stages', 'list', `<span class="n">${LISTS.length}</span>`)}${it('rules', 'Rules', 'rule', `<span class="n">${RULES.length}</span>`)}${out('AutoFlow', 'flow', 'the AutoFlow designer')}
-      <div class="grp">People</div>${it('access', 'Users & roles', 'shield', `<span class="n">${USERS.length}</span>`)}
-      <div class="grp">Data</div>${it('import', 'Import', 'upload')}${it('history', 'History & audit', 'history')}
+      <div class="grp">People</div>${it('access', 'Users & roles', 'shield', `<span class="n">${USERS.length}</span>`)}${it('branches', 'Branches & teams', 'bank', `<span class="n">${BRANCHES.reduce((n, r) => n + r.list.length, 0)}</span>`)}
+      <div class="grp">Data</div>${it('import', 'Import', 'upload')}${it('history', 'History & audit', 'history')}${it('bin', 'Recycle bin', 'trash', `<span class="n">${BIN.length}</span>`)}
       <div class="grp">Bank</div>${out('Bank profile', 'bank', 'Bank profile')}${out('SLA policies', 'clock', 'SLA policies (built with Tickets)')}${out('Quote settings', 'file', 'Quote settings (built with Quotes)')}
       <div class="grp">Tools</div>${out('Test cases', 'flask', 'Test cases')}
     </div>
@@ -921,7 +972,7 @@ function picklists() {
 /* ---------- rules ---------- */
 function rules() {
   const r = RULES.find((x) => x.id === S.rule);
-  const kinds = ['Assignment', 'Duplicate check', 'Validation', 'Stage rule'];
+  const kinds = ['Assignment', 'Duplicate check', 'Validation', 'Stage rule', 'Approval'];
   const kc = { WHEN: '#2f6fe0', IF: '#c98a12', THEN: '#1f9d63' };
   const samples = SAMPLES[r.id];
   let test = '<div class="muted" style="font-size:13px">Pick a record to see how this rule treats it.</div>';
@@ -1006,6 +1057,32 @@ function history() {
     <div class="ltabs" role="tablist" style="padding:0;margin-bottom:12px"><button role="tab" aria-selected="${S.htab === 'versions'}" data-a="htab" data-v="versions">Setup versions · ${VERSIONS.length}</button><button role="tab" aria-selected="${S.htab === 'audit'}" data-a="htab" data-v="audit">Audit log</button></div>${body}`;
 }
 
+/* ---------- branches & teams ---------- */
+function branches() {
+  const all = BRANCHES.flatMap((r) => r.list.map((b) => ({ ...b, region: r.region, rhead: r.head })));
+  const b = all.find((x) => x.id === S.branch) || all[0];
+  const av = (n) => `<i class="av sm soft">${n.split(' ').map((x) => x[0]).join('')}</i>`;
+  const lv = (n) => `<i>${[1, 2, 3].map((k) => `<b class="${k <= n ? 'on' : ''}"></b>`).join('')}</i>`;
+  return `<div class="su-h"><div><div class="eyebrow">People</div><h2>Branches &amp; teams</h2><p>The bank's regions, branches and teams. "Branch" in Users &amp; roles means this: people see their own branch's records, and a region head sees the whole region.</p></div>
+      <div class="acts"><button class="btn" data-a="toast" data-v="New region: name and region head">${ic('plus', 15)}Region</button><button class="btn pri" data-a="toast" data-v="New branch: name, code, region, manager, address">${ic('plus', 15)}Branch</button></div></div>
+    <div class="brs"><nav class="card reg" aria-label="Regions and branches">${BRANCHES.map((r) => `<div class="reg-h">${ic('map', 13)}${esc(r.region)} region<span>head ${esc(r.head)}</span></div>${r.list.map((x) => `<button class="brow" data-a="branch" data-v="${x.id}" aria-current="${x.id === b.id}"><span class="code">${x.code}</span><b>${esc(x.name)}</b><small>${x.mgr ? 'Manager ' + esc(x.mgr) : '<span style="color:var(--warn-text)">No manager yet</span>'} · ${plural(x.teams.length, 'team')}</small><span class="mono">${x.people}</span></button>`).join('')}`).join('')}</nav>
+      <div class="stack"><section class="card panel"><div class="box-h" style="flex-wrap:wrap"><h3 style="font-size:18px">${esc(b.name)}</h3><span class="vtag">${b.code}</span><span class="muted" style="font-size:12.5px">${esc(b.region)} region · ${esc(b.city)}</span></div>
+          <dl class="kv"><div><dt>Manager</dt><dd>${b.mgr ? av(b.mgr) + esc(b.mgr) : `<button class="link" data-a="toast" data-v="Pick a branch manager">Pick a manager</button><span class="muted" style="font-size:12px">until then ${esc(b.rhead)} approves</span>`}</dd></div><div><dt>People</dt><dd>${b.people}</dd></div><div><dt>Region head</dt><dd>${av(b.rhead)}${esc(b.rhead)}</dd></div></dl></section>
+        <section class="card panel"><div class="sec"><b>Teams</b> in ${esc(b.name)}</div>${b.teams.map(([t, lead, n]) => `<div class="team"><span><b>${esc(t)}</b><small>Lead ${esc(lead)} · ${plural(n, 'person')}</small></span><span class="stack-av">${['AD', 'MJ', 'SK', 'RT'].slice(0, Math.min(n, 4)).map((x) => `<i class="av sm soft">${x}</i>`).join('')}</span></div>`).join('')}
+          <button class="newrow" style="border-radius:11px;border:1px dashed var(--border-strong);margin-top:8px" data-a="toast" data-v="New team: name, lead, people; assignment rules can send work to it">${ic('plus', 15)}New team</button></section>
+        <section class="card panel"><div class="sec"><b>Who sees ${esc(b.name)}'s records</b></div><div class="scope">
+          <div><span class="pc" data-l="3">${lv(3)}All</span><span>Admins, and anyone with All in Users &amp; roles</span></div>
+          <div><span class="pc" data-l="2">${lv(2)}Branch</span><span>Everyone in ${esc(b.name)}, and ${esc(b.rhead)} as region head</span></div>
+          <div><span class="pc" data-l="1">${lv(1)}Own</span><span>Only the records they own, in any branch</span></div></div></section></div></div>`;
+}
+
+/* ---------- recycle bin ---------- */
+function bin() {
+  return `<div class="su-h"><div><div class="eyebrow">Data</div><h2>Recycle bin</h2><p>Deleted records stay here for 30 days with their notes, files and links, then go for good. Restoring puts a record back exactly where it was.</p></div></div>
+    <section class="card">${BIN.length ? BIN.map(([t, icn, c, name, who, when, left], i) => `<div class="binr" style="animation-delay:${i * 40}ms" data-binrow="${i}"><span class="tyc" style="--c:${c}">${ic(icn, 15)}</span><span><b style="font-weight:600">${esc(name)}</b><small>${t} · deleted by ${esc(who)} on ${when}</small></span><span class="left" style="--c:${left <= 7 ? 'var(--danger-text)' : left <= 14 ? 'var(--amber)' : 'var(--ok-text)'}">${left} days left<i><b style="width:${(left / 30) * 100}%"></b></i></span><button class="btn" data-a="restore" data-i="${i}">${ic('restore', 15)}Restore</button></div>`).join('') : '<div class="empty"><b>Nothing deleted in the last 30 days</b></div>'}</section>
+    <div class="muted" style="font-size:12.5px;margin-top:10px">Anyone who could delete a record can restore it. Deleted settings come back from History &amp; audit instead.</div>`;
+}
+
 /* ---------- publish dialog ---------- */
 function reviewDlg() {
   return `<div class="scrim" data-a="close"><div class="dlg wide" role="dialog" aria-modal="true" aria-labelledby="pubh">
@@ -1019,7 +1096,7 @@ function reviewDlg() {
 }
 
 /* ---------- render ---------- */
-const VIEWS = { home, workbench, picklists, rules, access, import: importer, history };
+const VIEWS = { home, workbench, picklists, rules, access, branches, import: importer, history, bin };
 function render() {
   const ae = document.activeElement, keep = ae && ae.id ? ae.id : null, pos = keep && ae.selectionStart != null ? ae.selectionStart : null;
   const scroll = $('main').scrollTop;
@@ -1078,6 +1155,8 @@ const A = {
   dodiscard: () => { S.draft = []; $('ovl').innerHTML = ''; toast('Draft discarded'); render(); },
   close: (t, e) => { if (e.target === t || t.tagName === 'BUTTON') $('ovl').innerHTML = ''; },
   toast: (t) => toast(t.dataset.v),
+  branch: (t) => { S.branch = t.dataset.v; render(); },
+  restore: (t) => { const i = +t.dataset.i; const row = document.querySelector(`[data-binrow="${i}"]`); const name = BIN[i][3]; if (row) row.classList.add('gone'); setTimeout(() => { BIN.splice(i, 1); toast(`${name} is back`); render(); }, 320); },
 };
 document.addEventListener('click', (e) => {
   const t = e.target.closest('[data-a]');
