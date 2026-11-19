@@ -4,7 +4,7 @@
 <title>Harbor Setup 3.0</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: Setup is the bank's workshop, not another module. A settings index sits on every Setup screen (with a find box for any field, rule, role or picklist); the Blueprint home maps every module and how they connect; Modules & fields edits a module's schema with a field inspector (formula editor with a live tester, record types, who can see it, where it is used); Picklists & stages, Page layouts (card library + 12-column canvas, drag to move, drag the right edge to resize), Rules as WHEN / IF / THEN sentences with a tester, Users & roles as a permission matrix, Import with column matching, History & audit with versions and roll back. Every change goes into a draft that only admins see until it is published as a new version. Tokens mirror src/styles/v3.css. */
+/* Layout: Setup is the bank's workshop, not another module. A settings index sits on every Setup screen (with a find box for any field, rule, role or picklist); page layouts are not in Setup (they live in each module's ToolBox as Customise page layout); the Blueprint home maps every module and how they connect; Modules & fields edits a module's schema with a field inspector (formula editor with a live tester, record types, who can see it, where it is used); Picklists & stages, Rules as WHEN / IF / THEN sentences with a tester, Users & roles as a permission matrix, Import with column matching, History & audit with versions and roll back. Every change goes into a draft that only admins see until it is published as a new version. Tokens mirror src/styles/v3.css. */
 :root {
   --bank-primary: #1d3a6e; --bank-on: #ffffff; --bank-ink-light: #1d3a6e; --bank-ink-dark: #9db8ee;
   --bank-ink: var(--bank-ink-light);
@@ -409,34 +409,6 @@ i { font-style: normal; }
 .mx:hover { transform: scale(1.1); }
 .mx[aria-checked="true"] { background: var(--bank-primary); color: var(--bank-on); box-shadow: none; }
 
-/* page layouts */
-.lay { display: grid; grid-template-columns: 220px minmax(0, 1fr) 250px; gap: 14px; align-items: start; }
-.lib { padding: 10px; display: grid; gap: 6px; }
-.libc { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); text-align: left; font-size: 13px; font-weight: 550; width: 100%; transition: border-color var(--fast), background var(--fast); }
-.libc:hover { border-color: var(--bank-soft-line); background: var(--bank-soft); }
-.libc.used { opacity: .55; }
-.libc .mono { margin-left: auto; font-size: 10.5px; color: var(--text-muted); }
-.canvas { padding: 14px; border-radius: 18px; border: 1px solid var(--border); min-height: 420px;
-  background-color: var(--surface-2); background-image: linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: calc((100% - 28px) / 12) 100%; background-position: 14px 0; }
-.canvas-g { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 10px; grid-auto-flow: dense; }
-.lc { position: relative; grid-column: span var(--s); min-height: calc(var(--r) * 34px); padding: 10px 12px; border-radius: 13px; background: var(--surface); border: 1px solid var(--border-strong); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 6px; overflow: hidden; transition: box-shadow var(--fast), border-color var(--fast); animation: pop var(--base) var(--ease-spring) backwards; }
-.lc[aria-selected="true"] { border-color: var(--bank-ink); box-shadow: 0 0 0 3px var(--bank-soft), var(--shadow); }
-.lc.lift { z-index: 5; box-shadow: var(--shadow-lg); opacity: .92; }
-.lc-h { display: flex; align-items: center; gap: 6px; font-weight: 650; font-size: 13px; }
-.lc-h .grab { height: 20px; }
-.lc-h .mono { margin-left: auto; font-size: 10.5px; color: var(--text-muted); font-weight: 500; }
-.lc .ln { height: 8px; border-radius: 4px; background: var(--surface-3); }
-.lc .rz { position: absolute; right: 0; top: 0; bottom: 0; width: 12px; cursor: ew-resize; touch-action: none; display: grid; place-items: center; }
-.lc .rz::after { content: ''; width: 3px; height: 26px; border-radius: 3px; background: var(--border-strong); transition: background var(--fast), height var(--fast); }
-.lc .rz:hover::after, .lc.sizing .rz::after { background: var(--bank-ink); height: 40px; }
-.lc .who { font-size: 11px; color: var(--warn-text); display: inline-flex; gap: 4px; align-items: center; }
-.canvas.phone .canvas-g { grid-template-columns: minmax(0, 1fr); max-width: 320px; margin: 0 auto; }
-.canvas.phone .lc { grid-column: 1 / -1; } .canvas.phone .rz { display: none; }
-.selrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
-.selrow .fchip { height: 34px; }
-.chk { display: flex; align-items: center; gap: 8px; padding: 5px 2px; font-size: 13px; width: 100%; text-align: left; }
-.chk .bx { width: 16px; height: 16px; border-radius: 5px; box-shadow: inset 0 0 0 1.5px var(--border-strong); display: grid; place-items: center; color: transparent; flex: none; }
-.chk[aria-checked="true"] .bx { background: var(--bank-primary); box-shadow: none; color: var(--bank-on); }
 
 /* rules */
 .rl { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 14px; align-items: start; }
@@ -557,7 +529,6 @@ i { font-style: normal; }
 
 @container (max-width: 1100px) {
   .wb { grid-template-columns: minmax(0, 1fr); } .insp { position: static; }
-  .lay { grid-template-columns: 200px minmax(0, 1fr); } .lay > .lay-side { grid-column: 1 / -1; }
   .home-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .home-cols > :last-child { grid-column: 1 / -1; }
 }
 @container (max-width: 900px) {
@@ -570,7 +541,6 @@ i { font-style: normal; }
   .su-ix .strip .grp { display: none; }
   .pk, .rl, .hist, .su .cols { grid-template-columns: minmax(0, 1fr); }
   .su .cols > .card { overflow-x: auto; }
-  .lay { grid-template-columns: minmax(0, 1fr); } .lib { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 }
 @container (max-width: 640px) {
   .rail { display: none; } .app { grid-template-columns: minmax(0, 1fr); }
@@ -591,11 +561,10 @@ i { font-style: normal; }
   .step { grid-template-columns: minmax(0, 1fr); gap: 6px; } .step + .step::before { left: 20px; }
   .draft { padding-left: 18px; } .draft .mono { display: none; }
   .impact { grid-template-columns: minmax(0, 1fr); }
-  .canvas .canvas-g { grid-template-columns: minmax(0, 1fr); } .canvas .lc { grid-column: 1 / -1; } .canvas .rz { display: none; }
 }
 </style>
 <div class="deck">
-  <h1>Setup <small>Harbor CRM 3.0, design for your review. Setup is the bank's workshop, not another module: a blueprint of the CRM, a settings index on every screen, and nothing goes live until it is published. Try: edit the EMI formula, tick a permission, drag a stage or a layout card's right edge, then <b>Review &amp; publish</b>.</small></h1>
+  <h1>Setup <small>Harbor CRM 3.0, design for your review. Setup is the bank's workshop, not another module: a blueprint of the CRM, a settings index on every screen, and nothing goes live until it is published. Try: edit the EMI formula, tick a permission, drag a stage, then <b>Review &amp; publish</b>.</small></h1>
   <div class="pick">Screen
     <div class="seg" id="screens"></div>
   </div>
@@ -724,13 +693,6 @@ const LISTS = [
 let DEP = { 'Home loan': ['Purchase', 'Construction', 'Balance transfer'], 'Car loan': ['New car', 'Used car'], 'Gold loan': ['Jewellery pledge'], 'Business loan': ['Working capital', 'Term loan'] };
 const COLOURS = ['#2f6fe0', '#0f97a8', '#1f9d63', '#6d4fd6', '#d9467a', '#d33a3a', '#c98a12', '#b8860b', '#0e7c8a', '#8a93a6'];
 
-const CARD_LIB = [['stage', 'Stage path', 'deal'], ['figures', 'Figures', 'deal'], ['details', 'Details', 'fields'], ['coll', 'Collateral', 'shield'], ['emi', 'EMI calculator', 'flow'], ['history', 'History', 'history'], ['quotes', 'Quotes', 'file'], ['people', 'People', 'users'], ['docs', 'Documents', 'file'], ['next', 'Next step', 'arrow'], ['activity', 'Activity', 'calendar'], ['tickets', 'Open tickets', 'ticket']];
-const LAYOUTS = {
-  H: [['stage', 12, 2], ['figures', 8, 4], ['next', 4, 4], ['details', 7, 7], ['coll', 5, 4], ['docs', 5, 3], ['history', 6, 6], ['quotes', 6, 6]],
-  C: [['stage', 12, 2], ['figures', 8, 4], ['next', 4, 4], ['details', 8, 7], ['emi', 4, 7], ['history', 12, 5]],
-  G: [['stage', 12, 2], ['coll', 6, 5], ['figures', 6, 5], ['details', 12, 6]],
-};
-const CARD_FIELDS = ['Deal number', 'Account', 'Product', 'Sub-product', 'Loan amount', 'Tenure (months)', 'Interest rate (%)', 'EMI', 'Close date', 'Owner'];
 
 const RULES = [
   { id: 'as-pune', kind: 'Assignment', name: 'Pune home loans to Baner', on: true, when: 'a Lead is created', ifs: [['City', 'is', 'Pune'], ['Product', 'is', 'Home loan']], then: [['Assign', 'round robin', 'Baner branch team']] },
@@ -773,7 +735,7 @@ let VERSIONS = [
 const AUDIT = [['Sana Iyer', 'Signed in', 'Baner, Pune · Chrome on Windows', '', '09:12'], ['Priya Nair', 'Published version 14', 'Gold loan record type, 4 changes', '', 'Yesterday 16:20'], ['Arjun Das', 'Exported 214 leads', 'Leads › My open leads view', '', 'Yesterday 14:03'], ['Rahul Khanna', 'Changed a deal', 'HL-2026-0142 Kapoor flat', ['Stage', 'Credit check', 'Sanctioned'], 'Yesterday 11:47'], ['Priya Nair', 'Changed a user', 'Meera Joshi', ['Branch', 'Andheri East', 'Kothrud, Pune'], '17 Nov'], ['Sana Iyer', 'Deleted a lead', 'Test lead (duplicate of Rhea Kapoor)', '', '16 Nov']];
 
 const HEALTH = [
-  ['warn', 'LTV % is on the Sanction rule but not on the Gold Loan page', 'Credit officers can’t see why a move is blocked.', 'layouts'],
+  ['warn', 'LTV % is on the Sanction rule but not on the Gold Loan page', 'Credit officers can’t see why a move is blocked. Fix it in Deals › ToolBox › Customise page layout.', 'toolbox'],
   ['warn', '1 KYC status has no colour', '“Re-KYC due” shows grey everywhere.', 'picklists'],
   ['info', 'Duplicate check on Leads uses mobile only', 'Adding PAN would catch 31 more duplicates from the last month.', 'rules'],
 ];
@@ -781,14 +743,14 @@ const HEALTH = [
 /* ---------- state ---------- */
 let S = {
   screen: 'home', mod: 'deals', tab: 'fields', field: 'emi', list: 'deal-stage', rule: 'vr-ltv', sample: 1, role: 'rm', atab: 'roles', ver: 14, htab: 'versions',
-  rt: 'H', lrole: 'All roles', lcard: 'details', phone: false, find: '', palette: null, invite: false, dup: 'skip', hot: null,
+  find: '', palette: null, invite: false, dup: 'skip', hot: null,
   draft: [
     { k: 'f-emi', s: 'chg', where: 'Deals › Fields', text: 'EMI formula rounds to whole rupees', by: 'You', at: '12 min ago' },
     { k: 'st-sanction', s: 'add', where: 'Deals › Stage', text: 'Sanctioned added to Gold Loan', by: 'You', at: '9 min ago' },
     { k: 'p-rm-leads-4', s: 'chg', where: 'Access › Relationship manager', text: 'Leads Export: None → Own', by: 'You', at: '2 min ago' },
   ],
 };
-const SCREENS = [['home', 'Blueprint', 'map'], ['workbench', 'Modules & fields', 'fields'], ['picklists', 'Picklists & stages', 'list'], ['layouts', 'Page layouts', 'layout'], ['rules', 'Rules', 'rule'], ['access', 'Users & roles', 'shield'], ['import', 'Import', 'upload'], ['history', 'History & audit', 'history']];
+const SCREENS = [['home', 'Blueprint', 'map'], ['workbench', 'Modules & fields', 'fields'], ['picklists', 'Picklists & stages', 'list'], ['rules', 'Rules', 'rule'], ['access', 'Users & roles', 'shield'], ['import', 'Import', 'upload'], ['history', 'History & audit', 'history']];
 
 function addDraft(k, s, where, text) {
   const row = { k, s, where, text, by: 'You', at: 'just now' };
@@ -817,7 +779,7 @@ function indexHTML() {
       ${q ? `<div class="su-hits" role="listbox">${hits.length ? hits.map((h, i) => `<button role="option" data-a="hit" data-i="${i}"><b>${esc(h.label)}</b><small>${esc(h.where)}</small></button>`).join('') : '<div class="muted" style="padding:8px 10px;font-size:12.5px">Nothing by that name. Try a field, rule, role or picklist.</div>'}</div>` : ''}</div>
     <div class="strip">
       <div class="grp">Overview</div>${it('home', 'Blueprint', 'map', S.draft.length ? '<i class="dot" title="Changes in draft"></i>' : '')}
-      <div class="grp">Build</div>${it('workbench', 'Modules & fields', 'fields', `<span class="n">${Object.keys(MODS).length}</span>`)}${it('picklists', 'Picklists & stages', 'list', `<span class="n">${LISTS.length}</span>`)}${it('layouts', 'Page layouts', 'layout')}${it('rules', 'Rules', 'rule', `<span class="n">${RULES.length}</span>`)}${out('AutoFlow', 'flow', 'the AutoFlow designer')}
+      <div class="grp">Build</div>${it('workbench', 'Modules & fields', 'fields', `<span class="n">${Object.keys(MODS).length}</span>`)}${it('picklists', 'Picklists & stages', 'list', `<span class="n">${LISTS.length}</span>`)}${it('rules', 'Rules', 'rule', `<span class="n">${RULES.length}</span>`)}${out('AutoFlow', 'flow', 'the AutoFlow designer')}
       <div class="grp">People</div>${it('access', 'Users & roles', 'shield', `<span class="n">${USERS.length}</span>`)}
       <div class="grp">Data</div>${it('import', 'Import', 'upload')}${it('history', 'History & audit', 'history')}
       <div class="grp">Bank</div>${out('Bank profile', 'bank', 'Bank profile')}${out('SLA policies', 'clock', 'SLA policies (built with Tickets)')}${out('Quote settings', 'file', 'Quote settings (built with Quotes)')}
@@ -854,7 +816,7 @@ function home() {
     </section>
     <div class="home-cols">
       <section class="card panel"><div class="sec"><b>Needs a look</b> ${HEALTH.length}</div>
-        ${HEALTH.map(([sv, t, d, go]) => `<div class="hc"><span class="sv ${sv === 'info' ? 'info' : ''}">${ic(sv === 'info' ? 'info' : 'warn', 13)}</span><b style="font-weight:600">${esc(t)}</b><span class="muted" style="font-size:12.5px">${esc(d)} <button class="link" data-a="go" data-s="${go}">Fix it</button></span></div>`).join('')}</section>
+        ${HEALTH.map(([sv, t, d, go]) => `<div class="hc"><span class="sv ${sv === 'info' ? 'info' : ''}">${ic(sv === 'info' ? 'info' : 'warn', 13)}</span><b style="font-weight:600">${esc(t)}</b><span class="muted" style="font-size:12.5px">${esc(d)} ${go === 'toolbox' ? '<button class="link" data-a="toast" data-v="Opens Deals › ToolBox › Customise page layout">Open layout</button>' : `<button class="link" data-a="go" data-s="${go}">Fix it</button>`}</span></div>`).join('')}</section>
       <section class="card panel"><div class="sec"><b>Versions</b> published</div>
         ${S.draft.length ? `<div class="vrow"><span class="vtag dr">draft</span><b style="font-weight:600">${plural(S.draft.length, 'change')} not published</b><button class="link" data-a="review">Review</button></div>` : ''}
         ${VERSIONS.slice(0, 3).map((v, i) => `<div class="vrow"><span class="vtag${i === 0 ? ' cur' : ''}">v${v.v}</span><b style="font-weight:600">${esc(v.note)}</b><button class="link" data-a="ver" data-v="${v.v}">Open</button><small>${esc(v.by)} · ${esc(v.at)} · ${plural(v.lines.length, 'change')}</small></div>`).join('')}</section>
@@ -921,11 +883,11 @@ function workbench() {
   let body;
   if (S.tab === 'types') {
     const rts = S.mod === 'deals' ? [['H', 'Home Loan', '#2f6fe0', 7, 4, 'Everyone'], ['C', 'Car Loan', '#0f97a8', 6, 3, 'Everyone'], ['G', 'Gold Loan', '#b8860b', 6, 4, 'Branches with a gold desk']] : [['D', 'Standard', m.c, 5, 3, 'Everyone']];
-    body = `<div class="card"><div class="rtcards">${rts.map(([k, n, c, st, ly, who], i) => `<div class="rtc" style="--c:${c};animation-delay:${i * 50}ms"><span class="ab">${k}</span><b>${n}</b><dl><div><dt>Stages</dt><dd>${st}</dd></div><div><dt>Page</dt><dd><button class="link" data-a="layrt" data-v="${k}">${ly} cards</button></dd></div><div><dt>Picklist values</dt><dd>own set</dd></div><div><dt>Who can use it</dt><dd style="font-family:var(--font-sans)">${who}</dd></div></dl></div>`).join('')}
+    body = `<div class="card"><div class="rtcards">${rts.map(([k, n, c, st, ly, who], i) => `<div class="rtc" style="--c:${c};animation-delay:${i * 50}ms"><span class="ab">${k}</span><b>${n}</b><dl><div><dt>Stages</dt><dd>${st}</dd></div><div><dt>Page</dt><dd><button class="link" data-a="toast" data-v="Opens ${n} in ${m.name} › ToolBox › Customise page layout">${ly} pages</button></dd></div><div><dt>Picklist values</dt><dd>own set</dd></div><div><dt>Who can use it</dt><dd style="font-family:var(--font-sans)">${who}</dd></div></dl></div>`).join('')}
       <button class="rtc add" data-a="toast" data-v="New record type: name, stages, layout copied from one you pick">${ic('plus', 20)}<b style="font-size:13.5px">New record type</b><small>Starts as a copy of one you pick</small></button></div></div>`;
   } else if (S.tab === 'toolbox') {
     body = `<div class="card panel"><div class="sec"><b>ToolBox in ${m.name}</b></div><p class="muted" style="margin:0 0 12px">The ToolBox button on the ${m.name} page opens these, so people who set things up can jump here from their work.</p>
-      <div class="qa">${[['Fields', 'fields'], ['Customise page layout', 'layouts'], ['Picklists & stages', 'picklists'], ['Rules', 'rules'], ['Import', 'import'], ['Who can do what', 'access']].map(([n, s]) => `<button data-a="go" data-s="${s}"><b>${n}</b><small>${m.name}</small></button>`).join('')}</div></div>`;
+      <div class="qa"><button data-a="toast" data-v="Opens the ${m.name} layouts: cards for each layout, New layout, and pages like New/Edit and Detail"><b>Customise page layout</b><small>Only here, not in Setup</small></button>${[['Fields', 'fields'], ['Picklists & stages', 'picklists'], ['Rules', 'rules'], ['Import', 'import'], ['Who can do what', 'access']].map(([n, s]) => `<button data-a="go" data-s="${s}"><b>${n}</b><small>${m.name}</small></button>`).join('')}</div></div>`;
   } else {
     const list = fields.length ? fields : [];
     body = `<div class="wb"><div class="card"><table class="ftable"><thead><tr><th>Field</th><th class="hide-s">Key</th><th>Kind</th><th class="hide-s">Record types</th><th class="hide-s" style="text-align:right">Used</th></tr></thead><tbody>
@@ -954,28 +916,6 @@ function picklists() {
       <div><div class="card"><div class="box-h" style="padding:14px 16px 0;flex-wrap:wrap"><h3 style="font-size:16px">${esc(l.name)}</h3><span class="mono muted" style="font-size:11.5px">used by ${plural(l.used, 'field')}</span></div>
         <div class="vals" id="vals">${rows}<button class="newrow" style="border-radius:11px;border:1px dashed var(--border-strong)" data-a="newval">${ic('plus', 15)}Add a value</button></div>
         ${l.id === 'deal-stage' ? '<div class="muted" style="font-size:12.5px;padding:0 16px 14px">Drag to reorder. H, C and G switch a stage on or off for Home, Car and Gold Loan. Won and Lost stages close the deal.</div>' : '<div class="muted" style="font-size:12.5px;padding:0 16px 14px">Drag to reorder. Each value needs a colour, so lists read the same everywhere.</div>'}</div>${matrix}</div></div>`;
-}
-
-/* ---------- page layouts ---------- */
-function layouts() {
-  const cards = LAYOUTS[S.rt];
-  const used = new Set(cards.map((c) => c[0]));
-  const cname = (id) => CARD_LIB.find((c) => c[0] === id);
-  const sel = cards.find((c) => c[0] === S.lcard);
-  const lines = (n) => Array.from({ length: Math.max(1, n - 1) }, (_, i) => `<i class="ln" style="width:${90 - ((i * 23) % 45)}%"></i>`).join('');
-  return `<div class="su-h"><div><div class="eyebrow">Build · Customise page layout</div><h2>Page layouts</h2><p>The record page is built from cards. Take cards from the library, drag to move, drag a card's right edge to resize. Each record type and role can have its own page.</p></div>
-      <div class="acts"><div class="seg"><button aria-pressed="${!S.phone}" data-a="phone" data-v="0">${ic('monitor', 14)}Desktop</button><button aria-pressed="${S.phone}" data-a="phone" data-v="1">${ic('phone', 14)}Phone</button></div></div></div>
-    <div class="selrow"><span class="lab">Deals ·</span>${Object.entries(RTS).map(([k, n]) => `<button class="fchip${S.rt === k ? ' set' : ''}" data-a="layrt" data-v="${k}">${n}</button>`).join('')}<span style="width:10px"></span><span class="lab">Seen by</span><button class="fchip set" data-a="toast" data-v="Pick a role to give it its own page: for example a Security card only for credit officers">${esc(S.lrole)} ▾</button></div>
-    <div class="lay">
-      <aside class="card lib" aria-label="Card library"><div class="sec" style="margin:4px 2px 6px"><b>Card library</b></div>${CARD_LIB.map(([id, n, icn]) => `<button class="libc${used.has(id) ? ' used' : ''}" data-a="addcard" data-v="${id}" ${used.has(id) ? 'aria-disabled="true"' : ''}>${ic(icn, 15)}${n}<span class="mono">${used.has(id) ? 'on page' : '+ add'}</span></button>`).join('')}
-        <button class="libc" style="border-style:dashed;color:var(--bank-ink)" data-a="toast" data-v="New card: pick fields or a related list; usable on any module">${ic('plus', 15)}New card</button></aside>
-      <div class="canvas${S.phone ? ' phone' : ''}" id="canvas"><div class="canvas-g" id="cg">${cards.map(([id, span, rows], i) => { const c = cname(id); return `<div class="lc" style="--s:${S.phone ? 12 : span};--r:${rows};animation-delay:${i * 30}ms" aria-selected="${S.lcard === id}" data-a="lcard" data-v="${id}" data-i="${i}"><div class="lc-h"><span class="grab" data-drag="card" data-i="${i}" aria-label="Move ${c[1]}">${ic('grip', 14)}</span>${ic(c[2], 14)}${c[1]}<span class="mono">${span}/12</span></div>${id === 'coll' && S.rt === 'G' ? '' : ''}${id === 'stage' ? '<i class="ln" style="height:14px;border-radius:7px;background:linear-gradient(90deg,var(--bank-primary) 45%,var(--surface-3) 45%)"></i>' : lines(rows)}${id === 'coll' ? '<span class="who">' + ic('lock', 11) + 'Credit officers and branch managers</span>' : ''}<span class="rz" data-drag="rz" data-i="${i}" aria-label="Resize ${c[1]}"></span></div>`; }).join('')}</div></div>
-      <aside class="card panel lay-side" aria-label="Card settings">${sel ? `<div class="sec"><b>${cname(sel[0])[1]}</b> card</div>
-          <div class="f" style="margin-bottom:10px"><span class="flab">Width</span><input type="range" min="3" max="12" value="${sel[1]}" data-a2="span" aria-label="Width in columns"><div class="mono muted" style="font-size:11px">${sel[1]} of 12 columns · ${sel[2]} rows tall</div></div>
-          ${sel[0] === 'details' ? `<span class="lab">Fields it shows</span><div style="margin:6px 0 10px">${CARD_FIELDS.map((n, i) => `<button class="chk" role="checkbox" aria-checked="${i < 7}" data-a="chk">${'<span class="bx">' + ic('check', 11) + '</span>'}${n}</button>`).join('')}</div>` : sel[0] === 'history' ? '<span class="lab">Shows</span><div class="muted" style="font-size:13px;margin:6px 0 10px">Last 20 events, then scrolls inside the card</div>' : '<div class="muted" style="font-size:13px;margin-bottom:10px">This card has no settings of its own.</div>'}
-          <span class="lab">Seen by</span><div class="muted" style="font-size:13px;margin:6px 0 12px">${sel[0] === 'coll' ? 'Credit officers, Branch managers' : 'Everyone who can open the deal'}</div>
-          <button class="btn danger" data-a="rmcard">Take off the page</button>` : '<div class="empty" style="padding:24px 8px"><b>Pick a card</b>Its settings show here.</div>'}</aside>
-    </div>`;
 }
 
 /* ---------- rules ---------- */
@@ -1071,7 +1011,7 @@ function reviewDlg() {
   return `<div class="scrim" data-a="close"><div class="dlg wide" role="dialog" aria-modal="true" aria-labelledby="pubh">
     <div class="dlg-head"><h3 id="pubh">Publish ${plural(S.draft.length, 'change')} as v${VERSIONS[0].v + 1}</h3><button class="btn ghost sq" data-a="close" aria-label="Close">${ic('x', 16)}</button></div>
     <div class="dlg-body">Everyone in the bank gets these on their next page load. You can roll back from History &amp; audit.
-      <div class="impact"><div><b>3</b><small>layouts touched</small></div><div><b>214</b><small>deals show a new EMI</small></div><div><b>6</b><small>people gain an export</small></div></div>
+      <div class="impact"><div><b>2</b><small>rules touched</small></div><div><b>214</b><small>deals show a new EMI</small></div><div><b>6</b><small>people gain an export</small></div></div>
       ${S.draft.map((d) => `<div class="dc"><span class="s ${d.s === 'add' ? 'add' : ''}">${d.s === 'add' ? '+' : '~'}</span><span>${esc(d.text)}<small>${esc(d.where)} · ${esc(d.by)} · ${esc(d.at)}</small></span><button class="btn ghost sq" data-a="undoone" data-k="${esc(d.k)}" aria-label="Drop this change">${ic('x', 14)}</button></div>`).join('')}
       <div class="f" style="margin-top:12px"><label for="pubnote">What is this version for?</label><textarea id="pubnote" placeholder="For example: EMI on loan pages, export for RMs"></textarea></div>
     </div>
@@ -1079,7 +1019,7 @@ function reviewDlg() {
 }
 
 /* ---------- render ---------- */
-const VIEWS = { home, workbench, picklists, layouts, rules, access, import: importer, history };
+const VIEWS = { home, workbench, picklists, rules, access, import: importer, history };
 function render() {
   const ae = document.activeElement, keep = ae && ae.id ? ae.id : null, pos = keep && ae.selectionStart != null ? ae.selectionStart : null;
   const scroll = $('main').scrollTop;
@@ -1112,18 +1052,12 @@ const A = {
   mask: () => toast('Adds a who-can-see line per role: Edit, Read, Masked or Hidden'),
   delf: () => { const f = field(); $('ovl').innerHTML = `<div class="scrim" data-a="close"><div class="dlg" role="dialog" aria-modal="true"><div class="dlg-head"><h3>Delete ${esc(f.label)}?</h3></div><div class="dlg-body">${f.used.length ? `It is used in ${plural(f.used.length, 'place')}: ${f.used.map(([k, v]) => `<b>${esc(v)}</b> (${esc(k.toLowerCase())})`).join(', ')}. Those stop working until you change them.` : 'Nothing uses it.'} The values already saved are kept for 30 days in case you change your mind.</div><div class="dlg-foot"><button class="btn ghost" data-a="close">Keep it</button><span class="sp"></span><button class="btn pri" style="background:var(--danger-text)" data-a="dodel">Delete in draft</button></div></div></div>`; },
   dodel: () => { const fs = FIELDS[S.mod], f = field(); fs.splice(fs.indexOf(f), 1); addDraft('f-' + f.id + '-del', 'chg', `${MODS[S.mod].name} › Fields`, `${f.label} deleted`); S.field = fs[0]?.id; $('ovl').innerHTML = ''; render(); },
-  layrt: (t) => go({ screen: 'layouts', rt: t.dataset.v, lcard: LAYOUTS[t.dataset.v][0][0] }),
   list: (t) => go({ screen: 'picklists', list: t.dataset.v }),
   sw: (t) => { const i = +t.dataset.i; S.palette = S.palette === i ? null : i; render(); },
   col: (t) => { const l = LISTS.find((x) => x.id === S.list); l.vals[+t.dataset.i][1] = t.dataset.v; S.palette = null; addDraft('c-' + l.id + t.dataset.i, 'chg', `Picklists › ${l.name}`, `${l.vals[+t.dataset.i][0]} gets a new colour`); render(); },
   valrt: (t) => { const l = LISTS.find((x) => x.id === S.list); const v = l.vals[+t.dataset.i][0]; let cur = l.rt[v] || 'HCG'; cur = cur.includes(t.dataset.v) ? cur.replace(t.dataset.v, '') : cur + t.dataset.v; l.rt[v] = cur; addDraft('rt-' + v, 'chg', 'Deals › Stage', `${v} on ${cur.split('').map((x) => RTS[x]).join(', ') || 'no record type'}`); render(); },
   newval: () => { const l = LISTS.find((x) => x.id === S.list); l.vals.splice(l.vals.findIndex((v) => v[2]) >= 0 && l.id === 'deal-stage' ? l.vals.findIndex((v) => v[2]) : l.vals.length, 0, ['New value', COLOURS[l.vals.length % COLOURS.length], '']); addDraft('v-' + l.id + l.vals.length, 'add', `Picklists › ${l.name}`, 'New value added'); render(); },
   dep: (t) => { const p = t.dataset.p, v = t.dataset.v; DEP[p] = DEP[p] || []; DEP[p] = DEP[p].includes(v) ? DEP[p].filter((x) => x !== v) : [...DEP[p], v]; addDraft('d-' + p + v, 'chg', 'Picklists › Loan sub-product', `${v} ${DEP[p].includes(v) ? 'offered' : 'no longer offered'} for ${p}`); render(); },
-  phone: (t) => { S.phone = t.dataset.v === '1'; render(); },
-  lcard: (t, e) => { if (e.target.closest('[data-drag]')) return; S.lcard = t.dataset.v; render(); },
-  addcard: (t) => { const id = t.dataset.v; if (LAYOUTS[S.rt].some((c) => c[0] === id)) return; LAYOUTS[S.rt].push([id, 6, 4]); S.lcard = id; addDraft('l-' + S.rt + id, 'add', `Deals › ${RTS[S.rt]} page`, `${CARD_LIB.find((c) => c[0] === id)[1]} card added`); render(); },
-  rmcard: () => { const L = LAYOUTS[S.rt]; const i = L.findIndex((c) => c[0] === S.lcard); const n = CARD_LIB.find((c) => c[0] === S.lcard)[1]; L.splice(i, 1); addDraft('l-' + S.rt + S.lcard, 'chg', `Deals › ${RTS[S.rt]} page`, `${n} card taken off`); S.lcard = L[0]?.[0]; render(); },
-  chk: (t) => { t.setAttribute('aria-checked', t.getAttribute('aria-checked') !== 'true'); addDraft('l-det-' + S.rt, 'chg', `Deals › ${RTS[S.rt]} page`, 'Details card shows other fields'); render(); },
   rule: (t) => go({ rule: t.dataset.v, sample: 1 }),
   sample: (t) => { S.sample = +t.dataset.v; render(); },
   ruleon: () => { const r = RULES.find((x) => x.id === S.rule); r.on = !r.on; addDraft('r-' + r.id, 'chg', `Rules › ${r.kind}`, `${r.name} switched ${r.on ? 'on' : 'off'}`); render(); },
@@ -1163,7 +1097,6 @@ document.addEventListener('input', (e) => {
   if (t.dataset.t) { NAMES[t.dataset.t] = t.value; const f = field(); const r = evalFx(f.fx, NAMES), out = $('fxOut'); const money = f.id === 'emi'; out.className = 'fx-out ' + (r.ok ? 'ok' : 'bad'); out.innerHTML = r.ok ? `${ic('check', 13)}= ${money ? inr(r.v) : r.v.toLocaleString('en-IN')}${money ? ' a month' : ''}` : `${ic('warn', 13)}${esc(r.msg)}`; return; }
   if (t.dataset.a2 === 'label') { const f = field(); f.label = t.value; addDraft('f-' + f.id + '-label', 'chg', `${MODS[S.mod].name} › Fields`, `Renamed to ${t.value}`); syncDraft(); const row = document.querySelector(`tr[data-v="${f.id}"] b`); if (row) row.textContent = t.value; return; }
   if (t.dataset.a2 === 'val') { const l = LISTS.find((x) => x.id === S.list); l.vals[+t.dataset.i][0] = t.value; addDraft('vn-' + l.id + t.dataset.i, 'chg', `Picklists › ${l.name}`, `Value renamed to ${t.value}`); syncDraft(); return; }
-  if (t.dataset.a2 === 'span') { const c = LAYOUTS[S.rt].find((x) => x[0] === S.lcard); c[1] = +t.value; addDraft('ls-' + S.rt + c[0], 'chg', `Deals › ${RTS[S.rt]} page`, `${CARD_LIB.find((x) => x[0] === c[0])[1]} card is ${c[1]} columns wide`); render(); return; }
 });
 document.addEventListener('change', (e) => { if (e.target.dataset.a2 === 'mapsel') { CSV[+e.target.dataset.i][2] = e.target.value; CSV[+e.target.dataset.i][3] = e.target.value ? 100 : 0; render(); } });
 /* keep the draft bar in step without redrawing the field being typed in */
@@ -1172,25 +1105,18 @@ function syncDraft() { const bar = document.querySelector('.draft'); if (!bar) {
 /* hover a module: light up its wires */
 document.addEventListener('pointerover', (e) => { const n = e.target.closest('[data-hover]'); const k = n ? n.dataset.hover : null; if (k !== S.hot && S.screen === 'home') { S.hot = k; document.querySelectorAll('.wires path').forEach((p, i) => p.classList.toggle('hot', !!k && WIRES[i].includes(k))); document.querySelectorAll('.node').forEach((x) => x.classList.toggle('hot', x.dataset.hover === k)); } });
 
-/* dragging: stage values (up/down), layout cards (move), card right edge (resize). Window listeners, so a redraw never drops the drag. */
+/* dragging: stage values (up/down). Window listeners, so a redraw never drops the drag. */
 let D = null;
 document.addEventListener('pointerdown', (e) => {
   const h = e.target.closest('[data-drag]'); if (!h || e.button) return;
   e.preventDefault();
   const kind = h.dataset.drag, i = +h.dataset.i;
-  if (kind === 'rz') { const g = $('cg'); const col = (g.getBoundingClientRect().width - 11 * 10) / 12 + 10; D = { kind, i, x: e.clientX, start: LAYOUTS[S.rt][i][1], col }; S.lcard = LAYOUTS[S.rt][i][0]; }
-  else D = { kind, i };
+  D = { kind, i };
   document.body.classList.add('dragging');
 });
 window.addEventListener('pointermove', (e) => {
   if (!D) return;
-  if (D.kind === 'rz') {
-    const span = Math.max(3, Math.min(12, Math.round(D.start + (e.clientX - D.x) / D.col)));
-    const c = LAYOUTS[S.rt][D.i]; if (span !== c[1]) { c[1] = span; D.moved = true; render(); const el = document.querySelector(`.lc[data-i="${D.i}"]`); if (el) el.classList.add('sizing'); }
-  } else if (D.kind === 'card') {
-    const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('.lc'); if (!over) return; const j = +over.dataset.i; if (j === D.i) return;
-    const L = LAYOUTS[S.rt]; const [m] = L.splice(D.i, 1); L.splice(j, 0, m); D.i = j; D.moved = true; S.lcard = m[0]; render(); document.querySelector(`.lc[data-i="${j}"]`)?.classList.add('lift');
-  } else if (D.kind === 'val') {
+  if (D.kind === 'val') {
     const over = document.elementFromPoint(e.clientX, e.clientY)?.closest('.vrow2'); if (!over) return; const j = +over.dataset.row; if (j === D.i) return;
     const l = LISTS.find((x) => x.id === S.list); const [m] = l.vals.splice(D.i, 1); l.vals.splice(j, 0, m); D.i = j; D.moved = true; render(); document.querySelector(`.vrow2[data-row="${j}"]`)?.classList.add('lift');
   }
@@ -1200,7 +1126,6 @@ window.addEventListener('pointerup', () => {
   document.body.classList.remove('dragging');
   if (D.moved) {
     if (D.kind === 'val') { const l = LISTS.find((x) => x.id === S.list); addDraft('o-' + l.id, 'chg', `Picklists › ${l.name}`, 'Values reordered'); }
-    else { const c = LAYOUTS[S.rt][D.i]; const n = CARD_LIB.find((x) => x[0] === c[0])[1]; addDraft((D.kind === 'rz' ? 'ls-' : 'lm-') + S.rt + c[0], 'chg', `Deals › ${RTS[S.rt]} page`, D.kind === 'rz' ? `${n} card is ${c[1]} columns wide` : `${n} card moved`); }
   }
   D = null; render();
 });
