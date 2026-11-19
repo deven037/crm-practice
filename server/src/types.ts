@@ -618,3 +618,19 @@ export interface SlaRules {
   workTo: string;
   timeZone: string;
 }
+
+/** One card on a dashboard: how many of the 12 columns it spans and how many 34px rows it is tall (null: as tall as its content). */
+export interface DashboardCard {
+  id: string;
+  span: number;
+  rows: number | null;
+  hidden: boolean;
+}
+
+/** A saved dashboard arrangement: one per person (id user-<userId>), plus the bank's default (id bank). */
+export interface DashboardLayout {
+  id: string;
+  userId: string | null;
+  cards: DashboardCard[];
+  updatedAt: string;
+}

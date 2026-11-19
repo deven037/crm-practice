@@ -391,3 +391,42 @@ paths:
       responses:
         '200': { description: The campaign with the new spend line, its spent total and a history line. }
         '409': { description: The campaign has not started (not_started). }
+  /dashboard/layout:
+    get:
+      tags: [Dashboard]
+      summary: The signed-in person's dashboard layout and the bank's default
+      responses:
+        '200': { description: '{ mine, bank }: each a layout { id, userId, cards[], updatedAt } or null. Cards have id, span (columns of 12), rows (34px steps, null = fit content) and hidden.' }
+    put:
+      tags: [Dashboard]
+      summary: Save the signed-in person's dashboard layout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cards]
+              properties:
+                cards:
+                  type: array
+                  items: { type: object, required: [id, span, rows, hidden], properties: { id: { type: string }, span: { type: integer }, rows: { type: integer, nullable: true }, hidden: { type: boolean } } }
+      responses:
+        '200': { description: The saved layout. }
+    delete:
+      tags: [Dashboard]
+      summary: Drop the person's own layout so the bank's default applies again
+      responses:
+        '204': { description: Removed. }
+  /dashboard/layout/bank:
+    put:
+      tags: [Dashboard]
+      summary: Set the layout everyone starts with (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [cards], properties: { cards: { type: array, items: { type: object } } } }
+      responses:
+        '200': { description: The saved bank layout. }
+        '403': { description: Admins only. }
